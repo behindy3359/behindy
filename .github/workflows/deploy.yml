@@ -7,24 +7,20 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup SSH key
+      - name: Pull latest code
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
-          chmod 600 key.pem
+          cd ~/behindy
+          git pull
+          echo "[+] Pull complete"
 
-      - name: Deploy to EC2
+      - name: Restart docker containers
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@3.36.91.179 << 'EOF'
-            set -e
-            cd ~/behindy
-            git pull
-            echo "[+] Pull complete"
-            docker-compose down
-            docker-compose up --build -d
-          EOF
+          cd ~/behindy
+          docker-compose down
+          docker-compose up --build -d
