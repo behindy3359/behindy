@@ -1,18 +1,22 @@
 # node
-node_modules/
+**/node_modules/
 
 # python
 __pycache__/
+*.pyc
 
 # build artifacts
-build/
-dist/
+**/build/
+**/dist/
 
 # env
-.env
+**/.env
 
 # etc
 .DS_Store
 
 # Spring Boot secret configs
 **/application.properties
+**/.gradle/
+**/build/
+**/out/
