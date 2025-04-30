@@ -21,6 +21,7 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@3.36.91.179 << 'EOF'
+            set -e
             cd ~/behindy
             git pull
             echo "[+] Pull complete"
