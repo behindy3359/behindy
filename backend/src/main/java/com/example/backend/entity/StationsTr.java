@@ -6,6 +6,7 @@ import lombok.*;
 @Entity
 @Getter@Setter
 @Builder@NoArgsConstructor@AllArgsConstructor
+@Table(name="TRA")
 public class StationsTr {
 
     @Id@GeneratedValue(strategy = GenerationType.AUTO )

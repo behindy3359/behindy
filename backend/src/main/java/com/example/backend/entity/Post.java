@@ -11,6 +11,7 @@ import java.util.List;
 @Entity
 @Getter@Setter@Builder
 @NoArgsConstructor@AllArgsConstructor
+@Table(name = "POST")
 public class Post {
 
     @Id
@@ -41,6 +42,7 @@ public class Post {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    // 관계 설정
     @OneToMany(mappedBy = "post")
     private List<Comment> comments;
 }

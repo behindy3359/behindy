@@ -8,9 +8,11 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
+// 플레이 캐릭터 정보
 @Entity
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "CHAR")
 public class Character {
 
     // 서비스영역
@@ -24,10 +26,10 @@ public class Character {
     @Column(name = "char_name", nullable = false)
     private Long charName;
 
-    @Column(name = "char_hp", nullable = false)
+    @Column(name = "char_health", nullable = false)
     private Integer charHealth = 100;
 
-    @Column(name = "char_sant", nullable = false)
+    @Column(name = "char_sanity", nullable = false)
     private Integer charSanity = 100;
 
     // 관리영역
