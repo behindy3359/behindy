@@ -4,8 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Getter@Setter@Builder
-@AllArgsConstructor@NoArgsConstructor
+@Getter@Setter@Builder @AllArgsConstructor@NoArgsConstructor
 @Table(name="STO")
 public class Story {
 

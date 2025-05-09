@@ -4,8 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Getter@Setter
-@Builder@NoArgsConstructor@AllArgsConstructor
+@Getter@Setter @Builder@NoArgsConstructor@AllArgsConstructor
 @Table(name="TRA")
 public class StationsTr {
 

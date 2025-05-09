@@ -5,8 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 
 @Entity
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @Table(name="STA")
 public class Station {
 

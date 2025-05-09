@@ -9,8 +9,7 @@ import java.time.LocalDateTime;
 // Options, 선택지들에 대한 로그를 보관하는 테이블
 
 @Entity
-@Getter@Setter
-@Builder@NoArgsConstructor@AllArgsConstructor
+@Getter@Setter @Builder@NoArgsConstructor@AllArgsConstructor
 @Table(name = "LOG_OPS")
 public class LogO {
 

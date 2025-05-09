@@ -10,8 +10,7 @@ import java.time.LocalDateTime;
 
 // 플레이 캐릭터 정보
 @Entity
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @Table(name = "CHAR")
 public class Character {
 

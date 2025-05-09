@@ -6,8 +6,7 @@ import org.springframework.data.annotation.CreatedDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Getter@Setter@Builder
-@NoArgsConstructor@AllArgsConstructor
+@Getter@Setter@Builder @NoArgsConstructor@AllArgsConstructor
 @Table(name = "LOGE")
 public class LogE {
 

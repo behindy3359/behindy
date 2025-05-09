@@ -10,18 +10,18 @@ import lombok.*;
 @Table(name = "OPTIONS")
 public class Options {
     @Id@GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name="ops_id")
+    @Column(name="opt_id")
     private long id;
 
     @Column(name="page_id")
     private long pageId;
 
-    @Column(name="ops_Contents")
-    private String opsContents;
+    @Column(name="opt_Contents")
+    private String optContents;
 
-    @Column(name="ops_effect")
-    private String opsEffect;
+    @Column(name="opt_effect")
+    private String optEffect;
 
-    @Column(name = "ops_amount")
-    private int opsAmount;
+    @Column(name = "opt_amount")
+    private int optAmount;
 }

@@ -11,9 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Getter@Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
-@EntityListeners(AuditingEntityListener.class)
+@Getter@Setter @NoArgsConstructor @AllArgsConstructor @Builder @EntityListeners(AuditingEntityListener.class)
 @Table(name = "USER")
 public class User {
 
