@@ -19,8 +19,7 @@ __pycache__/
 /pgdata
 
 # Spring Boot secret configs
-**/application.properties
-**/application.yml
+backend/behindy/
 **/.gradle/
 **/build/
 **/out/
