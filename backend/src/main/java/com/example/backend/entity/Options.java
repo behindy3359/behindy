@@ -11,7 +11,7 @@ import lombok.*;
 public class Options {
     @Id@GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="opt_id")
-    private long id;
+    private long optId;
 
     @Column(name="page_id")
     private long pageId;

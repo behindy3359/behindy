@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Getter@Setter@Builder @NoArgsConstructor@AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "POST")
 public class Post {
 
@@ -21,7 +23,7 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @Column(name="user_id")
-    private User user;
+    private User userId;
 
     @Column(name="post_title")
     private String postTitle;
@@ -41,7 +43,15 @@ public class Post {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+        // 논리삭제 메서드
+        public void delete() {
+            this.deletedAt = LocalDateTime.now();
+        }
+
+        // 삭제 여부 확인 메서드
+        public boolean isDeleted() {
+            return this.deletedAt != null;
+        }
+
     // 관계 설정
-    @OneToMany(mappedBy = "post")
-    private List<Comment> comments;
 }

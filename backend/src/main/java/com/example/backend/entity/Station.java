@@ -11,11 +11,11 @@ public class Station {
 
     @Id@GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="sta_id")
-    private long id;
+    private long staId;
 
     @Column(name="sta_name", nullable = false)
-    private long stationName;
+    private long staName;
 
     @Column(name="sta_line", nullable = false)
-    private long stationLine;
+    private long staLine;
 }

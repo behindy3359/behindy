@@ -3,6 +3,7 @@ package com.example.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -10,25 +11,26 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter@Setter@Builder@NoArgsConstructor@AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Table(name="OPS_LOGB")
 public class OpsLogB {
     @Id@GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name="logb_id")
+    @Column(name = "logb_id")
     private long id;
 
     @Column(name = "loge_id")
-    private long logEId;
+    private long logeId;
 
-    @Column(name="logb_page")
-    private long logBPage;
+    @Column(name = "logb_page")
+    private long logbPage;
 
-    @Column(name="lob_opt")
-    private long logBopt;
+    @Column(name = "lob_opt")
+    private long logbOpt;
 
-    @Column(name="logb_dur")
-    private long logBDur;
+    @Column(name = "logb_dur")
+    private long logbDur;
 
     @CreatedDate
-    @Column(name="created_at", updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 }

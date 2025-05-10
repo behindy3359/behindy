@@ -10,9 +10,8 @@ public class Story {
 
     @Id@GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="sto_id")
-    private Long id;
+    private Long stoId;
 
-    @JoinColumn(name = "sta_id")
     @Column(name = "sta_id")
     private Long staId;
 

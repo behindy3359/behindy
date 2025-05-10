@@ -10,7 +10,7 @@ public class Page {
 
     @Id@GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="page_id")
-    private long id;
+    private long pageId;
 
     @Column(name="sto_id")
     private long stoId;
@@ -19,5 +19,5 @@ public class Page {
     private long pageNumber;
 
     @Column(name="page_contents", columnDefinition = "TEXT")
-    private String contents;
+    private String pageContents;
 }

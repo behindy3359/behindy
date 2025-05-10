@@ -13,31 +13,31 @@ import java.time.LocalDateTime;
 public class OpsLogD {
     @Id@GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "logd_id")
-    private long id;
+    private long logdId;
 
-    @Column(name = "logd_date")
-    private LocalDateTime date;
+    @Column(name = "logd_date", updatable = false)
+    private LocalDateTime logdDate;
 
     @Column(name = "logd_Total")
-    private long total;
+    private long logdTotal;
 
     // 고유 방문자 수
     @Column(name="logd_unique")
-    private long unique;
+    private long logdUnique;
 
     // 접속자 수
     @Column(name="logd_login")
-    private long login;
+    private long logdLogin;
 
     // 플레이 횟수/ 던전 진입 횟수
     @Column(name="logd_counts")
-    private long counts;
+    private long logdCounts;
 
     // 플레이 시 클리어
     @Column(name="logd_success")
-    private long success;
+    private long logdSuccess;
 
     // 플레이 시 실패
     @Column(name="logd_fail")
-    private long fail;
+    private long logdFail;
 }

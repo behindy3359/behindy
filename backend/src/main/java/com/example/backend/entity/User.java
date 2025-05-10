@@ -8,6 +8,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -18,18 +19,18 @@ public class User {
     // 서비스 영역
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long id;
+    private Long userId;
 
     @Column(name = "user_name", nullable = false)
     @Convert(converter = TableCryptoConverter.class)
-    private String name;
+    private String userName;
 
     @Column(name = "user_password", nullable = false)
-    private String password;
+    private String userPassword;
 
     @Column(name = "user_email")
     @Convert(converter = TableCryptoConverter.class)
-    private String email;
+    private String userEmail;
 
     // 관리 영역
     private Boolean isAdmins = false;
@@ -44,14 +45,29 @@ public class User {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+        // 논리삭제 메서드
+        public void delete() {
+            this.deletedAt = LocalDateTime.now();
+        }
+
+        // 삭제 여부 확인 메서드
+        public boolean isDeleted() {
+            return this.deletedAt != null;
+        }
 
     // 관계 설정
-    @OneToMany(mappedBy = "user")
-    private List<Post> posts;
+    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    private List<Post> posts = new ArrayList<>();
+        // Post 관련 연관관계 편의 메서드
+        public void addPost(Post post) {
+            posts.add(post);
+            post.setUserId(this);
+        }
 
-    @OneToMany(mappedBy = "user")
-    private List<Comment> comments;
+        public void removePost(Post post) {
+            posts.remove(post);
+            post.setUserId(null);
+        }
 
-    @OneToMany(mappedBy = "user")
-    private List<Character> characters;
+
 }
