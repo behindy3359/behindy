@@ -21,13 +21,11 @@ public class LogO {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "char_id")
-    @Column(name = "char_id")
-    private long charId;
+    private Character character;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "opt_id")
-    @Column(name = "opt_id")
-    private long optId;
+    private Options options;
 
     @CreatedDate
     @Column(name="created_at", updatable = false)

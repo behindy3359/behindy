@@ -3,7 +3,6 @@ package com.example.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -24,17 +23,18 @@ public class Character {
     private Long charId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    @Column(name="user_id", nullable = false)
-    private Long userId;
+    @JoinColumn(name = "user_id" ,nullable = false)
+    private User user;
 
     @Column(name = "char_name", nullable = false)
-    private Long charName;
+    private String charName;
 
     @Column(name = "char_health", nullable = false)
+    @Builder.Default
     private Integer charHealth = 100;
 
     @Column(name = "char_sanity", nullable = false)
+    @Builder.Default
     private Integer charSanity = 100;
 
     // 관리영역
@@ -59,12 +59,15 @@ public class Character {
             return this.deletedAt != null;
         }
 
-    @OneToMany(mappedBy = "char_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "character", orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Now> nows = new ArrayList<>();
 
-    @OneToMany(mappedBy = "char_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "character", orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<LogE> logES = new ArrayList<>();
 
-    @OneToMany(mappedBy = "char_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "character", orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<LogO> logOS = new ArrayList<>();
 }

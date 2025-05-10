@@ -14,8 +14,7 @@ public class StationsTr {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sta_id")
-    @Column(name="sta_id")
-    private long staId;
+    private Station station;
 
     @Column(name="tr_day")
     private String trDay;

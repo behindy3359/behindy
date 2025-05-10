@@ -32,9 +32,6 @@ public class User {
     @Convert(converter = TableCryptoConverter.class)
     private String userEmail;
 
-    // 관리 영역
-    private Boolean isAdmins = false;
-
     @CreatedDate
     @Column(name="created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -56,15 +53,19 @@ public class User {
         }
 
     // 관계 설정
-    @OneToMany(mappedBy = "user_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "user")
+    @Builder.Default
     private List<Post> posts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "user")
+    @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "user")
+    @Builder.Default
     private List<Character> characters = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "user")
+    @Builder.Default
     private List<OpsLogA> OpsLogAs = new ArrayList<>();
 }

@@ -2,7 +2,6 @@ package com.example.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.Id;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,14 +16,16 @@ public class Station {
     private long staId;
 
     @Column(name="sta_name", nullable = false)
-    private long staName;
+    private String staName;
 
     @Column(name="sta_line", nullable = false)
-    private long staLine;
+    private Integer staLine;
 
-    @OneToMany(mappedBy = "sta_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "station", orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Story> stories = new ArrayList<>();
 
-    @OneToMany(mappedBy = "sta_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "station", orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<StationsTr> stationsTrs = new ArrayList<>();
 }

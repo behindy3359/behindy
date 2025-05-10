@@ -28,6 +28,7 @@ public class Options {
     @Column(name = "opt_amount")
     private int optAmount;
 
-    @OneToMany(mappedBy = "opt_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "options", orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<LogO> logOS = new ArrayList<>();
 }

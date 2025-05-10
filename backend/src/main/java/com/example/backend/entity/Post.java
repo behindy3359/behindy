@@ -15,7 +15,6 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "POST")
 public class Post {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="post_id")
@@ -23,8 +22,7 @@ public class Post {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    @Column(name="user_id")
-    private User userId;
+    private User user;
 
     @Column(name="post_title")
     private String postTitle;
@@ -55,6 +53,7 @@ public class Post {
         }
 
     // 관계 설정
-    @OneToMany(mappedBy = "post_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "post", orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 }

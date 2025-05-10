@@ -20,8 +20,7 @@ public class OpsLogB {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "loge_id")
-    @Column(name = "loge_id")
-    private long logeId;
+    private LogE loge;
 
     @Column(name = "logb_page")
     private long logbPage;

@@ -20,13 +20,11 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
-    @Column(name="post_id")
-    private Post postId;
+    private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    @Column(name="user_id")
-    private User userId;
+    private User user;
 
     @Column(name="cmt_contents",columnDefinition = "TEXT")
     private String cmtContents;

@@ -21,13 +21,11 @@ public class LogE {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "char_id")
-    @Column(name = "char_id")
-    private Long charId;
+    private Character character;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sto_id")
-    @Column(name = "sto_id")
-    private Long stoId;
+    private Story story;
 
     @Column(name = "loge_result")
     private String logeResult;
@@ -39,6 +37,7 @@ public class LogE {
     @Column(name="created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "loge_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "loge", orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<OpsLogB> OpsLogBs = new ArrayList<>();
 }

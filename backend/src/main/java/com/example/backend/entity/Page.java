@@ -24,6 +24,7 @@ public class Page {
     @Column(name="page_contents", columnDefinition = "TEXT")
     private String pageContents;
 
-    @OneToMany(mappedBy = "page_id", orphanRemoval = true)
+    @OneToMany(mappedBy = "page", orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Now> nows = new ArrayList<>();
 }
