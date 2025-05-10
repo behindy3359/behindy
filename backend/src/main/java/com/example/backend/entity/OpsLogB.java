@@ -18,6 +18,8 @@ public class OpsLogB {
     @Column(name = "logb_id")
     private long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "loge_id")
     @Column(name = "loge_id")
     private long logeId;
 

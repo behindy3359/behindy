@@ -56,18 +56,15 @@ public class User {
         }
 
     // 관계 설정
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    @OneToMany(mappedBy = "user_id", orphanRemoval = true)
     private List<Post> posts = new ArrayList<>();
-        // Post 관련 연관관계 편의 메서드
-        public void addPost(Post post) {
-            posts.add(post);
-            post.setUserId(this);
-        }
 
-        public void removePost(Post post) {
-            posts.remove(post);
-            post.setUserId(null);
-        }
+    @OneToMany(mappedBy = "user_id", orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user_id", orphanRemoval = true)
+    private List<Character> characters = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user_id", orphanRemoval = true)
+    private List<OpsLogA> OpsLogAs = new ArrayList<>();
 }

@@ -8,6 +8,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 // 플레이 캐릭터 정보
 @Entity
@@ -21,6 +23,8 @@ public class Character {
     @Column(name = "char_id")
     private Long charId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     @Column(name="user_id", nullable = false)
     private Long userId;
 
@@ -54,4 +58,13 @@ public class Character {
         public boolean isDeleted() {
             return this.deletedAt != null;
         }
+
+    @OneToMany(mappedBy = "char_id", orphanRemoval = true)
+    private List<Now> nows = new ArrayList<>();
+
+    @OneToMany(mappedBy = "char_id", orphanRemoval = true)
+    private List<LogE> logES = new ArrayList<>();
+
+    @OneToMany(mappedBy = "char_id", orphanRemoval = true)
+    private List<LogO> logOS = new ArrayList<>();
 }

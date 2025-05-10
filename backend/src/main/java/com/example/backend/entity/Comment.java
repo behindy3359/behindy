@@ -18,9 +18,13 @@ public class Comment {
     @Column(name = "cmt_id")
     private Long cmtId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
     @Column(name="post_id")
     private Post postId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     @Column(name="user_id")
     private User userId;
 
@@ -47,7 +51,4 @@ public class Comment {
         public boolean isDeleted() {
             return this.deletedAt != null;
         }
-
-    // 관계 설정
-
 }

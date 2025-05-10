@@ -12,8 +12,10 @@ public class StationsTr {
     @Column(name="tr_id")
     private long trId;
 
-    @Column(name="station_id")
-    private long stationId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sta_id")
+    @Column(name="sta_id")
+    private long staId;
 
     @Column(name="tr_day")
     private String trDay;

@@ -19,6 +19,8 @@ public class OpsLogA {
     @Column(name="loga_id")
     private long logaId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     @Column(name = "user_id")
     private long userId;
 

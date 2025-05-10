@@ -12,10 +12,13 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name="NOW")
 public class Now {
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "char_id")
     @Column(name="char_id")
     private long charId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "page_id")
     @Column(name="page_id")
     private long pageId;
 

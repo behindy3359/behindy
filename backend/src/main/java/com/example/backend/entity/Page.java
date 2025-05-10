@@ -3,6 +3,9 @@ package com.example.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter@Setter@Builder @NoArgsConstructor@AllArgsConstructor
 @Table(name="PAGE")
@@ -20,4 +23,7 @@ public class Page {
 
     @Column(name="page_contents", columnDefinition = "TEXT")
     private String pageContents;
+
+    @OneToMany(mappedBy = "page_id", orphanRemoval = true)
+    private List<Now> nows = new ArrayList<>();
 }

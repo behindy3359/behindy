@@ -19,11 +19,15 @@ public class LogO {
     @Column(name = "logo_id")
     private long logoId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "char_id")
     @Column(name = "char_id")
     private long charId;
 
-    @Column(name = "ops_id")
-    private long opsId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "opt_id")
+    @Column(name = "opt_id")
+    private long optId;
 
     @CreatedDate
     @Column(name="created_at", updatable = false)
