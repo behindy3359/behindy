@@ -39,5 +39,5 @@ public class LogE {
 
     @OneToMany(mappedBy = "loge", orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    private List<OpsLogB> OpsLogBs = new ArrayList<>();
+    private List<OpsLogB> opsLogBs = new ArrayList<>();
 }

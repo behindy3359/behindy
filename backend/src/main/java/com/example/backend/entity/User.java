@@ -52,6 +52,11 @@ public class User {
             return this.deletedAt != null;
         }
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    @Builder.Default
+    private Role role = Role.ROLE_USER;
+
     // 관계 설정
     @OneToMany(mappedBy = "user")
     @Builder.Default
@@ -67,5 +72,9 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     @Builder.Default
-    private List<OpsLogA> OpsLogAs = new ArrayList<>();
+    private List<OpsLogA> opsLogAS = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    @Builder.Default
+    private List<RefreshToken> refreshTokens = new ArrayList<>();
 }
