@@ -4,7 +4,6 @@ spring:
     username: ${DB_USER:postgres}
     password: ${DB_PASS:password}
     driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,10 +14,17 @@ spring:
         format_sql: true
         highlight_sql: true
         use_sql_comments: true
-
+  redis:
+    host: localhost
+    port: ${REDIS_PORT}
   profiles:
     active: default
 
 crypto:
   field-secret-key: ${FIELD_KEY}
   table-secret-key: ${TABLE_KEY}
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-validity: 3600000
+  refresh-token-validity: 2592000000
