@@ -4,10 +4,8 @@ import com.example.backend.dto.auth.JwtAuthResponse;
 import com.example.backend.dto.auth.LoginRequest;
 import com.example.backend.dto.auth.SignupRequest;
 import com.example.backend.dto.auth.TokenRefreshRequest;
-import com.example.backend.entity.RefreshToken;
 import com.example.backend.entity.User;
 import com.example.backend.exception.TokenRefreshException;
-import com.example.backend.repository.RefreshTokenRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.security.jwt.JwtTokenProvider;
 import com.example.backend.security.user.CustomUserDetails;
@@ -30,9 +28,9 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final RedisService redisService; // Redis 서비스 추가
 
     @Transactional
     public User register(SignupRequest request) {
@@ -61,6 +59,7 @@ public class AuthService {
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
+        // Redis에 리프레시 토큰 저장
         saveRefreshToken(userDetails.getId(), refreshToken);
 
         return JwtAuthResponse.builder()
@@ -76,60 +75,68 @@ public class AuthService {
     public JwtAuthResponse refreshToken(TokenRefreshRequest request) {
         String requestRefreshToken = request.getRefreshToken();
 
-        return refreshTokenRepository.findByValue(requestRefreshToken)
-                .map(refreshToken -> {
-                    if (!refreshToken.isValid()) {
-                        refreshTokenRepository.delete(refreshToken);
-                        throw new TokenRefreshException(requestRefreshToken, "Refresh token expired. Please login again");
-                    }
+        // 토큰에서 사용자 ID 추출
+        Long userId = tokenProvider.getUserIdFromJWT(requestRefreshToken);
 
-                    User user = refreshToken.getUser();
-                    CustomUserDetails userDetails = CustomUserDetails.build(user);
+        // Redis에서 저장된 토큰 확인
+        if (!redisService.validateRefreshToken(userId, requestRefreshToken)) {
+            throw new TokenRefreshException(requestRefreshToken, "Refresh token not found in database or not valid");
+        }
 
-                    // Create new authentication with the user details
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        // 토큰 유효성 검증
+        if (!tokenProvider.validateToken(requestRefreshToken)) {
+            redisService.deleteRefreshToken(userId);
+            throw new TokenRefreshException(requestRefreshToken, "Refresh token expired. Please login again");
+        }
 
-                    String newAccessToken = tokenProvider.generateAccessToken(authentication);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-                    return JwtAuthResponse.builder()
-                            .accessToken(newAccessToken)
-                            .refreshToken(requestRefreshToken) // Reuse the refresh token
-                            .userId(user.getUserId())
-                            .name(user.getUserName())
-                            .email(user.getUserEmail())
-                            .build();
-                })
-                .orElseThrow(() -> new TokenRefreshException(requestRefreshToken, "Refresh token not found in database"));
+        CustomUserDetails userDetails = CustomUserDetails.build(user);
+
+        // 새 인증 객체 생성
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+        // 새 액세스 토큰 생성
+        String newAccessToken = tokenProvider.generateAccessToken(authentication);
+
+        return JwtAuthResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(requestRefreshToken) // 같은 리프레시 토큰 유지
+                .userId(user.getUserId())
+                .name(user.getUserName())
+                .email(user.getUserEmail())
+                .build();
     }
 
     @Transactional
     public void logout(String refreshToken) {
-        refreshTokenRepository.findByValue(refreshToken)
-                .ifPresent(refreshTokenRepository::delete);
+        try {
+            // 토큰에서 사용자 ID 추출
+            Long userId = tokenProvider.getUserIdFromJWT(refreshToken);
+            // Redis에서 리프레시 토큰 삭제
+            redisService.deleteRefreshToken(userId);
+        } catch (Exception e) {
+            // 잘못된 토큰이어도 로그아웃 처리는 진행
+        }
         SecurityContextHolder.clearContext();
     }
 
+    /**
+     * Redis에 리프레시 토큰 저장
+     */
     private void saveRefreshToken(Long userId, String token) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        try {
+            // 토큰 만료 시간 계산
+            Date expiryDate = tokenProvider.getExpirationDateFromToken(token);
+            long ttlMillis = expiryDate.getTime() - System.currentTimeMillis();
 
-        // 기존 리프레시 토큰이 있다면 삭제
-        refreshTokenRepository.findByUser(user).ifPresent(refreshTokenRepository::delete);
+            // Redis에 토큰 저장
+            redisService.saveRefreshToken(userId, token, ttlMillis);
 
-        // 토큰 만료 시간 계산
-        Date expiryDate = tokenProvider.getExpirationDateFromToken(token);
-        LocalDateTime expiresAt = expiryDate.toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime();
-
-        // 새 리프레시 토큰 저장
-        RefreshToken refreshToken = RefreshToken.builder()
-                .user(user)
-                .value(token)
-                .expiresAt(expiresAt)
-                .build();
-
-        refreshTokenRepository.save(refreshToken);
+        } catch (Exception e) {
+            throw new RuntimeException("리프레시 토큰 저장 중 오류가 발생했습니다.", e);
+        }
     }
 }

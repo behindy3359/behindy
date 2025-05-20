@@ -17,6 +17,9 @@ spring:
   redis:
     host: localhost
     port: ${REDIS_PORT}
+    password: ${REDIS_PASSWORD}
+    database: 0
+    timeout: 2000
   profiles:
     active: default
 
