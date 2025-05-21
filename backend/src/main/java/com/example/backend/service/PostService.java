@@ -3,15 +3,18 @@ package com.example.backend.service;
 import com.example.backend.dto.post.PostCreateRequest;
 import com.example.backend.dto.post.PostListResponse;
 import com.example.backend.dto.post.PostResponse;
+import com.example.backend.dto.post.PostUpdateRequest;
 import com.example.backend.entity.Post;
 import com.example.backend.entity.User;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.PostRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.security.user.CustomUserDetails;
+import com.example.backend.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -26,26 +29,27 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final HtmlSanitizer htmlSanitizer;
 
     /**
      * 게시글 생성
      */
     @Transactional
     public PostResponse createPost(PostCreateRequest request) {
-        // 현재 인증된 사용자 정보 가져오기
         User currentUser = getCurrentUser();
 
-        // 게시글 엔티티 생성
+        // HTML Sanitizing 처리
+        String sanitizedTitle = htmlSanitizer.sanitize(request.getTitle());
+        String sanitizedContent = htmlSanitizer.sanitize(request.getContent());
+
         Post post = Post.builder()
                 .user(currentUser)
-                .postTitle(request.getTitle())
-                .postContents(request.getContent())
+                .postTitle(sanitizedTitle)
+                .postContents(sanitizedContent)
                 .build();
 
-        // 게시글 저장
         Post savedPost = postRepository.save(post);
 
-        // 응답 DTO로 변환하여 반환
         return mapToPostResponse(savedPost);
     }
 
@@ -106,4 +110,40 @@ public class PostService {
                 .totalPages(postsPage.getTotalPages())
                 .build();
     }
+    /**
+     * 게시글 수정
+     */
+    @Transactional
+    public PostResponse updatePost(Long postId, PostUpdateRequest request) {
+        // 게시글 조회
+        Post post = postRepository.findById(postId)
+                .filter(p -> !p.isDeleted())  // 삭제된 게시글 필터링
+                .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
+
+        // 현재 인증된 사용자 정보 가져오기
+        User currentUser = getCurrentUser();
+
+        // 게시글 작성자와 현재 사용자가 동일한지 확인
+        if (!post.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new AccessDeniedException("게시글을 수정할 권한이 없습니다.");
+        }
+
+        // XSS 방지를 위한 입력값 필터링
+        String sanitizedTitle = htmlSanitizer.sanitize(request.getTitle());
+        String sanitizedContent = htmlSanitizer.sanitize(request.getContent());
+
+        // 게시글 정보 업데이트 (필터링된 값 사용)
+        post.setPostTitle(sanitizedTitle);
+        post.setPostContents(sanitizedContent);
+
+        // 수정된 게시글 저장
+        Post updatedPost = postRepository.save(post);
+
+        // 응답 DTO로 변환하여 반환
+        return mapToPostResponse(updatedPost);
+    }
+    /**
+     * 게시글 삭제
+     */
+
 }

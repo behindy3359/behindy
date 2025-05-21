@@ -4,6 +4,7 @@ import com.example.backend.dto.auth.ApiResponse;
 import com.example.backend.dto.post.PostCreateRequest;
 import com.example.backend.dto.post.PostListResponse;
 import com.example.backend.dto.post.PostResponse;
+import com.example.backend.dto.post.PostUpdateRequest;
 import com.example.backend.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,19 @@ public class PostController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         PostListResponse response = postService.getAllPosts(pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 게시글 수정
+     */
+    @PutMapping("/{postId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<PostResponse> updatePost(
+            @PathVariable Long postId,
+            @Valid @RequestBody PostUpdateRequest request) {
+
+        PostResponse response = postService.updatePost(postId, request);
         return ResponseEntity.ok(response);
     }
 }

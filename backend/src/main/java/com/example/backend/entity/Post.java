@@ -30,6 +30,14 @@ public class Post {
     @Column(name="post_contents",columnDefinition = "TEXT")
     private String postContents;
 
+//    @Column(name="post_xcord")
+//    @Builder.Default
+//    private long postX = 0;
+//
+//    @Column(name="post_ycord")
+//    @Builder.Default
+//    private long postY = 0;
+
     // 관리 영역
     @CreatedDate
     @Column(name="created_at", updatable = false)

@@ -9,6 +9,7 @@ import com.example.backend.exception.TokenRefreshException;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.security.jwt.JwtTokenProvider;
 import com.example.backend.security.user.CustomUserDetails;
+import com.example.backend.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,6 +32,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final RedisService redisService; // Redis 서비스 추가
+    private final HtmlSanitizer htmlSanitizer;
 
     @Transactional
     public User register(SignupRequest request) {
@@ -38,10 +40,17 @@ public class AuthService {
             throw new RuntimeException("이미 사용 중인 이메일입니다.");
         }
 
+        // XSS 방지를 위한 입력값 필터링
+        String sanitizedName = htmlSanitizer.sanitize(request.getName());
+        String sanitizedEmail = htmlSanitizer.sanitize(request.getEmail());
+
+        // 비밀번호는 암호화되므로 XSS 필터링이 덜 중요하지만, 예방 차원에서 수행
+        String sanitizedPassword = htmlSanitizer.sanitize(request.getPassword());
+
         User user = User.builder()
-                .userName(request.getName())
-                .userEmail(request.getEmail())
-                .userPassword(passwordEncoder.encode(request.getPassword()))
+                .userName(sanitizedName)
+                .userEmail(sanitizedEmail)
+                .userPassword(passwordEncoder.encode(sanitizedPassword))
                 .build();
 
         return userRepository.save(user);
