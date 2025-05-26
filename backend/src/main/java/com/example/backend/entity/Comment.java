@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter@Setter @Builder@NoArgsConstructor@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "COMMENT") // comment -> cmt
+@Table(name = "COMMENT") // comment -> cmt 로 축약
 public class Comment {
     // 서비스영역
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

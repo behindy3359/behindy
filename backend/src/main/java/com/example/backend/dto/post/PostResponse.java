@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PostResponse {
-    private Long id;
+    private Long id; // 게시글 식별번호
     private String title;
     private String content;
     private String authorName;
@@ -20,6 +20,9 @@ public class PostResponse {
 
 //    private Long postX;
 //    private Long postY;
+
+    private boolean isEditable;  // 현재 사용자가 수정 가능한지
+    private boolean isDeletable; // 현재 사용자가 삭제 가능한지
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

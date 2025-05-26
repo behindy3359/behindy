@@ -5,6 +5,7 @@ import com.example.backend.dto.auth.LoginRequest;
 import com.example.backend.dto.auth.SignupRequest;
 import com.example.backend.dto.auth.TokenRefreshRequest;
 import com.example.backend.entity.User;
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.exception.TokenRefreshException;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.security.jwt.JwtTokenProvider;
@@ -54,6 +55,15 @@ public class AuthService {
                 .build();
 
         return userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        return userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userDetails.getId()));
     }
 
     @Transactional

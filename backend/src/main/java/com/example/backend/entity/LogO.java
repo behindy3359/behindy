@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter@Setter @Builder@NoArgsConstructor@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "LOG_OPS")
+@Table(name = "LOG_OPS") // log O, O : options, 선택지,
 public class LogO {
 
     @Id@GeneratedValue(strategy = GenerationType.AUTO)

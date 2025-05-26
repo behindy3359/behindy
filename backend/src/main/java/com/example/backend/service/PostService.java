@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class PostService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final AuthService authService;
     private final HtmlSanitizer htmlSanitizer;
 
     /**
@@ -36,7 +36,7 @@ public class PostService {
      */
     @Transactional
     public PostResponse createPost(PostCreateRequest request) {
-        User currentUser = getCurrentUser();
+        User currentUser = authService.getCurrentUser();
 
         // HTML Sanitizing 처리
         String sanitizedTitle = htmlSanitizer.sanitize(request.getTitle());
@@ -63,17 +63,6 @@ public class PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         return mapToPostResponse(post);
-    }
-
-    /**
-     * 현재 로그인한 사용자 정보 가져오기
-     */
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
-        return userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userDetails.getId()));
     }
 
     /**
@@ -121,7 +110,7 @@ public class PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         // 현재 인증된 사용자 정보 가져오기
-        User currentUser = getCurrentUser();
+        User currentUser = authService.getCurrentUser();
 
         // 게시글 작성자와 현재 사용자가 동일한지 확인
         if (!post.getUser().getUserId().equals(currentUser.getUserId())) {
@@ -153,7 +142,7 @@ public class PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         // 현재 인증된 사용자 정보 가져오기
-        User currentUser = getCurrentUser();
+        User currentUser = authService.getCurrentUser();
 
         // 게시글 작성자와 현재 사용자가 동일한지 확인
         if (!post.getUser().getUserId().equals(currentUser.getUserId())) {

@@ -14,7 +14,7 @@ import java.util.List;
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "CHAR")
+@Table(name = "CHAR") //character -> char 로 축약
 public class Character {
 
     // 서비스영역

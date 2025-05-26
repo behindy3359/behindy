@@ -12,7 +12,7 @@ import java.util.List;
 @Entity
 @Getter@Setter@Builder @NoArgsConstructor@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "LOGE")
+@Table(name = "LOGE") // log e, e로그 e: Ending
 public class LogE {
 
     @Id @GeneratedValue(strategy = GenerationType.AUTO)
