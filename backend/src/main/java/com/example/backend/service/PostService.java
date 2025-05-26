@@ -145,5 +145,23 @@ public class PostService {
     /**
      * 게시글 삭제
      */
+    @Transactional
+    public void deletePost(Long postId){
+        // 게시글 조회
+        Post post = postRepository.findById(postId)
+                .filter(p -> !p.isDeleted())  // 삭제된 게시글 필터링
+                .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
+        // 현재 인증된 사용자 정보 가져오기
+        User currentUser = getCurrentUser();
+
+        // 게시글 작성자와 현재 사용자가 동일한지 확인
+        if (!post.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new AccessDeniedException("게시글을 삭제할 권한이 없습니다.");
+        }
+
+        // 게시글 삭제
+        post.delete();
+        postRepository.save(post);
+    }
 }

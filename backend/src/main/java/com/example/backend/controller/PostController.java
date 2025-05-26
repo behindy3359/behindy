@@ -68,4 +68,18 @@ public class PostController {
         PostResponse response = postService.updatePost(postId, request);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * 게시글 삭제
+     */
+    @DeleteMapping("/{postId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse> deletePost(@PathVariable Long postId) {
+        postService.deletePost(postId);
+
+        return ResponseEntity.ok(ApiResponse.builder()
+                .success(true)
+                .message("게시글이 삭제되었습니다.")
+                .build());
+    }
 }

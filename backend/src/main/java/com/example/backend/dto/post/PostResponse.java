@@ -17,6 +17,10 @@ public class PostResponse {
     private String content;
     private String authorName;
     private Long authorId;
+
+//    private Long postX;
+//    private Long postY;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
