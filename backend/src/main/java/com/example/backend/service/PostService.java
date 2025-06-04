@@ -54,7 +54,7 @@ public class PostService {
     }
 
     /**
-     * 게시글 조회
+     * 단일 게시글 조회
      */
     @Transactional(readOnly = true)
     public PostResponse getPostById(Long postId) {
@@ -99,6 +99,7 @@ public class PostService {
                 .totalPages(postsPage.getTotalPages())
                 .build();
     }
+    
     /**
      * 게시글 수정
      */

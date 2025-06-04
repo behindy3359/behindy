@@ -83,4 +83,20 @@ public class CommentService {
                 .updatedAt(comment.getUpdatedAt())
                 .build();
     }
+
+    /**
+     * 단일 댓글 조회
+     */
+    @Transactional(readOnly = true)
+    public CommentResponse getCommentById(Long commentId){
+        Comment comment = commentRepository.findById(commentId)
+                .filter(c -> !c.isDeleted())
+                .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", commentId));
+        return mapToCommentResponse(comment);
+    }
+
+    /**
+     * 댓글 목록 조회
+     */
+
 }
