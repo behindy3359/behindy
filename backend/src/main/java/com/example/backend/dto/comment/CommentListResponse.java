@@ -12,9 +12,11 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommentListResponse {
-    private List<CommentListResponse> coments;
+    private List<CommentResponse> comments;
     private int page;
     private int size;
     private long totalElements;
     private int totalPages;
+    private boolean hasNext;
+    private boolean hasPrevious;  
 }

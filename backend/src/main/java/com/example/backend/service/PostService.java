@@ -99,7 +99,6 @@ public class PostService {
                 .totalPages(postsPage.getTotalPages())
                 .build();
     }
-    
     /**
      * 게시글 수정
      */

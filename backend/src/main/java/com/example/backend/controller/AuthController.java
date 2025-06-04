@@ -21,7 +21,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<ApiResponse> registerUser(
+            @Valid @RequestBody SignupRequest signupRequest) {
         User user = authService.register(signupRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.builder()
@@ -32,19 +33,22 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JwtAuthResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<JwtAuthResponse> authenticateUser(
+            @Valid @RequestBody LoginRequest loginRequest) {
         JwtAuthResponse response = authService.authenticate(loginRequest);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<JwtAuthResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
+    public ResponseEntity<JwtAuthResponse> refreshToken(
+            @Valid @RequestBody TokenRefreshRequest request) {
         JwtAuthResponse response = authService.refreshToken(request);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse> logoutUser(@Valid @RequestBody TokenRefreshRequest request) {
+    public ResponseEntity<ApiResponse> logoutUser(
+            @Valid @RequestBody TokenRefreshRequest request) {
         authService.logout(request.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.builder()
                 .success(true)

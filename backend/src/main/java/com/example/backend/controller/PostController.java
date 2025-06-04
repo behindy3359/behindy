@@ -28,7 +28,8 @@ public class PostController {
      */
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<PostResponse> createPost(@Valid @RequestBody PostCreateRequest request) {
+    public ResponseEntity<PostResponse> createPost(
+            @Valid @RequestBody PostCreateRequest request) {
         PostResponse response = postService.createPost(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -37,7 +38,8 @@ public class PostController {
      * 게시글 조회
      */
     @GetMapping("/{postId}")
-    public ResponseEntity<PostResponse> getPostById(@PathVariable Long postId) {
+    public ResponseEntity<PostResponse> getPostById(
+            @PathVariable Long postId) {
         PostResponse response = postService.getPostById(postId);
         return ResponseEntity.ok(response);
     }
@@ -74,7 +76,8 @@ public class PostController {
      */
     @DeleteMapping("/{postId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse> deletePost(@PathVariable Long postId) {
+    public ResponseEntity<ApiResponse> deletePost(
+            @PathVariable Long postId) {
         postService.deletePost(postId);
 
         return ResponseEntity.ok(ApiResponse.builder()
