@@ -28,6 +28,15 @@ public class Options {
     @Column(name = "opt_amount")
     private int optAmount;
 
+    @Column(name = "next_page_id")
+    private Long nextPageId;  // 이 선택지를 선택했을 때 이동할 페이지 ID
+
+    @Column(name = "condition_type")
+    private String conditionType; // "health_above", "sanity_below" 등
+
+    @Column(name = "condition_value")
+    private Integer conditionValue; // 조건 수치
+
     @OneToMany(mappedBy = "options", orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<LogO> logOS = new ArrayList<>();
