@@ -10,22 +10,27 @@ import java.util.List;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @Table(name="STA")
 public class Station {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long staId;
 
-    @Id@GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name="sta_id")
-    private long staId;
+    @Column(name = "api_station_id", unique = true)
+    private String apiStationId;
 
-    @Column(name="sta_name", nullable = false)
+    @Column(name = "api_subway_id")
+    private String apiSubwayId;
+
+    @Column(name = "sta_name", nullable = false)
     private String staName;
 
-    @Column(name="sta_line", nullable = false)
+    @Column(name = "sta_line", nullable = false)
     private Integer staLine;
 
-    @OneToMany(mappedBy = "station", orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Story> stories = new ArrayList<>();
+    @Column(name = "sta_line_name")
+    private String staLineName;
 
-    @OneToMany(mappedBy = "station", orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<StationsTr> stationsTrs = new ArrayList<>();
+    @Column(name = "coordinates_x")
+    private Double coordinatesX;
+
+    @Column(name = "coordinates_y")
+    private Double coordinatesY;
 }
