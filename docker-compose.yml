@@ -11,6 +11,11 @@ services:
     depends_on:
       - backend
       - aiserver
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     build:
@@ -35,6 +40,11 @@ services:
     depends_on:
       - db
       - redis
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   aiserver:
     build: ./aiserver
@@ -44,6 +54,11 @@ services:
       - 8000
     networks:
       - internal
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"    # 로그 파일 최대 크기
+        max-file: "3"      # 보관할 로그 파일 수
 
   db:
     image: postgres:15

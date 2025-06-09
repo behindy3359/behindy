@@ -155,9 +155,9 @@ public class GameService {
         Options selectedOption = optionsRepository.findById(optionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Option", "id", optionId));
 
-        // 3. 선택지가 현재 페이지의 것인지 확인 (long 타입 비교 수정)
+        // 3. 선택지가 현재 페이지의 것인지 확인
         Page currentPage = gameSession.getPage();
-        if (selectedOption.getPageId() != currentPage.getPageId()) { // ✅ primitive long 비교
+        if (selectedOption.getPageId() != currentPage.getPageId()) {
             throw new IllegalArgumentException("잘못된 선택지입니다.");
         }
 
