@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
     // 삭제되지 않은 모든 게시글 조회
-    @Query("SELECT p FROM POST p WHERE p.deletedAt IS NULL")
+    @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL")
     Page<Post> findAllActive(Pageable pageable);
 
     // 특정 사용자의 게시글 조회
