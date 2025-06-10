@@ -467,7 +467,7 @@ public class GameService {
                     return ActiveGameSessionResponse.builder()
                             .characterId(session.getCharacter().getCharId())
                             .characterName(session.getCharacter().getCharName())
-                            .userName(session.getCharacter().getUser().getUserName())
+                            .userName(session.getCharacter().getUsers().getUserName())
                             .storyId(story != null ? story.getStoId() : null)
                             .storyTitle(story != null ? story.getStoTitle() : "Unknown")
                             .currentPageNumber(session.getPage().getPageNumber())

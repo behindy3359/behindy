@@ -39,7 +39,7 @@ public class PostService {
         String sanitizedContent = htmlSanitizer.sanitize(request.getContent());
 
         Post post = Post.builder()
-                .user(currentUser)
+                .users(currentUser)
                 .postTitle(sanitizedTitle)
                 .postContents(sanitizedContent)
                 .build();
@@ -69,8 +69,8 @@ public class PostService {
                 .id(post.getPostId())
                 .title(post.getPostTitle())
                 .content(post.getPostContents())
-                .authorName(post.getUser().getUserName())
-                .authorId(post.getUser().getUserId())
+                .authorName(post.getUsers().getUserName())
+                .authorId(post.getUsers().getUserId())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();
@@ -109,7 +109,7 @@ public class PostService {
         User currentUser = authService.getCurrentUser();
 
         // 게시글 작성자와 현재 사용자가 동일한지 확인
-        if (!post.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!post.getUsers().getUserId().equals(currentUser.getUserId())) {
             throw new AccessDeniedException("게시글을 수정할 권한이 없습니다.");
         }
 
@@ -141,7 +141,7 @@ public class PostService {
         User currentUser = authService.getCurrentUser();
 
         // 게시글 작성자와 현재 사용자가 동일한지 확인
-        if (!post.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!post.getUsers().getUserId().equals(currentUser.getUserId())) {
             throw new AccessDeniedException("게시글을 삭제할 권한이 없습니다.");
         }
 
