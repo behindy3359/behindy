@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
+@Entity(name = "User")
 @Getter@Setter @NoArgsConstructor @AllArgsConstructor @Builder @EntityListeners(AuditingEntityListener.class)
 @Table(name = "USERS")
-public class Users {
+public class User {
 
     // 서비스 영역
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +56,7 @@ public class Users {
     @Column(name = "role", nullable = false)
     @Builder.Default
     private Role role = Role.ROLE_USER;
+
 
     // 관계 설정
     @OneToMany(mappedBy = "user")

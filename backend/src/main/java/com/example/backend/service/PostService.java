@@ -5,7 +5,7 @@ import com.example.backend.dto.post.PostListResponse;
 import com.example.backend.dto.post.PostResponse;
 import com.example.backend.dto.post.PostUpdateRequest;
 import com.example.backend.entity.Post;
-import com.example.backend.entity.Users;
+import com.example.backend.entity.User;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.PostRepository;
 import com.example.backend.util.HtmlSanitizer;
@@ -32,14 +32,14 @@ public class PostService {
      */
     @Transactional
     public PostResponse createPost(PostCreateRequest request) {
-        Users currentUsers = authService.getCurrentUser();
+        User currentUser = authService.getCurrentUser();
 
         // HTML Sanitizing 처리
         String sanitizedTitle = htmlSanitizer.sanitize(request.getTitle());
         String sanitizedContent = htmlSanitizer.sanitize(request.getContent());
 
         Post post = Post.builder()
-                .users(currentUsers)
+                .user(currentUser)
                 .postTitle(sanitizedTitle)
                 .postContents(sanitizedContent)
                 .build();
@@ -69,8 +69,8 @@ public class PostService {
                 .id(post.getPostId())
                 .title(post.getPostTitle())
                 .content(post.getPostContents())
-                .authorName(post.getUsers().getUserName())
-                .authorId(post.getUsers().getUserId())
+                .authorName(post.getUser().getUserName())
+                .authorId(post.getUser().getUserId())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();
@@ -106,10 +106,10 @@ public class PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         // 현재 인증된 사용자 정보 가져오기
-        Users currentUsers = authService.getCurrentUser();
+        User currentUser = authService.getCurrentUser();
 
         // 게시글 작성자와 현재 사용자가 동일한지 확인
-        if (!post.getUsers().getUserId().equals(currentUsers.getUserId())) {
+        if (!post.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new AccessDeniedException("게시글을 수정할 권한이 없습니다.");
         }
 
@@ -138,10 +138,10 @@ public class PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         // 현재 인증된 사용자 정보 가져오기
-        Users currentUsers = authService.getCurrentUser();
+        User currentUser = authService.getCurrentUser();
 
         // 게시글 작성자와 현재 사용자가 동일한지 확인
-        if (!post.getUsers().getUserId().equals(currentUsers.getUserId())) {
+        if (!post.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new AccessDeniedException("게시글을 삭제할 권한이 없습니다.");
         }
 

@@ -4,6 +4,8 @@ Web text adventure shifting from everyday subway life to a surreal world of urba
 
 ## Conventional Commits
 
+sb : springboot backend
+
 feat:       새로운 기능 추가
 
 fix:        버그 수정
@@ -19,6 +21,9 @@ chore:      기타 변경사항 (빌드, 설정, 패키지 등)
 build:      빌드 관련 작업 (도커, 컴파일러 설정 등)
 
 ci:         CI 설정 관련 변경 (GitHub Actions, Jenkins 등)
+
+
+ex) sb-fix : entity 내용 수정
 
 ## License
 

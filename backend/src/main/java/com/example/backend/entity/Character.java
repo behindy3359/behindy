@@ -1,5 +1,6 @@
 package com.example.backend.entity;
 
+import com.example.backend.security.crypto.FieldCryptoConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -10,34 +11,28 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-// 플레이 캐릭터 정보
-@Entity
+@Entity(name = "Character")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "CHAR") //character -> char 로 축약
+@Table(name = "char")
 public class Character {
 
-    // 서비스영역
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "char_id")
     private Long charId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id" ,nullable = false)
-    private Users users;
-
     @Column(name = "char_name", nullable = false)
+    @Convert(converter = FieldCryptoConverter.class)
     private String charName;
 
-    @Column(name = "char_health", nullable = false)
-    @Builder.Default
-    private Integer charHealth = 100;
+    @Column(name = "char_bio")
+    @Convert(converter = FieldCryptoConverter.class)
+    private String charBio;
 
-    @Column(name = "char_sanity", nullable = false)
-    @Builder.Default
-    private Integer charSanity = 100;
+    @Column(name = "char_mood")
+    @Convert(converter = FieldCryptoConverter.class)
+    private String charMood;
 
-    // 관리영역
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -46,28 +41,25 @@ public class Character {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // 캐릭터의 생존/사망 여부도 판별
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-        // 사망시 작동 메서드
-        public void delete() {
-            this.deletedAt = LocalDateTime.now();
-        }
 
-        // 사망 여부 확인 메서드
-        public boolean isDeleted() {
-            return this.deletedAt != null;
-        }
+    // 논리삭제 메서드
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 
-    @OneToMany(mappedBy = "character", orphanRemoval = true, fetch = FetchType.LAZY)
+    // 삭제 여부 확인 메서드
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    // 게임 진행 관련
+    @OneToMany(mappedBy = "character", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Now> nows = new ArrayList<>();
-
-    @OneToMany(mappedBy = "character", orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<LogE> logES = new ArrayList<>();
-
-    @OneToMany(mappedBy = "character", orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<LogO> logOS = new ArrayList<>();
 }

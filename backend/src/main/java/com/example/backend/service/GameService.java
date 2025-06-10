@@ -35,8 +35,8 @@ public class GameService {
     @Transactional
     public GameStartResponse startGame(Long storyId) {
         // 1. 현재 사용자의 살아있는 캐릭터 확인
-        Users currentUsers = authService.getCurrentUser();
-        Character character = getAliveCharacter(currentUsers);
+        User currentUser = authService.getCurrentUser();
+        Character character = getAliveCharacter(currentUser);
 
         // 2. 스토리 존재 확인
         Story story = storyRepository.findById(storyId)
@@ -64,7 +64,7 @@ public class GameService {
         CharacterResponse characterResponse = characterService.getCurrentCharacter();
 
         log.info("게임 시작: userId={}, charId={}, storyId={}",
-                currentUsers.getUserId(), character.getCharId(), storyId);
+                currentUser.getUserId(), character.getCharId(), storyId);
 
         return GameStartResponse.builder()
                 .storyId(storyId)
@@ -80,8 +80,8 @@ public class GameService {
      */
     @Transactional(readOnly = true)
     public GameResumeResponse resumeGame() {
-        Users currentUsers = authService.getCurrentUser();
-        Character character = getAliveCharacter(currentUsers);
+        User currentUser = authService.getCurrentUser();
+        Character character = getAliveCharacter(currentUser);
 
         // 진행 중인 게임 확인
         Now gameSession = nowRepository.findByCharacterIdWithPage(character.getCharId())
@@ -109,8 +109,8 @@ public class GameService {
      */
     @Transactional(readOnly = true)
     public GameStateResponse getCurrentGameState() {
-        Users currentUsers = authService.getCurrentUser();
-        Character character = getAliveCharacter(currentUsers);
+        User currentUser = authService.getCurrentUser();
+        Character character = getAliveCharacter(currentUser);
 
         Optional<Now> gameSession = nowRepository.findByCharacterIdWithPage(character.getCharId());
 
@@ -144,8 +144,8 @@ public class GameService {
      */
     @Transactional
     public ChoiceResultResponse makeChoice(Long optionId) {
-        Users currentUsers = authService.getCurrentUser();
-        Character character = getAliveCharacter(currentUsers);
+        User currentUser = authService.getCurrentUser();
+        Character character = getAliveCharacter(currentUser);
 
         // 1. 진행 중인 게임 확인
         Now gameSession = nowRepository.findByCharacterIdWithPage(character.getCharId())
@@ -216,8 +216,8 @@ public class GameService {
      */
     @Transactional
     public GameQuitResponse quitGame() {
-        Users currentUsers = authService.getCurrentUser();
-        Character character = getAliveCharacter(currentUsers);
+        User currentUser = authService.getCurrentUser();
+        Character character = getAliveCharacter(currentUser);
 
         Now gameSession = nowRepository.findByCharacter(character)
                 .orElseThrow(() -> new ResourceNotFoundException("Active Game", "characterId", character.getCharId()));
@@ -393,14 +393,14 @@ public class GameService {
     /**
      * 살아있는 캐릭터 조회
      */
-    private Character getAliveCharacter(Users users) {
+    private Character getAliveCharacter(User user) {
         return characterService.getCurrentCharacterOptional()
                 .map(characterResponse -> {
                     // CharacterResponse에서 Character 엔티티로 변환 (실제로는 Repository에서 직접 조회)
-                    return characterRepository.findByUserAndDeletedAtIsNull(users)
-                            .orElseThrow(() -> new ResourceNotFoundException("Living Character", "userId", users.getUserId()));
+                    return characterRepository.findByUserAndDeletedAtIsNull(user)
+                            .orElseThrow(() -> new ResourceNotFoundException("Living Character", "userId", user.getUserId()));
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("Living Character", "userId", users.getUserId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Living Character", "userId", user.getUserId()));
     }
 
     /**
@@ -467,7 +467,7 @@ public class GameService {
                     return ActiveGameSessionResponse.builder()
                             .characterId(session.getCharacter().getCharId())
                             .characterName(session.getCharacter().getCharName())
-                            .userName(session.getCharacter().getUsers().getUserName())
+                            .userName(session.getCharacter().getUser().getUserName())
                             .storyId(story != null ? story.getStoId() : null)
                             .storyTitle(story != null ? story.getStoTitle() : "Unknown")
                             .currentPageNumber(session.getPage().getPageNumber())
@@ -527,7 +527,7 @@ public class GameService {
     @Transactional(readOnly = true)
     public GameEligibilityResponse checkGameEligibility() {
         try {
-            Users currentUsers = authService.getCurrentUser();
+            User currentUser = authService.getCurrentUser();
 
             // 살아있는 캐릭터 확인
             Optional<CharacterResponse> characterOpt = characterService.getCurrentCharacterOptional();

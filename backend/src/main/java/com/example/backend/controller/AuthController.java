@@ -5,7 +5,7 @@ import com.example.backend.dto.auth.JwtAuthResponse;
 import com.example.backend.dto.auth.LoginRequest;
 import com.example.backend.dto.auth.SignupRequest;
 import com.example.backend.dto.auth.TokenRefreshRequest;
-import com.example.backend.entity.Users;
+import com.example.backend.entity.User;
 import com.example.backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +23,12 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse> registerUser(
             @Valid @RequestBody SignupRequest signupRequest) {
-        Users users = authService.register(signupRequest);
+        User user = authService.register(signupRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.builder()
                         .success(true)
                         .message("사용자 등록이 완료되었습니다.")
-                        .data(users.getUserId())
+                        .data(user.getUserId())
                         .build());
     }
 
