@@ -52,7 +52,7 @@ public class CommentService {
 
         // 댓글 생성
         Comment comment = Comment.builder()
-                .user(currentUser)
+                .users(currentUser)
                 .post(post)
                 .cmtContents(sanitizedContent)
                 .build();
@@ -121,7 +121,7 @@ public class CommentService {
         User currentUser = authService.getCurrentUser();
 
         // 댓글 작성자와 현재 사용자가 동일한지 확인
-        if (!comment.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!comment.getUsers().getUserId().equals(currentUser.getUserId())) {
             throw new AccessDeniedException("댓글을 수정할 권한이 없습니다.");
         }
 
@@ -152,7 +152,7 @@ public class CommentService {
         User currentUser = authService.getCurrentUser();
 
         // 댓글 작성자와 현재 사용자가 동일한지 확인
-        if (!comment.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!comment.getUsers().getUserId().equals(currentUser.getUserId())) {
             throw new AccessDeniedException("댓글을 삭제할 권한이 없습니다.");
         }
 
@@ -205,14 +205,14 @@ public class CommentService {
 
         // 댓글 작성자와 현재 사용자가 동일한지 확인
         boolean isOwner = currentUserId != null &&
-                currentUserId.equals(comment.getUser().getUserId());
+                currentUserId.equals(comment.getUsers().getUserId());
 
         return CommentResponse.builder()
                 .id(comment.getCmtId())
                 .postId(comment.getPost().getPostId())
                 .content(comment.getCmtContents())
-                .authorName(comment.getUser().getUserName())
-                .authorId(comment.getUser().getUserId())
+                .authorName(comment.getUsers().getUserName())
+                .authorId(comment.getUsers().getUserId())
                 .isEditable(isOwner)    // 작성자만 수정 가능
                 .isDeletable(isOwner)   // 작성자만 삭제 가능
                 .createdAt(comment.getCreatedAt())

@@ -24,7 +24,7 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    private User users;
 
     @Column(name="cmt_contents",columnDefinition = "TEXT")
     private String cmtContents;
@@ -40,13 +40,14 @@ public class Comment {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-        // 논리삭제 메서드
-        public void delete() {
-            this.deletedAt = LocalDateTime.now();
-        }
 
-        // 삭제 여부 확인 메서드
-        public boolean isDeleted() {
-            return this.deletedAt != null;
-        }
+    // 논리삭제 메서드
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    // 삭제 여부 확인 메서드
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
 }

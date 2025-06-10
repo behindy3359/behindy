@@ -13,7 +13,7 @@ import java.util.List;
 
 @Entity(name = "User")
 @Getter@Setter @NoArgsConstructor @AllArgsConstructor @Builder @EntityListeners(AuditingEntityListener.class)
-@Table(name = "USERS")
+@Table(name = "users")
 public class User {
 
     // 서비스 영역
@@ -42,6 +42,7 @@ public class User {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
     // 논리삭제 메서드
     public void delete() {
         this.deletedAt = LocalDateTime.now();
@@ -57,25 +58,24 @@ public class User {
     @Builder.Default
     private Role role = Role.ROLE_USER;
 
-
     // 관계 설정
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "users")
     @Builder.Default
     private List<Post> posts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "users")
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "users")
     @Builder.Default
     private List<Character> characters = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "users")
     @Builder.Default
     private List<OpsLogA> opsLogAS = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "users")
     @Builder.Default
     private List<RefreshToken> refreshTokens = new ArrayList<>();
 }

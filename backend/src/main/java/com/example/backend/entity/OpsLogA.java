@@ -21,7 +21,7 @@ public class OpsLogA {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    private User users;
 
     @Column(name = "loga_address")
     private String logaAddress;

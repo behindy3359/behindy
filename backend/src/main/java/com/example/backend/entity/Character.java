@@ -25,13 +25,15 @@ public class Character {
     @Convert(converter = FieldCryptoConverter.class)
     private String charName;
 
-    @Column(name = "char_bio")
-    @Convert(converter = FieldCryptoConverter.class)
-    private String charBio;
+    // ✅ 추가: 체력 필드
+    @Column(name = "char_health", nullable = false)
+    @Builder.Default
+    private Integer charHealth = 100;
 
-    @Column(name = "char_mood")
-    @Convert(converter = FieldCryptoConverter.class)
-    private String charMood;
+    // ✅ 추가: 정신력 필드
+    @Column(name = "char_sanity", nullable = false)
+    @Builder.Default
+    private Integer charSanity = 100;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
@@ -54,9 +56,10 @@ public class Character {
         return this.deletedAt != null;
     }
 
+    // ✅ 수정: user -> users 필드명 통일
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private User users;
 
     // 게임 진행 관련
     @OneToMany(mappedBy = "character", fetch = FetchType.LAZY)
