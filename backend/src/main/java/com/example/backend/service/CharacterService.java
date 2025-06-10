@@ -3,8 +3,7 @@ package com.example.backend.service;
 import com.example.backend.dto.character.CharacterCreateRequest;
 import com.example.backend.dto.character.CharacterResponse;
 import com.example.backend.entity.Character;
-import com.example.backend.entity.Now;
-import com.example.backend.entity.User;
+import com.example.backend.entity.Users;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.CharacterRepository;
 //import com.example.backend.repository.NowRepository;
@@ -34,10 +33,10 @@ public class CharacterService {
      */
     @Transactional
     public CharacterResponse createCharacter(CharacterCreateRequest request) {
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
         // 1. 기존 살아있는 캐릭터 확인
-        if (characterRepository.existsByUserAndDeletedAtIsNull(currentUser)) {
+        if (characterRepository.existsByUserAndDeletedAtIsNull(currentUsers)) {
             throw new IllegalStateException("이미 살아있는 캐릭터가 있습니다. 기존 캐릭터가 사망해야 새 캐릭터를 생성할 수 있습니다.");
         }
 
@@ -49,7 +48,7 @@ public class CharacterService {
 
         // 3. 캐릭터 생성
         Character character = Character.builder()
-                .user(currentUser)
+                .users(currentUsers)
                 .charName(sanitizedName)
                 .charHealth(100) // 기본 체력
                 .charSanity(100) // 기본 정신력
@@ -57,7 +56,7 @@ public class CharacterService {
 
         Character savedCharacter = characterRepository.save(character);
         log.info("새 캐릭터 생성됨: userId={}, charId={}, charName={}",
-                currentUser.getUserId(), savedCharacter.getCharId(), sanitizedName);
+                currentUsers.getUserId(), savedCharacter.getCharId(), sanitizedName);
 
         return mapToCharacterResponse(savedCharacter);
     }
@@ -67,10 +66,10 @@ public class CharacterService {
      */
     @Transactional(readOnly = true)
     public CharacterResponse getCurrentCharacter() {
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
-        Character character = characterRepository.findByUserAndDeletedAtIsNull(currentUser)
-                .orElseThrow(() -> new ResourceNotFoundException("Character", "user", currentUser.getUserId()));
+        Character character = characterRepository.findByUserAndDeletedAtIsNull(currentUsers)
+                .orElseThrow(() -> new ResourceNotFoundException("Character", "user", currentUsers.getUserId()));
 
         return mapToCharacterResponse(character);
     }
@@ -80,9 +79,9 @@ public class CharacterService {
      */
     @Transactional(readOnly = true)
     public Optional<CharacterResponse> getCurrentCharacterOptional() {
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
-        return characterRepository.findByUserAndDeletedAtIsNull(currentUser)
+        return characterRepository.findByUserAndDeletedAtIsNull(currentUsers)
                 .map(this::mapToCharacterResponse);
     }
 
@@ -91,9 +90,9 @@ public class CharacterService {
      */
     @Transactional(readOnly = true)
     public List<CharacterResponse> getCharacterHistory() {
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
-        List<Character> characters = characterRepository.findByUserOrderByCreatedAtDesc(currentUser);
+        List<Character> characters = characterRepository.findByUserOrderByCreatedAtDesc(currentUsers);
 
         return characters.stream()
                 .map(this::mapToCharacterResponse)
@@ -105,13 +104,13 @@ public class CharacterService {
      */
     @Transactional
     public void killCharacter(Long charId) {
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
         // 캐릭터 조회 및 소유권 확인
         Character character = characterRepository.findAliveCharacterById(charId)
                 .orElseThrow(() -> new ResourceNotFoundException("Character", "id", charId));
 
-        if (!character.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!character.getUsers().getUserId().equals(currentUsers.getUserId())) {
             throw new AccessDeniedException("캐릭터를 삭제할 권한이 없습니다.");
         }
 
@@ -123,7 +122,7 @@ public class CharacterService {
         cleanupGameProgress(character);
 
         log.info("캐릭터 사망 처리됨: charId={}, charName={}, userId={}",
-                charId, character.getCharName(), currentUser.getUserId());
+                charId, character.getCharName(), currentUsers.getUserId());
     }
 
     /**
@@ -193,8 +192,8 @@ public class CharacterService {
                 .charName(character.getCharName())
                 .charHealth(character.getCharHealth())
                 .charSanity(character.getCharSanity())
-                .userId(character.getUser().getUserId())
-                .userName(character.getUser().getUserName())
+                .userId(character.getUsers().getUserId())
+                .userName(character.getUsers().getUserName())
                 .isAlive(isAlive)
                 .isDying(isDying)
                 .statusMessage(statusMessage)

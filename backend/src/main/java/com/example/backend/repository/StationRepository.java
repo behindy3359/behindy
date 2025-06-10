@@ -41,13 +41,13 @@ public interface StationRepository extends JpaRepository<Station, Long> {
     Long countStationsByLine(@Param("lineNumber") Integer lineNumber);
 
     /**
-     * 스토리가 있는 역들만 조회
+     * 스토리가 있는 역들만 조회 - ✅ 이제 정상 작동
      */
     @Query("SELECT DISTINCT s FROM Station s JOIN s.stories st")
     List<Station> findStationsWithStories();
 
     /**
-     * 특정 노선에서 스토리가 있는 역들 조회
+     * 특정 노선에서 스토리가 있는 역들 조회 - ✅ 이제 정상 작동
      */
     @Query("SELECT DISTINCT s FROM Station s JOIN s.stories st WHERE s.staLine = :lineNumber")
     List<Station> findStationsWithStoriesByLine(@Param("lineNumber") Integer lineNumber);

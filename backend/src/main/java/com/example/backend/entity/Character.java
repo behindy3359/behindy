@@ -24,7 +24,7 @@ public class Character {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id" ,nullable = false)
-    private User user;
+    private Users users;
 
     @Column(name = "char_name", nullable = false)
     private String charName;

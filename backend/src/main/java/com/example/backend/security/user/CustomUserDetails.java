@@ -1,6 +1,6 @@
 package com.example.backend.security.user;
 
-import com.example.backend.entity.User;
+import com.example.backend.entity.Users;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,15 +25,15 @@ public class CustomUserDetails implements UserDetails {
 
     private Collection<? extends GrantedAuthority> authorities;
 
-    public static CustomUserDetails build(User user) {
+    public static CustomUserDetails build(Users users) {
         List<GrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority(user.getRole().name()));
+                new SimpleGrantedAuthority(users.getRole().name()));
 
         return new CustomUserDetails(
-                user.getUserId(),
-                user.getUserName(),
-                user.getUserEmail(),
-                user.getUserPassword(),
+                users.getUserId(),
+                users.getUserName(),
+                users.getUserEmail(),
+                users.getUserPassword(),
                 authorities
         );
     }

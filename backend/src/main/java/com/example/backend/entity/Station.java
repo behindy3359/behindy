@@ -33,4 +33,8 @@ public class Station {
 
     @Column(name = "coordinates_y")
     private Double coordinatesY;
+
+    @OneToMany(mappedBy = "station", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Story> stories = new ArrayList<>();
 }

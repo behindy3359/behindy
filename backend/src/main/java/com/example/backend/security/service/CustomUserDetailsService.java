@@ -1,6 +1,6 @@
 package com.example.backend.security.service;
 
-import com.example.backend.entity.User;
+import com.example.backend.entity.Users;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.security.user.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -19,19 +19,19 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUserEmail(username)
+        Users users = userRepository.findByUserEmail(username)
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found with email: " + username));
 
-        return CustomUserDetails.build(user);
+        return CustomUserDetails.build(users);
     }
 
     @Transactional
     public UserDetails loadUserById(Long id) {
-        User user = userRepository.findById(id)
+        Users users = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found with id : " + id));
 
-        return CustomUserDetails.build(user);
+        return CustomUserDetails.build(users);
     }
 }

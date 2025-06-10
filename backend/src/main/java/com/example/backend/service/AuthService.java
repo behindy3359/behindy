@@ -4,7 +4,7 @@ import com.example.backend.dto.auth.JwtAuthResponse;
 import com.example.backend.dto.auth.LoginRequest;
 import com.example.backend.dto.auth.SignupRequest;
 import com.example.backend.dto.auth.TokenRefreshRequest;
-import com.example.backend.entity.User;
+import com.example.backend.entity.Users;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.exception.TokenRefreshException;
 import com.example.backend.repository.UserRepository;
@@ -20,8 +20,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Date;
 
 @Service
@@ -36,7 +34,7 @@ public class AuthService {
     private final HtmlSanitizer htmlSanitizer;
 
     @Transactional
-    public User register(SignupRequest request) {
+    public Users register(SignupRequest request) {
         if (userRepository.existsByUserEmail(request.getEmail())) {
             throw new RuntimeException("이미 사용 중인 이메일입니다.");
         }
@@ -48,17 +46,17 @@ public class AuthService {
         // 비밀번호는 암호화되므로 XSS 필터링이 덜 중요하지만, 예방 차원에서 수행
         String sanitizedPassword = htmlSanitizer.sanitize(request.getPassword());
 
-        User user = User.builder()
+        Users users = Users.builder()
                 .userName(sanitizedName)
                 .userEmail(sanitizedEmail)
                 .userPassword(passwordEncoder.encode(sanitizedPassword))
                 .build();
 
-        return userRepository.save(user);
+        return userRepository.save(users);
     }
 
     @Transactional(readOnly = true)
-    public User getCurrentUser() {
+    public Users getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
@@ -108,10 +106,10 @@ public class AuthService {
             throw new TokenRefreshException(requestRefreshToken, "Refresh token expired. Please login again");
         }
 
-        User user = userRepository.findById(userId)
+        Users users = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        CustomUserDetails userDetails = CustomUserDetails.build(user);
+        CustomUserDetails userDetails = CustomUserDetails.build(users);
 
         // 새 인증 객체 생성
         UsernamePasswordAuthenticationToken authentication =
@@ -123,9 +121,9 @@ public class AuthService {
         return JwtAuthResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(requestRefreshToken) // 같은 리프레시 토큰 유지
-                .userId(user.getUserId())
-                .name(user.getUserName())
-                .email(user.getUserEmail())
+                .userId(users.getUserId())
+                .name(users.getUserName())
+                .email(users.getUserEmail())
                 .build();
     }
 

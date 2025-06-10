@@ -6,7 +6,7 @@ import com.example.backend.dto.comment.CommentResponse;
 import com.example.backend.dto.comment.CommentUpdateRequest;
 import com.example.backend.entity.Comment;
 import com.example.backend.entity.Post;
-import com.example.backend.entity.User;
+import com.example.backend.entity.Users;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.CommentRepository;
 import com.example.backend.repository.PostRepository;
@@ -41,7 +41,7 @@ public class CommentService {
     @Transactional
     public CommentResponse createComment(CommentCreateRequest request) {
         // 현재 로그인한 사용자 정보 가져오기
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
         // 게시글 존재 여부 및 삭제 여부 확인
         Post post = postRepository.findById(request.getPostId())
@@ -52,7 +52,7 @@ public class CommentService {
 
         // 댓글 생성
         Comment comment = Comment.builder()
-                .user(currentUser)
+                .users(currentUsers)
                 .post(post)
                 .cmtContents(sanitizedContent)
                 .build();
@@ -118,10 +118,10 @@ public class CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", commentId));
 
         // 현재 사용자 정보 가져오기
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
         // 댓글 작성자와 현재 사용자가 동일한지 확인
-        if (!comment.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!comment.getUsers().getUserId().equals(currentUsers.getUserId())) {
             throw new AccessDeniedException("댓글을 수정할 권한이 없습니다.");
         }
 
@@ -149,10 +149,10 @@ public class CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", commentId));
 
         // 현재 사용자 정보 가져오기
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
         // 댓글 작성자와 현재 사용자가 동일한지 확인
-        if (!comment.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!comment.getUsers().getUserId().equals(currentUsers.getUserId())) {
             throw new AccessDeniedException("댓글을 삭제할 권한이 없습니다.");
         }
 
@@ -167,13 +167,13 @@ public class CommentService {
     @Transactional(readOnly = true)
     public CommentListResponse getMyComments(int page, int size) {
         // 현재 사용자 정보 가져오기
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
         // 페이지네이션 설정 (최신순 정렬)
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         // 내 댓글 조회
-        Page<Comment> commentsPage = commentRepository.findByUserAndNotDeleted(currentUser, pageable);
+        Page<Comment> commentsPage = commentRepository.findByUserAndNotDeleted(currentUsers, pageable);
 
         // DTO 변환
         List<CommentResponse> comments = commentsPage.getContent().stream()
@@ -205,14 +205,14 @@ public class CommentService {
 
         // 댓글 작성자와 현재 사용자가 동일한지 확인
         boolean isOwner = currentUserId != null &&
-                currentUserId.equals(comment.getUser().getUserId());
+                currentUserId.equals(comment.getUsers().getUserId());
 
         return CommentResponse.builder()
                 .id(comment.getCmtId())
                 .postId(comment.getPost().getPostId())
                 .content(comment.getCmtContents())
-                .authorName(comment.getUser().getUserName())
-                .authorId(comment.getUser().getUserId())
+                .authorName(comment.getUsers().getUserName())
+                .authorId(comment.getUsers().getUserId())
                 .isEditable(isOwner)    // 작성자만 수정 가능
                 .isDeletable(isOwner)   // 작성자만 삭제 가능
                 .createdAt(comment.getCreatedAt())

@@ -1,7 +1,7 @@
 package com.example.backend.repository;
 
 import com.example.backend.entity.Post;
-import com.example.backend.entity.User;
+import com.example.backend.entity.Users;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,5 +15,5 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAllActive(Pageable pageable);
 
     // 특정 사용자의 게시글 조회
-    Page<Post> findByUserAndDeletedAtIsNull(User user, Pageable pageable);
+    Page<Post> findByUserAndDeletedAtIsNull(Users users, Pageable pageable);
 }

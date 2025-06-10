@@ -5,18 +5,14 @@ import com.example.backend.dto.post.PostListResponse;
 import com.example.backend.dto.post.PostResponse;
 import com.example.backend.dto.post.PostUpdateRequest;
 import com.example.backend.entity.Post;
-import com.example.backend.entity.User;
+import com.example.backend.entity.Users;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.PostRepository;
-import com.example.backend.repository.UserRepository;
-import com.example.backend.security.user.CustomUserDetails;
 import com.example.backend.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,14 +32,14 @@ public class PostService {
      */
     @Transactional
     public PostResponse createPost(PostCreateRequest request) {
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
         // HTML Sanitizing 처리
         String sanitizedTitle = htmlSanitizer.sanitize(request.getTitle());
         String sanitizedContent = htmlSanitizer.sanitize(request.getContent());
 
         Post post = Post.builder()
-                .user(currentUser)
+                .users(currentUsers)
                 .postTitle(sanitizedTitle)
                 .postContents(sanitizedContent)
                 .build();
@@ -73,8 +69,8 @@ public class PostService {
                 .id(post.getPostId())
                 .title(post.getPostTitle())
                 .content(post.getPostContents())
-                .authorName(post.getUser().getUserName())
-                .authorId(post.getUser().getUserId())
+                .authorName(post.getUsers().getUserName())
+                .authorId(post.getUsers().getUserId())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();
@@ -110,10 +106,10 @@ public class PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         // 현재 인증된 사용자 정보 가져오기
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
         // 게시글 작성자와 현재 사용자가 동일한지 확인
-        if (!post.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!post.getUsers().getUserId().equals(currentUsers.getUserId())) {
             throw new AccessDeniedException("게시글을 수정할 권한이 없습니다.");
         }
 
@@ -142,10 +138,10 @@ public class PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         // 현재 인증된 사용자 정보 가져오기
-        User currentUser = authService.getCurrentUser();
+        Users currentUsers = authService.getCurrentUser();
 
         // 게시글 작성자와 현재 사용자가 동일한지 확인
-        if (!post.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!post.getUsers().getUserId().equals(currentUsers.getUserId())) {
             throw new AccessDeniedException("게시글을 삭제할 권한이 없습니다.");
         }
 

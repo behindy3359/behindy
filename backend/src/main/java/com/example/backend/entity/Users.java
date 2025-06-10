@@ -13,8 +13,8 @@ import java.util.List;
 
 @Entity
 @Getter@Setter @NoArgsConstructor @AllArgsConstructor @Builder @EntityListeners(AuditingEntityListener.class)
-@Table(name = "USER")
-public class User {
+@Table(name = "USERS")
+public class Users {
 
     // 서비스 영역
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,15 +42,15 @@ public class User {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-        // 논리삭제 메서드
-        public void delete() {
-            this.deletedAt = LocalDateTime.now();
-        }
+    // 논리삭제 메서드
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 
-        // 삭제 여부 확인 메서드
-        public boolean isDeleted() {
-            return this.deletedAt != null;
-        }
+    // 삭제 여부 확인 메서드
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
