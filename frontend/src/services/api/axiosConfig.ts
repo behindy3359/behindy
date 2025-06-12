@@ -1,20 +1,11 @@
+// src/services/api/axiosConfig.ts
+// Axios 인스턴스 설정 및 인터셉터
+
 import axios from 'axios';
 import { env } from '@/config/env';
 
-type AxiosInstance = typeof axios;
-type AxiosRequestConfig = Parameters<typeof axios.request>[0];
-type AxiosResponse<T = any> = Awaited<ReturnType<typeof axios.get<T>>>;
-type AxiosError = {
-  config?: any;
-  response?: {
-    status: number;
-    data: any;
-  };
-  message: string;
-};
-
 // API 응답 기본 타입
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data: T;
   message?: string;
@@ -100,11 +91,20 @@ const createApiClient = (baseURL: string) => {
 
       return response;
     },
-    async (error) => {
-      const originalRequest = error.config as any & { _retry?: boolean };
+    async (error: unknown) => {
+      const axiosError = error as {
+        config?: Record<string, unknown> & { _retry?: boolean };
+        response?: {
+          status: number;
+          data: unknown;
+        };
+        message?: string;
+      };
+
+      const originalRequest = axiosError.config;
 
       // 401 에러 시 토큰 갱신 시도
-      if (error.response?.status === 401 && !originalRequest._retry) {
+      if (axiosError.response?.status === 401 && originalRequest && !originalRequest._retry) {
         originalRequest._retry = true;
 
         try {
@@ -126,11 +126,16 @@ const createApiClient = (baseURL: string) => {
           const { accessToken, refreshToken: newRefreshToken } = responseData;
           TokenManager.setTokens(accessToken, newRefreshToken);
 
-          // 원래 요청 재시도
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          }
-          return client(originalRequest);
+          // 원래 요청 재시도 - unknown을 통한 안전한 타입 변환
+          const retryConfig = {
+            ...originalRequest,
+            headers: {
+              ...(originalRequest.headers as Record<string, string> || {}),
+              Authorization: `Bearer ${accessToken}`,
+            },
+          };
+          
+          return client(retryConfig as unknown as Parameters<typeof client>[0]);
         } catch (refreshError) {
           // 토큰 갱신 실패 시 로그아웃 처리
           TokenManager.clearTokens();
@@ -145,10 +150,10 @@ const createApiClient = (baseURL: string) => {
       }
 
       // 에러 로깅
-      console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
-        status: error.response?.status,
-        message: error.response?.data?.message || error.message,
-        data: error.response?.data,
+      console.error(`❌ API Error: ${originalRequest?.method?.toString()?.toUpperCase()} ${originalRequest?.url}`, {
+        status: axiosError.response?.status,
+        message: axiosError.response?.data || axiosError.message,
+        data: axiosError.response?.data,
       });
 
       return Promise.reject(error);
@@ -158,43 +163,46 @@ const createApiClient = (baseURL: string) => {
   return client;
 };
 
+// API 클라이언트 인스턴스들
 export const apiClient = createApiClient(env.API_URL);
 export const aiClient = createApiClient(env.AI_URL);
 
+// 공통 API 요청 함수들
 export const api = {
   // GET 요청
-  get: async <T>(url: string, config?: any): Promise<T> => {
+  get: async <T>(url: string, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.get<T>(url, config);
     return response.data;
   },
 
   // POST 요청
-  post: async <T>(url: string, data?: any, config?: any): Promise<T> => {
+  post: async <T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.post<T>(url, data, config);
     return response.data;
   },
 
   // PUT 요청
-  put: async <T>(url: string, data?: any, config?: any): Promise<T> => {
+  put: async <T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.put<T>(url, data, config);
     return response.data;
   },
 
   // PATCH 요청
-  patch: async <T>(url: string, data?: any, config?: any): Promise<T> => {
+  patch: async <T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.patch<T>(url, data, config);
     return response.data;
   },
 
   // DELETE 요청
-  delete: async <T>(url: string, config?: any): Promise<T> => {
+  delete: async <T>(url: string, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.delete<T>(url, config);
     return response.data;
   },
 };
 
+// AI 서버용 API 함수들
 export const aiApi = {
-  post: async <T>(url: string, data?: any, config?: any): Promise<T> => {
+  post: async <T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<T> => {
     const response = await aiClient.post<T>(url, data, config);
     return response.data;
   },
