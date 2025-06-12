@@ -23,7 +23,7 @@ public class RefreshToken {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User users;
+    private User user;
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;

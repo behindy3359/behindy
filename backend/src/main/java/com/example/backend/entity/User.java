@@ -13,7 +13,7 @@ import java.util.List;
 
 @Entity(name = "User")
 @Getter@Setter @NoArgsConstructor @AllArgsConstructor @Builder @EntityListeners(AuditingEntityListener.class)
-@Table(name = "users")
+@Table(name = "users") // postgre에서 user 는 예약어;
 public class User {
 
     // 서비스 영역
@@ -59,23 +59,23 @@ public class User {
     private Role role = Role.ROLE_USER;
 
     // 관계 설정
-    @OneToMany(mappedBy = "users")
+    @OneToMany(mappedBy = "user")
     @Builder.Default
     private List<Post> posts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "users")
+    @OneToMany(mappedBy = "user")
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "users")
+    @OneToMany(mappedBy = "user")
     @Builder.Default
     private List<Character> characters = new ArrayList<>();
 
-    @OneToMany(mappedBy = "users")
+    @OneToMany(mappedBy = "user")
     @Builder.Default
     private List<OpsLogA> opsLogAS = new ArrayList<>();
 
-    @OneToMany(mappedBy = "users")
+    @OneToMany(mappedBy = "user")
     @Builder.Default
     private List<RefreshToken> refreshTokens = new ArrayList<>();
 }

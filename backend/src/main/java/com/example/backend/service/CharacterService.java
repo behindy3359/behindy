@@ -48,7 +48,7 @@ public class CharacterService {
 
         // 3. 캐릭터 생성
         Character character = Character.builder()
-                .users(currentUser)
+                .user(currentUser)
                 .charName(sanitizedName)
                 .charHealth(100) // 기본 체력
                 .charSanity(100) // 기본 정신력
@@ -110,7 +110,7 @@ public class CharacterService {
         Character character = characterRepository.findAliveCharacterById(charId)
                 .orElseThrow(() -> new ResourceNotFoundException("Character", "id", charId));
 
-        if (!character.getUsers().getUserId().equals(currentUser.getUserId())) {
+        if (!character.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new AccessDeniedException("캐릭터를 삭제할 권한이 없습니다.");
         }
 
@@ -192,8 +192,8 @@ public class CharacterService {
                 .charName(character.getCharName())
                 .charHealth(character.getCharHealth())
                 .charSanity(character.getCharSanity())
-                .userId(character.getUsers().getUserId())
-                .userName(character.getUsers().getUserName())
+                .userId(character.getUser().getUserId())
+                .userName(character.getUser().getUserName())
                 .isAlive(isAlive)
                 .isDying(isDying)
                 .statusMessage(statusMessage)
