@@ -10,20 +10,13 @@ fa : fastApi
 
 feat:       새로운 기능 추가
 
-fix:        버그 수정
+fix:        버그 수정 / 오타 수정/ 리팩토링 등 기존 작업물의 변화
 
 docs:       문서 수정 (README 등)
 
-style:      코드 포맷팅, 세미콜론 누락 등 (기능 변화 없음)
+chore:      기타 변경사항 ( 설정, 패키지 등)
 
-refactor:   코드 리팩토링 (기능 변화 없음)
-
-chore:      기타 변경사항 (빌드, 설정, 패키지 등)
-
-build:      빌드 관련 작업 (도커, 컴파일러 설정 등)
-
-ci:         CI 설정 관련 변경 (GitHub Actions, Jenkins 등)
-
+build:      빌드 관련 작업 / CI 설정 관련 변경
 
 
 ex) sb-fix : entity 내용 수정
