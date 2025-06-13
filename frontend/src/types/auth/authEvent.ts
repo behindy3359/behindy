@@ -1,8 +1,6 @@
 import { AuthError } from "./authState";
 
-/**
- * 인증 이벤트 타입
- */
+// 인증 이벤트 타입
 export type AuthEventType = 
   | 'login_success'
   | 'login_failed'
@@ -13,9 +11,7 @@ export type AuthEventType =
   | 'password_changed'
   | 'profile_updated';
 
-/**
- * 인증 이벤트 데이터
- */
+// 인증 이벤트 데이터
 export interface AuthEvent {
   type: AuthEventType;
   timestamp: number;

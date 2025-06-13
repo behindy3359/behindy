@@ -1,6 +1,3 @@
-// src/services/api/axiosConfig.ts
-// Axios 인스턴스 설정 및 인터셉터
-
 import axios from 'axios';
 import { env } from '@/config/env';
 

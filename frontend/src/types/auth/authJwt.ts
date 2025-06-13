@@ -1,11 +1,5 @@
 
-  // ============================================================================
-  // JWT 토큰 관련 타입들 (JWT Types)
-  // ============================================================================
-  
-  /**
-   * JWT 페이로드 구조
-   */
+  // JWT 페이로드 구조
   export interface JWTPayload {
     sub: string; // 사용자 ID
     name: string;
@@ -16,9 +10,7 @@
     aud?: string; // 대상
   }
   
-  /**
-   * 토큰 디코딩 결과
-   */
+  // 토큰 디코딩 결과
   export interface DecodedToken {
     header: {
       alg: string;
@@ -28,9 +20,7 @@
     signature: string;
   }
   
-  /**
-   * 토큰 검증 결과
-   */
+  // 토큰 검증 결과
   export interface TokenValidation {
     isValid: boolean;
     isExpired: boolean;

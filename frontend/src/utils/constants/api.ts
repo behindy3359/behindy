@@ -133,7 +133,6 @@ export const API_ENDPOINTS = {
     }
   }
   
-  // 편의 함수들
   export const buildApiUrl = {
     // 페이지네이션이 있는 게시글 목록
     posts: (pagination?: PaginationParams) => 

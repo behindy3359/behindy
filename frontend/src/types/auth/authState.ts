@@ -1,13 +1,9 @@
 import { CurrentUser } from "./authUser";
 
-/**
- * 인증 상태
- */
+// 인증 상태
 export type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated' | 'error';
 
-/**
- * 토큰 정보
- */
+// 토큰 정보
 export interface TokenInfo {
   accessToken: string | null;
   refreshToken: string | null;
@@ -15,9 +11,7 @@ export interface TokenInfo {
   expiresAt?: number;
 }
 
-/**
- * 인증 에러 정보
- */
+// 인증 에러 정보
 export interface AuthError {
   code: string;
   message: string;
@@ -25,9 +19,7 @@ export interface AuthError {
   details?: unknown;
 }
 
-/**
- * 전체 인증 상태
- */
+// 전체 인증 상태
 export interface AuthState {
   status: AuthStatus;
   user: CurrentUser | null;

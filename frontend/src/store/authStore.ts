@@ -1,6 +1,3 @@
-// src/store/authStore.ts
-// Zustand 인증 상태 관리
-
 import React from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
@@ -8,8 +5,7 @@ import { devtools } from 'zustand/middleware';
 
 // 타입 import
 import type { 
-  AuthState, 
-  AuthStatus,  
+  AuthState,
   TokenInfo, 
   AuthError,
 } from '@/types/auth/authState';
@@ -23,9 +19,7 @@ import { API_ENDPOINTS } from '@/config';
 import { TokenManager } from '@/config';
 import { env } from '@/config/env';
 
-// ============================================================================
 // 인증 스토어 액션 타입 정의
-// ============================================================================
 
 interface AuthActions {
   // 로그인/로그아웃
@@ -58,10 +52,7 @@ interface AuthActions {
 // 전체 스토어 타입
 type AuthStore = AuthState & AuthActions;
 
-// ============================================================================
 // 초기 상태 정의
-// ============================================================================
-
 const initialState: AuthState = {
   status: 'idle',
   user: null,
@@ -74,9 +65,7 @@ const initialState: AuthState = {
   isLoading: false,
 };
 
-// ============================================================================
 // Zustand 스토어 생성
-// ============================================================================
 
 export const useAuthStore = create<AuthStore>()(
   devtools(
@@ -85,9 +74,7 @@ export const useAuthStore = create<AuthStore>()(
         // 초기 상태
         ...initialState,
 
-        // ================================================================
         // 로그인/인증 액션들
-        // ================================================================
 
         /**
          * 사용자 로그인
@@ -241,9 +228,7 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        // ================================================================
         // 토큰 관리 액션들
-        // ================================================================
 
         /**
          * 토큰 갱신
@@ -338,13 +323,7 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        // ================================================================
-        // 사용자 정보 관리
-        // ================================================================
-
-        /**
-         * 현재 사용자 정보 가져오기
-         */
+        // 사용자 정보 관리 현재 사용자 정보 가져오기
         fetchCurrentUser: async (): Promise<void> => {
           try {
             // 실제로는 사용자 정보를 가져오는 API 엔드포인트가 필요
@@ -384,9 +363,7 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        /**
-         * 사용자 정보 업데이트
-         */
+        //사용자 정보 업데이트
         updateUser: (userUpdate: Partial<CurrentUser>): void => {
           const { user } = get();
           if (user) {
@@ -400,62 +377,43 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        // ================================================================
         // 상태 관리 액션들
-        // ================================================================
-
-        /**
-         * 로딩 상태 설정
-         */
+        // 로딩 상태 설정
         setLoading: (loading: boolean): void => {
           set({ isLoading: loading }, false, 'auth/setLoading');
         },
 
-        /**
-         * 에러 설정
-         */
+        // 에러 설정
+        
         setError: (error: AuthError | null): void => {
           set({ error }, false, 'auth/setError');
         },
 
-        /**
-         * 에러 정리
-         */
+        // 에러 정리
         clearError: (): void => {
           set({ error: null }, false, 'auth/clearError');
         },
 
-        /**
-         * 상태 초기화
-         */
+        // 상태 초기화
         reset: (): void => {
           TokenManager.clearTokens();
           set(initialState, false, 'auth/reset');
         },
 
-        // ================================================================
-        // 유틸리티 메서드들
-        // ================================================================
-
-        /**
-         * 인증 여부 확인
-         */
+        // 인증 유틸리티
+        // 인증 여부 확인
         isAuthenticated: (): boolean => {
           const { status, tokens } = get();
           return status === 'authenticated' && !!tokens.accessToken;
         },
 
-        /**
-         * 유효한 토큰 존재 여부
-         */
+        // 유효한 토큰 존재 여부
         hasValidToken: (): boolean => {
           const { tokens } = get();
           return !!tokens.accessToken && !!tokens.refreshToken;
         },
 
-        /**
-         * 토큰 갱신 필요 여부
-         */
+        // 토큰 갱신 필요 여부
         needsRefresh: (): boolean => {
           const { tokens, lastLoginAttempt } = get();
           
@@ -469,9 +427,7 @@ export const useAuthStore = create<AuthStore>()(
             : true;
         },
 
-        /**
-         * 사용자 권한 목록 가져오기
-         */
+        // 사용자 권한 목록 가져오기
         getUserPermissions: (): string[] => {
           const { user } = get();
           return user?.permissions || [];
@@ -489,15 +445,11 @@ export const useAuthStore = create<AuthStore>()(
       }
     ),
     {
-      name: 'auth-store', // Redux DevTools 이름
+      name: 'auth-store',
       enabled: env.DEV_MODE,
     }
   )
 );
-
-// ============================================================================
-// 편의 함수들 export
-// ============================================================================
 
 // 인증 상태 확인 헬퍼
 export const useAuth = () => {
