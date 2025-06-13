@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { User, Mail, Lock, Search, Heart, Settings } from 'lucide-react';
@@ -72,7 +74,7 @@ const CodeBlock = styled.pre`
   margin-top: 16px;
 `;
 
-export const Home: React.FC = () => {
+export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoadingButton, setIsLoadingButton] = useState(false);
@@ -379,6 +381,4 @@ import { Modal } from '@/components/ui/Modal/Modal';`}</CodeBlock>
       </Section>
     </ExampleContainer>
   );
-};
-
-export default Home;
+}
