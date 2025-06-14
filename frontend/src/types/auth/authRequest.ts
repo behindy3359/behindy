@@ -11,6 +11,7 @@ import { SessionInfo } from "./authSession";
   export interface LoginRequest {
     email: string;
     password: string;
+    rememberMe? : boolean;
   }
   
   // 토큰 갱신 요청 데이터
