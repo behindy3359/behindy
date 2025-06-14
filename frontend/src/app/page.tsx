@@ -1,384 +1,310 @@
+// src/app/page.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { User, Mail, Lock, Search, Heart, Settings } from 'lucide-react';
-import { Button, Input, Modal, ModalConfirm } from '../components/ui/index';
+import { PublicLayout } from '../components/layout';
+import { Button } from '../components/ui';
+import { useRouter } from 'next/navigation';
 
-const ExampleContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+const HeroSection = styled.section`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 100px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+    background-size: 50px 50px;
+    opacity: 0.3;
+  }
 `;
 
-const Section = styled.section`
-  margin-bottom: 60px;
+const HeroContent = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  
+  h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+    
+    @media (max-width: 768px) {
+      font-size: 2.5rem;
+    }
+  }
+  
+  p {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    line-height: 1.6;
+    
+    @media (max-width: 768px) {
+      font-size: 1.1rem;
+    }
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+  }
+`;
+
+const FeaturesSection = styled.section`
+  padding: 80px 20px;
+  background: #fafbfc;
+`;
+
+const FeaturesContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
   
   h2 {
-    font-size: 28px;
+    font-size: 2.5rem;
     font-weight: 700;
     color: #111827;
-    margin-bottom: 8px;
+    margin-bottom: 1rem;
+  }
+  
+  .subtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 3rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+`;
+
+const FeatureGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+`;
+
+const FeatureCard = styled.div`
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 1rem;
   }
   
   p {
     color: #6b7280;
-    margin-bottom: 24px;
     line-height: 1.6;
   }
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  margin-bottom: 40px;
+const TechSection = styled.section`
+  padding: 80px 20px;
+  background: white;
 `;
 
-const Card = styled.div`
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 24px;
+const TechContainer = styled.div`
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
   
-  h3 {
-    font-size: 18px;
+  h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 3rem;
+  }
+`;
+
+const TechGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+`;
+
+const TechItem = styled.div`
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  
+  h4 {
     font-weight: 600;
     color: #374151;
-    margin-bottom: 16px;
+    margin-bottom: 0.5rem;
   }
   
-  .example-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  p {
+    font-size: 0.9rem;
+    color: #6b7280;
   }
-  
-  .example-row {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-`;
-
-const CodeBlock = styled.pre`
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  font-size: 14px;
-  overflow-x: auto;
-  color: #374151;
-  margin-top: 16px;
 `;
 
 export default function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isLoadingButton, setIsLoadingButton] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const [emailValue, setEmailValue] = useState('');
-  const [passwordValue, setPasswordValue] = useState('');
+  const router = useRouter();
 
-  const handleLoadingTest = () => {
-    setIsLoadingButton(true);
-    setTimeout(() => setIsLoadingButton(false), 3000);
+  const handleGetStarted = () => {
+    router.push('/auth/signup');
+  };
+
+  const handleLogin = () => {
+    router.push('/auth/login');
   };
 
   return (
-    <ExampleContainer>
-      <h1 style={{ 
-        fontSize: '36px', 
-        fontWeight: '800', 
-        color: '#111827', 
-        marginBottom: '16px',
-        textAlign: 'center'
-      }}>
-        Behindy UI 컴포넌트 라이브러리
-      </h1>
-      <p style={{ 
-        textAlign: 'center', 
-        color: '#6b7280', 
-        fontSize: '18px', 
-        marginBottom: '60px' 
-      }}>
-        포트폴리오 프로젝트를 위한 재사용 가능한 UI 컴포넌트들
-      </p>
-
-      {/* Button 컴포넌트 예시 */}
-      <Section>
-        <h2>🎯 Button 컴포넌트</h2>
-        <p>다양한 스타일과 상태를 지원하는 버튼 컴포넌트입니다.</p>
-        
-        <Grid>
-          <Card>
-            <h3>기본 변형 (Variants)</h3>
-            <div className="example-group">
-              <div className="example-row">
-                <Button variant="primary">Primary</Button>
-                <Button variant="secondary">Secondary</Button>
-                <Button variant="outline">Outline</Button>
-              </div>
-              <div className="example-row">
-                <Button variant="ghost">Ghost</Button>
-                <Button variant="danger">Danger</Button>
-              </div>
-            </div>
-            <CodeBlock>{`<Button variant="primary">Primary</Button>
-<Button variant="secondary">Secondary</Button>
-<Button variant="outline">Outline</Button>`}</CodeBlock>
-          </Card>
-
-          <Card>
-            <h3>크기 및 상태</h3>
-            <div className="example-group">
-              <div className="example-row">
-                <Button size="sm">Small</Button>
-                <Button size="md">Medium</Button>
-                <Button size="lg">Large</Button>
-              </div>
-              <div className="example-row">
-                <Button disabled>Disabled</Button>
-                <Button 
-                  isLoading={isLoadingButton} 
-                  onClick={handleLoadingTest}
-                >
-                  {isLoadingButton ? 'Loading...' : 'Test Loading'}
-                </Button>
-              </div>
-            </div>
-            <CodeBlock>{`<Button size="sm">Small</Button>
-<Button isLoading={true}>Loading...</Button>
-<Button disabled>Disabled</Button>`}</CodeBlock>
-          </Card>
-
-          <Card>
-            <h3>아이콘 및 전체 너비</h3>
-            <div className="example-group">
-              <div className="example-row">
-                <Button icon={<User />}>사용자</Button>
-                <Button icon={<Heart />} iconPosition="right">좋아요</Button>
-              </div>
-              <Button fullWidth variant="secondary" icon={<Settings />}>
-                전체 너비 버튼
-              </Button>
-            </div>
-            <CodeBlock>{`<Button icon={<User />}>사용자</Button>
-<Button fullWidth variant="secondary">전체 너비</Button>`}</CodeBlock>
-          </Card>
-        </Grid>
-      </Section>
-
-      {/* Input 컴포넌트 예시 */}
-      <Section>
-        <h2>📝 Input 컴포넌트</h2>
-        <p>다양한 타입과 상태를 지원하는 입력 필드 컴포넌트입니다.</p>
-        
-        <Grid>
-          <Card>
-            <h3>기본 입력 필드</h3>
-            <div className="example-group">
-              <Input
-                label="사용자 이름"
-                placeholder="이름을 입력하세요"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                leftIcon={<User />}
-              />
-              <Input
-                label="이메일"
-                type="email"
-                placeholder="email@example.com"
-                value={emailValue}
-                onChange={(e) => setEmailValue(e.target.value)}
-                leftIcon={<Mail />}
-                helperText="올바른 이메일 형식을 입력하세요"
-              />
-            </div>
-            <CodeBlock>{`<Input
-  label="사용자 이름"
-  placeholder="이름을 입력하세요"
-  leftIcon={<User />}
-/>`}</CodeBlock>
-          </Card>
-
-          <Card>
-            <h3>패스워드 및 상태</h3>
-            <div className="example-group">
-              <Input
-                label="패스워드"
-                type="password"
-                placeholder="패스워드를 입력하세요"
-                value={passwordValue}
-                onChange={(e) => setPasswordValue(e.target.value)}
-              />
-              <Input
-                label="성공 상태"
-                placeholder="올바른 입력"
-                success="입력이 유효합니다!"
-                defaultValue="valid@email.com"
-              />
-              <Input
-                label="에러 상태"
-                placeholder="잘못된 입력"
-                error="이메일 형식이 올바르지 않습니다"
-                defaultValue="invalid-email"
-              />
-            </div>
-            <CodeBlock>{`<Input
-  type="password"
-  label="패스워드"
-/>
-<Input
-  error="에러 메시지"
-  success="성공 메시지"
-/>`}</CodeBlock>
-          </Card>
-
-          <Card>
-            <h3>변형 및 크기</h3>
-            <div className="example-group">
-              <Input
-                variant="filled"
-                placeholder="Filled variant"
-                leftIcon={<Search />}
-              />
-              <Input
-                variant="outline"
-                placeholder="Outline variant"
-                size="sm"
-              />
-              <Input
-                placeholder="Large size"
-                size="lg"
-                isLoading={true}
-              />
-            </div>
-            <CodeBlock>{`<Input variant="filled" />
-<Input variant="outline" size="sm" />
-<Input size="lg" isLoading={true} />`}</CodeBlock>
-          </Card>
-        </Grid>
-      </Section>
-
-      {/* Modal 컴포넌트 예시 */}
-      <Section>
-        <h2>🪟 Modal 컴포넌트</h2>
-        <p>다양한 크기와 애니메이션을 지원하는 모달 컴포넌트입니다.</p>
-        
-        <Grid>
-          <Card>
-            <h3>기본 모달</h3>
-            <div className="example-group">
-              <div className="example-row">
-                <Button onClick={() => setIsModalOpen(true)}>
-                  기본 모달 열기
-                </Button>
-                <Button 
-                  variant="danger"
-                  onClick={() => setIsConfirmOpen(true)}
-                >
-                  확인 모달 열기
-                </Button>
-              </div>
-            </div>
-            <CodeBlock>{`<Modal
-  isOpen={isOpen}
-  onClose={() => setIsOpen(false)}
-  title="모달 제목"
->
-  모달 내용
-</Modal>`}</CodeBlock>
-          </Card>
-
-          <Card>
-            <h3>모달 기능</h3>
-            <div className="example-group">
-              <ul style={{ color: '#6b7280', lineHeight: '1.8' }}>
-                <li>ESC 키로 닫기</li>
-                <li>백드롭 클릭으로 닫기</li>
-                <li>다양한 크기 (sm, md, lg, xl, full)</li>
-                <li>애니메이션 변형 (default, center, slide-up, slide-right)</li>
-                <li>커스텀 헤더/푸터 지원</li>
-                <li>포털을 통한 body 레벨 렌더링</li>
-              </ul>
-            </div>
-          </Card>
-        </Grid>
-      </Section>
-
-      {/* 모달들 */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Behindy 프로젝트 소개"
-        size="md"
-        footer={
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              닫기
-            </Button>
-            <Button onClick={() => setIsModalOpen(false)}>
-              확인
-            </Button>
-          </div>
-        }
-      >
-        <div style={{ lineHeight: '1.6', color: '#374151' }}>
-          <p>지하철 노선도 기반 텍스트 어드벤처 게임 프로젝트입니다.</p>
-          <ul style={{ paddingLeft: '20px', marginTop: '16px' }}>
-            <li>Spring Boot + Next.js + FastAPI 기술 스택</li>
-            <li>JWT 인증 + Redis 세션 관리</li>
-            <li>PostgreSQL + JPA/Hibernate</li>
-            <li>Docker 컨테이너화 + AWS 배포</li>
-          </ul>
-          <p style={{ marginTop: '16px' }}>
-            이 UI 컴포넌트들은 해당 프로젝트에서 사용될 예정입니다.
+    <PublicLayout>
+      {/* Hero Section */}
+      <HeroSection>
+        <HeroContent>
+          <h1>Behindy</h1>
+          <p>
+            지하철 노선도를 배경으로 한 독특한 텍스트 어드벤처 게임
+            <br />
+            당신만의 스토리를 만들어보세요
           </p>
-        </div>
-      </Modal>
+          <ButtonGroup>
+            <Button 
+              variant="secondary" 
+              size="lg"
+              onClick={handleGetStarted}
+            >
+              게임 시작하기
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={handleLogin}
+              style={{ 
+                background: 'rgba(255, 255, 255, 0.1)', 
+                borderColor: 'rgba(255, 255, 255, 0.3)',
+                color: 'white'
+              }}
+            >
+              로그인
+            </Button>
+          </ButtonGroup>
+        </HeroContent>
+      </HeroSection>
 
-      <ModalConfirm
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        onConfirm={() => {
-          alert('확인되었습니다!');
-        }}
-        title="작업 확인"
-        message="정말로 이 작업을 진행하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-        confirmText="진행"
-        cancelText="취소"
-        variant="danger"
-      />
+      {/* Features Section */}
+      <FeaturesSection>
+        <FeaturesContainer>
+          <h2>게임의 특징</h2>
+          <p className="subtitle">
+            일상적인 지하철 공간에서 펼쳐지는 특별한 모험
+          </p>
+          
+          <FeatureGrid>
+            <FeatureCard>
+              <div className="icon">🚇</div>
+              <h3>실제 지하철 노선도</h3>
+              <p>
+                서울 지하철 노선도를 기반으로 한 실감나는 배경
+                각 노선마다 고유한 스토리가 기다립니다
+              </p>
+            </FeatureCard>
+            
+            <FeatureCard>
+              <div className="icon">📖</div>
+              <h3>텍스트 어드벤처</h3>
+              <p>
+                선택에 따라 달라지는 스토리
+                당신의 결정이 캐릭터의 운명을 결정합니다
+              </p>
+            </FeatureCard>
+            
+            <FeatureCard>
+              <div className="icon">👤</div>
+              <h3>캐릭터 관리</h3>
+              <p>
+                체력과 정신력을 관리하며 진행하는 전략적 게임플레이
+                신중한 선택이 생존의 열쇠입니다
+              </p>
+            </FeatureCard>
+          </FeatureGrid>
+        </FeaturesContainer>
+      </FeaturesSection>
 
-      {/* 사용법 안내 */}
-      <Section>
-        <h2>🚀 사용법</h2>
-        <p>컴포넌트를 프로젝트에서 사용하는 방법입니다.</p>
-        
-        <Card>
-          <h3>Import 방법</h3>
-          <CodeBlock>{`// 개별 import
-import { Button, Input, Modal } from '@/components/ui';
-
-// 또는 구체적 경로
-import { Button } from '@/components/ui/Button/Button';
-import { Input } from '@/components/ui/Input/Input';
-import { Modal } from '@/components/ui/Modal/Modal';`}</CodeBlock>
-        </Card>
-
-        <Card style={{ marginTop: '24px' }}>
-          <h3>의존성</h3>
-          <ul style={{ color: '#6b7280', lineHeight: '1.8' }}>
-            <li><strong>styled-components</strong>: CSS-in-JS 스타일링</li>
-            <li><strong>framer-motion</strong>: 애니메이션 효과</li>
-            <li><strong>lucide-react</strong>: 아이콘 라이브러리</li>
-            <li><strong>react</strong>: React 18+ (forwardRef, createPortal 사용)</li>
-          </ul>
-        </Card>
-      </Section>
-    </ExampleContainer>
+      {/* Tech Stack Section */}
+      <TechSection>
+        <TechContainer>
+          <h2>기술 스택</h2>
+          
+          <TechGrid>
+            <TechItem>
+              <h4>Frontend</h4>
+              <p>Next.js 15 + TypeScript</p>
+            </TechItem>
+            
+            <TechItem>
+              <h4>Backend</h4>
+              <p>Spring Boot 3.4 + Java 21</p>
+            </TechItem>
+            
+            <TechItem>
+              <h4>Database</h4>
+              <p>PostgreSQL + Redis</p>
+            </TechItem>
+            
+            <TechItem>
+              <h4>AI Server</h4>
+              <p>FastAPI + Python</p>
+            </TechItem>
+            
+            <TechItem>
+              <h4>Infrastructure</h4>
+              <p>AWS EC2 + Docker</p>
+            </TechItem>
+            
+            <TechItem>
+              <h4>CI/CD</h4>
+              <p>GitHub Actions</p>
+            </TechItem>
+          </TechGrid>
+        </TechContainer>
+      </TechSection>
+    </PublicLayout>
   );
 }
