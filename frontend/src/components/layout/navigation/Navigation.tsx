@@ -72,12 +72,6 @@ const mainNavItems: NavItem[] = [
       { icon: HelpCircle, label: '질문답변', path: '/community/qna' },
       { icon: Star, label: '스토리 후기', path: '/community/reviews' }
     ]
-  },
-  {
-    icon: Trophy,
-    label: '랭킹',
-    path: '/ranking',
-    description: '플레이어 순위 및 업적'
   }
 ];
 

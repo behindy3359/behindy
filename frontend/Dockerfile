@@ -1,5 +1,3 @@
-# --- Frontend (Next.js) Dockerfile ---
-
 # 1단계: 빌드 단계
 FROM node:20-alpine AS builder
 

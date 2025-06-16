@@ -286,8 +286,7 @@ const navItems = [
   { icon: Home, label: '홈', path: '/' },
   { icon: Map, label: '지하철 노선도', path: '/subway-map' },
   { icon: GamepadIcon, label: '게임', path: '/game' },
-  { icon: MessageSquare, label: '커뮤니티', path: '/community' },
-  { icon: Trophy, label: '랭킹', path: '/ranking' }
+  { icon: MessageSquare, label: '커뮤니티', path: '/community' }
 ];
 
 export const Header: React.FC<HeaderProps> = ({
