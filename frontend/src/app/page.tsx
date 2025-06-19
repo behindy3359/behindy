@@ -5,7 +5,6 @@ import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { PublicLayout } from '../components/layout';
 import { Button } from '../components/ui';
-import { SubwayMap } from '../components/subway';
 import { MapPin, Zap, Users } from 'lucide-react';
 
 // 스타일드 컴포넌트들
