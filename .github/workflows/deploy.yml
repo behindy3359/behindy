@@ -15,11 +15,9 @@ jobs:
           echo "=== 배포 전 디스크 정리 ==="
           df -h
           
-          # Docker 정리
           docker system prune -f --volumes
           docker image prune -a -f
           
-          # 시스템 정리
           sudo apt autoremove -y
           sudo apt autoclean
           
@@ -29,23 +27,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Pull latest code
+      - name: Force sync latest code
         run: |
           cd ~/behindy
-          git pull
-          echo "[+] Pull complete"
+          git fetch origin
+          git reset --hard origin/main
+          echo "[+] Force sync complete"
 
       - name: Build and restart containers
         run: |
           cd ~/behindy
           
-          # 기존 컨테이너 정리
           docker-compose down --volumes --remove-orphans
-          
-          # 새 컨테이너 시작
           docker-compose up --build -d
           
-          # 빌드 캐시 정리
           docker builder prune -f
 
       - name: Health check
@@ -53,7 +48,6 @@ jobs:
           echo "=== 헬스체크 대기 ==="
           sleep 30
           
-          # 서비스 확인
           if curl -f http://localhost/; then
             echo "✅ 배포 성공!"
           else
@@ -64,7 +58,6 @@ jobs:
 
       - name: Final cleanup
         run: |
-          # 최종 정리
           docker image prune -f
           echo "=== 최종 디스크 상태 ==="
           df -h
