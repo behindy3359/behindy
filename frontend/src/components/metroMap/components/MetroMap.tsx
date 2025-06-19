@@ -15,13 +15,6 @@ import type {
 // 데이터 import
 import { STATIONS, SUBWAY_LINES, ENRICHED_DISTRICTS } from '../data';
 
-// 하위 컴포넌트들 (아직 구현 전이므로 임시로 주석)
-// import { SeoulDistricts } from './SeoulDistricts';
-// import { SubwayStations } from './SubwayStations';
-// import { SubwayLines } from './SubwayLines';
-// import { StationTooltip } from './StationTooltip';
-// import { LineControls } from './LineControls';
-
 /**
  * 스타일드 컴포넌트들
  */
