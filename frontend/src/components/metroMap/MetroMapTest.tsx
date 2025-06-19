@@ -1,6 +1,3 @@
-// src/components/metroMap/UpdatedMetroMapTest.tsx
-// 정제된 지하철 데이터를 사용하는 개선된 테스트 컴포넌트
-
 "use client";
 
 import React, { useState } from 'react';
@@ -214,7 +211,7 @@ const SearchResults = styled.div`
 // 메인 컴포넌트
 // ================================================================
 
-export const UpdatedMetroMapTest: React.FC = () => {
+export const MetroMapTest: React.FC = () => {
   const [visibleLines, setVisibleLines] = useState<number[]>([1, 2, 3, 4]);
   const [showDistricts, setShowDistricts] = useState(true);
   const [showHanRiver, setShowHanRiver] = useState(true);
@@ -272,11 +269,33 @@ export const UpdatedMetroMapTest: React.FC = () => {
 
   return (
     <Container>
+      <Title>🚇 서울 지하철 노선도 (정제된 데이터)</Title>
+
+      {/* 통계 카드 */}
+      <StatsGrid>
+        <StatCard>
+          <div className="stat-number">{METRO_STATS.totalStations}</div>
+          <div className="stat-label">총 지하철역</div>
+        </StatCard>
+        <StatCard>
+          <div className="stat-number">{METRO_STATS.transferStations}</div>
+          <div className="stat-label">환승역</div>
+        </StatCard>
+        <StatCard>
+          <div className="stat-number">{METRO_STATS.stationsWithStory}</div>
+          <div className="stat-label">스토리 보유역</div>
+        </StatCard>
+        <StatCard>
+          <div className="stat-number">{visibleStations.length}</div>
+          <div className="stat-label">현재 표시</div>
+        </StatCard>
+      </StatsGrid>
       
       <MapWrapper>
         {/* 컨트롤 패널 */}
         <Controls>
           <ControlGroup>
+            <ControlLabel>표시할 노선</ControlLabel>
             <CheckboxGroup>
               {lineStats.map(({ line, color, totalStations }) => (
                 <CheckboxItem key={line} $color={color}>
@@ -293,6 +312,7 @@ export const UpdatedMetroMapTest: React.FC = () => {
           </ControlGroup>
 
           <ControlGroup>
+            <ControlLabel>표시 옵션</ControlLabel>
             <CheckboxGroup>
               <CheckboxItem>
                 <input
@@ -300,7 +320,7 @@ export const UpdatedMetroMapTest: React.FC = () => {
                   checked={showDistricts}
                   onChange={(e) => setShowDistricts(e.target.checked)}
                 />
-                구
+                서울시 구
               </CheckboxItem>
               <CheckboxItem>
                 <input
@@ -347,6 +367,7 @@ export const UpdatedMetroMapTest: React.FC = () => {
                     <div className="station-name">
                       {station.name}
                       {station.isTransfer && ' 🔄'}
+                      {station.hasStory && ' 📖'}
                     </div>
                     <div className="station-lines">
                       {station.lines.join(', ')}호선
@@ -395,10 +416,10 @@ export const UpdatedMetroMapTest: React.FC = () => {
                   <circle
                     cx={station.x}
                     cy={station.y}
-                    r={selectedStation === station.id ? 2 : station.isTransfer ? 1.5 : 1}
+                    r={selectedStation === station.id ? 2.5 : station.isTransfer ? 1.8 : 1.3}
                     fill={station.hasStory ? '#fbbf24' : 'white'}
                     stroke={LINE_COLORS[station.line as keyof typeof LINE_COLORS]}
-                    strokeWidth={selectedStation === station.id ? "1" : "0.8"}
+                    strokeWidth={selectedStation === station.id ? "1.2" : "0.8"}
                     style={{ cursor: 'pointer' }}
                     onClick={() => handleStationClick(station.id)}
                   />
@@ -408,7 +429,7 @@ export const UpdatedMetroMapTest: React.FC = () => {
                     <circle
                       cx={station.x}
                       cy={station.y}
-                      r={0.5}
+                      r={0.6}
                       fill={LINE_COLORS[station.line as keyof typeof LINE_COLORS]}
                     />
                   )}
@@ -417,11 +438,17 @@ export const UpdatedMetroMapTest: React.FC = () => {
                   {(showLabels || selectedStation === station.id) && (
                     <text
                       x={station.x}
-                      y={station.y - 2.5}
-                      fontSize="2"
+                      y={station.y - 3}
+                      fontSize="2.5"
                       fill="#374151"
                       textAnchor="middle"
-                      style={{ pointerEvents: 'none', fontWeight: 'bold' }}
+                      style={{ 
+                        pointerEvents: 'none', 
+                        fontWeight: 'bold',
+                        stroke: 'white',
+                        strokeWidth: '0.5',
+                        paintOrder: 'stroke'
+                      }}
                     >
                       {station.name}
                     </text>
@@ -440,15 +467,16 @@ export const UpdatedMetroMapTest: React.FC = () => {
               return station ? (
                 <div>
                   <InfoTitle>
-                    선택된 역: {station.name}
+                    🚇 {station.name}
                     {station.isTransfer && ' 🔄 환승역'}
-                    {station.hasStory && ' 📖 스토리'}
+                    {station.hasStory && ' 📖 스토리 있음'}
                   </InfoTitle>
                   <InfoGrid>
                     <InfoItem><strong>ID:</strong> {station.id}</InfoItem>
                     <InfoItem><strong>노선:</strong> {station.lines.join(', ')}호선</InfoItem>
                     <InfoItem><strong>좌표:</strong> ({station.x.toFixed(2)}, {station.y.toFixed(2)})</InfoItem>
                     <InfoItem><strong>환승역:</strong> {station.isTransfer ? '예' : '아니오'}</InfoItem>
+                    <InfoItem><strong>스토리:</strong> {station.hasStory ? '있음' : '없음'}</InfoItem>
                     <InfoItem>
                       <strong>정규화 좌표:</strong> 
                       ({SVG_CONFIG.normalizeCoordinate(station.x, station.y).x.toFixed(3)}, 
@@ -521,4 +549,4 @@ export const UpdatedMetroMapTest: React.FC = () => {
   );
 };
 
-export default UpdatedMetroMapTest;
+export default MetroMapTest;
