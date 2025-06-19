@@ -5,9 +5,8 @@ import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { PublicLayout } from '../components/layout';
 import { Button } from '../components/ui';
-import { MapPin, Zap, Users } from 'lucide-react';
+import SubwayMapTest from '@/components/metroMap/MetroMapTest';
 
-// 스타일드 컴포넌트들
 const HeroSection = styled.section`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -142,33 +141,6 @@ const FeatureCard = styled.div`
   }
 `;
 
-const SubwayMapSection = styled.section`
-  padding: 80px 20px;
-  background: white;
-`;
-
-const SubwayMapContainer = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-  text-align: center;
-  
-  h2 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 1rem;
-  }
-  
-  .subtitle {
-    font-size: 1.1rem;
-    color: #6b7280;
-    margin-bottom: 3rem;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-`;
-
 const MapWrapper = styled.div`
   background: #f8fafc;
   border-radius: 20px;
@@ -256,10 +228,6 @@ export default function Home() {
     router.push(`/station/${stationId}`);
   };
 
-  const handleViewFullMap = () => {
-    router.push('/subway-map');
-  };
-
   return (
     <PublicLayout>
       {/* Hero Section */}
@@ -268,6 +236,9 @@ export default function Home() {
           <h1>Behindy</h1>
         </HeroContent>
       </HeroSection>
+
+      {/* Metro Map Section */}
+      <SubwayMapTest/>
 
       {/* Tech Stack Section */}
       <TechSection>

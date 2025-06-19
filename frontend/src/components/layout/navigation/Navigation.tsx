@@ -46,7 +46,7 @@ const mainNavItems: NavItem[] = [
   {
     icon: Map,
     label: '지하철 노선도',
-    path: '/subway-map',
+    path: '/metro-map',
     description: '실시간 지하철 정보 및 스토리 탐색'
   },
   {

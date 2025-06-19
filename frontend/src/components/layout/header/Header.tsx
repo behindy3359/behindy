@@ -284,7 +284,7 @@ const MobileMenu = styled(motion.div)`
 
 const navItems = [
   { icon: Home, label: '홈', path: '/' },
-  { icon: Map, label: '지하철 노선도', path: '/subway-map' },
+  { icon: Map, label: '지하철 노선도', path: '/metro-map' },
   { icon: GamepadIcon, label: '게임', path: '/game' },
   { icon: MessageSquare, label: '커뮤니티', path: '/community' }
 ];
