@@ -1,6 +1,7 @@
+// frontend/src/components/metroMap/MetroMapWithLines.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { 
   METRO_STATIONS, 
@@ -14,6 +15,11 @@ import {
   type Station
 } from '../../data/metro/stationsData';
 import { SEOUL_DISTRICTS, HAN_RIVER } from '../../data/metro/seoulDistrictData';
+import { 
+  generateLineConnections, 
+  getVisibleLineConnections,
+  type LineConnection 
+} from '../../data/metro/metroLineConnections';
 
 // ================================================================
 // 스타일드 컴포넌트
@@ -212,44 +218,56 @@ const SearchResults = styled.div`
 // 메인 컴포넌트
 // ================================================================
 
-export const MetroMapTest: React.FC = () => {
+export const MetroMapWithLines: React.FC = () => {
   const [visibleLines, setVisibleLines] = useState<number[]>([1, 2, 3, 4]);
   const [showDistricts, setShowDistricts] = useState(true);
   const [showHanRiver, setShowHanRiver] = useState(true);
   const [showLabels, setShowLabels] = useState(false);
+  const [showLines, setShowLines] = useState(true);
   const [showTransferOnly, setShowTransferOnly] = useState(false);
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // 표시할 노선 연결 계산
+  const lineConnections = useMemo(() => {
+    return showLines ? getVisibleLineConnections(visibleLines) : [];
+  }, [visibleLines, showLines]);
+
   // 표시할 역들 필터링
-  const visibleStations = METRO_STATIONS.filter(station => {
-    // 노선 필터링
-    const matchesLine = LineBitUtils.matchesFilter(
-      LineBitUtils.linesToBits(station.lines), 
-      visibleLines
-    );
-    
-    // 환승역만 보기 필터링
-    const matchesTransfer = !showTransferOnly || station.isTransfer;
-    
-    return matchesLine && matchesTransfer;
-  });
+  const visibleStations = useMemo(() => {
+    return METRO_STATIONS.filter(station => {
+      // 노선 필터링
+      const matchesLine = LineBitUtils.matchesFilter(
+        LineBitUtils.linesToBits(station.lines), 
+        visibleLines
+      );
+      
+      // 환승역만 보기 필터링
+      const matchesTransfer = !showTransferOnly || station.isTransfer;
+      
+      return matchesLine && matchesTransfer;
+    });
+  }, [visibleLines, showTransferOnly]);
 
   // 검색 결과
-  const searchResults = searchQuery.length > 1 ? searchStations(searchQuery) : [];
+  const searchResults = useMemo(() => {
+    return searchQuery.length > 1 ? searchStations(searchQuery) : [];
+  }, [searchQuery]);
 
   // 노선별 통계
-  const lineStats = Object.entries(LINE_COLORS).map(([lineNum, color]) => {
-    const line = parseInt(lineNum);
-    const stations = getStationsByLine(line);
-    
-    return {
-      line,
-      color,
-      totalStations: stations.length,
-      visible: visibleLines.includes(line)
-    };
-  });
+  const lineStats = useMemo(() => {
+    return Object.entries(LINE_COLORS).map(([lineNum, color]) => {
+      const line = parseInt(lineNum);
+      const stations = getStationsByLine(line);
+      
+      return {
+        line,
+        color,
+        totalStations: stations.length,
+        visible: visibleLines.includes(line)
+      };
+    });
+  }, [visibleLines]);
 
   const handleLineToggle = (line: number) => {
     setVisibleLines(prev => 
@@ -290,6 +308,10 @@ export const MetroMapTest: React.FC = () => {
           <div className="stat-number">{visibleStations.length}</div>
           <div className="stat-label">현재 표시</div>
         </StatCard>
+        <StatCard>
+          <div className="stat-number">{lineConnections.length}</div>
+          <div className="stat-label">표시 노선</div>
+        </StatCard>
       </StatsGrid>
       
       <MapWrapper>
@@ -315,6 +337,14 @@ export const MetroMapTest: React.FC = () => {
           <ControlGroup>
             <ControlLabel>표시 옵션</ControlLabel>
             <CheckboxGroup>
+              <CheckboxItem>
+                <input
+                  type="checkbox"
+                  checked={showLines}
+                  onChange={(e) => setShowLines(e.target.checked)}
+                />
+                노선 연결
+              </CheckboxItem>
               <CheckboxItem>
                 <input
                   type="checkbox"
@@ -410,17 +440,38 @@ export const MetroMapTest: React.FC = () => {
               />
             )}
 
-            {/* 지하철역 */}
+            {showLines && (
+              <g id="metro-lines">
+                {lineConnections.map(connection => (
+                  <g key={`line-${connection.lineNumber}`}>
+                    {connection.segments.map((segment, index) => (
+                      <path
+                        key={`segment-${connection.lineNumber}-${index}`}
+                        d={segment.path}
+                        stroke={segment.color}
+                        strokeWidth="2"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        opacity="0.8"
+                      />
+                    ))}
+                  </g>
+                ))}
+              </g>
+            )}
+
             <g id="stations">
               {visibleStations.map(station => (
                 <g key={station.id}>
+                  {/* 역 원 (배경) */}
                   <circle
                     cx={station.x}
                     cy={station.y}
-                    r={selectedStation === station.id ? 2.5 : station.isTransfer ? 1.8 : 1.3}
-                    fill={station.hasStory ? '#fbbf24' : 'white'}
+                    r={selectedStation === station.id ? 0.8 : station.isTransfer ? 0.8 : 0.5}
+                    fill="white"
                     stroke={getStationColor(station)}
-                    strokeWidth={selectedStation === station.id ? "1" : "0.8"}
+                    strokeWidth={selectedStation === station.id ? "1.2" : "0.8"}
                     style={{ cursor: 'pointer' }}
                     onClick={() => handleStationClick(station.id)}
                   />
@@ -470,19 +521,12 @@ export const MetroMapTest: React.FC = () => {
                   <InfoTitle>
                     🚇 {station.name}
                     {station.isTransfer && ' 🔄 환승역'}
-                    {station.hasStory && ' 📖 스토리 있음'}
                   </InfoTitle>
                   <InfoGrid>
                     <InfoItem><strong>ID:</strong> {station.id}</InfoItem>
                     <InfoItem><strong>노선:</strong> {station.lines.join(', ')}호선</InfoItem>
                     <InfoItem><strong>좌표:</strong> ({station.x.toFixed(2)}, {station.y.toFixed(2)})</InfoItem>
                     <InfoItem><strong>환승역:</strong> {station.isTransfer ? '예' : '아니오'}</InfoItem>
-                    <InfoItem><strong>스토리:</strong> {station.hasStory ? '있음' : '없음'}</InfoItem>
-                    <InfoItem>
-                      <strong>정규화 좌표:</strong> 
-                      ({SVG_CONFIG.normalizeCoordinate(station.x, station.y).x.toFixed(3)}, 
-                       {SVG_CONFIG.normalizeCoordinate(station.x, station.y).y.toFixed(3)})
-                    </InfoItem>
                   </InfoGrid>
                 </div>
               ) : null;
@@ -490,64 +534,8 @@ export const MetroMapTest: React.FC = () => {
           </InfoPanel>
         )}
       </MapWrapper>
-
-      {/* 상세 통계 */}
-      {/* <InfoPanel>
-        <InfoTitle>📊 상세 통계</InfoTitle>
-        <InfoGrid>
-          <InfoItem><strong>총 지하철역:</strong> {METRO_STATS.totalStations}개</InfoItem>
-          <InfoItem><strong>환승역:</strong> {METRO_STATS.transferStations}개</InfoItem>
-          <InfoItem><strong>스토리 보유역:</strong> {METRO_STATS.stationsWithStory}개</InfoItem>
-          <InfoItem><strong>현재 표시:</strong> {visibleStations.length}개 역</InfoItem>
-          <InfoItem><strong>검색 결과:</strong> {searchResults.length}개</InfoItem>
-        </InfoGrid>
-
-        <div style={{ marginTop: '16px' }}>
-          <strong>노선별 상세 통계:</strong>
-          <InfoGrid style={{ marginTop: '8px' }}>
-            {Object.entries(METRO_STATS.stationsByLine).map(([line, count]) => (
-              <InfoItem key={line}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div 
-                    style={{ 
-                      width: '12px', 
-                      height: '12px', 
-                      borderRadius: '50%', 
-                      background: LINE_COLORS[parseInt(line) as keyof typeof LINE_COLORS] || '#666'
-                    }} 
-                  />
-                  <span>{line}호선: {count}개 역</span>
-                </div>
-              </InfoItem>
-            ))}
-          </InfoGrid>
-        </div>
-      </InfoPanel> */}
-
-      {/* 비트 연산 테스트 */}
-      {/* <InfoPanel>
-        <InfoTitle>🔧 비트 연산 유틸리티 테스트</InfoTitle>
-        <InfoGrid>
-          <InfoItem>
-            <strong>1,4호선 비트:</strong> 
-            {LineBitUtils.linesToBits([1, 4])} (이진: {LineBitUtils.linesToBits([1, 4]).toString(2)})
-          </InfoItem>
-          <InfoItem>
-            <strong>비트 9를 노선으로:</strong> 
-            [{LineBitUtils.bitsToLines(9).join(', ')}]호선
-          </InfoItem>
-          <InfoItem>
-            <strong>환승역 필터 테스트:</strong> 
-            {getTransferStations().length}개 환승역 발견
-          </InfoItem>
-          <InfoItem>
-            <strong>검색 테스트 ("강남"):</strong> 
-            {searchStations("강남").length}개 역 발견
-          </InfoItem>
-        </InfoGrid>
-      </InfoPanel> */}
     </Container>
   );
 };
 
-export default MetroMapTest;
+export default MetroMapWithLines;

@@ -5,7 +5,9 @@ import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { PublicLayout } from '../components/layout';
 import { Button } from '../components/ui';
-import SubwayMapTest from '@/components/metroMap/MetroMapTest';
+import SubwayMapTest from '@/components/metroMap/MetroMapTest'
+;import { EnhancedMetroMap } from '@/components/metroMap';
+
 
 const HeroSection = styled.section`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -239,6 +241,7 @@ export default function Home() {
 
       {/* Metro Map Section */}
       <SubwayMapTest/>
+      <EnhancedMetroMap />
 
       {/* Tech Stack Section */}
       <TechSection>
