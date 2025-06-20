@@ -244,7 +244,7 @@ export default function Home() {
       <HeroSection>
         <HeroContent>
           <h1>Behindy</h1>
-          <p>지하철 노선도 기반 텍스트 어드벤처 게임</p>
+          {/* <p>지하철 노선도 기반 텍스트 어드벤처 게임</p>
           <ButtonGroup>
             <Button variant="primary" size="lg" onClick={handleGetStarted}>
               게임 시작하기
@@ -252,20 +252,16 @@ export default function Home() {
             <Button variant="outline" size="lg" onClick={handleLogin}>
               로그인
             </Button>
-          </ButtonGroup>
+          </ButtonGroup> */}
         </HeroContent>
       </HeroSection>
 
       {/* Features Section */}
       <FeaturesSection>
         <FeaturesContainer>
-          <h2>특별한 모험이 기다립니다</h2>
-          <p className="subtitle">
-            서울 지하철의 각 역에서 펼쳐지는 독특한 이야기들을 경험해보세요
-          </p>
-          <MetroMapTest/>
-
+          
           <MetroMapWithLines/>
+
         </FeaturesContainer>
       </FeaturesSection>
 

@@ -1,320 +1,382 @@
-// src/components/ui/Input/Input.tsx
-import React, { forwardRef, useState } from 'react';
-import styled, { css } from 'styled-components';
-import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+"use client";
 
-export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+import React, { useState, forwardRef } from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+
+// ================================================================
+// Types
+// ================================================================
+
+export interface InputProps {
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url';
+  placeholder?: string;
+  value?: string;
+  defaultValue?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
+  readOnly?: boolean;
+  required?: boolean;
+  autoComplete?: string;
+  autoFocus?: boolean;
+  name?: string;
+  id?: string;
+  className?: string;
   label?: string;
-  error?: string;
-  success?: string;
   helperText?: string;
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'filled' | 'outline';
+  error?: string | boolean;
+  success?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  isLoading?: boolean;
   fullWidth?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-// Input 크기별 스타일
-const inputSizes = {
-  sm: css`
-    padding: 8px 12px;
-    font-size: 14px;
-    min-height: 36px;
-  `,
-  
-  md: css`
-    padding: 12px 16px;
-    font-size: 16px;
-    min-height: 44px;
-  `,
-  
-  lg: css`
-    padding: 16px 20px;
-    font-size: 18px;
-    min-height: 52px;
-  `
-};
-
-// Input 변형별 스타일
-const inputVariants = {
-  default: css`
-    background: white;
-    border: 2px solid #e5e7eb;
-    
-    &:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-  `,
-  
-  filled: css`
-    background: #f9fafb;
-    border: 2px solid transparent;
-    
-    &:focus {
-      background: white;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-  `,
-  
-  outline: css`
-    background: transparent;
-    border: 2px solid #d1d5db;
-    
-    &:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-  `
-};
-
-// 스타일드 컴포넌트용 타입
-interface StyledInputProps {
-  $size: InputProps['size'];
-  $variant: InputProps['variant'];
-  $hasLeftIcon: boolean;
-  $hasRightIcon: boolean;
-  $hasError: boolean;
-  $hasSuccess: boolean;
-}
+// ================================================================
+// Styled Components (props 필터링 추가)
+// ================================================================
 
 const InputWrapper = styled.div<{ $fullWidth?: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: ${({ $fullWidth }) => $fullWidth ? '100%' : 'auto'};
+  gap: 0.5rem;
+  width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
 `;
 
 const Label = styled.label`
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 2px;
+  margin-bottom: 0.25rem;
 `;
 
-const InputContainer = styled.div`
+const InputContainer = styled.div.withConfig({
+  shouldForwardProp: (prop) => 
+    !['hasError', 'hasSuccess', 'size'].includes(prop)
+})<{ hasError?: boolean; hasSuccess?: boolean; size?: string }>`
   position: relative;
   display: flex;
   align-items: center;
+  
+  ${({ size }) => {
+    switch (size) {
+      case 'sm':
+        return `height: 2.25rem;`;
+      case 'lg':
+        return `height: 3rem;`;
+      default:
+        return `height: 2.5rem;`;
+    }
+  }}
 `;
 
-const StyledInput = styled.input<StyledInputProps>`
+const StyledInput = styled.input.withConfig({
+  shouldForwardProp: (prop) => 
+    !['hasError', 'hasSuccess', 'hasLeftIcon', 'hasRightIcon', 'size'].includes(prop)
+})<{ 
+  hasError?: boolean; 
+  hasSuccess?: boolean; 
+  hasLeftIcon?: boolean; 
+  hasRightIcon?: boolean; 
+  size?: string;
+}>`
   width: 100%;
-  border-radius: 12px;
-  font-family: inherit;
-  transition: all 0.2s ease;
-  outline: none;
-  
-  ${({ $size = 'md' }) => inputSizes[$size]}
-  ${({ $variant = 'default' }) => inputVariants[$variant]}
-  
-  ${({ $hasLeftIcon }) => $hasLeftIcon && css`
-    padding-left: 44px;
-  `}
-  
-  ${({ $hasRightIcon }) => $hasRightIcon && css`
-    padding-right: 44px;
-  `}
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #111827;
+  background: #ffffff;
+  transition: all 0.2s ease-in-out;
 
-  ${({ $hasError }) => $hasError && css`
-    border-color: #ef4444 !important;
-    
-    &:focus {
-      border-color: #ef4444 !important;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+  ${({ size }) => {
+    switch (size) {
+      case 'sm':
+        return `
+          padding: 0.5rem 0.75rem;
+          height: 2.25rem;
+        `;
+      case 'lg':
+        return `
+          padding: 0.875rem 1rem;
+          height: 3rem;
+          font-size: 1rem;
+        `;
+      default:
+        return `
+          padding: 0.625rem 0.875rem;
+          height: 2.5rem;
+        `;
     }
-  `}
+  }}
 
-  ${({ $hasSuccess }) => $hasSuccess && css`
-    border-color: #10b981 !important;
-    
-    &:focus {
-      border-color: #10b981 !important;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+  ${({ hasLeftIcon, size }) => {
+    if (hasLeftIcon) {
+      const padding = size === 'lg' ? '2.5rem' : size === 'sm' ? '2rem' : '2.25rem';
+      return `padding-left: ${padding};`;
     }
-  `}
-  
+    return '';
+  }}
+
+  ${({ hasRightIcon, size }) => {
+    if (hasRightIcon) {
+      const padding = size === 'lg' ? '2.5rem' : size === 'sm' ? '2rem' : '2.25rem';
+      return `padding-right: ${padding};`;
+    }
+    return '';
+  }}
+
   &::placeholder {
     color: #9ca3af;
   }
-  
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
   &:disabled {
-    background: #f3f4f6;
+    background: #f9fafb;
     color: #9ca3af;
     cursor: not-allowed;
   }
 
-  &:focus {
-    transform: translateY(-1px);
+  &:read-only {
+    background: #f9fafb;
   }
+
+  ${({ hasError }) =>
+    hasError &&
+    `
+    border-color: #ef4444;
+    
+    &:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+  `}
+
+  ${({ hasSuccess }) =>
+    hasSuccess &&
+    `
+    border-color: #10b981;
+    
+    &:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+  `}
 `;
 
-const IconWrapper = styled.div<{ $position: 'left' | 'right' }>`
+const IconWrapper = styled.div<{ position: 'left' | 'right'; size?: string }>`
   position: absolute;
-  ${({ $position }) => $position}: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  color: #9ca3af;
-  z-index: 1;
+  justify-content: center;
+  color: #6b7280;
   pointer-events: none;
-  
+  z-index: 1;
+
+  ${({ position, size }) => {
+    const offset = size === 'lg' ? '0.875rem' : size === 'sm' ? '0.625rem' : '0.75rem';
+    return position === 'left' ? `left: ${offset};` : `right: ${offset};`;
+  }}
+
   svg {
-    width: 20px;
-    height: 20px;
+    width: ${({ size }) => (size === 'lg' ? '1.25rem' : '1rem')};
+    height: ${({ size }) => (size === 'lg' ? '1.25rem' : '1rem')};
   }
 `;
 
-const PasswordToggle = styled.button`
+const ToggleButton = styled.button<{ size?: string }>`
   position: absolute;
-  right: 12px;
+  right: ${({ size }) => (size === 'lg' ? '0.875rem' : size === 'sm' ? '0.625rem' : '0.75rem')};
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
+  color: #6b7280;
   cursor: pointer;
-  color: #9ca3af;
+  padding: 0.25rem;
+  border-radius: 4px;
   display: flex;
   align-items: center;
-  padding: 4px;
-  border-radius: 4px;
+  justify-content: center;
   transition: color 0.2s ease;
-  z-index: 2;
-  
+
   &:hover {
-    color: #6b7280;
+    color: #374151;
   }
-  
+
   &:focus {
     outline: none;
-    color: #6b7280;
+    color: #667eea;
   }
-  
+
   svg {
-    width: 20px;
-    height: 20px;
+    width: ${({ size }) => (size === 'lg' ? '1.25rem' : '1rem')};
+    height: ${({ size }) => (size === 'lg' ? '1.25rem' : '1rem')};
   }
 `;
 
-const HelperText = styled.div<{ $variant: 'error' | 'success' | 'default' }>`
-  font-size: 12px;
+const HelperText = styled.div<{ hasError?: boolean; hasSuccess?: boolean }>`
+  font-size: 0.75rem;
+  color: #6b7280;
   display: flex;
   align-items: center;
-  gap: 4px;
-  
-  ${({ $variant }) => {
-    switch ($variant) {
-      case 'error':
-        return css`color: #ef4444;`;
-      case 'success':
-        return css`color: #10b981;`;
-      default:
-        return css`color: #6b7280;`;
-    }
-  }}
-  
+  gap: 0.25rem;
+
+  ${({ hasError }) =>
+    hasError &&
+    `
+    color: #ef4444;
+  `}
+
+  ${({ hasSuccess }) =>
+    hasSuccess &&
+    `
+    color: #10b981;
+  `}
+
   svg {
-    width: 14px;
-    height: 14px;
+    width: 0.875rem;
+    height: 0.875rem;
   }
 `;
 
-const LoadingSpinner = styled.div`
-  position: absolute;
-  right: 12px;
-  width: 16px;
-  height: 16px;
-  border: 2px solid #e5e7eb;
-  border-top: 2px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  z-index: 2;
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+// ================================================================
+// Input Component
+// ================================================================
+
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  (
+    {
+      type = 'text',
+      placeholder,
+      value,
+      defaultValue,
+      onChange,
+      onBlur,
+      onFocus,
+      disabled = false,
+      readOnly = false,
+      required = false,
+      autoComplete,
+      autoFocus = false,
+      name,
+      id,
+      className,
+      label,
+      helperText,
+      error,
+      success = false,
+      leftIcon,
+      rightIcon,
+      fullWidth = false,
+      size = 'md',
+      ...rest
+    },
+    ref
+  ) => {
+    const [showPassword, setShowPassword] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+
+    const isPassword = type === 'password';
+    const hasError = Boolean(error);
+    const hasSuccess = success && !hasError;
+    const hasLeftIcon = Boolean(leftIcon);
+    const hasRightIcon = Boolean(rightIcon) || isPassword;
+
+    const inputType = isPassword && showPassword ? 'text' : type;
+
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(true);
+      onFocus?.(e);
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(false);
+      onBlur?.(e);
+    };
+
+    const togglePasswordVisibility = () => {
+      setShowPassword(!showPassword);
+    };
+
+    return (
+      <InputWrapper $fullWidth={fullWidth} className={className}>
+        {label && (
+          <Label htmlFor={id}>
+            {label}
+            {required && <span style={{ color: '#ef4444' }}> *</span>}
+          </Label>
+        )}
+
+        <InputContainer hasError={hasError} hasSuccess={hasSuccess} size={size}>
+          {leftIcon && (
+            <IconWrapper position="left" size={size}>
+              {leftIcon}
+            </IconWrapper>
+          )}
+
+          <StyledInput
+            ref={ref}
+            type={inputType}
+            placeholder={placeholder}
+            value={value}
+            defaultValue={defaultValue}
+            onChange={onChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            disabled={disabled}
+            readOnly={readOnly}
+            required={required}
+            autoComplete={autoComplete}
+            autoFocus={autoFocus}
+            name={name}
+            id={id}
+            hasError={hasError}
+            hasSuccess={hasSuccess}
+            hasLeftIcon={hasLeftIcon}
+            hasRightIcon={hasRightIcon}
+            size={size}
+            {...rest}
+          />
+
+          {isPassword && (
+            <ToggleButton
+              type="button"
+              onClick={togglePasswordVisibility}
+              size={size}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff /> : <Eye />}
+            </ToggleButton>
+          )}
+
+          {!isPassword && rightIcon && (
+            <IconWrapper position="right" size={size}>
+              {rightIcon}
+            </IconWrapper>
+          )}
+        </InputContainer>
+
+        {(helperText || error) && (
+          <HelperText hasError={hasError} hasSuccess={hasSuccess}>
+            {hasError && <AlertCircle />}
+            {hasSuccess && <CheckCircle2 />}
+            {hasError ? (typeof error === 'string' ? error : '오류가 발생했습니다.') : helperText}
+          </HelperText>
+        )}
+      </InputWrapper>
+    );
   }
-`;
-
-export const Input = forwardRef<HTMLInputElement, InputProps>(({
-  label,
-  error,
-  success,
-  helperText,
-  size = 'md',
-  variant = 'default',
-  leftIcon,
-  rightIcon,
-  isLoading = false,
-  fullWidth = false,
-  type = 'text',
-  className,
-  ...props
-}, ref) => {
-  const [showPassword, setShowPassword] = useState(false);
-  
-  const actualType = type === 'password' && showPassword ? 'text' : type;
-  const hasError = Boolean(error);
-  const hasSuccess = Boolean(success && !error);
-  const hasRightIcon = Boolean(rightIcon) || type === 'password' || isLoading;
-
-  return (
-    <InputWrapper $fullWidth={fullWidth} className={className}>
-      {label && (
-        <Label htmlFor={props.id}>
-          {label}
-        </Label>
-      )}
-      
-      <InputContainer>
-        {leftIcon && (
-          <IconWrapper $position="left">
-            {leftIcon}
-          </IconWrapper>
-        )}
-        
-        <StyledInput
-          ref={ref}
-          type={actualType}
-          $size={size}
-          $variant={variant}
-          $hasLeftIcon={Boolean(leftIcon)}
-          $hasRightIcon={hasRightIcon}
-          $hasError={hasError}
-          $hasSuccess={hasSuccess}
-          {...props}
-        />
-        
-        {isLoading && <LoadingSpinner />}
-        
-        {!isLoading && type === 'password' && (
-          <PasswordToggle
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            tabIndex={-1}
-            aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-          >
-            {showPassword ? <EyeOff /> : <Eye />}
-          </PasswordToggle>
-        )}
-        
-        {!isLoading && type !== 'password' && rightIcon && (
-          <IconWrapper $position="right">
-            {rightIcon}
-          </IconWrapper>
-        )}
-      </InputContainer>
-      
-      {(error || success || helperText) && (
-        <HelperText $variant={hasError ? 'error' : hasSuccess ? 'success' : 'default'}>
-          {hasError && <AlertCircle />}
-          {hasSuccess && <CheckCircle />}
-          {error || success || helperText}
-        </HelperText>
-      )}
-    </InputWrapper>
-  );
-});
+);
 
 Input.displayName = 'Input';
 

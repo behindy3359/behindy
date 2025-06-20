@@ -295,7 +295,7 @@ export const MetroMapWithLines: React.FC = () => {
     <Container>
       {/* 통계 카드 */}
       <StatsGrid>
-        <StatCard>
+        {/* <StatCard>
           <div className="stat-number">{METRO_STATS.totalStations}</div>
           <div className="stat-label">총 지하철역</div>
         </StatCard>
@@ -310,14 +310,13 @@ export const MetroMapWithLines: React.FC = () => {
         <StatCard>
           <div className="stat-number">{lineConnections.length}</div>
           <div className="stat-label">표시 노선</div>
-        </StatCard>
+        </StatCard> */}
       </StatsGrid>
       
       <MapWrapper>
         {/* 컨트롤 패널 */}
         <Controls>
           <ControlGroup>
-            <ControlLabel>표시할 노선</ControlLabel>
             <CheckboxGroup>
               {lineStats.map(({ line, color, totalStations }) => (
                 <CheckboxItem key={line} $color={color}>
@@ -334,7 +333,6 @@ export const MetroMapWithLines: React.FC = () => {
           </ControlGroup>
 
           <ControlGroup>
-            <ControlLabel>표시 옵션</ControlLabel>
             <CheckboxGroup>
               <CheckboxItem>
                 <input
@@ -377,35 +375,6 @@ export const MetroMapWithLines: React.FC = () => {
                 환승역만
               </CheckboxItem>
             </CheckboxGroup>
-          </ControlGroup>
-
-          <ControlGroup>
-            <ControlLabel>역 검색</ControlLabel>
-            <SearchBox
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="역명 검색..."
-            />
-            {searchResults.length > 0 && (
-              <SearchResults>
-                {searchResults.slice(0, 10).map(station => (
-                  <div 
-                    key={station.id}
-                    className="search-item"
-                    onClick={() => handleSearchItemClick(station.id)}
-                  >
-                    <div className="station-name">
-                      {station.name}
-                      {station.isTransfer && ' 🔄'}
-                      {station.hasStory && ' 📖'}
-                    </div>
-                    <div className="station-lines">
-                      {station.lines.join(', ')}호선
-                    </div>
-                  </div>
-                ))}
-              </SearchResults>
-            )}
           </ControlGroup>
         </Controls>
 

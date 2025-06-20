@@ -1,189 +1,268 @@
-import React from 'react';
-import styled, { css } from 'styled-components';
-import { motion } from 'framer-motion';
+"use client";
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+import React from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
+
+// ================================================================
+// Types
+// ================================================================
+
+export interface ButtonProps {
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  disabled?: boolean;
   fullWidth?: boolean;
-  icon?: React.ReactNode;
-  iconPosition?: 'left' | 'right';
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  type?: 'button' | 'submit' | 'reset';
+  className?: string;
+  id?: string;
 }
 
-const buttonVariants = {
-  primary: css`
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    
-    &:hover:not(:disabled) {
-      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-      transform: translateY(-2px);
-    }
-  `,
-  
-  secondary: css`
-    background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(54, 209, 220, 0.4);
-    
-    &:hover:not(:disabled) {
-      background: linear-gradient(135deg, #2bc4cf 0%, #4e7bd3 100%);
-      box-shadow: 0 6px 20px rgba(54, 209, 220, 0.6);
-      transform: translateY(-2px);
-    }
-  `,
-  
-  outline: css`
-    background: transparent;
-    color: #667eea;
-    border: 2px solid #667eea;
-    
-    &:hover:not(:disabled) {
-      background: #667eea;
-      color: white;
-      transform: translateY(-1px);
-    }
-  `,
-  
-  ghost: css`
-    background: transparent;
-    color: #6b7280;
-    border: none;
-    
-    &:hover:not(:disabled) {
-      background: rgba(107, 114, 128, 0.1);
-      color: #374151;
-    }
-  `,
-  
-  danger: css`
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-    
-    &:hover:not(:disabled) {
-      background: linear-gradient(135deg, #ff5252 0%, #dc4747 100%);
-      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
-      transform: translateY(-2px);
-    }
-  `
-};
+// ================================================================
+// Styled Components (props 필터링 추가)
+// ================================================================
 
-// 버튼 크기별 스타일
-const buttonSizes = {
-  sm: css`
-    padding: 8px 16px;
-    font-size: 14px;
-    min-height: 36px;
-  `,
-  
-  md: css`
-    padding: 12px 24px;
-    font-size: 16px;
-    min-height: 44px;
-  `,
-  
-  lg: css`
-    padding: 16px 32px;
-    font-size: 18px;
-    min-height: 52px;
-  `
-};
-
-const StyledButton = styled(motion.button)<ButtonProps>`
+const StyledButton = styled(motion.button).withConfig({
+  // DOM으로 전달하지 않을 props 필터링
+  shouldForwardProp: (prop) => 
+    !['variant', 'size', 'isLoading', 'fullWidth', 'leftIcon', 'rightIcon'].includes(prop)
+})<ButtonProps>`
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border-radius: 12px;
+  gap: 0.5rem;
   font-weight: 600;
-  font-family: inherit;
+  text-align: center;
+  white-space: nowrap;
+  border-radius: 8px;
+  border: 2px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  font-family: inherit;
   
-  ${({ variant = 'primary' }) => buttonVariants[variant]}
-  ${({ size = 'md' }) => buttonSizes[size]}
-  ${({ fullWidth }) => fullWidth && css`width: 100%;`}
-  
+  /* Size variants */
+  ${({ size }) => {
+    switch (size) {
+      case 'sm':
+        return `
+          padding: 0.5rem 1rem;
+          font-size: 0.875rem;
+          line-height: 1.25rem;
+        `;
+      case 'lg':
+        return `
+          padding: 0.75rem 2rem;
+          font-size: 1rem;
+          line-height: 1.5rem;
+        `;
+      default:
+        return `
+          padding: 0.625rem 1.5rem;
+          font-size: 0.875rem;
+          line-height: 1.25rem;
+        `;
+    }
+  }}
+
+  /* Color variants */
+  ${({ variant }) => {
+    switch (variant) {
+      case 'primary':
+        return `
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          box-shadow: 0 4px 14px 0 rgba(102, 126, 234, 0.3);
+          
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(102, 126, 234, 0.4);
+          }
+          
+          &:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px 0 rgba(102, 126, 234, 0.3);
+          }
+        `;
+      case 'secondary':
+        return `
+          background: #f8fafc;
+          color: #475569;
+          border-color: #e2e8f0;
+          
+          &:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+          }
+          
+          &:active:not(:disabled) {
+            background: #e2e8f0;
+          }
+        `;
+      case 'outline':
+        return `
+          background: transparent;
+          color: #667eea;
+          border-color: #667eea;
+          
+          &:hover:not(:disabled) {
+            background: rgba(102, 126, 234, 0.1);
+            color: #5a67d8;
+            border-color: #5a67d8;
+          }
+          
+          &:active:not(:disabled) {
+            background: rgba(102, 126, 234, 0.2);
+          }
+        `;
+      case 'ghost':
+        return `
+          background: transparent;
+          color: #64748b;
+          
+          &:hover:not(:disabled) {
+            background: #f8fafc;
+            color: #475569;
+          }
+          
+          &:active:not(:disabled) {
+            background: #f1f5f9;
+          }
+        `;
+      case 'destructive':
+        return `
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.3);
+          
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(239, 68, 68, 0.4);
+          }
+          
+          &:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.3);
+          }
+        `;
+      default:
+        return `
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          box-shadow: 0 4px 14px 0 rgba(102, 126, 234, 0.3);
+          
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(102, 126, 234, 0.4);
+          }
+          
+          &:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px 0 rgba(102, 126, 234, 0.3);
+          }
+        `;
+    }
+  }}
+
+  /* Full width */
+  ${({ fullWidth }) => fullWidth && `
+    width: 100%;
+  `}
+
+  /* Disabled state */
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none !important;
+    box-shadow: none !important;
   }
-  
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
-  }
-  
-  /* 로딩 상태일 때 아이콘 숨기기 */
-  ${({ isLoading }) => isLoading && css`
-    color: transparent;
+
+  /* Loading state */
+  ${({ isLoading }) => isLoading && `
+    cursor: wait;
+    
+    .button-content {
+      opacity: 0.7;
+    }
   `}
+`;
+
+const ButtonContent = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const LoadingSpinner = styled.div`
   position: absolute;
-  width: 20px;
-  height: 20px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-const IconWrapper = styled.span<{ position: 'left' | 'right' }>`
   display: flex;
   align-items: center;
-  order: ${({ position }) => position === 'right' ? 1 : -1};
+  justify-content: center;
 `;
+
+// ================================================================
+// Button Component
+// ================================================================
 
 export const Button: React.FC<ButtonProps> = ({
   children,
   variant = 'primary',
   size = 'md',
   isLoading = false,
+  disabled = false,
   fullWidth = false,
-  icon,
-  iconPosition = 'left',
-  disabled,
-  ...props
+  leftIcon,
+  rightIcon,
+  onClick,
+  type = 'button',
+  className,
+  id,
+  ...rest
 }) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isLoading || disabled) {
+      e.preventDefault();
+      return;
+    }
+    onClick?.(e);
+  };
+
   return (
     <StyledButton
       variant={variant}
       size={size}
-      fullWidth={fullWidth}
       isLoading={isLoading}
       disabled={disabled || isLoading}
-      whileTap={{ scale: disabled || isLoading ? 1 : 0.98 }}
-      {...props}
+      fullWidth={fullWidth}
+      onClick={handleClick}
+      type={type}
+      className={className}
+      id={id}
+      whileHover={disabled || isLoading ? {} : { scale: 1.02 }}
+      whileTap={disabled || isLoading ? {} : { scale: 0.98 }}
+      transition={{ duration: 0.1 }}
+      {...rest}
     >
-      {isLoading && <LoadingSpinner />}
-      
-      {icon && !isLoading && (
-        <IconWrapper position={iconPosition}>
-          {icon}
-        </IconWrapper>
+      {isLoading && (
+        <LoadingSpinner>
+          <Loader2 size={16} className="animate-spin" />
+        </LoadingSpinner>
       )}
       
-      {children}
+      <ButtonContent className="button-content">
+        {leftIcon && <span>{leftIcon}</span>}
+        {children}
+        {rightIcon && <span>{rightIcon}</span>}
+      </ButtonContent>
     </StyledButton>
   );
 };
 
-// 기본 export
 export default Button;
