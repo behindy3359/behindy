@@ -109,12 +109,12 @@ public class MetroApiService {
 
                     if (response.getMetroErrorMessage() != null && response.getMetroErrorMessage().getStatus() != null) {
                         log.error("API 에러 응답: {}", response.getMetroErrorMessage().getMessage());
-                        return new ArrayList<>();
+                        return new ArrayList<RealtimeArrivalInfo>();
                     }
 
                     List<RealtimeArrivalInfo> result = response.getRealtimeArrivalList();
                     log.info("실시간 도착정보 조회 성공: {} - {}건", stationName, result != null ? result.size() : 0);
-                    return result != null ? result : new ArrayList<>();
+                    return result != null ? result : new ArrayList<RealtimeArrivalInfo>();
                 })
                 .onErrorResume(error -> {
                     log.error("실시간 도착정보 조회 실패: {} - {}", stationName, error.getMessage());
@@ -147,12 +147,12 @@ public class MetroApiService {
 
                     if (response.getMetroErrorMessage() != null && response.getMetroErrorMessage().getStatus() != null) {
                         log.error("API 에러 응답: {}", response.getMetroErrorMessage().getMessage());
-                        return new ArrayList<>();
+                        return new ArrayList<RealtimePositionInfo>();
                     }
 
                     List<RealtimePositionInfo> result = response.getRealtimePositionList();
                     log.info("실시간 위치정보 조회 성공: {}호선 - {}건", lineNumber, result != null ? result.size() : 0);
-                    return result != null ? result : new ArrayList<>();
+                    return result != null ? result : new ArrayList<RealtimePositionInfo>();
                 })
                 .onErrorResume(error -> {
                     log.error("실시간 위치정보 조회 실패: {}호선 - {}", lineNumber, error.getMessage());
