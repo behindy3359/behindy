@@ -26,9 +26,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 	// DB Driver
-
 	runtimeOnly 'org.postgresql:postgresql'
-//	runtimeOnly 'com.h2database:h2'
 
 	// DevTools
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -51,6 +49,13 @@ dependencies {
 
 	// Redis (토큰 저장용)
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// HTTP 클라이언트 (외부 API 호출용)
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// JSON 처리 향상
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names'
 
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
