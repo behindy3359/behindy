@@ -39,4 +39,7 @@ public class MetroRealtimeDto {
     private Boolean isExpress;         // 급행 여부
     private Boolean isLastTrain;       // 막차 여부
     private String trainType;          // 열차 종류
+
+    // 데이터 출처
+    private String dataSource;         // 데이터 출처 (API/CACHE/MOCK)
 }

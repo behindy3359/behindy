@@ -1,17 +1,17 @@
 package com.example.backend.service;
 
 import com.example.backend.dto.metro.*;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
+import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -97,7 +97,7 @@ public class MetroApiService {
         return webClient.get()
                 .uri(url)
                 .retrieve()
-                .onStatus(HttpStatus::isError, response -> {
+                .onStatus(HttpStatusCode::isError, response -> {
                     log.error("API 호출 오류: {} - {}", response.statusCode(), url);
                     return Mono.error(new RuntimeException("API 호출 실패: " + response.statusCode()));
                 })
@@ -135,7 +135,7 @@ public class MetroApiService {
         return webClient.get()
                 .uri(url)
                 .retrieve()
-                .onStatus(HttpStatus::isError, response -> {
+                .onStatus(HttpStatusCode::isError, response -> {
                     log.error("API 호출 오류: {} - {}", response.statusCode(), url);
                     return Mono.error(new RuntimeException("API 호출 실패: " + response.statusCode()));
                 })
