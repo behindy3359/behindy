@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { PublicLayout } from '../components/layout';
 import { Button } from '../components/ui';
+import { MetroMapTest, MetroMapWithLines } from '@/components/metroMap';
 
 const HeroSection = styled.section`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -262,37 +263,9 @@ export default function Home() {
           <p className="subtitle">
             서울 지하철의 각 역에서 펼쳐지는 독특한 이야기들을 경험해보세요
           </p>
+          <MetroMapTest/>
 
-          {/* Temporary Map Placeholder */}
-          <MapWrapper>
-            <TempMapContainer>
-              <h3>🚇 지하철 노선도</h3>
-              <p>인터랙티브 지하철 노선도가 여기에 표시됩니다</p>
-              <p style={{ marginTop: '10px', fontSize: '12px' }}>
-                * 현재 개발 중인 기능입니다
-              </p>
-            </TempMapContainer>
-          </MapWrapper>
-
-          <FeatureGrid>
-            <FeatureCard>
-              <div className="icon">🗺️</div>
-              <h3>인터랙티브 노선도</h3>
-              <p>실제 서울 지하철 노선도를 기반으로 한 인터랙티브한 게임 맵</p>
-            </FeatureCard>
-            
-            <FeatureCard>
-              <div className="icon">📖</div>
-              <h3>역별 스토리</h3>
-              <p>각 지하철역마다 고유한 스토리와 선택지가 준비되어 있습니다</p>
-            </FeatureCard>
-            
-            <FeatureCard>
-              <div className="icon">🎮</div>
-              <h3>텍스트 어드벤처</h3>
-              <p>선택에 따라 달라지는 스토리와 캐릭터의 운명을 경험하세요</p>
-            </FeatureCard>
-          </FeatureGrid>
+          <MetroMapWithLines/>
         </FeaturesContainer>
       </FeaturesSection>
 
