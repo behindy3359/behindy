@@ -5,98 +5,129 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import styled from 'styled-components';
-import { Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { LogIn, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Button, Input } from '../../ui';
 import { useAuthStore } from '../../../store/authStore';
 
-// 폼 검증 스키마
+// ================================================================
+// Types & Validation
+// ================================================================
+
+interface LoginFormData {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
 const loginSchema = yup.object({
   email: yup
     .string()
     .required('이메일을 입력해주세요')
-    .email('올바른 이메일 형식을 입력해주세요'),
+    .email('올바른 이메일 형식이 아닙니다'),
   password: yup
     .string()
     .required('비밀번호를 입력해주세요')
-    .min(6, '비밀번호는 최소 6자 이상이어야 합니다')
+    .min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
 });
 
-// 폼 데이터 타입
-interface LoginFormData {
-  email: string;
-  password: string;
-}
+// ================================================================
+// Styled Components
+// ================================================================
 
-// Props 타입
-interface LoginFormProps {
-  onSuccess?: () => void;
-  onSignupClick?: () => void;
-  redirectTo?: string;
-}
-
-const FormContainer = styled.div`
+const FormContainer = styled(motion.div)`
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
-  padding: 32px;
+  padding: 2rem;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 `;
 
 const FormHeader = styled.div`
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 2rem;
+  
+  h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+  }
+  
+  p {
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
 `;
 
-const Title = styled.h1`
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 8px;
-`;
-
-const Subtitle = styled.p`
-  color: #6b7280;
-  font-size: 16px;
-`;
-
-const FormContent = styled.form`
+const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1.5rem;
 `;
 
-const ErrorMessage = styled.div`
+const CheckboxContainer = styled.div`
+  display: flex;
+  items-center;
+  gap: 0.5rem;
+  
+  input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 4px;
+    border: 2px solid #d1d5db;
+    
+    &:checked {
+      background-color: #667eea;
+      border-color: #667eea;
+    }
+  }
+  
+  label {
+    font-size: 0.875rem;
+    color: #374151;
+    cursor: pointer;
+  }
+`;
+
+const ForgotPassword = styled.button`
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 0.875rem;
+  text-align: right;
+  cursor: pointer;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const ErrorMessage = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 0.5rem;
+  padding: 0.75rem;
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 8px;
   color: #dc2626;
-  font-size: 14px;
+  font-size: 0.875rem;
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     flex-shrink: 0;
   }
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
 `;
 
 const Divider = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin: 24px 0;
+  margin: 1.5rem 0;
   
   &::before,
   &::after {
@@ -107,121 +138,115 @@ const Divider = styled.div`
   }
   
   span {
+    padding: 0 1rem;
     color: #6b7280;
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 `;
 
-const SignupLink = styled.div`
+const SignupPrompt = styled.div`
   text-align: center;
-  margin-top: 24px;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
   color: #6b7280;
-  font-size: 14px;
   
-  button {
+  a {
     color: #667eea;
-    background: none;
-    border: none;
-    cursor: pointer;
+    text-decoration: none;
     font-weight: 600;
-    text-decoration: underline;
     
     &:hover {
-      color: #5a67d8;
+      text-decoration: underline;
     }
   }
 `;
 
-const RememberMeContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: #667eea;
-  }
-  
-  label {
-    font-size: 14px;
-    color: #374151;
-    cursor: pointer;
-  }
-`;
+// ================================================================
+// LoginForm Component
+// ================================================================
 
-export const LoginForm: React.FC<LoginFormProps> = ({
-  onSuccess,
-  onSignupClick,
-  redirectTo
-}) => {
+export const LoginForm: React.FC = () => {
+  const [isFormLoading, setIsFormLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const [loginError, setLoginError] = useState<string>('');
+  
+  const { login } = useAuthStore();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isValid },
+    reset,
   } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),
-    mode: 'onBlur'
+    mode: 'onChange',
   });
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      clearError();
-      
-      await login({
+      setIsFormLoading(true);
+      setLoginError('');
+
+      // API 호출
+      const result = await login({
         email: data.email,
         password: data.password,
-        rememberMe
+        rememberMe,
       });
 
-      // 로그인 성공 시
-      onSuccess?.();
-      
-      // 리다이렉트 처리
-      if (redirectTo) {
-        window.location.href = redirectTo;
+      if (result.success) {
+        reset();
+        // 로그인 성공 시 리다이렉트는 AuthStore에서 처리
+      } else {
+        setLoginError(result.error || '로그인에 실패했습니다.');
       }
-    } catch (err) {
-      // 에러는 zustand store에서 처리됨
-      console.error('로그인 오류:', err);
+    } catch (error) {
+      setLoginError('로그인 중 오류가 발생했습니다.');
+      console.error('Login error:', error);
+    } finally {
+      setIsFormLoading(false);
     }
   };
 
-  const isFormLoading = isLoading || isSubmitting;
+  const handleForgotPassword = () => {
+    // TODO: 비밀번호 찾기 기능 구현
+    alert('비밀번호 찾기 기능은 준비 중입니다.');
+  };
 
   return (
-    <FormContainer>
+    <FormContainer
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <FormHeader>
-        <Title>로그인</Title>
-        <Subtitle>Behindy에 오신 것을 환영합니다</Subtitle>
+        <h2>로그인</h2>
+        <p>계정에 로그인하여 게임을 시작하세요</p>
       </FormHeader>
 
-      <FormContent onSubmit={handleSubmit(onSubmit)}>
-        {/* 서버 에러 표시 */}
-        {error && (
-          <ErrorMessage>
-            <AlertCircle />
-            {typeof error === 'string' ? error : 'An error occurred'}
-          </ErrorMessage>
-        )}
+      {loginError && (
+        <ErrorMessage
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+        >
+          <AlertCircle />
+          {loginError}
+        </ErrorMessage>
+      )}
 
-        {/* 이메일 입력 */}
+      <Form onSubmit={handleSubmit(onSubmit)}>
         <Input
           {...register('email')}
           type="email"
           label="이메일"
-          placeholder="이메일을 입력하세요"
+          placeholder="your.email@example.com"
           leftIcon={<Mail />}
           error={errors.email?.message}
-          disabled={isFormLoading}
-          autoComplete="email"
           fullWidth
+          autoComplete="email"
         />
 
-        {/* 비밀번호 입력 */}
         <Input
           {...register('password')}
           type="password"
@@ -229,55 +254,47 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           placeholder="비밀번호를 입력하세요"
           leftIcon={<Lock />}
           error={errors.password?.message}
-          disabled={isFormLoading}
-          autoComplete="current-password"
           fullWidth
+          autoComplete="current-password"
         />
 
-        {/* 로그인 유지 체크박스 */}
-        <RememberMeContainer>
-          <input
-            type="checkbox"
-            id="rememberMe"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            disabled={isFormLoading}
-          />
-          <label htmlFor="rememberMe">
-            로그인 상태 유지
-          </label>
-        </RememberMeContainer>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <CheckboxContainer>
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            <label htmlFor="rememberMe">로그인 상태 유지</label>
+          </CheckboxContainer>
 
-        {/* 로그인 버튼 */}
-        <ButtonGroup>
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            isLoading={isFormLoading}
-            icon={<LogIn />}
-          >
-            {isFormLoading ? '로그인 중...' : '로그인'}
-          </Button>
-        </ButtonGroup>
-      </FormContent>
+          <ForgotPassword type="button" onClick={handleForgotPassword}>
+            비밀번호 찾기
+          </ForgotPassword>
+        </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          fullWidth
+          isLoading={isFormLoading}
+          leftIcon={<LogIn />}
+          disabled={!isValid || isFormLoading}
+        >
+          {isFormLoading ? '로그인 중...' : '로그인'}
+        </Button>
+      </Form>
 
       <Divider>
         <span>또는</span>
       </Divider>
 
-      {/* 회원가입 링크 */}
-      <SignupLink>
+      <SignupPrompt>
         계정이 없으신가요?{' '}
-        <button 
-          type="button" 
-          onClick={onSignupClick}
-          disabled={isFormLoading}
-        >
-          회원가입
-        </button>
-      </SignupLink>
+        <a href="/auth/signup">회원가입</a>
+      </SignupPrompt>
     </FormContainer>
   );
 };

@@ -1,4 +1,3 @@
-export { default as MetroMapTest } from './MetroMapTest';
 export { MetroMapWithLines } from './MetroMapWithLines';
 
 // 나중에 추가될 컴포넌트들

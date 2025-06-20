@@ -5,28 +5,41 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import styled from 'styled-components';
-import { User, Mail, Lock, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { UserPlus, Mail, Lock, User, Check, X, AlertCircle } from 'lucide-react';
 import { Button, Input } from '../../ui';
 import { useAuthStore } from '../../../store/authStore';
 
-// 폼 검증 스키마
+// ================================================================
+// Types & Validation
+// ================================================================
+
+interface SignupFormData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  agreeToTerms: boolean;
+  agreeToPrivacy: boolean;
+}
+
 const signupSchema = yup.object({
   name: yup
     .string()
     .required('이름을 입력해주세요')
     .min(2, '이름은 최소 2자 이상이어야 합니다')
-    .max(20, '이름은 최대 20자까지 입력 가능합니다'),
+    .max(50, '이름은 최대 50자까지 입력 가능합니다'),
   email: yup
     .string()
     .required('이메일을 입력해주세요')
-    .email('올바른 이메일 형식을 입력해주세요'),
+    .email('올바른 이메일 형식이 아닙니다'),
   password: yup
     .string()
     .required('비밀번호를 입력해주세요')
     .min(8, '비밀번호는 최소 8자 이상이어야 합니다')
     .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      '비밀번호는 대문자, 소문자, 숫자를 각각 하나 이상 포함해야 합니다'
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+      '비밀번호는 대소문자, 숫자, 특수문자를 포함해야 합니다'
     ),
   confirmPassword: yup
     .string()
@@ -35,354 +48,353 @@ const signupSchema = yup.object({
   agreeToTerms: yup
     .boolean()
     .required('이용약관에 동의해주세요')
-    .oneOf([true], '이용약관에 동의해주세요')
+    .oneOf([true], '이용약관에 동의해주세요'),
+  agreeToPrivacy: yup
+    .boolean()
+    .required('개인정보처리방침에 동의해주세요')
+    .oneOf([true], '개인정보처리방침에 동의해주세요'),
 });
 
-// 폼 데이터 타입
-interface SignupFormData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  agreeToTerms: boolean;
-}
+// ================================================================
+// Styled Components
+// ================================================================
 
-// Props 타입
-interface SignupFormProps {
-  onSuccess?: () => void;
-  onLoginClick?: () => void;
-}
-
-const FormContainer = styled.div`
+const FormContainer = styled(motion.div)`
   width: 100%;
   max-width: 450px;
   margin: 0 auto;
-  padding: 32px;
+  padding: 2rem;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 `;
 
 const FormHeader = styled.div`
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 2rem;
+  
+  h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+  }
+  
+  p {
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
 `;
 
-const Title = styled.h1`
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 8px;
-`;
-
-const Subtitle = styled.p`
-  color: #6b7280;
-  font-size: 16px;
-`;
-
-const FormContent = styled.form`
+const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 20px;
-`;
-
-const ErrorMessage = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #dc2626;
-  font-size: 14px;
-  
-  svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-  }
-`;
-
-const SuccessMessage = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  color: #166534;
-  font-size: 14px;
-  
-  svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-  }
+  gap: 1.5rem;
 `;
 
 const PasswordStrength = styled.div<{ strength: number }>`
-  margin-top: 8px;
-  
-  .strength-label {
-    font-size: 12px;
-    color: #6b7280;
-    margin-bottom: 4px;
-  }
+  margin-top: 0.5rem;
   
   .strength-bar {
+    width: 100%;
     height: 4px;
     background: #e5e7eb;
     border-radius: 2px;
     overflow: hidden;
+    
+    .strength-fill {
+      height: 100%;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+      
+      ${({ strength }) => {
+        if (strength <= 1) return 'width: 25%; background: #ef4444;';
+        if (strength <= 2) return 'width: 50%; background: #f59e0b;';
+        if (strength <= 3) return 'width: 75%; background: #eab308;';
+        return 'width: 100%; background: #10b981;';
+      }}
+    }
   }
   
-  .strength-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: all 0.3s ease;
-    width: ${({ strength }) => (strength / 4) * 100}%;
-    background: ${({ strength }) => {
-      if (strength <= 1) return '#ef4444';
-      if (strength <= 2) return '#f59e0b';
-      if (strength <= 3) return '#10b981';
-      return '#059669';
-    }};
+  .strength-text {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    
+    ${({ strength }) => {
+      if (strength <= 1) return 'color: #ef4444;';
+      if (strength <= 2) return 'color: #f59e0b;';
+      if (strength <= 3) return 'color: #eab308;';
+      return 'color: #10b981;';
+    }}
   }
 `;
 
-const TermsContainer = styled.div`
+const PasswordRequirements = styled.div`
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  
+  .requirement {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+    
+    &.met {
+      color: #10b981;
+    }
+    
+    &.unmet {
+      color: #ef4444;
+    }
+    
+    svg {
+      width: 0.75rem;
+      height: 0.75rem;
+    }
+  }
+`;
+
+const CheckboxContainer = styled.div`
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 0.5rem;
   
   input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    margin-top: 2px;
-    accent-color: #667eea;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 4px;
+    border: 2px solid #d1d5db;
+    margin-top: 0.125rem;
+    
+    &:checked {
+      background-color: #667eea;
+      border-color: #667eea;
+    }
   }
   
   label {
-    font-size: 14px;
+    font-size: 0.875rem;
     color: #374151;
     cursor: pointer;
-    line-height: 1.5;
+    line-height: 1.4;
     
     a {
       color: #667eea;
-      text-decoration: underline;
+      text-decoration: none;
       
       &:hover {
-        color: #5a67d8;
+        text-decoration: underline;
       }
     }
   }
 `;
 
-const ButtonGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
-`;
-
-const Divider = styled.div`
+const ErrorMessage = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin: 24px 0;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 0.875rem;
   
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #e5e7eb;
-  }
-  
-  span {
-    color: #6b7280;
-    font-size: 14px;
+  svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
   }
 `;
 
-const LoginLink = styled.div`
+const LoginPrompt = styled.div`
   text-align: center;
-  margin-top: 24px;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
   color: #6b7280;
-  font-size: 14px;
   
-  button {
+  a {
     color: #667eea;
-    background: none;
-    border: none;
-    cursor: pointer;
+    text-decoration: none;
     font-weight: 600;
-    text-decoration: underline;
     
     &:hover {
-      color: #5a67d8;
+      text-decoration: underline;
     }
   }
 `;
 
-// 비밀번호 강도 체크 함수
-const checkPasswordStrength = (password: string): number => {
+// ================================================================
+// Helper Functions
+// ================================================================
+
+const calculatePasswordStrength = (password: string): number => {
   let strength = 0;
+  
   if (password.length >= 8) strength++;
   if (/[a-z]/.test(password)) strength++;
   if (/[A-Z]/.test(password)) strength++;
   if (/\d/.test(password)) strength++;
-  return strength;
+  if (/[@$!%*?&]/.test(password)) strength++;
+  
+  return Math.min(strength, 4);
 };
 
-export const SignupForm: React.FC<SignupFormProps> = ({
-  onSuccess,
-  onLoginClick
-}) => {
-  const [passwordStrength, setPasswordStrength] = useState(0);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const { signup, isLoading, error, clearError } = useAuthStore();
+const getPasswordRequirements = (password: string) => [
+  { text: '8자 이상', met: password.length >= 8 },
+  { text: '소문자 포함', met: /[a-z]/.test(password) },
+  { text: '대문자 포함', met: /[A-Z]/.test(password) },
+  { text: '숫자 포함', met: /\d/.test(password) },
+  { text: '특수문자 포함', met: /[@$!%*?&]/.test(password) },
+];
+
+// ================================================================
+// SignupForm Component
+// ================================================================
+
+export const SignupForm: React.FC = () => {
+  const [isFormLoading, setIsFormLoading] = useState(false);
+  const [signupError, setSignupError] = useState<string>('');
+  const [password, setPassword] = useState('');
+  
+  const { signup } = useAuthStore();
 
   const {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting }
+    formState: { errors, isValid },
+    reset,
   } = useForm<SignupFormData>({
     resolver: yupResolver(signupSchema),
-    mode: 'onBlur',
+    mode: 'onChange',
     defaultValues: {
       name: '',
       email: '',
       password: '',
       confirmPassword: '',
-      agreeToTerms: false
-    }
+      agreeToTerms: false,
+      agreeToPrivacy: false,
+    },
   });
 
-  const watchPassword = watch('password', '');
-
-  // 비밀번호 강도 실시간 체크
-  React.useEffect(() => {
-    setPasswordStrength(checkPasswordStrength(watchPassword));
-  }, [watchPassword]);
+  const watchedPassword = watch('password', '');
+  const passwordStrength = calculatePasswordStrength(watchedPassword);
+  const passwordRequirements = getPasswordRequirements(watchedPassword);
 
   const onSubmit = async (data: SignupFormData) => {
     try {
-      clearError();
-      
-      await signup({
+      setIsFormLoading(true);
+      setSignupError('');
+
+      // API 호출
+      const result = await signup({
         name: data.name,
         email: data.email,
-        password: data.password
+        password: data.password,
       });
 
-      // 회원가입 성공 시
-      setIsSuccess(true);
-      
-      // 2초 후 성공 콜백 실행
-      setTimeout(() => {
-        onSuccess?.();
-      }, 2000);
-      
-    } catch (err) {
-      // 에러는 zustand store에서 처리됨
-      console.error('회원가입 오류:', err);
+      if (result.success) {
+        reset();
+        // 회원가입 성공 시 리다이렉트는 AuthStore에서 처리
+      } else {
+        setSignupError(result.error || '회원가입에 실패했습니다.');
+      }
+    } catch (error) {
+      setSignupError('회원가입 중 오류가 발생했습니다.');
+      console.error('Signup error:', error);
+    } finally {
+      setIsFormLoading(false);
     }
   };
 
-  const isFormLoading = isLoading || isSubmitting;
-
-  if (isSuccess) {
-    return (
-      <FormContainer>
-        <FormHeader>
-          <Title>회원가입 완료!</Title>
-          <Subtitle>환영합니다! 로그인 페이지로 이동합니다.</Subtitle>
-        </FormHeader>
-        <SuccessMessage>
-          <CheckCircle />
-          회원가입이 성공적으로 완료되었습니다.
-        </SuccessMessage>
-      </FormContainer>
-    );
-  }
-
   return (
-    <FormContainer>
+    <FormContainer
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <FormHeader>
-        <Title>회원가입</Title>
-        <Subtitle>Behindy에서 특별한 모험을 시작하세요</Subtitle>
+        <h2>회원가입</h2>
+        <p>새 계정을 만들어 게임을 시작하세요</p>
       </FormHeader>
 
-      <FormContent onSubmit={handleSubmit(onSubmit)}>
-        {/* 서버 에러 표시 */}
-        {error && (
-          <ErrorMessage>
-            <AlertCircle />
-            {typeof error === 'string' ? error : 'An error occurred'}
-          </ErrorMessage>
-        )}
+      {signupError && (
+        <ErrorMessage
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+        >
+          <AlertCircle />
+          {signupError}
+        </ErrorMessage>
+      )}
 
-        {/* 이름 입력 */}
+      <Form onSubmit={handleSubmit(onSubmit)}>
         <Input
           {...register('name')}
           type="text"
           label="이름"
-          placeholder="이름을 입력하세요"
+          placeholder="홍길동"
           leftIcon={<User />}
           error={errors.name?.message}
-          disabled={isFormLoading}
-          autoComplete="name"
           fullWidth
+          autoComplete="name"
         />
 
-        {/* 이메일 입력 */}
         <Input
           {...register('email')}
           type="email"
           label="이메일"
-          placeholder="이메일을 입력하세요"
+          placeholder="your.email@example.com"
           leftIcon={<Mail />}
           error={errors.email?.message}
-          disabled={isFormLoading}
-          autoComplete="email"
           fullWidth
+          autoComplete="email"
         />
 
-        {/* 비밀번호 입력 */}
         <div>
           <Input
             {...register('password')}
             type="password"
             label="비밀번호"
-            placeholder="비밀번호를 입력하세요"
+            placeholder="안전한 비밀번호를 입력하세요"
             leftIcon={<Lock />}
             error={errors.password?.message}
-            disabled={isFormLoading}
-            autoComplete="new-password"
             fullWidth
+            autoComplete="new-password"
           />
-          {watchPassword && (
-            <PasswordStrength strength={passwordStrength}>
-              <div className="strength-label">
-                비밀번호 강도: {
-                  passwordStrength <= 1 ? '약함' :
-                  passwordStrength <= 2 ? '보통' :
-                  passwordStrength <= 3 ? '강함' : '매우 강함'
-                }
-              </div>
-              <div className="strength-bar">
-                <div className="strength-fill" />
-              </div>
-            </PasswordStrength>
+          
+          {watchedPassword && (
+            <>
+              <PasswordStrength strength={passwordStrength}>
+                <div className="strength-bar">
+                  <div className="strength-fill" />
+                </div>
+                <div className="strength-text">
+                  {passwordStrength <= 1 && '약함'}
+                  {passwordStrength === 2 && '보통'}
+                  {passwordStrength === 3 && '강함'}
+                  {passwordStrength >= 4 && '매우 강함'}
+                </div>
+              </PasswordStrength>
+              
+              <PasswordRequirements>
+                {passwordRequirements.map((req, index) => (
+                  <div 
+                    key={index} 
+                    className={`requirement ${req.met ? 'met' : 'unmet'}`}
+                  >
+                    {req.met ? <Check /> : <X />}
+                    {req.text}
+                  </div>
+                ))}
+              </PasswordRequirements>
+            </>
           )}
         </div>
 
-        {/* 비밀번호 확인 */}
         <Input
           {...register('confirmPassword')}
           type="password"
@@ -390,60 +402,63 @@ export const SignupForm: React.FC<SignupFormProps> = ({
           placeholder="비밀번호를 다시 입력하세요"
           leftIcon={<Lock />}
           error={errors.confirmPassword?.message}
-          disabled={isFormLoading}
-          autoComplete="new-password"
           fullWidth
+          autoComplete="new-password"
         />
 
-        {/* 이용약관 동의 */}
-        <TermsContainer>
-          <input
-            {...register('agreeToTerms')}
-            type="checkbox"
-            id="agreeToTerms"
-            disabled={isFormLoading}
-          />
-          <label htmlFor="agreeToTerms">
-            <a href="/terms" target="_blank">이용약관</a> 및{' '}
-            <a href="/privacy" target="_blank">개인정보처리방침</a>에 동의합니다.
-            {errors.agreeToTerms && (
-              <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
-                {errors.agreeToTerms.message}
-              </div>
-            )}
-          </label>
-        </TermsContainer>
+        <div>
+          <CheckboxContainer>
+            <input
+              {...register('agreeToTerms')}
+              type="checkbox"
+              id="agreeToTerms"
+            />
+            <label htmlFor="agreeToTerms">
+              <a href="/terms" target="_blank">이용약관</a>에 동의합니다 (필수)
+            </label>
+          </CheckboxContainer>
+          {errors.agreeToTerms && (
+            <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+              {errors.agreeToTerms.message}
+            </div>
+          )}
+        </div>
 
-        {/* 회원가입 버튼 */}
-        <ButtonGroup>
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            isLoading={isFormLoading}
-            icon={<UserPlus />}
-          >
-            {isFormLoading ? '가입 중...' : '회원가입'}
-          </Button>
-        </ButtonGroup>
-      </FormContent>
+        <div>
+          <CheckboxContainer>
+            <input
+              {...register('agreeToPrivacy')}
+              type="checkbox"
+              id="agreeToPrivacy"
+            />
+            <label htmlFor="agreeToPrivacy">
+              <a href="/privacy" target="_blank">개인정보처리방침</a>에 동의합니다 (필수)
+            </label>
+          </CheckboxContainer>
+          {errors.agreeToPrivacy && (
+            <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+              {errors.agreeToPrivacy.message}
+            </div>
+          )}
+        </div>
 
-      <Divider>
-        <span>또는</span>
-      </Divider>
-
-      {/* 로그인 링크 */}
-      <LoginLink>
-        이미 계정이 있으신가요?{' '}
-        <button 
-          type="button" 
-          onClick={onLoginClick}
-          disabled={isFormLoading}
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          fullWidth
+          isLoading={isFormLoading}
+          leftIcon={<UserPlus />}
+          disabled={!isValid || isFormLoading}
         >
-          로그인
-        </button>
-      </LoginLink>
+          {isFormLoading ? '계정 생성 중...' : '계정 만들기'}
+        </Button>
+      </Form>
+
+      <LoginPrompt>
+        이미 계정이 있으신가요?{' '}
+        <a href="/auth/login">로그인</a>
+      </LoginPrompt>
     </FormContainer>
   );
 };

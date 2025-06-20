@@ -19,13 +19,25 @@ import { API_ENDPOINTS } from '@/config';
 import { TokenManager } from '@/config';
 import { env } from '@/config/env';
 
+// ================================================================
+// 응답 타입 정의
+// ================================================================
+
+interface AuthResult {
+  success: boolean;
+  error?: string;
+  data?: any;
+}
+
+// ================================================================
 // 인증 스토어 액션 타입 정의
+// ================================================================
 
 interface AuthActions {
-  // 로그인/로그아웃
-  login: (credentials: LoginReq) => Promise<boolean>;
+  // 로그인/로그아웃 (응답 형식 변경)
+  login: (credentials: LoginReq) => Promise<AuthResult>;
   logout: () => Promise<void>;
-  signup: (userData: SignupReq) => Promise<boolean>;
+  signup: (userData: SignupReq) => Promise<AuthResult>;
   
   // 토큰 관리
   refreshToken: () => Promise<boolean>;
@@ -65,7 +77,9 @@ const initialState: AuthState = {
   isLoading: false,
 };
 
+// ================================================================
 // Zustand 스토어 생성
+// ================================================================
 
 export const useAuthStore = create<AuthStore>()(
   devtools(
@@ -79,7 +93,7 @@ export const useAuthStore = create<AuthStore>()(
         /**
          * 사용자 로그인
          */
-        login: async (credentials: LoginReq): Promise<boolean> => {
+        login: async (credentials: LoginReq): Promise<AuthResult> => {
           try {
             set({ isLoading: true, error: null }, false, 'auth/login/start');
 
@@ -120,7 +134,7 @@ export const useAuthStore = create<AuthStore>()(
               'auth/login/success'
             );
 
-            return true;
+            return { success: true, data: user };
           } catch (error: unknown) {
             const authError: AuthError = {
               code: (error as { response?: { status?: number } }).response?.status?.toString() || 'LOGIN_FAILED',
@@ -140,18 +154,18 @@ export const useAuthStore = create<AuthStore>()(
               'auth/login/error'
             );
 
-            return false;
+            return { success: false, error: authError.message };
           }
         },
 
         /**
          * 사용자 회원가입
          */
-        signup: async (userData: SignupReq): Promise<boolean> => {
+        signup: async (userData: SignupReq): Promise<AuthResult> => {
           try {
             set({ isLoading: true, error: null }, false, 'auth/signup/start');
 
-            await api.post(API_ENDPOINTS.AUTH.SIGNUP, userData);
+            const response = await api.post(API_ENDPOINTS.AUTH.SIGNUP, userData);
 
             set(
               {
@@ -163,7 +177,7 @@ export const useAuthStore = create<AuthStore>()(
               'auth/signup/success'
             );
 
-            return true;
+            return { success: true, data: response };
           } catch (error: unknown) {
             const authError: AuthError = {
               code: (error as { response?: { status?: number } }).response?.status?.toString() || 'SIGNUP_FAILED',
@@ -181,7 +195,7 @@ export const useAuthStore = create<AuthStore>()(
               'auth/signup/error'
             );
 
-            return false;
+            return { success: false, error: authError.message };
           }
         },
 
@@ -323,7 +337,11 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        // 사용자 정보 관리 현재 사용자 정보 가져오기
+        // 사용자 정보 관리
+
+        /**
+         * 현재 사용자 정보 가져오기
+         */
         fetchCurrentUser: async (): Promise<void> => {
           try {
             // 실제로는 사용자 정보를 가져오는 API 엔드포인트가 필요
@@ -363,7 +381,9 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        //사용자 정보 업데이트
+        /**
+         * 사용자 정보 업데이트
+         */
         updateUser: (userUpdate: Partial<CurrentUser>): void => {
           const { user } = get();
           if (user) {
@@ -378,42 +398,57 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         // 상태 관리 액션들
-        // 로딩 상태 설정
+
+        /**
+         * 로딩 상태 설정
+         */
         setLoading: (loading: boolean): void => {
           set({ isLoading: loading }, false, 'auth/setLoading');
         },
 
-        // 에러 설정
-        
+        /**
+         * 에러 설정
+         */
         setError: (error: AuthError | null): void => {
           set({ error }, false, 'auth/setError');
         },
 
-        // 에러 정리
+        /**
+         * 에러 정리
+         */
         clearError: (): void => {
           set({ error: null }, false, 'auth/clearError');
         },
 
-        // 상태 초기화
+        /**
+         * 상태 초기화
+         */
         reset: (): void => {
           TokenManager.clearTokens();
           set(initialState, false, 'auth/reset');
         },
 
         // 인증 유틸리티
-        // 인증 여부 확인
+
+        /**
+         * 인증 여부 확인
+         */
         isAuthenticated: (): boolean => {
           const { status, tokens } = get();
           return status === 'authenticated' && !!tokens.accessToken;
         },
 
-        // 유효한 토큰 존재 여부
+        /**
+         * 유효한 토큰 존재 여부
+         */
         hasValidToken: (): boolean => {
           const { tokens } = get();
           return !!tokens.accessToken && !!tokens.refreshToken;
         },
 
-        // 토큰 갱신 필요 여부
+        /**
+         * 토큰 갱신 필요 여부
+         */
         needsRefresh: (): boolean => {
           const { tokens, lastLoginAttempt } = get();
           
@@ -427,7 +462,9 @@ export const useAuthStore = create<AuthStore>()(
             : true;
         },
 
-        // 사용자 권한 목록 가져오기
+        /**
+         * 사용자 권한 목록 가져오기
+         */
         getUserPermissions: (): string[] => {
           const { user } = get();
           return user?.permissions || [];
@@ -451,7 +488,13 @@ export const useAuthStore = create<AuthStore>()(
   )
 );
 
-// 인증 상태 확인 헬퍼
+// ================================================================
+// 헬퍼 훅들
+// ================================================================
+
+/**
+ * 인증 상태 확인 헬퍼
+ */
 export const useAuth = () => {
   const store = useAuthStore();
   return {
@@ -466,7 +509,9 @@ export const useAuth = () => {
   };
 };
 
-// 로그인 필요 여부 확인
+/**
+ * 로그인 필요 여부 확인
+ */
 export const useRequireAuth = () => {
   const { isAuthenticated, checkAuthStatus } = useAuthStore();
   
@@ -474,7 +519,7 @@ export const useRequireAuth = () => {
     if (!isAuthenticated()) {
       checkAuthStatus();
     }
-  }, []);
+  }, [isAuthenticated, checkAuthStatus]);
   
   return isAuthenticated();
 };

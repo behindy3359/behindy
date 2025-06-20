@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { PublicLayout } from '../components/layout';
 import { Button } from '../components/ui';
-import { MetroMapTest, MetroMapWithLines } from '@/components/metroMap';
+import { MetroMapWithLines } from '@/components/metroMap';
 
 const HeroSection = styled.section`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
