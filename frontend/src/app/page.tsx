@@ -5,9 +5,6 @@ import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { PublicLayout } from '../components/layout';
 import { Button } from '../components/ui';
-import SubwayMapTest from '@/components/metroMap/MetroMapTest'
-;import { EnhancedMetroMap } from '@/components/metroMap';
-
 
 const HeroSection = styled.section`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -149,6 +146,7 @@ const MapWrapper = styled.div`
   padding: 20px;
   margin-bottom: 2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  text-align: center;
 `;
 
 const MapDescription = styled.div`
@@ -209,6 +207,25 @@ const TechItem = styled.div`
   }
 `;
 
+const TempMapContainer = styled.div`
+  background: white;
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+  
+  h3 {
+    margin-bottom: 10px;
+    color: #374151;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+`;
+
 export default function Home() {
   const router = useRouter();
 
@@ -220,28 +237,64 @@ export default function Home() {
     router.push('/auth/login');
   };
 
-  const handleGameStart = (stationId: string) => {
-    // 로그인 후 게임 시작으로 리다이렉트
-    router.push(`/auth/login?redirect=/game/start/${stationId}`);
-  };
-
-  const handleStationDetail = (stationId: string) => {
-    // 역 상세 정보 페이지로 이동 (나중에 구현)
-    router.push(`/station/${stationId}`);
-  };
-
   return (
     <PublicLayout>
       {/* Hero Section */}
       <HeroSection>
         <HeroContent>
           <h1>Behindy</h1>
+          <p>지하철 노선도 기반 텍스트 어드벤처 게임</p>
+          <ButtonGroup>
+            <Button variant="primary" size="lg" onClick={handleGetStarted}>
+              게임 시작하기
+            </Button>
+            <Button variant="outline" size="lg" onClick={handleLogin}>
+              로그인
+            </Button>
+          </ButtonGroup>
         </HeroContent>
       </HeroSection>
 
-      {/* Metro Map Section */}
-      <SubwayMapTest/>
-      <EnhancedMetroMap />
+      {/* Features Section */}
+      <FeaturesSection>
+        <FeaturesContainer>
+          <h2>특별한 모험이 기다립니다</h2>
+          <p className="subtitle">
+            서울 지하철의 각 역에서 펼쳐지는 독특한 이야기들을 경험해보세요
+          </p>
+
+          {/* Temporary Map Placeholder */}
+          <MapWrapper>
+            <TempMapContainer>
+              <h3>🚇 지하철 노선도</h3>
+              <p>인터랙티브 지하철 노선도가 여기에 표시됩니다</p>
+              <p style={{ marginTop: '10px', fontSize: '12px' }}>
+                * 현재 개발 중인 기능입니다
+              </p>
+            </TempMapContainer>
+          </MapWrapper>
+
+          <FeatureGrid>
+            <FeatureCard>
+              <div className="icon">🗺️</div>
+              <h3>인터랙티브 노선도</h3>
+              <p>실제 서울 지하철 노선도를 기반으로 한 인터랙티브한 게임 맵</p>
+            </FeatureCard>
+            
+            <FeatureCard>
+              <div className="icon">📖</div>
+              <h3>역별 스토리</h3>
+              <p>각 지하철역마다 고유한 스토리와 선택지가 준비되어 있습니다</p>
+            </FeatureCard>
+            
+            <FeatureCard>
+              <div className="icon">🎮</div>
+              <h3>텍스트 어드벤처</h3>
+              <p>선택에 따라 달라지는 스토리와 캐릭터의 운명을 경험하세요</p>
+            </FeatureCard>
+          </FeatureGrid>
+        </FeaturesContainer>
+      </FeaturesSection>
 
       {/* Tech Stack Section */}
       <TechSection>

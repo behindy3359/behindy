@@ -1,4 +1,3 @@
-// frontend/src/components/metroMap/EnhancedMetroMap.tsx
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';

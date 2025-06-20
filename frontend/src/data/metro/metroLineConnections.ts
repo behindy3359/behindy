@@ -1,5 +1,3 @@
-// frontend/src/data/metro/metroLineConnections.ts
-
 import { METRO_STATIONS, LINE_COLORS } from './stationsData';
 
 export interface LineSegment {
