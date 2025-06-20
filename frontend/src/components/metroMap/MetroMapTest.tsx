@@ -10,8 +10,9 @@ import {
   getTransferStations,
   searchStations,
   METRO_STATS,
-  SVG_CONFIG 
-} from '../../data/metro/refinedStationsData';
+  SVG_CONFIG,
+  type Station
+} from '../../data/metro/stationsData';
 import { SEOUL_DISTRICTS, HAN_RIVER } from '../../data/metro/seoulDistrictData';
 
 // ================================================================
@@ -217,7 +218,7 @@ export const MetroMapTest: React.FC = () => {
   const [showHanRiver, setShowHanRiver] = useState(true);
   const [showLabels, setShowLabels] = useState(false);
   const [showTransferOnly, setShowTransferOnly] = useState(false);
-  const [selectedStation, setSelectedStation] = useState<string | null>(null);
+  const [selectedStation, setSelectedStation] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // 표시할 역들 필터링
@@ -258,19 +259,23 @@ export const MetroMapTest: React.FC = () => {
     );
   };
 
-  const handleStationClick = (stationId: string) => {
+  const handleStationClick = (stationId: number) => {
     setSelectedStation(selectedStation === stationId ? null : stationId);
   };
 
-  const handleSearchItemClick = (stationId: string) => {
+  const handleSearchItemClick = (stationId: number) => {
     setSelectedStation(stationId);
     setSearchQuery('');
   };
 
+  // 주 노선 색상 가져오기 함수
+  const getStationColor = (station: Station) => {
+    const primaryLine = station.lines[0];
+    return LINE_COLORS[primaryLine as keyof typeof LINE_COLORS];
+  };
+
   return (
     <Container>
-      <Title>🚇 서울 지하철 노선도 (정제된 데이터)</Title>
-
       {/* 통계 카드 */}
       <StatsGrid>
         <StatCard>
@@ -280,10 +285,6 @@ export const MetroMapTest: React.FC = () => {
         <StatCard>
           <div className="stat-number">{METRO_STATS.transferStations}</div>
           <div className="stat-label">환승역</div>
-        </StatCard>
-        <StatCard>
-          <div className="stat-number">{METRO_STATS.stationsWithStory}</div>
-          <div className="stat-label">스토리 보유역</div>
         </StatCard>
         <StatCard>
           <div className="stat-number">{visibleStations.length}</div>
@@ -320,7 +321,7 @@ export const MetroMapTest: React.FC = () => {
                   checked={showDistricts}
                   onChange={(e) => setShowDistricts(e.target.checked)}
                 />
-                서울시 구
+                구
               </CheckboxItem>
               <CheckboxItem>
                 <input
@@ -418,7 +419,7 @@ export const MetroMapTest: React.FC = () => {
                     cy={station.y}
                     r={selectedStation === station.id ? 2.5 : station.isTransfer ? 1.8 : 1.3}
                     fill={station.hasStory ? '#fbbf24' : 'white'}
-                    stroke={LINE_COLORS[station.line as keyof typeof LINE_COLORS]}
+                    stroke={getStationColor(station)}
                     strokeWidth={selectedStation === station.id ? "1.2" : "0.8"}
                     style={{ cursor: 'pointer' }}
                     onClick={() => handleStationClick(station.id)}
@@ -430,7 +431,7 @@ export const MetroMapTest: React.FC = () => {
                       cx={station.x}
                       cy={station.y}
                       r={0.6}
-                      fill={LINE_COLORS[station.line as keyof typeof LINE_COLORS]}
+                      fill={getStationColor(station)}
                     />
                   )}
                   
@@ -491,7 +492,7 @@ export const MetroMapTest: React.FC = () => {
       </MapWrapper>
 
       {/* 상세 통계 */}
-      <InfoPanel>
+      {/* <InfoPanel>
         <InfoTitle>📊 상세 통계</InfoTitle>
         <InfoGrid>
           <InfoItem><strong>총 지하철역:</strong> {METRO_STATS.totalStations}개</InfoItem>
@@ -521,10 +522,10 @@ export const MetroMapTest: React.FC = () => {
             ))}
           </InfoGrid>
         </div>
-      </InfoPanel>
+      </InfoPanel> */}
 
       {/* 비트 연산 테스트 */}
-      <InfoPanel>
+      {/* <InfoPanel>
         <InfoTitle>🔧 비트 연산 유틸리티 테스트</InfoTitle>
         <InfoGrid>
           <InfoItem>
@@ -544,7 +545,7 @@ export const MetroMapTest: React.FC = () => {
             {searchStations("강남").length}개 역 발견
           </InfoItem>
         </InfoGrid>
-      </InfoPanel>
+      </InfoPanel> */}
     </Container>
   );
 };
