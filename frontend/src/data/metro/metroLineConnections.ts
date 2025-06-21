@@ -50,29 +50,39 @@ const createCurvedPath = (
  */
 const LINE_STATION_ORDERS = {
   1: [
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
-    21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 124, 17, 18, 19, 20, 
+    21, 22, 23, 24, 25, 26, 64, 27, 28, 29, 30, 31
   ],
   2: [
-    19, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 75, 76, 44, 45, 46, 47, 48, 
+    19, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 
     49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 
     67, 68, 69, 70, 71, 72, 73, 74
   ],
   3: [
-    77, 78, 79, 80, 81, 82, 83, 84, 85, 17, 34, 86, 87, 88, 89, 90, 91, 92, 
-    93, 55, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106
+    83, 84, 85, 86, 87, 88, 89, 90, 91, 17, 35, 92, 93, 94, 95, 96, 97,
+    98, 99, 100, 55, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112
   ],
   4: [
-    107, 108, 109, 4, 110, 111, 112, 113, 114, 115, 116, 117, 118, 37, 86, 
-    119, 120, 20, 121, 122, 123, 124, 125, 58, 126, 127
+    113, 114, 115, 4, 116, 117, 118, 119, 120, 121, 122, 123, 124, 37, 92, 125, 126, 20, 127,
+    128, 129, 130, 131, 132, 58, 133
   ]
 };
 
 const SPECIAL_CONNECTIONS = {
+  1:[
+    {from: 27, to: 32, type: 'branch' },
+    {from: 32, to: 33, type: 'branch' }
+  ],
   2: [
     { from: 43, to: 75, type: 'branch' }, 
     { from: 75, to: 76, type: 'branch' }, 
-    { from: 76, to: 14, type: 'branch' } 
+    { from: 76, to: 77, type: 'branch' }, 
+    { from: 77, to: 14, type: 'branch' },
+    { from: 66, to: 79, type: 'branch' },
+    { from: 79, to: 80, type: 'branch' },
+    { from: 80, to: 81, type: 'branch' },
+    { from: 81, to: 82, type: 'branch' },
+    { from: 19, to: 74, type: 'branch' },
   ]
 };
 
@@ -126,7 +136,7 @@ export const generateLineConnections = (): LineConnection[] => {
           const path = createCurvedPath(
             fromStation.x, fromStation.y, 
             toStation.x, toStation.y, 
-            0.3 // 분기선은 더 큰 곡률
+            0.1 // 분기선은 더 큰 곡률
           );
 
           segments.push({
@@ -183,56 +193,10 @@ export const areStationsConnected = (stationId1: number, stationId2: number): bo
   );
 };
 
-/**
- * 역 간 최단 경로 찾기 (간단한 BFS)
- */
-export const findShortestPath = (fromStationId: number, toStationId: number): number[] => {
-  const connections = generateLineConnections();
-  const graph: { [key: number]: number[] } = {};
-
-  // 그래프 구성
-  connections.forEach(lineConn => {
-    lineConn.segments.forEach(segment => {
-      if (!graph[segment.fromStationId]) graph[segment.fromStationId] = [];
-      if (!graph[segment.toStationId]) graph[segment.toStationId] = [];
-      
-      graph[segment.fromStationId].push(segment.toStationId);
-      graph[segment.toStationId].push(segment.fromStationId);
-    });
-  });
-
-  // BFS로 최단 경로 찾기
-  const queue: { stationId: number; path: number[] }[] = [{ stationId: fromStationId, path: [fromStationId] }];
-  const visited = new Set<number>();
-
-  while (queue.length > 0) {
-    const { stationId, path } = queue.shift()!;
-
-    if (stationId === toStationId) {
-      return path;
-    }
-
-    if (visited.has(stationId)) continue;
-    visited.add(stationId);
-
-    const neighbors = graph[stationId] || [];
-    neighbors.forEach(neighborId => {
-      if (!visited.has(neighborId)) {
-        queue.push({
-          stationId: neighborId,
-          path: [...path, neighborId]
-        });
-      }
-    });
-  }
-
-  return []; // 경로 없음
-};
 
 export default {
   generateLineConnections,
   getLineConnection,
   getVisibleLineConnections,
   areStationsConnected,
-  findShortestPath
 };
