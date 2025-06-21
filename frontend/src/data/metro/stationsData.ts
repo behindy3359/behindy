@@ -844,6 +844,15 @@ export const SVG_CONFIG = {
   })
 };
 
+export const STORY_STATIONS = [
+  { id: 1, name: "도봉산", lines: [1] },
+  { id: 18, name: "종각", lines: [1] },
+  { id: 20, name: "서울역", lines: [1, 4] },
+  { id: 54, name: "강남", lines: [2] },
+  { id: 71, name: "홍대입구", lines: [2] },
+  { id: 72, name: "신촌", lines: [2] },
+  { id: 119, name: "명동", lines: [4] },
+] as const;
 
 // ================================================================
 // 기본 export
@@ -861,4 +870,5 @@ export default {
   getDistanceBetweenStations,
   METRO_STATS,
   SVG_CONFIG,
+  STORY_STATIONS
 };
