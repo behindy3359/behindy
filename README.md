@@ -4,6 +4,7 @@ Web text adventure shifting from everyday subway life to a surreal world of urba
 
 ## Conventional Commits
 
+pj : nginx          (project)
 sb : SpringBoot
 nx : next.js
 fa : fastApi
