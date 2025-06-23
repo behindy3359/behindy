@@ -23,8 +23,8 @@ services:
       dockerfile: Dockerfile
     container_name: backend
     restart: always
-    expose:
-      - 8080
+    ports:
+      - "8080:8080"
     environment:
       - DB_URL=db:5432/behindy
       - DB_USER=${DB_USER}
@@ -35,6 +35,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - FIELD_KEY=${FIELD_KEY}
       - TABLE_KEY=${TABLE_KEY}
+      - SEOUL_METRO_API_KEY=${SEOUL_METRO_API_KEY:-TEMP_KEY}  # 이것도 추가하면 좋음
     networks:
       - internal
     depends_on:
