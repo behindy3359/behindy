@@ -14,12 +14,19 @@ spring:
         format_sql: true
         highlight_sql: true
         use_sql_comments: true
-  redis:
-    host: ${REDIS_HOST:redis}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
-    database: 0
-    timeout: 2000
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+      database: 0
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 10
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
   profiles:
     active: default
 
@@ -31,20 +38,21 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-validity: 3600000
   refresh-token-validity: 2592000000
+
 seoul:
   metro:
     api:
       key: ${SEOUL_METRO_API_KEY:TEMP_KEY}
       base-url: ${SEOUL_METRO_API_BASE_URL:http://swopenAPI.seoul.go.kr/api/subway}
-      enabled: ${METRO_API_ENABLED:true}
-      timeout: ${METRO_API_TIMEOUT:10000}
-      retry-count: ${METRO_API_RETRY_COUNT:3}
-      enabled-lines: ${METRO_ENABLED_LINES:1,2,3,4}
-      update-interval: ${METRO_UPDATE_INTERVAL:120000}
+      enabled: ${SEOUL_METRO_API_ENABLED:true}
+      timeout: ${SEOUL_METRO_API_TIMEOUT:10000}
+      retry-count: ${SEOUL_METRO_API_RETRY_COUNT:3}
+      enabled-lines: ${SEOUL_METRO_ENABLED_LINES:1,2,3,4}
+      update-interval: ${SEOUL_METRO_API_UPDATE_INTERVAL:120000}
     cache:
-      ttl: ${METRO_CACHE_TTL:180}
+      ttl: ${SEOUL_METRO_CACHE_TTL:180}
     monitoring:
-      daily-limit: ${METRO_DAILY_LIMIT:950}
+      daily-limit: ${SEOUL_METRO_MONITORING_DAILY_LIMIT:950}
       
 logging:
   level:
