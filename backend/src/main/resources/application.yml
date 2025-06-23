@@ -31,7 +31,6 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-validity: 3600000
   refresh-token-validity: 2592000000
-
 seoul:
   metro:
     api:
@@ -46,3 +45,8 @@ seoul:
       ttl: ${METRO_CACHE_TTL:180}
     monitoring:
       daily-limit: ${METRO_DAILY_LIMIT:950}
+      
+logging:
+  level:
+    org.springframework.data.redis: DEBUG
+    org.springframework.boot.context.config: DEBUG
