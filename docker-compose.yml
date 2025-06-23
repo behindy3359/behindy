@@ -43,6 +43,7 @@ services:
       - SEOUL_METRO_CACHE_TTL=180
       - SEOUL_METRO_API_UPDATE_INTERVAL=${METRO_UPDATE_INTERVAL}
       - SEOUL_METRO_MONITORING_DAILY_LIMIT=${METRO_DAILY_LIMIT}
+      - SEOUL_METRO_API_BASE_URL=https://swopenapi.seoul.go.kr/api/subway
     networks:
       - internal
     depends_on:
