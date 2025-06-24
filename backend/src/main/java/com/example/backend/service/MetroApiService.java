@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -85,45 +84,7 @@ public class MetroApiService {
     }
 
     /**
-     * 실시간 도착정보 조회 (특정 역)
-     */
-    public Mono<List<RealtimeArrivalInfo>> getRealtimeArrival(String stationName) {
-        if (!apiEnabled || "TEMP_KEY".equals(apiKey)) {
-            return createMockArrivalData(stationName);
-        }
-
-        String url = buildUrl("realtimeStationArrival", stationName);
-
-        return webClient.get()
-                .uri(url)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, response -> {
-                    log.error("API 호출 오류: {} - {}", response.statusCode(), url);
-                    return Mono.error(new RuntimeException("API 호출 실패: " + response.statusCode()));
-                })
-                .bodyToMono(RealtimeArrivalResponse.class)
-                .timeout(Duration.ofMillis(timeoutMs))
-                .retryWhen(Retry.fixedDelay(retryCount, Duration.ofSeconds(1)))
-                .map(response -> {
-                    incrementCallCount();
-
-                    if (response.getMetroErrorMessage() != null && response.getMetroErrorMessage().getStatus() != null) {
-                        log.error("API 에러 응답: {}", response.getMetroErrorMessage().getMessage());
-                        return new ArrayList<RealtimeArrivalInfo>();
-                    }
-
-                    List<RealtimeArrivalInfo> result = response.getRealtimeArrivalList();
-                    log.info("실시간 도착정보 조회 성공: {} - {}건", stationName, result != null ? result.size() : 0);
-                    return result != null ? result : new ArrayList<RealtimeArrivalInfo>();
-                })
-                .onErrorResume(error -> {
-                    log.error("실시간 도착정보 조회 실패: {} - {}", stationName, error.getMessage());
-                    return createMockArrivalData(stationName);
-                });
-    }
-
-    /**
-     * 실시간 위치정보 조회 (특정 노선)
+     * 실시간 위치정보 조회 (특정 노선) - 단순화된 버전
      */
     public Mono<List<RealtimePositionInfo>> getRealtimePosition(String lineNumber) {
         if (!apiEnabled || "TEMP_KEY".equals(apiKey)) {
@@ -161,26 +122,25 @@ public class MetroApiService {
     }
 
     /**
-     * 활성화된 노선들의 실시간 데이터 조회 (1-4호선만)
+     * 활성화된 노선들의 실시간 데이터 조회
      */
-    public Mono<List<MetroRealtimeDto>> getAllLinesRealtime() {
+    public Mono<List<TrainPosition>> getAllLinesRealtime() {
         List<Mono<List<RealtimePositionInfo>>> requests = new ArrayList<>();
 
-        // 🎯 활성화된 노선만 요청 (1-4호선)
         for (String lineNumber : enabledLines) {
             requests.add(getRealtimePosition(lineNumber));
         }
 
         return Mono.zip(requests, results -> {
-            List<MetroRealtimeDto> allTrains = new ArrayList<>();
+            List<TrainPosition> allTrains = new ArrayList<>();
 
             for (int i = 0; i < results.length; i++) {
                 @SuppressWarnings("unchecked")
                 List<RealtimePositionInfo> lineData = (List<RealtimePositionInfo>) results[i];
 
                 for (RealtimePositionInfo position : lineData) {
-                    MetroRealtimeDto dto = convertToRealtimeDto(position);
-                    allTrains.add(dto);
+                    TrainPosition trainPosition = convertToTrainPosition(position);
+                    allTrains.add(trainPosition);
                 }
             }
 
@@ -227,22 +187,20 @@ public class MetroApiService {
     }
 
     /**
-     * RealtimePositionInfo를 MetroRealtimeDto로 변환
+     * RealtimePositionInfo를 TrainPosition으로 변환 - 단순화된 버전
      */
-    private MetroRealtimeDto convertToRealtimeDto(RealtimePositionInfo position) {
-        return MetroRealtimeDto.builder()
-                .trainNo(position.getTrainNo())
-                .subwayLine(extractLineNumber(position.getSubwayId()))
-                .subwayLineId(position.getSubwayId())
-                .currentStation(position.getStatnNm())
-                .direction(position.getUpdnLine())
+    private TrainPosition convertToTrainPosition(RealtimePositionInfo position) {
+        return TrainPosition.builder()
+                .trainId(position.getTrainNo())
+                .lineNumber(Integer.valueOf(extractLineNumber(position.getSubwayId())))
                 .stationId(position.getStatnId())
-                .trainStatus("운행중")
+                .stationName(position.getStatnNm())
+                .direction(convertDirection(position.getUpdnLine()))
+                .x(50.0 + Math.random() * 100) // 임시 좌표 (실제로는 역 좌표 매핑 필요)
+                .y(25.0 + Math.random() * 50)
                 .lastUpdated(LocalDateTime.now())
-                .dataTime(parseRecptnDt(position.getRecptnDt()))
-                .isRealtime(true)
-                .isLastTrain("Y".equals(position.getLstcarAt()))
                 .dataSource("API")
+                .isRealtime(true)
                 .build();
     }
 
@@ -255,61 +213,27 @@ public class MetroApiService {
     }
 
     /**
-     * recptnDt 파싱 (YYYY-MM-DD HH:mm:ss)
+     * 상하행 구분 변환
      */
-    private LocalDateTime parseRecptnDt(String recptnDt) {
-        try {
-            if (recptnDt == null || recptnDt.length() < 19) {
-                return LocalDateTime.now();
-            }
-            // "2025-06-21 14:30:00" 형식으로 파싱
-            return LocalDateTime.parse(recptnDt.replace(" ", "T"));
-        } catch (Exception e) {
-            log.warn("recptnDt 파싱 실패: {} - {}", recptnDt, e.getMessage());
-            return LocalDateTime.now();
-        }
+    private String convertDirection(String updnLine) {
+        if ("0".equals(updnLine)) return "up";   // 상행
+        if ("1".equals(updnLine)) return "down"; // 하행
+        return "up"; // 기본값
     }
 
-    // ===== Mock 데이터 생성 =====
+    // ===== Mock 데이터 생성 (단순화) =====
 
     /**
-     * Mock 도착정보 데이터 생성 (API 키 없을 때)
-     */
-    private Mono<List<RealtimeArrivalInfo>> createMockArrivalData(String stationName) {
-        List<RealtimeArrivalInfo> mockData = new ArrayList<>();
-
-        // 상행/하행 각각 1개씩 Mock 데이터
-        for (int i = 0; i < 2; i++) {
-            RealtimeArrivalInfo mock = RealtimeArrivalInfo.builder()
-                    .subwayId("100" + (i + 1))
-                    .subwayNm((i + 1) + "호선")
-                    .statnNm(stationName)
-                    .trainLineNm(i == 0 ? "상행" : "하행")
-                    .subwayHeading(i == 0 ? "상행" : "하행")
-                    .btrainSttus(i == 0 ? "진입" : "접근")
-                    .barvlDt(String.valueOf((i + 1) * 60)) // 60초, 120초
-                    .btrainNo("MOCK-" + (1000 + i))
-                    .bstatnNm(stationName)
-                    .recptnDt(LocalDateTime.now().toString())
-                    .arvlMsg2("곧 도착")
-                    .build();
-            mockData.add(mock);
-        }
-
-        log.info("Mock 도착정보 데이터 생성: {} - {}건", stationName, mockData.size());
-        return Mono.just(mockData);
-    }
-
-    /**
-     * Mock 위치정보 데이터 생성 (API 키 없을 때)
+     * Mock 위치정보 데이터 생성 (API 키 없을 때) - 단순화된 버전
      */
     private Mono<List<RealtimePositionInfo>> createMockPositionData(String lineNumber) {
         List<RealtimePositionInfo> mockData = new ArrayList<>();
 
-        // 해당 노선에 3대의 Mock 열차 생성
-        String[] stations = {"종각", "시청", "을지로입구", "동대문", "동대문역사문화공원"};
+        // 해당 노선에 적정 수의 Mock 열차 생성
+        int trainCount = getTrainCountForLine(Integer.parseInt(lineNumber));
+        String[] stations = getStationsForLine(Integer.parseInt(lineNumber));
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < trainCount; i++) {
             RealtimePositionInfo mock = RealtimePositionInfo.builder()
                     .subwayId("100" + lineNumber)
                     .subwayNm(lineNumber + "호선")
@@ -318,15 +242,41 @@ public class MetroApiService {
                     .trainNo("MOCK-" + lineNumber + "-" + (1000 + i))
                     .recptnDt(LocalDateTime.now().toString())
                     .lastRecptnDt(LocalDateTime.now().toString())
-                    .updnLine(i % 2 == 0 ? "상행" : "하행")
+                    .updnLine(i % 2 == 0 ? "0" : "1") // 상행/하행 번갈아
                     .statnTid(String.valueOf(i + 1))
                     .directAt("N")
-                    .lstcarAt(i == 2 ? "Y" : "N") // 마지막 열차는 막차로 설정
+                    .lstcarAt(i == trainCount - 1 ? "Y" : "N") // 마지막 열차는 막차로 설정
                     .build();
             mockData.add(mock);
         }
 
         log.info("Mock 위치정보 데이터 생성: {}호선 - {}건", lineNumber, mockData.size());
         return Mono.just(mockData);
+    }
+
+    /**
+     * 노선별 적정 열차 수 반환
+     */
+    private int getTrainCountForLine(int lineNumber) {
+        switch (lineNumber) {
+            case 1: return 10;
+            case 2: return 15; // 순환선이라 많음
+            case 3: return 9;
+            case 4: return 8;
+            default: return 5;
+        }
+    }
+
+    /**
+     * 노선별 주요 역명 반환
+     */
+    private String[] getStationsForLine(int lineNumber) {
+        switch (lineNumber) {
+            case 1: return new String[]{"종각", "시청", "을지로입구", "동대문", "동묘앞"};
+            case 2: return new String[]{"강남", "역삼", "선릉", "삼성", "건대입구", "홍대입구"};
+            case 3: return new String[]{"대치", "도곡", "매봉", "양재", "남부터미널"};
+            case 4: return new String[]{"명동", "회현", "서울역", "숙대입구", "삼각지"};
+            default: return new String[]{"테스트역"};
+        }
     }
 }

@@ -1,9 +1,6 @@
-// MetroCacheService.java
 package com.example.backend.service;
 
-import com.example.backend.dto.metro.MetroCacheData;
-import com.example.backend.dto.metro.MetroRealtimeDto;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.example.backend.dto.metro.TrainPosition;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +14,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 지하철 캐시 서비스 (최종 버전)
+ * 위치 정보만 캐싱하는 단순화된 구조
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,23 +29,22 @@ public class MetroCacheService {
     @Value("${seoul.metro.cache.ttl:180}")
     private int cacheTtlSeconds;
 
-    // Redis 키 패턴
+    // Redis 키 패턴 (단순화)
     private static final String METRO_POSITIONS_KEY = "metro:positions:line:";
-    private static final String METRO_ARRIVALS_KEY = "metro:arrivals:station:";
-    private static final String METRO_ALL_LINES_KEY = "metro:all_lines";
+    private static final String METRO_ALL_POSITIONS_KEY = "metro:all_positions";
     private static final String METRO_HEALTH_KEY = "metro:health";
     private static final String METRO_LAST_UPDATE_KEY = "metro:last_update";
 
     /**
-     * 특정 노선의 실시간 위치 데이터 캐시 저장
+     * 특정 노선의 위치 데이터 캐시 저장
      */
-    public void cacheLinePositions(String lineNumber, List<MetroRealtimeDto> trains) {
+    public void cacheLinePositions(String lineNumber, List<TrainPosition> positions) {
         try {
             String key = METRO_POSITIONS_KEY + lineNumber;
 
-            MetroCacheData cacheData = MetroCacheData.builder()
+            PositionCacheData cacheData = PositionCacheData.builder()
                     .lineNumber(lineNumber)
-                    .trains(trains)
+                    .positions(positions)
                     .lastUpdated(LocalDateTime.now())
                     .nextUpdateTime(LocalDateTime.now().plusSeconds(cacheTtlSeconds))
                     .isHealthy(true)
@@ -54,7 +54,7 @@ public class MetroCacheService {
             String jsonData = objectMapper.writeValueAsString(cacheData);
             redisTemplate.opsForValue().set(key, jsonData, cacheTtlSeconds, TimeUnit.SECONDS);
 
-            log.debug("{}호선 위치 데이터 캐시 저장: {}대 열차", lineNumber, trains.size());
+            log.debug("{}호선 위치 데이터 캐시 저장: {}대 열차", lineNumber, positions.size());
 
         } catch (Exception e) {
             log.error("{}호선 위치 데이터 캐시 저장 실패: {}", lineNumber, e.getMessage(), e);
@@ -62,9 +62,9 @@ public class MetroCacheService {
     }
 
     /**
-     * 특정 노선의 실시간 위치 데이터 캐시 조회
+     * 특정 노선의 위치 데이터 캐시 조회
      */
-    public MetroCacheData getLinePositions(String lineNumber) {
+    public PositionCacheData getLinePositions(String lineNumber) {
         try {
             String key = METRO_POSITIONS_KEY + lineNumber;
             Object cachedData = redisTemplate.opsForValue().get(key);
@@ -74,9 +74,9 @@ public class MetroCacheService {
                 return null;
             }
 
-            MetroCacheData result = objectMapper.readValue(cachedData.toString(), MetroCacheData.class);
+            PositionCacheData result = objectMapper.readValue(cachedData.toString(), PositionCacheData.class);
             log.debug("{}호선 위치 데이터 캐시 조회: {}대 열차", lineNumber,
-                    result.getTrains() != null ? result.getTrains().size() : 0);
+                    result.getPositions() != null ? result.getPositions().size() : 0);
 
             return result;
 
@@ -87,13 +87,13 @@ public class MetroCacheService {
     }
 
     /**
-     * 전체 노선 실시간 데이터 캐시 저장
+     * 전체 노선 위치 데이터 캐시 저장
      */
-    public void cacheAllLinesData(List<MetroRealtimeDto> allTrains) {
+    public void cacheAllPositions(List<TrainPosition> allPositions) {
         try {
-            MetroCacheData cacheData = MetroCacheData.builder()
+            PositionCacheData cacheData = PositionCacheData.builder()
                     .lineNumber("ALL")
-                    .trains(allTrains)
+                    .positions(allPositions)
                     .lastUpdated(LocalDateTime.now())
                     .nextUpdateTime(LocalDateTime.now().plusSeconds(cacheTtlSeconds))
                     .isHealthy(true)
@@ -101,86 +101,35 @@ public class MetroCacheService {
                     .build();
 
             String jsonData = objectMapper.writeValueAsString(cacheData);
-            redisTemplate.opsForValue().set(METRO_ALL_LINES_KEY, jsonData, cacheTtlSeconds, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(METRO_ALL_POSITIONS_KEY, jsonData, cacheTtlSeconds, TimeUnit.SECONDS);
 
-            log.info("전체 노선 데이터 캐시 저장: {}대 열차", allTrains.size());
+            log.info("전체 노선 위치 데이터 캐시 저장: {}대 열차", allPositions.size());
 
         } catch (Exception e) {
-            log.error("전체 노선 데이터 캐시 저장 실패: {}", e.getMessage(), e);
+            log.error("전체 노선 위치 데이터 캐시 저장 실패: {}", e.getMessage(), e);
         }
     }
 
     /**
-     * 전체 노선 실시간 데이터 캐시 조회
+     * 전체 노선 위치 데이터 캐시 조회
      */
-    public MetroCacheData getAllLinesData() {
+    public PositionCacheData getAllPositions() {
         try {
-            Object cachedData = redisTemplate.opsForValue().get(METRO_ALL_LINES_KEY);
+            Object cachedData = redisTemplate.opsForValue().get(METRO_ALL_POSITIONS_KEY);
 
             if (cachedData == null) {
-                log.debug("전체 노선 데이터 캐시 없음");
+                log.debug("전체 노선 위치 데이터 캐시 없음");
                 return null;
             }
 
-            MetroCacheData result = objectMapper.readValue(cachedData.toString(), MetroCacheData.class);
-            log.debug("전체 노선 데이터 캐시 조회: {}대 열차",
-                    result.getTrains() != null ? result.getTrains().size() : 0);
+            PositionCacheData result = objectMapper.readValue(cachedData.toString(), PositionCacheData.class);
+            log.debug("전체 노선 위치 데이터 캐시 조회: {}대 열차",
+                    result.getPositions() != null ? result.getPositions().size() : 0);
 
             return result;
 
         } catch (Exception e) {
-            log.error("전체 노선 데이터 캐시 조회 실패: {}", e.getMessage(), e);
-            return null;
-        }
-    }
-
-    /**
-     * 특정 역의 도착정보 캐시 저장
-     */
-    public void cacheStationArrivals(String stationName, List<MetroRealtimeDto> arrivals) {
-        try {
-            String key = METRO_ARRIVALS_KEY + stationName;
-
-            MetroCacheData cacheData = MetroCacheData.builder()
-                    .lineNumber(stationName) // 역명을 lineNumber 필드에 저장
-                    .trains(arrivals)
-                    .lastUpdated(LocalDateTime.now())
-                    .nextUpdateTime(LocalDateTime.now().plusSeconds(cacheTtlSeconds))
-                    .isHealthy(true)
-                    .dataSource("API")
-                    .build();
-
-            String jsonData = objectMapper.writeValueAsString(cacheData);
-            redisTemplate.opsForValue().set(key, jsonData, cacheTtlSeconds, TimeUnit.SECONDS);
-
-            log.debug("{} 역 도착정보 캐시 저장: {}건", stationName, arrivals.size());
-
-        } catch (Exception e) {
-            log.error("{} 역 도착정보 캐시 저장 실패: {}", stationName, e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 특정 역의 도착정보 캐시 조회
-     */
-    public MetroCacheData getStationArrivals(String stationName) {
-        try {
-            String key = METRO_ARRIVALS_KEY + stationName;
-            Object cachedData = redisTemplate.opsForValue().get(key);
-
-            if (cachedData == null) {
-                log.debug("{} 역 도착정보 캐시 없음", stationName);
-                return null;
-            }
-
-            MetroCacheData result = objectMapper.readValue(cachedData.toString(), MetroCacheData.class);
-            log.debug("{} 역 도착정보 캐시 조회: {}건", stationName,
-                    result.getTrains() != null ? result.getTrains().size() : 0);
-
-            return result;
-
-        } catch (Exception e) {
-            log.error("{} 역 도착정보 캐시 조회 실패: {}", stationName, e.getMessage(), e);
+            log.error("전체 노선 위치 데이터 캐시 조회 실패: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -252,7 +201,7 @@ public class MetroCacheService {
     /**
      * 캐시 데이터 유효성 검사
      */
-    public boolean isCacheValid(MetroCacheData cacheData) {
+    public boolean isCacheValid(PositionCacheData cacheData) {
         if (cacheData == null || cacheData.getLastUpdated() == null) {
             return false;
         }
@@ -282,23 +231,23 @@ public class MetroCacheService {
     }
 
     /**
-     * 전체 지하철 캐시 삭제 (긴급 시) - 활성화된 노선만
+     * 전체 지하철 캐시 삭제 (긴급 시)
      */
     public void evictAllMetroCache() {
         try {
-            // 🎯 활성화된 노선별 캐시만 삭제 (1-4호선)
+            // 활성화된 노선별 캐시 삭제 (1-4호선)
             for (String line : Arrays.asList("1", "2", "3", "4")) {
                 evictLineCache(line);
             }
 
             // 전체 노선 캐시 삭제
-            redisTemplate.delete(METRO_ALL_LINES_KEY);
+            redisTemplate.delete(METRO_ALL_POSITIONS_KEY);
 
             // 건강 상태 및 업데이트 시간 삭제
             redisTemplate.delete(METRO_HEALTH_KEY);
             redisTemplate.delete(METRO_LAST_UPDATE_KEY);
 
-            log.info("활성화된 노선 캐시 삭제 완료 (1-4호선)");
+            log.info("전체 지하철 캐시 삭제 완료");
 
         } catch (Exception e) {
             log.error("캐시 삭제 실패: {}", e.getMessage(), e);
@@ -306,7 +255,7 @@ public class MetroCacheService {
     }
 
     /**
-     * 캐시 통계 조회 - 활성화된 노선만
+     * 캐시 통계 조회
      */
     public CacheStatistics getCacheStatistics() {
         try {
@@ -314,13 +263,13 @@ public class MetroCacheService {
             int totalTrains = 0;
             LocalDateTime oldestUpdate = LocalDateTime.now();
 
-            // 🎯 활성화된 노선 캐시만 확인 (1-4호선)
+            // 활성화된 노선 캐시 확인 (1-4호선)
             for (String line : Arrays.asList("1", "2", "3", "4")) {
-                MetroCacheData lineData = getLinePositions(line);
+                PositionCacheData lineData = getLinePositions(line);
                 if (lineData != null && isCacheValid(lineData)) {
                     activeCaches++;
-                    if (lineData.getTrains() != null) {
-                        totalTrains += lineData.getTrains().size();
+                    if (lineData.getPositions() != null) {
+                        totalTrains += lineData.getPositions().size();
                     }
                     if (lineData.getLastUpdated().isBefore(oldestUpdate)) {
                         oldestUpdate = lineData.getLastUpdated();
@@ -329,10 +278,10 @@ public class MetroCacheService {
             }
 
             // 전체 노선 캐시 확인
-            MetroCacheData allData = getAllLinesData();
-            boolean hasAllLinesCache = allData != null && isCacheValid(allData);
+            PositionCacheData allData = getAllPositions();
+            boolean hasAllPositionsCache = allData != null && isCacheValid(allData);
 
-            return new CacheStatistics(activeCaches, totalTrains, hasAllLinesCache,
+            return new CacheStatistics(activeCaches, totalTrains, hasAllPositionsCache,
                     oldestUpdate, getLastUpdateTime());
 
         } catch (Exception e) {
@@ -342,6 +291,67 @@ public class MetroCacheService {
     }
 
     // === 내부 클래스들 ===
+
+    public static class PositionCacheData {
+        public String lineNumber;
+        public List<TrainPosition> positions;
+        public LocalDateTime lastUpdated;
+        public LocalDateTime nextUpdateTime;
+        public Boolean isHealthy;
+        public String dataSource;
+
+        public PositionCacheData() {}
+
+        public static PositionCacheDataBuilder builder() {
+            return new PositionCacheDataBuilder();
+        }
+
+        public static class PositionCacheDataBuilder {
+            private PositionCacheData data = new PositionCacheData();
+
+            public PositionCacheDataBuilder lineNumber(String lineNumber) {
+                data.lineNumber = lineNumber;
+                return this;
+            }
+
+            public PositionCacheDataBuilder positions(List<TrainPosition> positions) {
+                data.positions = positions;
+                return this;
+            }
+
+            public PositionCacheDataBuilder lastUpdated(LocalDateTime lastUpdated) {
+                data.lastUpdated = lastUpdated;
+                return this;
+            }
+
+            public PositionCacheDataBuilder nextUpdateTime(LocalDateTime nextUpdateTime) {
+                data.nextUpdateTime = nextUpdateTime;
+                return this;
+            }
+
+            public PositionCacheDataBuilder isHealthy(Boolean isHealthy) {
+                data.isHealthy = isHealthy;
+                return this;
+            }
+
+            public PositionCacheDataBuilder dataSource(String dataSource) {
+                data.dataSource = dataSource;
+                return this;
+            }
+
+            public PositionCacheData build() {
+                return data;
+            }
+        }
+
+        // Getters
+        public String getLineNumber() { return lineNumber; }
+        public List<TrainPosition> getPositions() { return positions; }
+        public LocalDateTime getLastUpdated() { return lastUpdated; }
+        public LocalDateTime getNextUpdateTime() { return nextUpdateTime; }
+        public Boolean getIsHealthy() { return isHealthy; }
+        public String getDataSource() { return dataSource; }
+    }
 
     public static class HealthStatus {
         public String status;
@@ -368,15 +378,15 @@ public class MetroCacheService {
     public static class CacheStatistics {
         public int activeLinesCaches;
         public int totalTrains;
-        public boolean hasAllLinesCache;
+        public boolean hasAllPositionsCache;
         public LocalDateTime oldestCacheTime;
         public LocalDateTime lastUpdateTime;
 
-        public CacheStatistics(int activeLinesCaches, int totalTrains, boolean hasAllLinesCache,
+        public CacheStatistics(int activeLinesCaches, int totalTrains, boolean hasAllPositionsCache,
                                LocalDateTime oldestCacheTime, LocalDateTime lastUpdateTime) {
             this.activeLinesCaches = activeLinesCaches;
             this.totalTrains = totalTrains;
-            this.hasAllLinesCache = hasAllLinesCache;
+            this.hasAllPositionsCache = hasAllPositionsCache;
             this.oldestCacheTime = oldestCacheTime;
             this.lastUpdateTime = lastUpdateTime;
         }
@@ -384,7 +394,7 @@ public class MetroCacheService {
         // Getters
         public int getActiveLinesCaches() { return activeLinesCaches; }
         public int getTotalTrains() { return totalTrains; }
-        public boolean isHasAllLinesCache() { return hasAllLinesCache; }
+        public boolean isHasAllPositionsCache() { return hasAllPositionsCache; }
         public LocalDateTime getOldestCacheTime() { return oldestCacheTime; }
         public LocalDateTime getLastUpdateTime() { return lastUpdateTime; }
     }

@@ -1,9 +1,6 @@
-
-// MetroDataScheduler.java
 package com.example.backend.service;
 
-import com.example.backend.dto.metro.MetroCacheData;
-import com.example.backend.dto.metro.MetroRealtimeDto;
+import com.example.backend.dto.metro.TrainPosition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +13,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * 지하철 데이터 스케줄러 (최종 버전)
+ * 새로운 서비스 구조에 맞게 완전히 재작성
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -40,7 +41,7 @@ public class MetroDataScheduler {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        log.info("=== 지하철 실시간 데이터 시스템 시작 ===");
+        log.info("=== 지하철 실시간 위치 시스템 시작 ===");
         log.info("API 활성화: {}", apiEnabled);
         log.info("일일 API 호출 제한: {}", dailyLimit);
 
@@ -48,7 +49,7 @@ public class MetroDataScheduler {
         new Thread(() -> {
             try {
                 Thread.sleep(5000);
-                updateAllMetroData();
+                updateAllMetroPositions();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -56,18 +57,17 @@ public class MetroDataScheduler {
     }
 
     /**
-     * 주기적 지하철 데이터 업데이트 (2분 간격)
-     * 환경변수로 조절 가능: METRO_UPDATE_INTERVAL
+     * 주기적 지하철 위치 데이터 업데이트 (2분 간격)
      */
     @Scheduled(fixedRateString = "${seoul.metro.api.update-interval:120000}") // 기본 2분
     public void scheduledUpdate() {
-        updateAllMetroData();
+        updateAllMetroPositions();
     }
 
     /**
-     * 전체 지하철 데이터 업데이트
+     * 전체 지하철 위치 데이터 업데이트
      */
-    public void updateAllMetroData() {
+    public void updateAllMetroPositions() {
         if (!apiEnabled) {
             log.debug("API가 비활성화되어 있어 업데이트를 건너뜁니다.");
             return;
@@ -80,14 +80,14 @@ public class MetroDataScheduler {
         }
 
         try {
-            log.info("=== 지하철 실시간 데이터 업데이트 시작 ===");
+            log.info("=== 지하철 위치 데이터 업데이트 시작 ===");
 
             // API 호출 한도 확인
             if (!checkApiLimit()) {
                 return;
             }
 
-            // 전체 노선 데이터 업데이트
+            // 전체 노선 위치 데이터 업데이트
             metroApiService.getAllLinesRealtime()
                     .subscribe(
                             this::handleSuccessfulUpdate,
@@ -114,20 +114,20 @@ public class MetroDataScheduler {
             return;
         }
 
-        log.info("{}호선 데이터 업데이트 시작", lineNumber);
+        log.info("{}호선 위치 데이터 업데이트 시작", lineNumber);
 
         metroApiService.getRealtimePosition(lineNumber)
                 .subscribe(
                         positions -> {
-                            List<MetroRealtimeDto> trains = positions.stream()
-                                    .map(this::convertToRealtimeDto)
+                            List<TrainPosition> trains = positions.stream()
+                                    .map(this::convertToTrainPosition)
                                     .toList();
 
                             metroCacheService.cacheLinePositions(lineNumber, trains);
-                            log.info("{}호선 데이터 업데이트 완료: {}대 열차", lineNumber, trains.size());
+                            log.info("{}호선 위치 데이터 업데이트 완료: {}대 열차", lineNumber, trains.size());
                         },
                         error -> {
-                            log.error("{}호선 데이터 업데이트 실패: {}", lineNumber, error.getMessage());
+                            log.error("{}호선 위치 데이터 업데이트 실패: {}", lineNumber, error.getMessage());
                             handleLineUpdateFailure(lineNumber, error);
                         }
                 );
@@ -136,15 +136,15 @@ public class MetroDataScheduler {
     /**
      * 성공적인 업데이트 처리
      */
-    private void handleSuccessfulUpdate(List<MetroRealtimeDto> allTrains) {
+    private void handleSuccessfulUpdate(List<TrainPosition> allTrains) {
         try {
             // 전체 데이터 캐시
-            metroCacheService.cacheAllLinesData(allTrains);
+            metroCacheService.cacheAllPositions(allTrains);
 
-            // 🎯 활성화된 노선별로 분리하여 캐시 (1-4호선만)
+            // 활성화된 노선별로 분리하여 캐시
             for (String lineNum : metroApiService.getEnabledLines()) {
-                List<MetroRealtimeDto> lineTrains = allTrains.stream()
-                        .filter(train -> lineNum.equals(train.getSubwayLine()))
+                List<TrainPosition> lineTrains = allTrains.stream()
+                        .filter(train -> lineNum.equals(String.valueOf(train.getLineNumber())))
                         .toList();
 
                 metroCacheService.cacheLinePositions(lineNum, lineTrains);
@@ -159,7 +159,7 @@ public class MetroDataScheduler {
                     String.format("정상 업데이트 완료. 활성 노선: %s, 총 %d대 열차",
                             metroApiService.getEnabledLines(), allTrains.size()));
 
-            log.info("=== 지하철 데이터 업데이트 성공: {}개 노선, {}대 열차, API 호출 수: {}/{} ===",
+            log.info("=== 지하철 위치 데이터 업데이트 성공: {}개 노선, {}대 열차, API 호출 수: {}/{} ===",
                     metroApiService.getEnabledLines().size(), allTrains.size(),
                     metroApiService.getDailyCallCount(), dailyLimit);
 
@@ -195,7 +195,7 @@ public class MetroDataScheduler {
         log.error(errorMsg, error);
 
         // 기존 캐시 데이터 유지 (만료되지 않았다면)
-        MetroCacheData existingData = metroCacheService.getLinePositions(lineNumber);
+        MetroCacheService.PositionCacheData existingData = metroCacheService.getLinePositions(lineNumber);
         if (existingData != null && metroCacheService.isCacheValid(existingData)) {
             log.info("{}호선 기존 캐시 데이터 유지", lineNumber);
         }
@@ -209,9 +209,6 @@ public class MetroDataScheduler {
 
         log.error("=== 심각한 오류: {} ===", criticalMsg);
         metroCacheService.cacheHealthStatus("CRITICAL", criticalMsg);
-
-        // 추가 조치: 알림 발송, 관리자 통보 등 (향후 구현)
-        // sendCriticalAlert(criticalMsg);
     }
 
     /**
@@ -234,20 +231,20 @@ public class MetroDataScheduler {
     }
 
     /**
-     * 위치정보를 MetroRealtimeDto로 변환 (간소화 버전)
+     * RealtimePositionInfo를 TrainPosition으로 변환
      */
-    private MetroRealtimeDto convertToRealtimeDto(com.example.backend.dto.metro.RealtimePositionInfo position) {
-        return MetroRealtimeDto.builder()
-                .trainNo(position.getTrainNo())
-                .subwayLine(extractLineNumber(position.getSubwayId()))
-                .subwayLineId(position.getSubwayId())
-                .currentStation(position.getStatnNm())
-                .direction(position.getUpdnLine())
+    private TrainPosition convertToTrainPosition(com.example.backend.dto.metro.RealtimePositionInfo position) {
+        return TrainPosition.builder()
+                .trainId(position.getTrainNo())
+                .lineNumber(Integer.valueOf(extractLineNumber(position.getSubwayId())))
                 .stationId(position.getStatnId())
-                .trainStatus("운행중")
+                .stationName(position.getStatnNm())
+                .direction(convertDirection(position.getUpdnLine()))
+                .x(50.0 + Math.random() * 100) // 임시 좌표
+                .y(25.0 + Math.random() * 50)
                 .lastUpdated(LocalDateTime.now())
+                .dataSource("API")
                 .isRealtime(true)
-                .isLastTrain("Y".equals(position.getLstcarAt()))
                 .build();
     }
 
@@ -257,6 +254,15 @@ public class MetroDataScheduler {
     private String extractLineNumber(String subwayId) {
         if (subwayId == null || subwayId.length() < 4) return "1";
         return subwayId.substring(3);
+    }
+
+    /**
+     * 상하행 구분 변환
+     */
+    private String convertDirection(String updnLine) {
+        if ("0".equals(updnLine)) return "up";   // 상행
+        if ("1".equals(updnLine)) return "down"; // 하행
+        return "up"; // 기본값
     }
 
     /**
@@ -315,7 +321,7 @@ public class MetroDataScheduler {
 
             log.info("시스템 상태: {} - {}", healthStatus, healthDetails);
             log.info("캐시 통계: 활성 {}개, 열차 {}대, 전체캐시: {}",
-                    stats.getActiveLinesCaches(), stats.getTotalTrains(), stats.isHasAllLinesCache());
+                    stats.getActiveLinesCaches(), stats.getTotalTrains(), stats.isHasAllPositionsCache());
 
         } catch (Exception e) {
             log.error("시간별 상태 점검 실패: {}", e.getMessage(), e);
@@ -328,7 +334,7 @@ public class MetroDataScheduler {
      */
     public void manualUpdate() {
         log.info("=== 수동 업데이트 요청 ===");
-        updateAllMetroData();
+        updateAllMetroPositions();
     }
 
     /**
@@ -337,6 +343,20 @@ public class MetroDataScheduler {
     public void manualLineUpdate(String lineNumber) {
         log.info("=== {}호선 수동 업데이트 요청 ===", lineNumber);
         updateLineData(lineNumber);
+    }
+
+    /**
+     * 긴급 캐시 클리어 (관리자용)
+     */
+    public void emergencyCacheClear() {
+        log.warn("=== 긴급 캐시 클리어 실행 ===");
+        metroCacheService.evictAllMetroCache();
+        consecutiveFailures = 0;
+
+        // 즉시 새 데이터 로드 시도
+        updateAllMetroPositions();
+
+        log.info("긴급 캐시 클리어 및 재로드 완료");
     }
 
     /**
@@ -358,24 +378,10 @@ public class MetroDataScheduler {
                 .apiUsagePercentage((double) metroApiService.getDailyCallCount() / dailyLimit * 100)
                 .activeCaches(stats.getActiveLinesCaches())
                 .totalTrains(stats.getTotalTrains())
-                .hasAllLinesCache(stats.isHasAllLinesCache())
+                .hasAllPositionsCache(stats.isHasAllPositionsCache())
                 .isUpdating(isUpdating.get())
                 .apiEnabled(apiEnabled)
                 .build();
-    }
-
-    /**
-     * 긴급 캐시 클리어 (관리자용)
-     */
-    public void emergencyCacheClear() {
-        log.warn("=== 긴급 캐시 클리어 실행 ===");
-        metroCacheService.evictAllMetroCache();
-        consecutiveFailures = 0;
-
-        // 즉시 새 데이터 로드 시도
-        updateAllMetroData();
-
-        log.info("긴급 캐시 클리어 및 재로드 완료");
     }
 
     // === 내부 클래스 ===
@@ -394,7 +400,7 @@ public class MetroDataScheduler {
         private double apiUsagePercentage;
         private int activeCaches;
         private int totalTrains;
-        private boolean hasAllLinesCache;
+        private boolean hasAllPositionsCache;
         private boolean isUpdating;
         private boolean apiEnabled;
     }
