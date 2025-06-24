@@ -8,14 +8,16 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+    open-in-view: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         highlight_sql: true
         use_sql_comments: true
   data:
     redis:
+      repositories:
+        enabled: false
       host: ${SPRING_DATA_REDIS_HOST:redis}
       port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${SPRING_DATA_REDIS_PASSWORD:}
@@ -53,8 +55,9 @@ seoul:
       ttl: ${SEOUL_METRO_CACHE_TTL:180}
     monitoring:
       daily-limit: ${SEOUL_METRO_MONITORING_DAILY_LIMIT:950}
-      
+
 logging:
   level:
-    org.springframework.data.redis: DEBUG
-    org.springframework.boot.context.config: DEBUG
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
+    org.springframework.data.redis: INFO
+    org.springframework.boot.context.config: INFO
