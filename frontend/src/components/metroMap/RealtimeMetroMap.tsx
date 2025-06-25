@@ -252,7 +252,7 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
       setIsLoading(true);
       setError(null);
       
-      console.log(` 지하철 실시간 데이터 요청 #${requestCount + 1}`);
+      console.log(`🚇 지하철 실시간 데이터 요청 #${requestCount + 1}`);
       
       // 실제 API 호출
       const response = await fetch('/api/metro/positions');
@@ -260,7 +260,7 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
       
       if (result.success && result.data) {
         setData(result.data);
-        console.log(' 새로운 지하철 데이터 업데이트:', {
+        console.log('✅ 새로운 지하철 데이터 업데이트:', {
           totalTrains: result.data.totalTrains,
           dataSource: result.data.dataSource,
           timestamp: result.data.lastUpdated
@@ -274,7 +274,7 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
       setError(`네트워크 오류: ${errorMessage}`);
-      console.error(' 지하철 데이터 업데이트 실패:', err);
+      console.error('❌ 지하철 데이터 업데이트 실패:', err);
     } finally {
       setIsLoading(false);
     }
@@ -286,7 +286,7 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
     
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log(' 탭 활성화 - 즉시 업데이트');
+        console.log('👀 탭 활성화 - 즉시 업데이트');
         fetchData();
       }
     };
@@ -330,15 +330,45 @@ export const RealtimeMetroMap: React.FC = () => {
   const processedRealtimeData = useMemo(() => {
     if (!realtimeData?.positions) return [];
     
+    console.log('🔄 실시간 데이터 변환 시작:', realtimeData.positions.length, '개 열차');
+    
     // 백엔드 데이터를 프론트엔드 형식으로 변환
-    return realtimeData.positions.map(train => ({
-      frontendStationId: train.stationId ? parseInt(train.stationId) : 0,
-      stationName: train.stationName,
-      lineNumber: train.lineNumber,
-      direction: train.direction,
-      trainCount: 1, // 각 열차를 1개로 계산
-      lastUpdated: new Date(train.lastUpdated)
-    })).filter(train => train.frontendStationId > 0);
+    const converted = realtimeData.positions.map(train => {
+      // 1차: API ID로 매핑 시도
+      let frontendStation = METRO_STATIONS.find(station => 
+        station.realApiId === train.stationId
+      );
+      
+      // 2차: 역명 + 노선으로 매핑 시도 (fallback)
+      if (!frontendStation) {
+        frontendStation = METRO_STATIONS.find(station => 
+          station.name === train.stationName && 
+          station.lines.includes(train.lineNumber)
+        );
+        
+        if (frontendStation) {
+          console.log(`📍 역명 매핑 성공: ${train.stationName} -> ID ${frontendStation.id}`);
+        }
+      }
+      
+      if (!frontendStation) {
+        console.warn(`❌ 매핑 실패: ${train.stationName} (API ID: ${train.stationId}, 노선: ${train.lineNumber})`);
+        return null;
+      }
+      
+      return {
+        frontendStationId: frontendStation.id,
+        stationName: train.stationName,
+        lineNumber: train.lineNumber,
+        direction: train.direction,
+        trainCount: 1,
+        lastUpdated: new Date(train.lastUpdated),
+        trainId: train.trainId
+      };
+    }).filter(train => train !== null);
+    
+    console.log(`✅ 매핑 완료: ${converted.length}/${realtimeData.positions.length} 열차`);
+    return converted;
   }, [realtimeData]);
 
   // 표시할 노선 연결 계산
@@ -398,15 +428,15 @@ export const RealtimeMetroMap: React.FC = () => {
     <Container>
       {/* 헤더 */}
       <Header>
-        <h1>지하철 노선도</h1>
-        <StatusIndicator $isLoading={isLoading} $hasError={!!error}>
+        <h1>🚇 실시간 지하철 노선도</h1>
+        {/* <StatusIndicator $isLoading={isLoading} $hasError={!!error}>
           <div className="indicator" />
           {error ? '연결 실패' : isLoading ? '업데이트 중' : '실시간 연결'}
-        </StatusIndicator>
+        </StatusIndicator> */}
       </Header>
 
       {/* 통계 카드 */}
-      <StatsGrid>
+      {/* <StatsGrid>
         <StatCard>
           <div className="stat-number">{METRO_STATS.totalStations}</div>
           <div className="stat-label">총 지하철역</div>
@@ -423,7 +453,7 @@ export const RealtimeMetroMap: React.FC = () => {
           <div className="stat-number">{processedRealtimeData.length}</div>
           <div className="stat-label">실시간 데이터</div>
         </StatCard>
-      </StatsGrid>
+      </StatsGrid> */}
       
       <MapWrapper>
         {/* 컨트롤 패널 */}
@@ -438,7 +468,7 @@ export const RealtimeMetroMap: React.FC = () => {
                     onChange={() => handleLineToggle(line)}
                   />
                   <div className="color-dot" />
-                  {line}호선 ({totalStations}개역, {trainCount}대)
+                  {line}호선 {/*({totalStations}개역, {trainCount}대)*/}
                 </CheckboxItem>
               ))}
             </CheckboxGroup>
@@ -480,13 +510,6 @@ export const RealtimeMetroMap: React.FC = () => {
               </CheckboxItem>
             </CheckboxGroup>
           </ControlGroup>
-
-          <RefreshButton 
-            onClick={refreshData} 
-            disabled={isLoading}
-          >
-            {isLoading ? '업데이트 중...' : '즉시 새로고침'}
-          </RefreshButton>
         </Controls>
 
         {/* SVG 지도 */}
@@ -552,11 +575,37 @@ export const RealtimeMetroMap: React.FC = () => {
                 
                 return (
                   <g key={station.id}>
+                    {/* 실시간 데이터가 있는 역의 외곽 링 애니메이션 */}
+                    {hasRealtimeData && (
+                      <circle
+                        cx={station.x}
+                        cy={station.y}
+                        r="1.5"
+                        fill="none"
+                        stroke="#10b981"
+                        strokeWidth="0.3"
+                        opacity="0.8"
+                      >
+                        <animate
+                          attributeName="r"
+                          values="0.8;2.0;0.8"
+                          dur="3s"
+                          repeatCount="indefinite"
+                        />
+                        <animate
+                          attributeName="opacity"
+                          values="0.8;0.2;0.8"
+                          dur="3s"
+                          repeatCount="indefinite"
+                        />
+                      </circle>
+                    )}
+                    
                     {/* 역 원 (배경) */}
                     <circle
                       cx={station.x}
                       cy={station.y}
-                      r={selectedStation === station.id ? 1.2 : station.isTransfer ? 0.8 : 0.5}
+                      r={selectedStation === station.id ? 1.2 : station.isTransfer ? 0.8 : 0.6}
                       fill="white"
                       stroke={getStationColor(station)}
                       strokeWidth={selectedStation === station.id ? "1.2" : "0.8"}
@@ -564,24 +613,17 @@ export const RealtimeMetroMap: React.FC = () => {
                       onClick={() => handleStationClick(station.id)}
                     />
                     
-                    {/* 실시간 데이터가 있는 역 표시 */}
+                    {/* 실시간 데이터가 있는 역의 중심 점 */}
                     {hasRealtimeData && (
                       <circle
                         cx={station.x}
                         cy={station.y}
-                        r={0.3}
+                        r="0.4"
                         fill="#10b981"
-                        opacity="0.8"
                       >
                         <animate
-                          attributeName="r"
-                          values="0.3;0.6;0.3"
-                          dur="2s"
-                          repeatCount="indefinite"
-                        />
-                        <animate
-                          attributeName="opacity"
-                          values="0.8;0.4;0.8"
+                          attributeName="fill"
+                          values="#10b981;#34d399;#10b981"
                           dur="2s"
                           repeatCount="indefinite"
                         />
@@ -593,25 +635,40 @@ export const RealtimeMetroMap: React.FC = () => {
                       <circle
                         cx={station.x}
                         cy={station.y}
-                        r={0.6}
+                        r={0.5}
                         fill={getStationColor(station)}
+                        opacity="0.7"
                       />
                     )}
                     
-                    {/* 역명 라벨 */}
+                    {/* 스토리 역 표시 */}
+                    {station.hasStory && (
+                      <circle
+                        cx={station.x + 1}
+                        cy={station.y - 1}
+                        r="0.3"
+                        fill="#fbbf24"
+                        stroke="white"
+                        strokeWidth="0.2"
+                      />
+                    )}
+                    
+                    {/* 역명 라벨 - 위치 수정 */}
                     {(showLabels || selectedStation === station.id) && (
                       <text
                         x={station.x}
-                        y={station.y - 3}
-                        fontSize="2.5"
+                        y={station.y - 2.5}
+                        fontSize="2.2"
                         fill="#374151"
                         textAnchor="middle"
+                        dominantBaseline="middle"
                         style={{ 
                           pointerEvents: 'none', 
-                          fontWeight: 'bold',
+                          fontWeight: '600',
                           stroke: 'white',
-                          strokeWidth: '0.5',
-                          paintOrder: 'stroke'
+                          strokeWidth: '0.6',
+                          paintOrder: 'stroke fill',
+                          fontFamily: 'system-ui, -apple-system, sans-serif'
                         }}
                       >
                         {station.name}

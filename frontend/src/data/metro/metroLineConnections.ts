@@ -50,7 +50,7 @@ const createCurvedPath = (
  */
 const LINE_STATION_ORDERS = {
   1: [
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 124, 17, 18, 19, 20, 
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 124, 16, 17, 18, 19, 20, 
     21, 22, 23, 24, 25, 26, 66, 27, 28, 29, 30, 31
   ],
   2: [
@@ -77,7 +77,8 @@ const SPECIAL_CONNECTIONS = {
     { from: 43, to: 75, type: 'branch' }, 
     { from: 75, to: 76, type: 'branch' }, 
     { from: 76, to: 77, type: 'branch' }, 
-    { from: 77, to: 14, type: 'branch' },
+    { from: 77, to: 78, type: 'branch' }, 
+    { from: 78, to: 14, type: 'branch' },
     { from: 66, to: 79, type: 'branch' },
     { from: 79, to: 80, type: 'branch' },
     { from: 80, to: 81, type: 'branch' },

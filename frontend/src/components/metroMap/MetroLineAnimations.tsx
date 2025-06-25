@@ -100,6 +100,9 @@ export const MetroLineAnimations: React.FC<MetroLineAnimationsProps> = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 opacity="0.6"
+                style={{
+                  zIndex : "5"
+                }}
               />
               
               {/* 상행선 애니메이션 */}

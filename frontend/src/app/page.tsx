@@ -207,13 +207,10 @@ export default function Home() {
       {/* 실시간 지하철 노선도 섹션 */}
       <FeaturesSection>
         <FeaturesContainer>
-          <h2>🚇 실시간 지하철 노선도</h2>
-          
-          <FeatureHighlight>
             
             {/* 실시간 지하철 노선도 컴포넌트 */}
             <RealtimeMetroMap />
-          </FeatureHighlight>
+
         </FeaturesContainer>
       </FeaturesSection>
 
