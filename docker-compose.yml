@@ -39,7 +39,7 @@ services:
       - TABLE_KEY=${TABLE_KEY}
       
       - SEOUL_METRO_API_KEY=${SEOUL_METRO_API_KEY:-TEMP_KEY}
-      - SEOUL_METRO_API_BASE_URL=https://swopenapi.seoul.go.kr/api/subway
+      - SEOUL_METRO_API_BASE_URL=http://swopenapi.seoul.go.kr/api/subway
       - SEOUL_METRO_API_ENABLED=${METRO_API_ENABLED}
       - SEOUL_METRO_API_TIMEOUT=10000
       - SEOUL_METRO_API_RETRY_COUNT=3

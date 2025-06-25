@@ -111,7 +111,7 @@ public class MetroApiService {
                 .filter(line -> line.matches("\\d+"))
                 .collect(Collectors.toList());
 
-        log.info("API 서비스 초기화: 활성 노선 {}", enabledLines);
+        log.info("=== API 서비스 초기화 ===");
     }
 
     /**
@@ -132,7 +132,11 @@ public class MetroApiService {
      * 실시간 위치정보 조회 (특정 노선)
      */
     public Mono<List<RealtimePositionInfo>> getRealtimePosition(String lineNumber) {
+        log.info("=== API 호출 전 조건 확인 ===");
+
         if (!apiEnabled || "TEMP_KEY".equals(apiKey)) {
+            log.warn("API 비활성화 또는 임시 키 사용: apiEnabled={}, apiKey={}",
+                    apiEnabled, apiKey.substring(0, Math.min(8, apiKey.length())) + "...");
             return createCleanMockPositionData(lineNumber);
         }
 
@@ -337,10 +341,9 @@ public class MetroApiService {
         return TrainPosition.builder()
                 .trainId(position.getTrainNo())
                 .lineNumber(Integer.valueOf(extractLineNumber(position.getSubwayId())))
-                .stationId(position.getStatnId()) // 🎯 API ID만 제공
-                .stationName(position.getStatnNm()) // 🎯 역명만 제공
+                .stationId(position.getStatnId())
+                .stationName(position.getStatnNm())
                 .direction(convertDirection(position.getUpdnLine()))
-                // 🚀 x, y 좌표 제거! 프론트엔드에서 stationId로 매핑
                 .x(null)
                 .y(null)
                 .lastUpdated(LocalDateTime.now())
