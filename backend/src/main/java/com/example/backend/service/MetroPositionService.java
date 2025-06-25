@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.dto.metro.TrainPosition;
 import com.example.backend.dto.metro.MetroPositionResponse;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,8 @@ public class MetroPositionService {
 
     @Value("${seoul.metro.api.enabled-lines:1,2,3,4}")
     private String enabledLinesConfig;
+
+    private final MetroStationFilter stationFilter; // 🎯 필터 추가
 
     private List<Integer> enabledLines;
 
@@ -93,38 +96,41 @@ public class MetroPositionService {
                 .collect(Collectors.toList());
 
         log.info("지하철 위치 서비스 초기화 완료: 활성 노선 {}", enabledLines);
+        log.info("프론트엔드 역 필터링 활성화: {}개 역", stationFilter.getFrontendStationIds().size());
     }
 
     /**
-     * 전체 노선의 열차 위치 정보 조회
+     * 전체 노선의 열차 위치 정보 조회 (필터링 적용)
      */
     public MetroPositionResponse getAllPositions() {
         try {
+            // 1. 전체 위치 정보 생성 (필터링 전)
             List<TrainPosition> allPositions = new ArrayList<>();
-
-            // 활성화된 노선별로 위치 정보 생성
             for (Integer lineNumber : enabledLines) {
                 List<TrainPosition> linePositions = generateRealisticLinePositions(lineNumber);
                 allPositions.addAll(linePositions);
             }
 
-            // 노선별 통계 생성
-            Map<String, Integer> lineStats = createLineStatistics(allPositions);
+            // 2. 🎯 프론트엔드 역만 필터링
+            List<TrainPosition> filteredPositions = stationFilter.filterFrontendStations(allPositions);
 
-            // 응답 생성
+            // 3. 필터링된 데이터로 통계 생성
+            Map<String, Integer> lineStats = createLineStatistics(filteredPositions);
+
+            // 4. 응답 생성
             MetroPositionResponse response = MetroPositionResponse.builder()
-                    .positions(allPositions)
-                    .totalTrains(allPositions.size())
+                    .positions(filteredPositions)
+                    .totalTrains(filteredPositions.size())
                     .lineStatistics(lineStats)
                     .lastUpdated(LocalDateTime.now())
                     .nextUpdate(LocalDateTime.now().plusMinutes(2))
-                    .dataSource(apiEnabled ? "CLEAN_MOCK" : "MOCK")
+                    .dataSource(apiEnabled ? "FILTERED_MOCK" : "MOCK")
                     .isRealtime(false) // Mock 데이터임을 명시
                     .systemStatus("HEALTHY")
                     .build();
 
-            log.info("전체 위치 정보 조회 완료: {}개 노선, {}대 열차",
-                    enabledLines.size(), allPositions.size());
+            log.info("전체 위치 정보 조회 완료 (필터링 적용): {}개 노선, {}대 열차 (필터링 전: {}대)",
+                    enabledLines.size(), filteredPositions.size(), allPositions.size());
 
             return response;
 
@@ -135,7 +141,7 @@ public class MetroPositionService {
     }
 
     /**
-     * 특정 노선의 열차 위치 정보 조회
+     * 특정 노선의 열차 위치 정보 조회 (필터링 적용)
      */
     public MetroPositionResponse getLinePositions(Integer lineNumber) {
         try {
@@ -144,21 +150,29 @@ public class MetroPositionService {
                 return createEmptyResponse(lineNumber, "비활성 노선");
             }
 
-            List<TrainPosition> positions = generateRealisticLinePositions(lineNumber);
-            Map<String, Integer> lineStats = Map.of(lineNumber.toString(), positions.size());
+            // 1. 해당 노선 위치 정보 생성
+            List<TrainPosition> allLinePositions = generateRealisticLinePositions(lineNumber);
+
+            // 2. 🎯 프론트엔드 역만 필터링
+            List<TrainPosition> filteredPositions = stationFilter.filterLineStations(allLinePositions, lineNumber);
+
+            // 3. 통계 생성
+            Map<String, Integer> lineStats = Map.of(lineNumber.toString(), filteredPositions.size());
 
             MetroPositionResponse response = MetroPositionResponse.builder()
-                    .positions(positions)
-                    .totalTrains(positions.size())
+                    .positions(filteredPositions)
+                    .totalTrains(filteredPositions.size())
                     .lineStatistics(lineStats)
                     .lastUpdated(LocalDateTime.now())
                     .nextUpdate(LocalDateTime.now().plusMinutes(2))
-                    .dataSource("CLEAN_MOCK")
+                    .dataSource("FILTERED_MOCK")
                     .isRealtime(false)
                     .systemStatus("HEALTHY")
                     .build();
 
-            log.info("{}호선 위치 정보 조회 완료: {}대 열차 (관심사 분리)", lineNumber, positions.size());
+            log.info("{}호선 위치 정보 조회 완료 (필터링 적용): {}대 열차 (필터링 전: {}대)",
+                    lineNumber, filteredPositions.size(), allLinePositions.size());
+
             return response;
 
         } catch (Exception e) {
@@ -168,7 +182,49 @@ public class MetroPositionService {
     }
 
     /**
-     *  위치 정보 생성
+     * 관리자용: 필터링 통계 조회
+     */
+    public MetroStationFilter.FilteringStatistics getFilteringStatistics() {
+        try {
+            // 전체 데이터 생성
+            List<TrainPosition> allPositions = new ArrayList<>();
+            for (Integer lineNumber : enabledLines) {
+                List<TrainPosition> linePositions = generateRealisticLinePositions(lineNumber);
+                allPositions.addAll(linePositions);
+            }
+
+            // 필터링 적용
+            List<TrainPosition> filteredPositions = stationFilter.filterFrontendStations(allPositions);
+
+            // 통계 생성
+            return stationFilter.generateFilteringStats(allPositions, filteredPositions);
+
+        } catch (Exception e) {
+            log.error("필터링 통계 생성 실패: {}", e.getMessage(), e);
+            return MetroStationFilter.FilteringStatistics.builder()
+                    .originalCount(0)
+                    .filteredCount(0)
+                    .reductionCount(0)
+                    .reductionPercentage(0.0)
+                    .build();
+        }
+    }
+
+    /**
+     * 관리자용: 제외된 역 목록 조회 (디버깅용)
+     */
+    public List<String> getExcludedStations() {
+        List<TrainPosition> allPositions = new ArrayList<>();
+        for (Integer lineNumber : enabledLines) {
+            List<TrainPosition> linePositions = generateRealisticLinePositions(lineNumber);
+            allPositions.addAll(linePositions);
+        }
+
+        return stationFilter.getExcludedStations(allPositions);
+    }
+
+    /**
+     * 현실적인 위치 정보 생성 (기존과 동일)
      */
     private List<TrainPosition> generateRealisticLinePositions(Integer lineNumber) {
         List<StationInfo> stations = LINE_STATIONS.get(lineNumber);
@@ -178,7 +234,6 @@ public class MetroPositionService {
         }
 
         int trainCount = getRealisticTrainCount(lineNumber);
-
         trainCount = adjustTrainCountByTime(trainCount);
 
         List<TrainPosition> positions = new ArrayList<>();
@@ -186,7 +241,6 @@ public class MetroPositionService {
 
         for (int i = 0; i < trainCount; i++) {
             StationInfo station = getDistributedStation(stations, i, trainCount);
-
             String direction = getRealisticDirection(random, lineNumber);
 
             TrainPosition position = TrainPosition.builder()
@@ -203,19 +257,19 @@ public class MetroPositionService {
             positions.add(position);
         }
 
-        log.debug("{}호선 비즈니스 로직 기반 위치 데이터 생성: {}대 열차", lineNumber, positions.size());
+        log.debug("{}호선 위치 데이터 생성: {}대 열차", lineNumber, positions.size());
         return positions;
     }
 
     /**
-     *  노선별 현실적 열차 수 반환
+     * 현실적인 노선별 열차 수 반환
      */
     private int getRealisticTrainCount(Integer lineNumber) {
         return REALISTIC_TRAIN_COUNTS.getOrDefault(lineNumber, 5);
     }
 
     /**
-     *  시간대별 열차 수 조정
+     * 시간대별 열차 수 조정
      */
     private int adjustTrainCountByTime(int baseCount) {
         LocalTime now = LocalTime.now();
@@ -238,7 +292,7 @@ public class MetroPositionService {
     }
 
     /**
-     *  열차를 역에 순서대로 분산 배치
+     * 열차를 역에 순서대로 분산 배치
      */
     private StationInfo getDistributedStation(List<StationInfo> stations, int trainIndex, int totalTrains) {
         // 전체 역을 열차 수로 나누어 균등 분산
@@ -248,7 +302,7 @@ public class MetroPositionService {
     }
 
     /**
-     *  상행/하행 방향 결정
+     * 현실적인 상행/하행 방향 결정
      */
     private String getRealisticDirection(Random random, Integer lineNumber) {
         // 60:40 비율로 약간의 편중 (완전 50:50보다 현실적)
@@ -312,6 +366,19 @@ public class MetroPositionService {
         return enabledLines.contains(lineNumber);
     }
 
+    /**
+     * 프론트엔드 역 필터 정보 반환
+     */
+    public Map<String, Object> getFilterInfo() {
+        return Map.of(
+                "totalFrontendStations", stationFilter.getFrontendStationIds().size(),
+                "stationsByLine", stationFilter.getFrontendStationCountByLine(),
+                "enabledLines", enabledLines,
+                "filteringEnabled", true
+        );
+    }
+
+    @Getter
     private static class StationInfo {
         private final String name;
         private final String id;
@@ -320,8 +387,5 @@ public class MetroPositionService {
             this.name = name;
             this.id = id;
         }
-
-        public String getName() { return name; }
-        public String getId() { return id; }
     }
 }
