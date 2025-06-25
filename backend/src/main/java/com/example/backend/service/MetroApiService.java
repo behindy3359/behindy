@@ -14,10 +14,7 @@ import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -129,51 +126,146 @@ public class MetroApiService {
     }
 
     /**
-     * 실시간 위치정보 조회 (특정 노선)
+     * 실시간 위치정보 조회 (특정 노선) - 상세 로깅 추가
      */
     public Mono<List<RealtimePositionInfo>> getRealtimePosition(String lineNumber) {
-        log.info("=== API 호출 전 조건 확인 ===");
+        log.info("=== 🚇 지하철 API 호출 시작 ===");
 
         if (!apiEnabled || "TEMP_KEY".equals(apiKey)) {
-            log.warn("API 비활성화 또는 임시 키 사용: apiEnabled={}, apiKey={}",
-                    apiEnabled, apiKey.substring(0, Math.min(8, apiKey.length())) + "...");
+            log.warn("❌ API 비활성화 또는 임시 키: apiEnabled={}, apiKey={}...",
+                    apiEnabled, apiKey.substring(0, Math.min(8, apiKey.length())));
             return createCleanMockPositionData(lineNumber);
         }
 
-        String url = buildUrl("realtimePosition", lineNumber);
+        // 1. 요청 로깅
+        String url = buildUrl("realtimePosition", lineNumber + "호선");
+        log.info("요청 URL: {}", url);
+        log.info("요청 시간: {}", LocalDateTime.now());
 
         return webClient.get()
                 .uri(url)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response -> {
-                    log.error("API 호출 오류: {} - {}", response.statusCode(), url);
+                    log.error("❌ HTTP 에러: {} - {}", response.statusCode(), url);
                     return Mono.error(new RuntimeException("API 호출 실패: " + response.statusCode()));
                 })
                 .bodyToMono(RealtimePositionResponse.class)
                 .timeout(Duration.ofMillis(timeoutMs))
                 .retryWhen(Retry.fixedDelay(retryCount, Duration.ofSeconds(1)))
                 .map(response -> {
-                    incrementCallCount();
+                    // 2. 응답 로깅
+                    log.info("===API 응답 분석 ===");
 
-                    if (response.getMetroErrorMessage() != null && response.getMetroErrorMessage().getStatus() != null) {
-                        log.error("API 에러 응답: {}", response.getMetroErrorMessage().getMessage());
-                        return new ArrayList<RealtimePositionInfo>();
+                    // 2-1. 기본 응답 정보
+                    incrementCallCount();
+                    log.info("HTTP 응답 수신 완료");
+
+                    // 2-2. 에러 메시지 체크
+                    MetroErrorMessage errorMsg = response.getMetroErrorMessage();
+                    if (errorMsg != null) {
+                        log.info("ErrorMessage - Status: {}, Code: {}, Message: {}, Total: {}",
+                                errorMsg.getStatus(), errorMsg.getCode(),
+                                errorMsg.getMessage(), errorMsg.getTotal());
+
+                        // 에러 상태 체크
+                        if (errorMsg.getStatus() == null || errorMsg.getStatus() != 200) {
+                            log.error("API 에러 응답: Status={}, Message={}",
+                                    errorMsg.getStatus(), errorMsg.getMessage());
+                            return new ArrayList<RealtimePositionInfo>();
+                        }
+                    } else {
+                        log.warn("ErrorMessage가 null입니다");
                     }
 
-                    List<RealtimePositionInfo> result = response.getRealtimePositionList();
-                    log.info("실시간 위치정보 조회 성공: {}호선 - {}건", lineNumber, result != null ? result.size() : 0);
-                    return result != null ? result : new ArrayList<RealtimePositionInfo>();
+                    // 2-3. 실제 데이터 체크
+                    List<RealtimePositionInfo> positionList = response.getRealtimePositionList();
+                    log.info("RealtimePositionList - Size: {}, IsNull: {}",
+                            positionList != null ? positionList.size() : "null",
+                            positionList == null);
+
+                    // 3. 데이터 검증 및 샘플 로깅
+                    if (positionList != null && !positionList.isEmpty()) {
+
+                        // 데이터 품질 체크
+                        long validTrains = positionList.stream()
+                                .filter(train -> train.getTrainNo() != null && !train.getTrainNo().trim().isEmpty())
+                                .filter(train -> train.getStatnNm() != null && !train.getStatnNm().trim().isEmpty())
+                                .count();
+
+                        log.info("데이터 품질: 전체={}, 유효={}, 무효={}",
+                                positionList.size(), validTrains, positionList.size() - validTrains);
+
+                        // 상행/하행 분포
+                        long upTrains = positionList.stream()
+                                .filter(train -> "0".equals(train.getUpdnLine()))
+                                .count();
+                        long downTrains = positionList.stream()
+                                .filter(train -> "1".equals(train.getUpdnLine()))
+                                .count();
+
+                        log.info("방향별 분포: 상행(0)={}, 하행(1)={}, 기타={}",
+                                upTrains, downTrains, positionList.size() - upTrains - downTrains);
+
+                    } else {
+                        log.warn("⚠수신된 열차 데이터가 없습니다");
+
+                        // 빈 데이터 원인 분석
+                        if (errorMsg != null) {
+                            log.info("   빈 데이터 원인 분석:");
+                            log.info("   - API Status: {}", errorMsg.getStatus());
+                            log.info("   - Total Count: {}", errorMsg.getTotal());
+                            log.info("   - Message: {}", errorMsg.getMessage());
+                        }
+                    }
+
+                    // 4. 후처리 결과 로깅
+                    List<RealtimePositionInfo> result = positionList != null ? positionList : new ArrayList<>();
+                    log.info("=== 후처리 완료 ===");
+                    log.info(" {}호선 처리 결과: {}건 → 반환", lineNumber, result.size());
+
+                    return result;
                 })
                 .onErrorResume(error -> {
-                    log.error("실시간 위치정보 조회 실패: {}호선 - {}", lineNumber, error.getMessage());
+                    log.error("===  API 호출 실패 ===");
+                    log.error(" 오류 내용: {}", error.getMessage());
+                    log.error(" Mock 데이터로 대체");
                     return createCleanMockPositionData(lineNumber);
                 });
     }
+    /**
+     * 변환 과정 로깅 (필수만)
+     */
+    private TrainPosition convertToTrainPositionWithLogging(RealtimePositionInfo position, String lineNumber) {
+        try {
+            TrainPosition result = TrainPosition.builder()
+                    .trainId(position.getTrainNo())
+                    .lineNumber(Integer.valueOf(extractLineNumber(position.getSubwayId())))
+                    .stationId(position.getStatnId())
+                    .stationName(position.getStatnNm())
+                    .direction(convertDirection(position.getUpdnLine()))
+                    .x(null)
+                    .y(null)
+                    .lastUpdated(LocalDateTime.now())
+                    .dataSource("API")
+                    .isRealtime(true)
+                    .build();
+
+            return result;
+
+        } catch (Exception e) {
+            log.error(" 변환 실패: TrainNo={}, Error={}",
+                    position.getTrainNo(), e.getMessage());
+            return null;
+        }
+    }
 
     /**
-     * 활성화된 노선들의 실시간 데이터 조회
+     * getAllLinesRealtime 메서드에도 로깅 추가
      */
     public Mono<List<TrainPosition>> getAllLinesRealtime() {
+        log.info("===  전체 노선 실시간 데이터 조회 시작 ===");
+        log.info(" 활성 노선: {}", enabledLines);
+
         List<Mono<List<RealtimePositionInfo>>> requests = new ArrayList<>();
 
         for (String lineNumber : enabledLines) {
@@ -181,24 +273,45 @@ public class MetroApiService {
         }
 
         return Mono.zip(requests, results -> {
+            log.info("===  전체 노선 데이터 통합 처리 ===");
+
             List<TrainPosition> allTrains = new ArrayList<>();
+            Map<String, Integer> lineStats = new HashMap<>();
 
             for (int i = 0; i < results.length; i++) {
+                String currentLine = enabledLines.get(i);
+
                 @SuppressWarnings("unchecked")
                 List<RealtimePositionInfo> lineData = (List<RealtimePositionInfo>) results[i];
 
+                log.info(" {}호선: 수신={}건", currentLine, lineData.size());
+
+                int successCount = 0;
+                int failCount = 0;
+
                 for (RealtimePositionInfo position : lineData) {
-                    TrainPosition trainPosition = convertToTrainPosition(position);
-                    allTrains.add(trainPosition);
+                    TrainPosition trainPosition = convertToTrainPositionWithLogging(position, currentLine);
+                    if (trainPosition != null) {
+                        allTrains.add(trainPosition);
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
                 }
+
+                lineStats.put(currentLine, successCount);
+                log.info(" {}호선 변환: 성공={}건, 실패={}건", currentLine, successCount, failCount);
             }
 
-            log.info("활성화된 노선 실시간 데이터 조회 완료: {}개 노선, 총 {}대 열차",
-                    enabledLines.size(), allTrains.size());
+            log.info("===  전체 처리 완료 ===");
+            log.info("   최종 결과:");
+            log.info("   - 총 노선: {}개", enabledLines.size());
+            log.info("   - 총 열차: {}대", allTrains.size());
+            log.info("   - 노선별 현황: {}", lineStats);
+
             return allTrains;
         });
     }
-
     /**
      *  Mock 데이터 생성
      */
@@ -229,8 +342,8 @@ public class MetroApiService {
             RealtimePositionInfo mock = RealtimePositionInfo.builder()
                     .subwayId("100" + lineNumber)
                     .subwayNm(lineNumber + "호선")
-                    .statnId(station.getApiId()) // 🎯 API ID만 제공
-                    .statnNm(station.getName())  // 🎯 역명만 제공
+                    .statnId(station.getApiId())
+                    .statnNm(station.getName())
                     .trainNo("MOCK-" + lineNumber + "-" + (1000 + i))
                     .recptnDt(LocalDateTime.now().toString())
                     .lastRecptnDt(LocalDateTime.now().toString())
