@@ -477,16 +477,6 @@ export const RealtimeMetroMap: React.FC = () => {
                     />
                   )}
                   
-                  {/* 스토리 역 표시 */}
-                  {station.hasStory && (
-                    <circle
-                      cx={station.x}
-                      cy={station.y}
-                      r={0.3}
-                      fill="#fbbf24"
-                    />
-                  )}
-                  
                   {/* 역명 라벨 */}
                   {(showLabels || selectedStation === station.id) && (
                     <text
@@ -511,22 +501,6 @@ export const RealtimeMetroMap: React.FC = () => {
             </g>
           </svg>
         </SVGContainer>
-
-        {/* 정보 패널 */}
-        <InfoPanel>
-          <div className="info-title">📡 실시간 연결 정보</div>
-          <div className="last-updated">
-            마지막 업데이트: {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : '로딩 중...'}
-          </div>
-          <div className="request-count">
-            API 요청 횟수: {requestCount}회 | 데이터 소스: {realtimeData?.dataSource || 'N/A'}
-          </div>
-          {error && (
-            <div style={{ color: '#dc2626', fontSize: '14px', marginTop: '8px' }}>
-              ❌ {error}
-            </div>
-          )}
-        </InfoPanel>
 
         {/* 선택된 역 정보 */}
         {selectedStation && (
@@ -564,12 +538,6 @@ export const RealtimeMetroMap: React.FC = () => {
           </InfoPanel>
         )}
       </MapWrapper>
-
-      <div style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center' }}>
-        💡 <strong>실시간 기능:</strong> 30초마다 자동 업데이트 | 
-        상행/하행 방향별 그라데이션 애니메이션 | 
-        열차 수에 따른 애니메이션 강도 조절
-      </div>
     </Container>
   );
 };

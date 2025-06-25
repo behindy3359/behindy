@@ -5,7 +5,7 @@ import { RealtimeStationData } from '@/data/metro/stationsData';
 interface MetroLineAnimationsProps {
   realtimeData: RealtimeStationData[];
   visibleLines: number[];
-  lineConnections: any[]; // 기존 LineConnection 타입 사용
+  lineConnections: any[];
 }
 
 // 애니메이션 강도 계산

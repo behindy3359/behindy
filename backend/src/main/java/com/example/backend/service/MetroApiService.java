@@ -13,9 +13,11 @@ import reactor.util.retry.Retry;
 import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -39,26 +41,69 @@ public class MetroApiService {
     @Value("${seoul.metro.api.retry-count:3}")
     private int retryCount;
 
-    // 🎯 사용할 노선 목록 (1-4호선만)
     @Value("${seoul.metro.api.enabled-lines:1,2,3,4}")
     private String enabledLinesConfig;
 
     private final WebClient webClient;
     private final AtomicInteger dailyCallCount = new AtomicInteger(0);
-
-    // 활성화된 노선 목록 캐시
     private List<String> enabledLines;
 
-    // WebClient 빈 설정
+    private static final List<CleanStationInfo> STATION_DATA = Arrays.asList(
+            // 1호선
+            new CleanStationInfo("1", "도봉산", "1001000117"),
+            new CleanStationInfo("1", "창동", "1001000116"),
+            new CleanStationInfo("1", "종로5가", "1001000129"),
+            new CleanStationInfo("1", "종각", "1001000131"),
+            new CleanStationInfo("1", "시청", "1001000132"),
+            new CleanStationInfo("1", "서울역", "1001000133"),
+            new CleanStationInfo("1", "용산", "1001000135"),
+            new CleanStationInfo("1", "영등포", "1001000139"),
+            new CleanStationInfo("1", "구로", "1001000141"),
+            new CleanStationInfo("1", "온수", "1001000145"),
+
+            // 2호선
+            new CleanStationInfo("2", "을지로입구", "1002000202"),
+            new CleanStationInfo("2", "동대문역사문화공원", "1002000205"),
+            new CleanStationInfo("2", "건대입구", "1002000212"),
+            new CleanStationInfo("2", "잠실", "1002000216"),
+            new CleanStationInfo("2", "삼성", "1002000219"),
+            new CleanStationInfo("2", "강남", "1002000222"),
+            new CleanStationInfo("2", "사당", "1002000226"),
+            new CleanStationInfo("2", "신림", "1002000230"),
+            new CleanStationInfo("2", "구로디지털단지", "1002000232"),
+            new CleanStationInfo("2", "홍대입구", "1002000239"),
+            new CleanStationInfo("2", "신촌", "1002000240"),
+
+            // 3호선
+            new CleanStationInfo("3", "구파발", "1003000301"),
+            new CleanStationInfo("3", "불광", "1003000303"),
+            new CleanStationInfo("3", "독립문", "1003000307"),
+            new CleanStationInfo("3", "종로3가", "1003000310"),
+            new CleanStationInfo("3", "충무로", "1003000328"),
+            new CleanStationInfo("3", "압구정", "1003000323"),
+            new CleanStationInfo("3", "교대", "1003000319"),
+            new CleanStationInfo("3", "양재", "1003000344"),
+            new CleanStationInfo("3", "수서", "1003000351"),
+            new CleanStationInfo("3", "오금", "1003000352"),
+
+            // 4호선
+            new CleanStationInfo("4", "당고개", "1004000401"),
+            new CleanStationInfo("4", "상계", "1004000402"),
+            new CleanStationInfo("4", "창동", "1004000412"),
+            new CleanStationInfo("4", "한성대입구", "1004000419"),
+            new CleanStationInfo("4", "동대문", "1004000421"),
+            new CleanStationInfo("4", "충무로", "1004000423"),
+            new CleanStationInfo("4", "명동", "1004000424"),
+            new CleanStationInfo("4", "서울역", "1004000426"),
+            new CleanStationInfo("4", "사당", "1004000433")
+    );
+
     public MetroApiService() {
         this.webClient = WebClient.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024)) // 1MB
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024))
                 .build();
     }
 
-    /**
-     * 초기화 메서드 - 활성화된 노선 목록 파싱
-     */
     @PostConstruct
     public void init() {
         this.enabledLines = Arrays.stream(enabledLinesConfig.split(","))
@@ -66,7 +111,7 @@ public class MetroApiService {
                 .filter(line -> line.matches("\\d+"))
                 .collect(Collectors.toList());
 
-        log.info("🚇 활성화된 지하철 노선: {}", enabledLines);
+        log.info("API 서비스 초기화: 활성 노선 {}", enabledLines);
     }
 
     /**
@@ -84,11 +129,11 @@ public class MetroApiService {
     }
 
     /**
-     * 실시간 위치정보 조회 (특정 노선) - 단순화된 버전
+     * 실시간 위치정보 조회 (특정 노선)
      */
     public Mono<List<RealtimePositionInfo>> getRealtimePosition(String lineNumber) {
         if (!apiEnabled || "TEMP_KEY".equals(apiKey)) {
-            return createMockPositionData(lineNumber);
+            return createCleanMockPositionData(lineNumber);
         }
 
         String url = buildUrl("realtimePosition", lineNumber);
@@ -117,7 +162,7 @@ public class MetroApiService {
                 })
                 .onErrorResume(error -> {
                     log.error("실시간 위치정보 조회 실패: {}호선 - {}", lineNumber, error.getMessage());
-                    return createMockPositionData(lineNumber);
+                    return createCleanMockPositionData(lineNumber);
                 });
     }
 
@@ -148,6 +193,108 @@ public class MetroApiService {
                     enabledLines.size(), allTrains.size());
             return allTrains;
         });
+    }
+
+    /**
+     *  Mock 데이터 생성
+     */
+    private Mono<List<RealtimePositionInfo>> createCleanMockPositionData(String lineNumber) {
+        List<RealtimePositionInfo> mockData = new ArrayList<>();
+
+        // 해당 노선의 역 정보 필터링
+        List<CleanStationInfo> lineStations = STATION_DATA.stream()
+                .filter(station -> lineNumber.equals(station.getLineNumber()))
+                .collect(Collectors.toList());
+
+        if (lineStations.isEmpty()) {
+            log.warn("{}호선에 대한 역 정보가 없습니다", lineNumber);
+            return Mono.just(new ArrayList<>());
+        }
+
+        int trainCount = getTrainCountForLine(Integer.parseInt(lineNumber));
+
+        trainCount = adjustTrainCountByTime(trainCount);
+
+        Random random = new Random();
+
+        for (int i = 0; i < trainCount; i++) {
+            CleanStationInfo station = getDistributedStation(lineStations, i, trainCount);
+
+            String direction = getRealisticDirection(random);
+
+            RealtimePositionInfo mock = RealtimePositionInfo.builder()
+                    .subwayId("100" + lineNumber)
+                    .subwayNm(lineNumber + "호선")
+                    .statnId(station.getApiId()) // 🎯 API ID만 제공
+                    .statnNm(station.getName())  // 🎯 역명만 제공
+                    .trainNo("MOCK-" + lineNumber + "-" + (1000 + i))
+                    .recptnDt(LocalDateTime.now().toString())
+                    .lastRecptnDt(LocalDateTime.now().toString())
+                    .updnLine(direction)
+                    .statnTid(String.valueOf(i + 1))
+                    .directAt("N")
+                    .lstcarAt(i == trainCount - 1 ? "Y" : "N")
+                    .build();
+            mockData.add(mock);
+        }
+
+        log.info("관심사 분리 Mock 위치정보 데이터 생성: {}호선 - {}건 (좌표 없음)", lineNumber, mockData.size());
+        return Mono.just(mockData);
+    }
+
+    /**
+     * 노선별 현실적인 열차 수 반환
+     */
+    private int getTrainCountForLine(int lineNumber) {
+        switch (lineNumber) {
+            case 1: return 8;   // 1호선: 일반적인 운행 밀도
+            case 2: return 12;  // 2호선: 순환선이라 가장 많음
+            case 3: return 7;   // 3호선: 중간 밀도
+            case 4: return 6;   // 4호선: 분기선 포함, 상대적으로 적음
+            default: return 5;
+        }
+    }
+
+    /**
+     * 시간대별 열차 수 조정
+     */
+    private int adjustTrainCountByTime(int baseCount) {
+        LocalTime now = LocalTime.now();
+        int hour = now.getHour();
+
+        // 출근시간(7-9시): +2대
+        if (hour >= 7 && hour <= 9) {
+            return baseCount + 2;
+        }
+        // 퇴근시간(18-20시): +1대
+        else if (hour >= 18 && hour <= 20) {
+            return baseCount + 1;
+        }
+        // 심야시간(0-5시): -2대
+        else if (hour >= 0 && hour <= 5) {
+            return Math.max(2, baseCount - 2); // 최소 2대는 유지
+        }
+
+        return baseCount;
+    }
+
+    /**
+     *  열차를 역에 순서대로 분산 배치
+     */
+    private CleanStationInfo getDistributedStation(List<CleanStationInfo> stations, int trainIndex, int totalTrains) {
+        // 전체 역을 열차 수로 나누어 균등 분산
+        int interval = Math.max(1, stations.size() / totalTrains);
+        int stationIndex = (trainIndex * interval) % stations.size();
+        return stations.get(stationIndex);
+    }
+
+    /**
+     * 현실적인 상행/하행 방향 결정 (60:40 비율)
+     */
+    private String getRealisticDirection(Random random) {
+        // 60:40 비율로 약간의 편중 (완전 50:50보다 현실적)
+        // updnLine: "0" = 상행, "1" = 하행
+        return random.nextDouble() < 0.6 ? "0" : "1";
     }
 
     /**
@@ -186,18 +333,16 @@ public class MetroApiService {
         log.info("일일 API 호출 카운트 초기화: {} → 0", previousCount);
     }
 
-    /**
-     * RealtimePositionInfo를 TrainPosition으로 변환 - 단순화된 버전
-     */
     private TrainPosition convertToTrainPosition(RealtimePositionInfo position) {
         return TrainPosition.builder()
                 .trainId(position.getTrainNo())
                 .lineNumber(Integer.valueOf(extractLineNumber(position.getSubwayId())))
-                .stationId(position.getStatnId())
-                .stationName(position.getStatnNm())
+                .stationId(position.getStatnId()) // 🎯 API ID만 제공
+                .stationName(position.getStatnNm()) // 🎯 역명만 제공
                 .direction(convertDirection(position.getUpdnLine()))
-                .x(50.0 + Math.random() * 100) // 임시 좌표 (실제로는 역 좌표 매핑 필요)
-                .y(25.0 + Math.random() * 50)
+                // 🚀 x, y 좌표 제거! 프론트엔드에서 stationId로 매핑
+                .x(null)
+                .y(null)
                 .lastUpdated(LocalDateTime.now())
                 .dataSource("API")
                 .isRealtime(true)
@@ -221,62 +366,21 @@ public class MetroApiService {
         return "up"; // 기본값
     }
 
-    // ===== Mock 데이터 생성 (단순화) =====
+    // === 내부 클래스: 관심사 분리된 역 정보 (좌표 제거) ===
 
-    /**
-     * Mock 위치정보 데이터 생성 (API 키 없을 때) - 단순화된 버전
-     */
-    private Mono<List<RealtimePositionInfo>> createMockPositionData(String lineNumber) {
-        List<RealtimePositionInfo> mockData = new ArrayList<>();
+    private static class CleanStationInfo {
+        private final String lineNumber;
+        private final String name;
+        private final String apiId;
 
-        // 해당 노선에 적정 수의 Mock 열차 생성
-        int trainCount = getTrainCountForLine(Integer.parseInt(lineNumber));
-        String[] stations = getStationsForLine(Integer.parseInt(lineNumber));
-
-        for (int i = 0; i < trainCount; i++) {
-            RealtimePositionInfo mock = RealtimePositionInfo.builder()
-                    .subwayId("100" + lineNumber)
-                    .subwayNm(lineNumber + "호선")
-                    .statnId("MOCK_ST_" + lineNumber + "_" + i)
-                    .statnNm(stations[i % stations.length])
-                    .trainNo("MOCK-" + lineNumber + "-" + (1000 + i))
-                    .recptnDt(LocalDateTime.now().toString())
-                    .lastRecptnDt(LocalDateTime.now().toString())
-                    .updnLine(i % 2 == 0 ? "0" : "1") // 상행/하행 번갈아
-                    .statnTid(String.valueOf(i + 1))
-                    .directAt("N")
-                    .lstcarAt(i == trainCount - 1 ? "Y" : "N") // 마지막 열차는 막차로 설정
-                    .build();
-            mockData.add(mock);
+        public CleanStationInfo(String lineNumber, String name, String apiId) {
+            this.lineNumber = lineNumber;
+            this.name = name;
+            this.apiId = apiId;
         }
 
-        log.info("Mock 위치정보 데이터 생성: {}호선 - {}건", lineNumber, mockData.size());
-        return Mono.just(mockData);
-    }
-
-    /**
-     * 노선별 적정 열차 수 반환
-     */
-    private int getTrainCountForLine(int lineNumber) {
-        switch (lineNumber) {
-            case 1: return 10;
-            case 2: return 15; // 순환선이라 많음
-            case 3: return 9;
-            case 4: return 8;
-            default: return 5;
-        }
-    }
-
-    /**
-     * 노선별 주요 역명 반환
-     */
-    private String[] getStationsForLine(int lineNumber) {
-        switch (lineNumber) {
-            case 1: return new String[]{"종각", "시청", "을지로입구", "동대문", "동묘앞"};
-            case 2: return new String[]{"강남", "역삼", "선릉", "삼성", "건대입구", "홍대입구"};
-            case 3: return new String[]{"대치", "도곡", "매봉", "양재", "남부터미널"};
-            case 4: return new String[]{"명동", "회현", "서울역", "숙대입구", "삼각지"};
-            default: return new String[]{"테스트역"};
-        }
+        public String getLineNumber() { return lineNumber; }
+        public String getName() { return name; }
+        public String getApiId() { return apiId; }
     }
 }

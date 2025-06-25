@@ -9,13 +9,10 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * 지하철 위치 정보 서비스 (최종 버전)
- * 노선도 애니메이션에 최적화된 핵심 기능 제공
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -29,44 +26,61 @@ public class MetroPositionService {
 
     private List<Integer> enabledLines;
 
-    // 노선별 적정 열차 수 (현실적인 운행 밀도 반영)
-    private static final Map<Integer, Integer> LINE_TRAIN_COUNTS = Map.of(
-            1, 10,  // 1호선: 8-12대
-            2, 15,  // 2호선: 12-18대 (순환선이라 많음)
-            3, 9,   // 3호선: 7-11대
-            4, 8    // 4호선: 6-10대
+    private static final Map<Integer, Integer> REALISTIC_TRAIN_COUNTS = Map.of(
+            1, 8,   // 1호선: 일반적인 운행 밀도
+            2, 12,  // 2호선: 순환선이라 가장 많음
+            3, 7,   // 3호선: 중간 밀도
+            4, 6    // 4호선: 분기선 포함, 상대적으로 적음
     );
 
-    // 노선별 주요 역들 (좌표 포함)
     private static final Map<Integer, List<StationInfo>> LINE_STATIONS = Map.of(
             1, Arrays.asList(
-                    new StationInfo("종각", "1_001", 60.577595, 47.299969),
-                    new StationInfo("시청", "1_002", 55.123456, 47.299969),
-                    new StationInfo("을지로입구", "1_003", 65.234567, 47.299969),
-                    new StationInfo("동대문", "1_004", 75.345678, 42.156789),
-                    new StationInfo("동묘앞", "1_005", 80.456789, 42.156789)
+                    new StationInfo("도봉산", "1001000117"),
+                    new StationInfo("창동", "1001000116"),
+                    new StationInfo("종로5가", "1001000129"),
+                    new StationInfo("종각", "1001000131"),
+                    new StationInfo("시청", "1001000132"),
+                    new StationInfo("서울역", "1001000133"),
+                    new StationInfo("용산", "1001000135"),
+                    new StationInfo("영등포", "1001000139"),
+                    new StationInfo("구로", "1001000141"),
+                    new StationInfo("온수", "1001000145")
             ),
             2, Arrays.asList(
-                    new StationInfo("강남", "2_201", 85.456789, 25.678901),
-                    new StationInfo("역삼", "2_202", 90.567890, 25.678901),
-                    new StationInfo("선릉", "2_203", 95.678901, 25.678901),
-                    new StationInfo("삼성", "2_204", 100.789012, 25.678901),
-                    new StationInfo("건대입구", "2_205", 105.890123, 35.789012),
-                    new StationInfo("홍대입구", "2_206", 40.234567, 52.345678)
+                    new StationInfo("을지로입구", "1002000202"),
+                    new StationInfo("동대문역사문화공원", "1002000205"),
+                    new StationInfo("건대입구", "1002000212"),
+                    new StationInfo("잠실", "1002000216"),
+                    new StationInfo("삼성", "1002000219"),
+                    new StationInfo("강남", "1002000222"),
+                    new StationInfo("사당", "1002000226"),
+                    new StationInfo("신림", "1002000230"),
+                    new StationInfo("구로디지털단지", "1002000232"),
+                    new StationInfo("홍대입구", "1002000239"),
+                    new StationInfo("신촌", "1002000240")
             ),
             3, Arrays.asList(
-                    new StationInfo("대치", "3_301", 105.890123, 30.789012),
-                    new StationInfo("도곡", "3_302", 110.901234, 30.789012),
-                    new StationInfo("매봉", "3_303", 115.012345, 30.789012),
-                    new StationInfo("양재", "3_304", 120.123456, 30.789012),
-                    new StationInfo("남부터미널", "3_305", 125.234567, 30.789012)
+                    new StationInfo("구파발", "1003000301"),
+                    new StationInfo("불광", "1003000303"),
+                    new StationInfo("독립문", "1003000307"),
+                    new StationInfo("종로3가", "1003000310"),
+                    new StationInfo("충무로", "1003000328"),
+                    new StationInfo("압구정", "1003000323"),
+                    new StationInfo("교대", "1003000319"),
+                    new StationInfo("양재", "1003000344"),
+                    new StationInfo("수서", "1003000351"),
+                    new StationInfo("오금", "1003000352")
             ),
             4, Arrays.asList(
-                    new StationInfo("명동", "4_401", 60.123456, 52.234567),
-                    new StationInfo("회현", "4_402", 55.234567, 52.234567),
-                    new StationInfo("서울역", "4_403", 50.345678, 52.234567),
-                    new StationInfo("숙대입구", "4_404", 45.456789, 52.234567),
-                    new StationInfo("삼각지", "4_405", 40.567890, 52.234567)
+                    new StationInfo("당고개", "1004000401"),
+                    new StationInfo("상계", "1004000402"),
+                    new StationInfo("창동", "1004000412"),
+                    new StationInfo("한성대입구", "1004000419"),
+                    new StationInfo("동대문", "1004000421"),
+                    new StationInfo("충무로", "1004000423"),
+                    new StationInfo("명동", "1004000424"),
+                    new StationInfo("서울역", "1004000426"),
+                    new StationInfo("사당", "1004000433")
             )
     );
 
@@ -78,7 +92,7 @@ public class MetroPositionService {
                 .sorted()
                 .collect(Collectors.toList());
 
-        log.info("🚇 지하철 위치 서비스 초기화 완료: 활성 노선 {}", enabledLines);
+        log.info("지하철 위치 서비스 초기화 완료: 활성 노선 {}", enabledLines);
     }
 
     /**
@@ -90,7 +104,7 @@ public class MetroPositionService {
 
             // 활성화된 노선별로 위치 정보 생성
             for (Integer lineNumber : enabledLines) {
-                List<TrainPosition> linePositions = generateLinePositions(lineNumber);
+                List<TrainPosition> linePositions = generateRealisticLinePositions(lineNumber);
                 allPositions.addAll(linePositions);
             }
 
@@ -103,9 +117,9 @@ public class MetroPositionService {
                     .totalTrains(allPositions.size())
                     .lineStatistics(lineStats)
                     .lastUpdated(LocalDateTime.now())
-                    .nextUpdate(LocalDateTime.now().plusMinutes(2)) // 2분 후 다음 업데이트
-                    .dataSource(apiEnabled ? "API" : "MOCK")
-                    .isRealtime(apiEnabled)
+                    .nextUpdate(LocalDateTime.now().plusMinutes(2))
+                    .dataSource(apiEnabled ? "CLEAN_MOCK" : "MOCK")
+                    .isRealtime(false) // Mock 데이터임을 명시
                     .systemStatus("HEALTHY")
                     .build();
 
@@ -130,7 +144,7 @@ public class MetroPositionService {
                 return createEmptyResponse(lineNumber, "비활성 노선");
             }
 
-            List<TrainPosition> positions = generateLinePositions(lineNumber);
+            List<TrainPosition> positions = generateRealisticLinePositions(lineNumber);
             Map<String, Integer> lineStats = Map.of(lineNumber.toString(), positions.size());
 
             MetroPositionResponse response = MetroPositionResponse.builder()
@@ -139,12 +153,12 @@ public class MetroPositionService {
                     .lineStatistics(lineStats)
                     .lastUpdated(LocalDateTime.now())
                     .nextUpdate(LocalDateTime.now().plusMinutes(2))
-                    .dataSource(apiEnabled ? "API" : "MOCK")
-                    .isRealtime(apiEnabled)
+                    .dataSource("CLEAN_MOCK")
+                    .isRealtime(false)
                     .systemStatus("HEALTHY")
                     .build();
 
-            log.info("{}호선 위치 정보 조회 완료: {}대 열차", lineNumber, positions.size());
+            log.info("{}호선 위치 정보 조회 완료: {}대 열차 (관심사 분리)", lineNumber, positions.size());
             return response;
 
         } catch (Exception e) {
@@ -154,22 +168,26 @@ public class MetroPositionService {
     }
 
     /**
-     * 특정 노선의 위치 정보 생성 (Mock 데이터)
+     *  위치 정보 생성
      */
-    private List<TrainPosition> generateLinePositions(Integer lineNumber) {
+    private List<TrainPosition> generateRealisticLinePositions(Integer lineNumber) {
         List<StationInfo> stations = LINE_STATIONS.get(lineNumber);
         if (stations == null || stations.isEmpty()) {
             log.warn("{}호선 역 정보 없음", lineNumber);
             return List.of();
         }
 
-        int trainCount = LINE_TRAIN_COUNTS.getOrDefault(lineNumber, 5);
+        int trainCount = getRealisticTrainCount(lineNumber);
+
+        trainCount = adjustTrainCountByTime(trainCount);
+
         List<TrainPosition> positions = new ArrayList<>();
         Random random = new Random();
 
         for (int i = 0; i < trainCount; i++) {
-            StationInfo station = stations.get(random.nextInt(stations.size()));
-            String direction = random.nextBoolean() ? "up" : "down";
+            StationInfo station = getDistributedStation(stations, i, trainCount);
+
+            String direction = getRealisticDirection(random, lineNumber);
 
             TrainPosition position = TrainPosition.builder()
                     .trainId(String.format("%d%04d", lineNumber, 1000 + i))
@@ -177,17 +195,64 @@ public class MetroPositionService {
                     .stationId(station.getId())
                     .stationName(station.getName())
                     .direction(direction)
-                    .x(station.getX() + (random.nextDouble() - 0.5) * 2) // 약간의 위치 변화
-                    .y(station.getY() + (random.nextDouble() - 0.5) * 2)
-                    .lastUpdated(LocalDateTime.now().minusSeconds(random.nextInt(120))) // 최근 2분 내
-                    .dataSource("MOCK")
+                    .lastUpdated(LocalDateTime.now().minusSeconds(random.nextInt(120)))
+                    .dataSource("CLEAN_MOCK")
                     .isRealtime(false)
                     .build();
 
             positions.add(position);
         }
 
+        log.debug("{}호선 비즈니스 로직 기반 위치 데이터 생성: {}대 열차", lineNumber, positions.size());
         return positions;
+    }
+
+    /**
+     *  노선별 현실적 열차 수 반환
+     */
+    private int getRealisticTrainCount(Integer lineNumber) {
+        return REALISTIC_TRAIN_COUNTS.getOrDefault(lineNumber, 5);
+    }
+
+    /**
+     *  시간대별 열차 수 조정
+     */
+    private int adjustTrainCountByTime(int baseCount) {
+        LocalTime now = LocalTime.now();
+        int hour = now.getHour();
+
+        // 출근시간(7-9시): +2대
+        if (hour >= 7 && hour <= 9) {
+            return baseCount + 2;
+        }
+        // 퇴근시간(18-20시): +1대
+        else if (hour >= 18 && hour <= 20) {
+            return baseCount + 1;
+        }
+        // 심야시간(0-5시): -2대
+        else if (hour >= 0 && hour <= 5) {
+            return Math.max(2, baseCount - 2); // 최소 2대는 유지
+        }
+
+        return baseCount;
+    }
+
+    /**
+     *  열차를 역에 순서대로 분산 배치
+     */
+    private StationInfo getDistributedStation(List<StationInfo> stations, int trainIndex, int totalTrains) {
+        // 전체 역을 열차 수로 나누어 균등 분산
+        int interval = Math.max(1, stations.size() / totalTrains);
+        int stationIndex = (trainIndex * interval) % stations.size();
+        return stations.get(stationIndex);
+    }
+
+    /**
+     *  상행/하행 방향 결정
+     */
+    private String getRealisticDirection(Random random, Integer lineNumber) {
+        // 60:40 비율로 약간의 편중 (완전 50:50보다 현실적)
+        return random.nextDouble() < 0.6 ? "up" : "down";
     }
 
     /**
@@ -247,24 +312,16 @@ public class MetroPositionService {
         return enabledLines.contains(lineNumber);
     }
 
-    // === 내부 클래스: 역 정보 ===
-
     private static class StationInfo {
         private final String name;
         private final String id;
-        private final double x;
-        private final double y;
 
-        public StationInfo(String name, String id, double x, double y) {
+        public StationInfo(String name, String id) {
             this.name = name;
             this.id = id;
-            this.x = x;
-            this.y = y;
         }
 
         public String getName() { return name; }
         public String getId() { return id; }
-        public double getX() { return x; }
-        public double getY() { return y; }
     }
 }

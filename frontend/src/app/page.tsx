@@ -201,18 +201,6 @@ export default function Home() {
       <HeroSection>
         <HeroContent>
           <h1>🚇 Behindy</h1>
-          <p>지하철 노선도 기반 텍스트 어드벤처 게임</p>
-          <p style={{ fontSize: '1rem', opacity: 0.8 }}>
-            실시간 지하철 데이터와 함께하는 새로운 게임 경험
-          </p>
-          <ButtonGroup>
-            <Button variant="primary" size="lg" onClick={handleGetStarted}>
-              게임 시작하기
-            </Button>
-            <Button variant="outline" size="lg" onClick={handleLogin}>
-              로그인
-            </Button>
-          </ButtonGroup>
         </HeroContent>
       </HeroSection>
 
@@ -220,20 +208,8 @@ export default function Home() {
       <FeaturesSection>
         <FeaturesContainer>
           <h2>🚇 실시간 지하철 노선도</h2>
-          <div className="subtitle">
-            서울시 지하철 1-4호선의 실시간 운행 정보를 시각적으로 확인하세요.
-            그라데이션 애니메이션으로 열차의 움직임을 느껴보세요!
-          </div>
           
           <FeatureHighlight>
-            <div className="feature-header">
-              <span className="icon">⚡</span>
-              <h3>실시간 데이터 연동</h3>
-            </div>
-            <div className="feature-description">
-              서울시 공공 API와 연동하여 30초마다 실시간 지하철 운행 정보를 업데이트합니다.
-              상행선과 하행선을 구분하여 열차 수에 따른 애니메이션 강도를 조절합니다.
-            </div>
             
             {/* 실시간 지하철 노선도 컴포넌트 */}
             <RealtimeMetroMap />
@@ -246,8 +222,7 @@ export default function Home() {
         <TechContainer>
           <h2>🛠️ 기술 스택</h2>
           <div className="tech-description">
-            최신 웹 기술을 활용한 풀스택 개발 프로젝트입니다.
-            실시간 데이터 처리부터 시각적 애니메이션까지 다양한 기술을 경험할 수 있습니다.
+            웹 기술을 활용한 풀스택 개발 프로젝트입니다.
           </div>
           
           <TechGrid>
@@ -285,7 +260,7 @@ export default function Home() {
       </TechSection>
 
       {/* 프로젝트 특징 */}
-      <FeaturesSection style={{ background: 'white' }}>
+      {/* <FeaturesSection style={{ background: 'white' }}>
         <FeaturesContainer>
           <h2>✨ 프로젝트 특징</h2>
           
@@ -341,7 +316,7 @@ export default function Home() {
         💡 <strong>개발 노트:</strong> 
         이 프로젝트는 신입 웹 개발자의 포트폴리오 목적으로 제작되었습니다. | 
         실시간 데이터 연동, 시각적 애니메이션, 풀스택 개발 경험을 한 번에! 🚀
-      </div>
+      </div> */}
     </PublicLayout>
   );
 }
