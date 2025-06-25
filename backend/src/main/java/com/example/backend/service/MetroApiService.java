@@ -126,13 +126,16 @@ public class MetroApiService {
     }
 
     /**
-     * 실시간 위치정보 조회 (특정 노선) - 상세 로깅 추가
+     * 실시간 위치정보 조회 (특정 노선)
+     */
+    /**
+     * 실시간 위치정보 조회 (특정 노선) - 에러 처리 개선
      */
     public Mono<List<RealtimePositionInfo>> getRealtimePosition(String lineNumber) {
-        log.info("=== 🚇 지하철 API 호출 시작 ===");
+        log.info("===  지하철 API 호출 시작 ===");
 
         if (!apiEnabled || "TEMP_KEY".equals(apiKey)) {
-            log.warn("❌ API 비활성화 또는 임시 키: apiEnabled={}, apiKey={}...",
+            log.warn(" API 비활성화 또는 임시 키: apiEnabled={}, apiKey={}...",
                     apiEnabled, apiKey.substring(0, Math.min(8, apiKey.length())));
             return createCleanMockPositionData(lineNumber);
         }
@@ -146,94 +149,97 @@ public class MetroApiService {
                 .uri(url)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response -> {
-                    log.error("❌ HTTP 에러: {} - {}", response.statusCode(), url);
+                    log.error(" HTTP 에러: {} - {}", response.statusCode(), url);
                     return Mono.error(new RuntimeException("API 호출 실패: " + response.statusCode()));
                 })
                 .bodyToMono(RealtimePositionResponse.class)
                 .timeout(Duration.ofMillis(timeoutMs))
                 .retryWhen(Retry.fixedDelay(retryCount, Duration.ofSeconds(1)))
                 .map(response -> {
-                    // 2. 응답 로깅
-                    log.info("===API 응답 분석 ===");
-
-                    // 2-1. 기본 응답 정보
+                    // 2. 응답 분석 로깅
+                    log.info("=== API 응답 분석 ===");
                     incrementCallCount();
                     log.info("HTTP 응답 수신 완료");
 
-                    // 2-2. 에러 메시지 체크
-                    MetroErrorMessage errorMsg = response.getMetroErrorMessage();
-                    if (errorMsg != null) {
-                        log.info("ErrorMessage - Status: {}, Code: {}, Message: {}, Total: {}",
-                                errorMsg.getStatus(), errorMsg.getCode(),
-                                errorMsg.getMessage(), errorMsg.getTotal());
+                    //  3-1. 직접 에러 응답 체크
+                    if (response.isDirectError()) {
+                        log.warn("   직접 에러 응답 감지:");
+                        log.warn("   Status: {}, Code: {}", response.getDirectStatus(), response.getDirectCode());
+                        log.warn("   Message: {}", response.getDirectMessage());
+                        log.warn("   Total: {}", response.getDirectTotal());
 
-                        // 에러 상태 체크
-                        if (errorMsg.getStatus() == null || errorMsg.getStatus() != 200) {
-                            log.error("API 에러 응답: Status={}, Message={}",
-                                    errorMsg.getStatus(), errorMsg.getMessage());
-                            return new ArrayList<RealtimePositionInfo>();
-                        }
-                    } else {
-                        log.warn("ErrorMessage가 null입니다");
+                        //  Mock 데이터 생성을 위한 예외 발생
+                        throw new RuntimeException("API_DIRECT_ERROR: " + response.getUnifiedErrorMessage());
                     }
 
-                    // 2-3. 실제 데이터 체크
+                    // 3-2. 래퍼 에러 응답 체크
+                    if (response.isWrapperError()) {
+                        MetroErrorMessage errorMsg = response.getMetroErrorMessage();
+                        log.warn("   래퍼 에러 응답 감지:");
+                        log.warn("   Status: {}, Code: {}", errorMsg.getStatus(), errorMsg.getCode());
+                        log.warn("   Message: {}", errorMsg.getMessage());
+
+                        throw new RuntimeException("API_WRAPPER_ERROR: " + response.getUnifiedErrorMessage());
+                    }
+
+                    // 3-3. 정상 응답이지만 데이터 비어있음 체크 (핵심 추가!)
+                    if (response.isEmpty()) {
+                        log.warn("   정상 응답이지만 데이터가 비어있음 (심야시간/운행중단 등)");
+                        log.warn("   현재 시간: {}", LocalDateTime.now());
+                        log.warn("   노선: {}호선", lineNumber);
+
+                        //  Mock 데이터 생성을 위한 예외 발생
+                        throw new RuntimeException("API_EMPTY_DATA: 해당 시간대 운행 데이터 없음");
+                    }
+
+                    // 4. 정상 데이터 처리
                     List<RealtimePositionInfo> positionList = response.getRealtimePositionList();
-                    log.info("RealtimePositionList - Size: {}, IsNull: {}",
-                            positionList != null ? positionList.size() : "null",
-                            positionList == null);
 
-                    // 3. 데이터 검증 및 샘플 로깅
-                    if (positionList != null && !positionList.isEmpty()) {
+                    // 데이터 품질 체크
+                    long validTrains = positionList.stream()
+                            .filter(train -> train.getTrainNo() != null && !train.getTrainNo().trim().isEmpty())
+                            .filter(train -> train.getStatnNm() != null && !train.getStatnNm().trim().isEmpty())
+                            .count();
 
-                        // 데이터 품질 체크
-                        long validTrains = positionList.stream()
-                                .filter(train -> train.getTrainNo() != null && !train.getTrainNo().trim().isEmpty())
-                                .filter(train -> train.getStatnNm() != null && !train.getStatnNm().trim().isEmpty())
-                                .count();
+                    log.info("   정상 데이터 수신:");
+                    log.info("   전체 열차: {}대", positionList.size());
+                    log.info("   유효 열차: {}대", validTrains);
 
-                        log.info("데이터 품질: 전체={}, 유효={}, 무효={}",
-                                positionList.size(), validTrains, positionList.size() - validTrains);
+                    // 상행/하행 분포
+                    long upTrains = positionList.stream()
+                            .filter(train -> "0".equals(train.getUpdnLine()))
+                            .count();
+                    long downTrains = positionList.stream()
+                            .filter(train -> "1".equals(train.getUpdnLine()))
+                            .count();
 
-                        // 상행/하행 분포
-                        long upTrains = positionList.stream()
-                                .filter(train -> "0".equals(train.getUpdnLine()))
-                                .count();
-                        long downTrains = positionList.stream()
-                                .filter(train -> "1".equals(train.getUpdnLine()))
-                                .count();
+                    log.info("   방향별 분포: 상행={}대, 하행={}대", upTrains, downTrains);
+                    log.info("=== API 데이터 처리 완료 ===");
 
-                        log.info("방향별 분포: 상행(0)={}, 하행(1)={}, 기타={}",
-                                upTrains, downTrains, positionList.size() - upTrains - downTrains);
-
-                    } else {
-                        log.warn("⚠수신된 열차 데이터가 없습니다");
-
-                        // 빈 데이터 원인 분석
-                        if (errorMsg != null) {
-                            log.info("   빈 데이터 원인 분석:");
-                            log.info("   - API Status: {}", errorMsg.getStatus());
-                            log.info("   - Total Count: {}", errorMsg.getTotal());
-                            log.info("   - Message: {}", errorMsg.getMessage());
-                        }
-                    }
-
-                    // 4. 후처리 결과 로깅
-                    List<RealtimePositionInfo> result = positionList != null ? positionList : new ArrayList<>();
-                    log.info("=== 후처리 완료 ===");
-                    log.info(" {}호선 처리 결과: {}건 → 반환", lineNumber, result.size());
-
-                    return result;
+                    return positionList;
                 })
                 .onErrorResume(error -> {
-                    log.error("===  API 호출 실패 ===");
+                    log.error("=== API 호출 실패 또는 데이터 없음 ===");
+                    log.error(" 오류 유형: {}", error.getClass().getSimpleName());
                     log.error(" 오류 내용: {}", error.getMessage());
-                    log.error(" Mock 데이터로 대체");
+
+                    // 🎯 오류 유형별 분류
+                    if (error.getMessage().contains("API_DIRECT_ERROR")) {
+                        log.error(" → 직접 에러 응답 (status != 200)");
+                    } else if (error.getMessage().contains("API_WRAPPER_ERROR")) {
+                        log.error(" → 래퍼 에러 응답 (errorMessage)");
+                    } else if (error.getMessage().contains("API_EMPTY_DATA")) {
+                        log.warn(" → 정상 응답이지만 데이터 없음 (심야시간 등)");
+                    } else {
+                        log.error(" → 네트워크 또는 기타 오류");
+                    }
+
+                    log.info(" Mock 데이터로 대체 생성");
                     return createCleanMockPositionData(lineNumber);
                 });
     }
     /**
-     * 변환 과정 로깅 (필수만)
+     * 변환 과정 로깅
      */
     private TrainPosition convertToTrainPositionWithLogging(RealtimePositionInfo position, String lineNumber) {
         try {
@@ -313,9 +319,13 @@ public class MetroApiService {
         });
     }
     /**
-     *  Mock 데이터 생성
+     *   Mock 데이터 생성
      */
     private Mono<List<RealtimePositionInfo>> createCleanMockPositionData(String lineNumber) {
+        log.info("===  Mock 데이터 생성 시작 ===");
+        log.info("대상 노선: {}호선", lineNumber);
+        log.info("생성 이유: API 데이터 없음 또는 오류");
+
         List<RealtimePositionInfo> mockData = new ArrayList<>();
 
         // 해당 노선의 역 정보 필터링
@@ -324,38 +334,43 @@ public class MetroApiService {
                 .collect(Collectors.toList());
 
         if (lineStations.isEmpty()) {
-            log.warn("{}호선에 대한 역 정보가 없습니다", lineNumber);
             return Mono.just(new ArrayList<>());
         }
 
-        int trainCount = getTrainCountForLine(Integer.parseInt(lineNumber));
+        //  시간대별 현실적 열차 수 계산
+        int baseTrainCount = getTrainCountForLine(Integer.parseInt(lineNumber));
+        int adjustedTrainCount = adjustTrainCountByTime(baseTrainCount);
 
-        trainCount = adjustTrainCountByTime(trainCount);
+        LocalTime currentTime = LocalTime.now();
+        String timeCategory = getTimeCategory(currentTime);
 
         Random random = new Random();
 
-        for (int i = 0; i < trainCount; i++) {
-            CleanStationInfo station = getDistributedStation(lineStations, i, trainCount);
-
+        for (int i = 0; i < adjustedTrainCount; i++) {
+            CleanStationInfo station = getDistributedStation(lineStations, i, adjustedTrainCount);
             String direction = getRealisticDirection(random);
+
+            //  현실적인 열차 번호 생성
+            String trainNumber = generateRealisticTrainNumber(lineNumber, i, currentTime);
 
             RealtimePositionInfo mock = RealtimePositionInfo.builder()
                     .subwayId("100" + lineNumber)
                     .subwayNm(lineNumber + "호선")
                     .statnId(station.getApiId())
                     .statnNm(station.getName())
-                    .trainNo("MOCK-" + lineNumber + "-" + (1000 + i))
-                    .recptnDt(LocalDateTime.now().toString())
-                    .lastRecptnDt(LocalDateTime.now().toString())
+                    .trainNo(trainNumber)
+                    .recptnDt(generateRealisticTime())
+                    .lastRecptnDt(LocalDateTime.now().minusSeconds(random.nextInt(120)).toString())
                     .updnLine(direction)
                     .statnTid(String.valueOf(i + 1))
                     .directAt("N")
-                    .lstcarAt(i == trainCount - 1 ? "Y" : "N")
+                    .lstcarAt(i == adjustedTrainCount - 1 ? "Y" : "N") // 마지막 차량만 막차 표시
                     .build();
+
             mockData.add(mock);
         }
 
-        log.info("관심사 분리 Mock 위치정보 데이터 생성: {}호선 - {}건 (좌표 없음)", lineNumber, mockData.size());
+        log.info("=== {}호선 Mock 데이터 생성 완료 ===", lineNumber);
         return Mono.just(mockData);
     }
 
@@ -373,26 +388,67 @@ public class MetroApiService {
     }
 
     /**
-     * 시간대별 열차 수 조정
+     *  시간대별 열차 수 조정
      */
     private int adjustTrainCountByTime(int baseCount) {
         LocalTime now = LocalTime.now();
         int hour = now.getHour();
 
-        // 출근시간(7-9시): +2대
-        if (hour >= 7 && hour <= 9) {
-            return baseCount + 2;
-        }
-        // 퇴근시간(18-20시): +1대
-        else if (hour >= 18 && hour <= 20) {
-            return baseCount + 1;
-        }
-        // 심야시간(0-5시): -2대
-        else if (hour >= 0 && hour <= 5) {
-            return Math.max(2, baseCount - 2); // 최소 2대는 유지
+        if (hour >= 6 && hour <= 9) {
+            // 출근시간: +50% 증가
+            int increase = Math.max(2, baseCount / 2);
+            return baseCount + increase;
+        } else if (hour >= 18 && hour <= 21) {
+            // 퇴근시간: +30% 증가
+            int increase = Math.max(1, baseCount / 3);
+            return baseCount + increase;
+        } else if (hour >= 23 || hour <= 5) {
+            // 심야시간: -60% 감소
+            int decrease = Math.max(baseCount * 3 / 5, 2); // 최소 2대는 유지
+            return decrease;
+        } else if (hour >= 10 && hour <= 15) {
+            // 한가한 시간: -20% 감소
+            int decrease = Math.max(baseCount - baseCount / 5, baseCount / 2);
+            return decrease;
         }
 
         return baseCount;
+    }
+
+    /**
+     *  현실적인 열차 번호 생성
+     */
+    private String generateRealisticTrainNumber(String lineNumber, int index, LocalTime currentTime) {
+        // 심야시간에는 특별한 접두사 사용
+        if (currentTime.getHour() >= 23 || currentTime.getHour() <= 5) {
+            return String.format("N%s%03d", lineNumber, 100 + index); // N1001, N1002...
+        }
+
+        // 일반시간
+        return String.format("%s%04d", lineNumber, 1000 + index); // 11001, 11002...
+    }
+
+    /**
+     *  현실적인 수신 시간 생성
+     */
+    private String generateRealisticTime() {
+        LocalDateTime base = LocalDateTime.now();
+        // 0~180초 전 시간으로 랜덤 생성
+        int secondsAgo = new Random().nextInt(180);
+        return base.minusSeconds(secondsAgo).toString();
+    }
+
+    /**
+     *  시간대 구분 반환
+     */
+    private String getTimeCategory(LocalTime time) {
+        int hour = time.getHour();
+
+        if (hour >= 6 && hour <= 9) return "출근러시";
+        if (hour >= 18 && hour <= 21) return "퇴근러시";
+        if (hour >= 23 || hour <= 5) return "심야시간";
+        if (hour >= 10 && hour <= 15) return "한가한시간";
+        return "일반시간";
     }
 
     /**
