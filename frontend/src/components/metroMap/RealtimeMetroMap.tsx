@@ -11,15 +11,13 @@ import {
   transformApiDataToFrontend,
   type Station,
   type RealtimeStationData
-} from '@/data/metro/stationsData';
-import { SEOUL_DISTRICTS, HAN_RIVER } from '@/data/metro/seoulDistrictData';
+} from '../../data/metro/stationsData';
+import { SEOUL_DISTRICTS, HAN_RIVER } from '../../data/metro/seoulDistrictData';
 import { 
   generateLineConnections, 
   getVisibleLineConnections,
   type LineConnection 
-} from '@/data/metro/metroLineConnections';
-import { useMetroRealtime } from '@/hooks/useMetroRealtime';
-import { MetroLineAnimations } from './MetroLineAnimations';
+} from '../../data/metro/metroLineConnections';
 
 // 스타일드 컴포넌트들
 const Container = styled.div`
@@ -217,6 +215,99 @@ const InfoPanel = styled.div`
   }
 `;
 
+// 백엔드 API 응답 타입
+interface MetroApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    positions: Array<{
+      trainId: string;
+      lineNumber: number;
+      stationId: string;
+      stationName: string;
+      direction: 'up' | 'down';
+      lastUpdated: string;
+      dataSource: string;
+      isRealtime: boolean;
+      fresh: boolean;
+    }>;
+    totalTrains: number;
+    lineStatistics: Record<string, number>;
+    lastUpdated: string;
+    dataSource: string;
+    systemStatus: string;
+    isRealtime: boolean;
+  };
+}
+
+// 실시간 데이터 훅
+const useMetroRealtime = (intervalMs: number = 30000) => {
+  const [data, setData] = useState<MetroApiResponse['data'] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [requestCount, setRequestCount] = useState(0);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log(` 지하철 실시간 데이터 요청 #${requestCount + 1}`);
+      
+      // 실제 API 호출
+      const response = await fetch('/api/metro/positions');
+      const result: MetroApiResponse = await response.json();
+      
+      if (result.success && result.data) {
+        setData(result.data);
+        console.log(' 새로운 지하철 데이터 업데이트:', {
+          totalTrains: result.data.totalTrains,
+          dataSource: result.data.dataSource,
+          timestamp: result.data.lastUpdated
+        });
+      } else {
+        setError(result.message || '데이터를 불러올 수 없습니다.');
+      }
+      
+      setRequestCount(prev => prev + 1);
+      
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      setError(`네트워크 오류: ${errorMessage}`);
+      console.error(' 지하철 데이터 업데이트 실패:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, intervalMs);
+    
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log(' 탭 활성화 - 즉시 업데이트');
+        fetchData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [intervalMs]);
+
+  return {
+    data,
+    isLoading,
+    error,
+    refreshData: fetchData,
+    requestCount
+  };
+};
+
 // 메인 컴포넌트
 export const RealtimeMetroMap: React.FC = () => {
   const [visibleLines, setVisibleLines] = useState<number[]>([1, 2, 3, 4]);
@@ -231,15 +322,23 @@ export const RealtimeMetroMap: React.FC = () => {
     data: realtimeData, 
     isLoading, 
     error, 
-    lastUpdated, 
-    requestCount,
-    refreshData 
+    refreshData,
+    requestCount
   } = useMetroRealtime(30000); // 30초 간격
 
   // 실시간 데이터를 프론트엔드 형식으로 변환
   const processedRealtimeData = useMemo(() => {
-    if (!realtimeData?.trains) return [];
-    return transformApiDataToFrontend(realtimeData.trains);
+    if (!realtimeData?.positions) return [];
+    
+    // 백엔드 데이터를 프론트엔드 형식으로 변환
+    return realtimeData.positions.map(train => ({
+      frontendStationId: train.stationId ? parseInt(train.stationId) : 0,
+      stationName: train.stationName,
+      lineNumber: train.lineNumber,
+      direction: train.direction,
+      trainCount: 1, // 각 열차를 1개로 계산
+      lastUpdated: new Date(train.lastUpdated)
+    })).filter(train => train.frontendStationId > 0);
   }, [realtimeData]);
 
   // 표시할 노선 연결 계산
@@ -265,7 +364,7 @@ export const RealtimeMetroMap: React.FC = () => {
       const stations = getStationsByLine(line);
       const trainCount = processedRealtimeData
         .filter(train => train.lineNumber === line)
-        .reduce((sum, train) => sum + train.trainCount, 0);
+        .length;
       
       return {
         line,
@@ -299,7 +398,7 @@ export const RealtimeMetroMap: React.FC = () => {
     <Container>
       {/* 헤더 */}
       <Header>
-        <h1>🚇 실시간 지하철 노선도</h1>
+        <h1>지하철 노선도</h1>
         <StatusIndicator $isLoading={isLoading} $hasError={!!error}>
           <div className="indicator" />
           {error ? '연결 실패' : isLoading ? '업데이트 중' : '실시간 연결'}
@@ -353,7 +452,7 @@ export const RealtimeMetroMap: React.FC = () => {
                   checked={showLines}
                   onChange={(e) => setShowLines(e.target.checked)}
                 />
-                실시간 애니메이션
+                노선 표시
               </CheckboxItem>
               <CheckboxItem>
                 <input
@@ -420,9 +519,9 @@ export const RealtimeMetroMap: React.FC = () => {
               />
             )}
 
-            {/* 기본 노선 (정적) */}
-            {!showLines && (
-              <g id="metro-lines-static">
+            {/* 노선 */}
+            {showLines && (
+              <g id="metro-lines">
                 {lineConnections.map(connection => (
                   <g key={`line-${connection.lineNumber}`}>
                     {connection.segments.map((segment, index) => (
@@ -442,68 +541,91 @@ export const RealtimeMetroMap: React.FC = () => {
               </g>
             )}
 
-            {/* 실시간 애니메이션 노선 */}
-            {showLines && (
-              <MetroLineAnimations
-                realtimeData={processedRealtimeData}
-                visibleLines={visibleLines}
-                lineConnections={lineConnections}
-              />
-            )}
-
             {/* 지하철역 */}
             <g id="stations">
-              {visibleStations.map(station => (
-                <g key={station.id}>
-                  {/* 역 원 (배경) */}
-                  <circle
-                    cx={station.x}
-                    cy={station.y}
-                    r={selectedStation === station.id ? 0.8 : station.isTransfer ? 0.8 : 0.5}
-                    fill="white"
-                    stroke={getStationColor(station)}
-                    strokeWidth={selectedStation === station.id ? "1.2" : "0.8"}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleStationClick(station.id)}
-                  />
-                  
-                  {/* 환승역 표시 */}
-                  {station.isTransfer && (
+              {visibleStations.map(station => {
+                // 실시간 데이터에서 해당 역 찾기
+                const realtimeInfo = processedRealtimeData.filter(
+                  data => data.frontendStationId === station.id
+                );
+                const hasRealtimeData = realtimeInfo.length > 0;
+                
+                return (
+                  <g key={station.id}>
+                    {/* 역 원 (배경) */}
                     <circle
                       cx={station.x}
                       cy={station.y}
-                      r={0.6}
-                      fill={getStationColor(station)}
+                      r={selectedStation === station.id ? 1.2 : station.isTransfer ? 0.8 : 0.5}
+                      fill="white"
+                      stroke={getStationColor(station)}
+                      strokeWidth={selectedStation === station.id ? "1.2" : "0.8"}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => handleStationClick(station.id)}
                     />
-                  )}
-                  
-                  {/* 역명 라벨 */}
-                  {(showLabels || selectedStation === station.id) && (
-                    <text
-                      x={station.x}
-                      y={station.y - 3}
-                      fontSize="2.5"
-                      fill="#374151"
-                      textAnchor="middle"
-                      style={{ 
-                        pointerEvents: 'none', 
-                        fontWeight: 'bold',
-                        stroke: 'white',
-                        strokeWidth: '0.5',
-                        paintOrder: 'stroke'
-                      }}
-                    >
-                      {station.name}
-                    </text>
-                  )}
-                </g>
-              ))}
+                    
+                    {/* 실시간 데이터가 있는 역 표시 */}
+                    {hasRealtimeData && (
+                      <circle
+                        cx={station.x}
+                        cy={station.y}
+                        r={0.3}
+                        fill="#10b981"
+                        opacity="0.8"
+                      >
+                        <animate
+                          attributeName="r"
+                          values="0.3;0.6;0.3"
+                          dur="2s"
+                          repeatCount="indefinite"
+                        />
+                        <animate
+                          attributeName="opacity"
+                          values="0.8;0.4;0.8"
+                          dur="2s"
+                          repeatCount="indefinite"
+                        />
+                      </circle>
+                    )}
+                    
+                    {/* 환승역 표시 */}
+                    {station.isTransfer && (
+                      <circle
+                        cx={station.x}
+                        cy={station.y}
+                        r={0.6}
+                        fill={getStationColor(station)}
+                      />
+                    )}
+                    
+                    {/* 역명 라벨 */}
+                    {(showLabels || selectedStation === station.id) && (
+                      <text
+                        x={station.x}
+                        y={station.y - 3}
+                        fontSize="2.5"
+                        fill="#374151"
+                        textAnchor="middle"
+                        style={{ 
+                          pointerEvents: 'none', 
+                          fontWeight: 'bold',
+                          stroke: 'white',
+                          strokeWidth: '0.5',
+                          paintOrder: 'stroke'
+                        }}
+                      >
+                        {station.name}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
             </g>
           </svg>
         </SVGContainer>
 
         {/* 선택된 역 정보 */}
-        {selectedStation && (
+        {/* {selectedStation && (
           <InfoPanel style={{ marginTop: '12px' }}>
             {(() => {
               const station = METRO_STATIONS.find(s => s.id === selectedStation);
@@ -526,7 +648,8 @@ export const RealtimeMetroMap: React.FC = () => {
                         <strong>실시간 정보:</strong>
                         {realtimeInfo.map((info, index) => (
                           <div key={index} style={{ marginLeft: '16px' }}>
-                            • {info.direction === 'up' ? '상행' : info.direction === 'down' ? '하행' : '방향미상'}: {info.trainCount}대
+                            • {info.direction === 'up' ? '상행' : info.direction === 'down' ? '하행' : '방향미상'}: 
+                            {info.lastUpdated.toLocaleTimeString()} 업데이트
                           </div>
                         ))}
                       </div>
@@ -536,7 +659,22 @@ export const RealtimeMetroMap: React.FC = () => {
               ) : null;
             })()}
           </InfoPanel>
-        )}
+        )} */}
+
+        {/* 시스템 정보 */}
+        {/* <InfoPanel>
+          <div className="info-title">시스템 정보</div>
+          <div className="last-updated">
+            마지막 업데이트: {realtimeData?.lastUpdated ? 
+              new Date(realtimeData.lastUpdated).toLocaleString() : '없음'}
+          </div>
+          <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+            <div>데이터 소스: {realtimeData?.dataSource || '알 수 없음'}</div>
+            <div>시스템 상태: {realtimeData?.systemStatus || '알 수 없음'}</div>
+            <div>요청 횟수: {requestCount}회</div>
+            <div>실시간: {realtimeData?.isRealtime ? '예' : '아니오'}</div>
+          </div>
+        </InfoPanel> */}
       </MapWrapper>
     </Container>
   );
