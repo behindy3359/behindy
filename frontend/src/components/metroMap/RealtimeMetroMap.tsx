@@ -252,19 +252,12 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
       setIsLoading(true);
       setError(null);
       
-      console.log(`🚇 지하철 실시간 데이터 요청 #${requestCount + 1}`);
-      
-      // 실제 API 호출
       const response = await fetch('/api/metro/positions');
       const result: MetroApiResponse = await response.json();
       
       if (result.success && result.data) {
         setData(result.data);
-        console.log('✅ 새로운 지하철 데이터 업데이트:', {
-          totalTrains: result.data.totalTrains,
-          dataSource: result.data.dataSource,
-          timestamp: result.data.lastUpdated
-        });
+        console.log(result.data);
       } else {
         setError(result.message || '데이터를 불러올 수 없습니다.');
       }
@@ -274,7 +267,6 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
       setError(`네트워크 오류: ${errorMessage}`);
-      console.error('❌ 지하철 데이터 업데이트 실패:', err);
     } finally {
       setIsLoading(false);
     }
@@ -326,11 +318,8 @@ export const RealtimeMetroMap: React.FC = () => {
     requestCount
   } = useMetroRealtime(30000); // 30초 간격
 
-  // 실시간 데이터를 프론트엔드 형식으로 변환
   const processedRealtimeData = useMemo(() => {
     if (!realtimeData?.positions) return [];
-    
-    console.log('🔄 실시간 데이터 변환 시작:', realtimeData.positions.length, '개 열차');
     
     // 백엔드 데이터를 프론트엔드 형식으로 변환
     const converted = realtimeData.positions.map(train => {
@@ -345,14 +334,9 @@ export const RealtimeMetroMap: React.FC = () => {
           station.name === train.stationName && 
           station.lines.includes(train.lineNumber)
         );
-        
-        if (frontendStation) {
-          console.log(`📍 역명 매핑 성공: ${train.stationName} -> ID ${frontendStation.id}`);
-        }
       }
       
       if (!frontendStation) {
-        console.warn(`❌ 매핑 실패: ${train.stationName} (API ID: ${train.stationId}, 노선: ${train.lineNumber})`);
         return null;
       }
       
@@ -428,7 +412,6 @@ export const RealtimeMetroMap: React.FC = () => {
     <Container>
       {/* 헤더 */}
       <Header>
-        <h1>🚇 실시간 지하철 노선도</h1>
         {/* <StatusIndicator $isLoading={isLoading} $hasError={!!error}>
           <div className="indicator" />
           {error ? '연결 실패' : isLoading ? '업데이트 중' : '실시간 연결'}
@@ -518,7 +501,7 @@ export const RealtimeMetroMap: React.FC = () => {
             viewBox={SVG_CONFIG.viewBox}
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* 구청 경계 */}
+            {/* 구청 경계 (가장 아래 레이어) */}
             {showDistricts && (
               <g id="districts" opacity="0.6">
                 {SEOUL_DISTRICTS.map(district => (
@@ -533,7 +516,7 @@ export const RealtimeMetroMap: React.FC = () => {
               </g>
             )}
 
-            {/* 한강 */}
+            {/* 한강 (두 번째 레이어) */}
             {showHanRiver && (
               <path
                 d={HAN_RIVER.path}
@@ -542,7 +525,7 @@ export const RealtimeMetroMap: React.FC = () => {
               />
             )}
 
-            {/* 노선 */}
+            {/* 노선 (세 번째 레이어) */}
             {showLines && (
               <g id="metro-lines">
                 {lineConnections.map(connection => (
@@ -563,121 +546,126 @@ export const RealtimeMetroMap: React.FC = () => {
                 ))}
               </g>
             )}
-
-            {/* 지하철역 */}
-            <g id="stations">
-              {visibleStations.map(station => {
-                // 실시간 데이터에서 해당 역 찾기
-                const realtimeInfo = processedRealtimeData.filter(
-                  data => data.frontendStationId === station.id
-                );
-                const hasRealtimeData = realtimeInfo.length > 0;
-                
-                return (
-                  <g key={station.id}>
-                    {/* 실시간 데이터가 있는 역의 외곽 링 애니메이션 */}
-                    {hasRealtimeData && (
-                      <circle
-                        cx={station.x}
-                        cy={station.y}
-                        r="1.5"
-                        fill="none"
-                        stroke="#10b981"
-                        strokeWidth="0.3"
-                        opacity="0.8"
-                      >
-                        <animate
-                          attributeName="r"
-                          values="0.8;2.0;0.8"
-                          dur="3s"
-                          repeatCount="indefinite"
-                        />
-                        <animate
-                          attributeName="opacity"
-                          values="0.8;0.2;0.8"
-                          dur="3s"
-                          repeatCount="indefinite"
-                        />
-                      </circle>
-                    )}
-                    
-                    {/* 역 원 (배경) */}
-                    <circle
-                      cx={station.x}
-                      cy={station.y}
-                      r={selectedStation === station.id ? 1.2 : station.isTransfer ? 0.8 : 0.6}
-                      fill="white"
-                      stroke={getStationColor(station)}
-                      strokeWidth={selectedStation === station.id ? "1.2" : "0.8"}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleStationClick(station.id)}
-                    />
-                    
-                    {/* 실시간 데이터가 있는 역의 중심 점 */}
-                    {hasRealtimeData && (
-                      <circle
-                        cx={station.x}
-                        cy={station.y}
-                        r="0.4"
-                        fill="#10b981"
-                      >
-                        <animate
-                          attributeName="fill"
-                          values="#10b981;#34d399;#10b981"
-                          dur="2s"
-                          repeatCount="indefinite"
-                        />
-                      </circle>
-                    )}
-                    
-                    {/* 환승역 표시 */}
-                    {station.isTransfer && (
-                      <circle
-                        cx={station.x}
-                        cy={station.y}
-                        r={0.5}
-                        fill={getStationColor(station)}
-                        opacity="0.7"
-                      />
-                    )}
-                    
-                    {/* 스토리 역 표시 */}
-                    {station.hasStory && (
-                      <circle
-                        cx={station.x + 1}
-                        cy={station.y - 1}
-                        r="0.3"
-                        fill="#fbbf24"
-                        stroke="white"
-                        strokeWidth="0.2"
-                      />
-                    )}
-                    
-                    {/* 역명 라벨 - 위치 수정 */}
-                    {(showLabels || selectedStation === station.id) && (
-                      <text
-                        x={station.x}
-                        y={station.y - 2.5}
-                        fontSize="2.2"
-                        fill="#374151"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        style={{ 
-                          pointerEvents: 'none', 
-                          fontWeight: '600',
-                          stroke: 'white',
-                          strokeWidth: '0.6',
-                          paintOrder: 'stroke fill',
-                          fontFamily: 'system-ui, -apple-system, sans-serif'
-                        }}
-                      >
-                        {station.name}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
+            <g id="station-circles">
+              {[1, 2, 3, 4].map(lineNumber => (
+                <g key={`line-${lineNumber}-stations`} id={`line-${lineNumber}-circles`}>
+                  {visibleStations
+                    .filter(station => station.lines.includes(lineNumber))
+                    .map(station => {
+                      const realtimeInfo = processedRealtimeData.filter(
+                        data => data.frontendStationId === station.id
+                      );
+                      const hasRealtimeData = realtimeInfo.length > 0;
+                      
+                      return (
+                        <g key={`${station.id}-line-${lineNumber}`}>
+                          {/* 실시간 데이터가 있는 역의 외곽 링 애니메이션 */}
+                          {hasRealtimeData && (
+                            <circle
+                              cx={station.x}
+                              cy={station.y}
+                              r="1.5"
+                              fill="none"
+                              stroke="#ff9900"
+                              strokeWidth="0.3"
+                              opacity="0.8"
+                            >
+                              <animate
+                                attributeName="r"
+                                values="0.8;2.0;0.8"
+                                dur="3s"
+                                repeatCount="indefinite"
+                              />
+                              <animate
+                                attributeName="opacity"
+                                values="0.8;0.2;0.8"
+                                dur="3s"
+                                repeatCount="indefinite"
+                              />
+                            </circle>
+                          )}
+                          
+                          {/* 역 원 (배경) */}
+                          <circle
+                            cx={station.x}
+                            cy={station.y}
+                            r={selectedStation === station.id ? 1.2 : station.isTransfer ? 0.8 : 0.6}
+                            fill="white"
+                            stroke={getStationColor(station)}
+                            strokeWidth={selectedStation === station.id ? "1.2" : "0.8"}
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => handleStationClick(station.id)}
+                          />
+                          
+                          {/* 실시간 데이터가 있는 역의 중심 점 */}
+                          {hasRealtimeData && (
+                            <circle
+                              cx={station.x}
+                              cy={station.y}
+                              r="0.4"
+                              fill="#10b981"
+                            >
+                              <animate
+                                attributeName="fill"
+                                values="#10b981;#34d399;#10b981"
+                                dur="2s"
+                                repeatCount="indefinite"
+                              />
+                            </circle>
+                          )}
+                          
+                          {/* 환승역 표시 */}
+                          {station.isTransfer && (
+                            <circle
+                              cx={station.x}
+                              cy={station.y}
+                              r={0.5}
+                              fill={getStationColor(station)}
+                              opacity="0.7"
+                            />
+                          )}
+                        </g>
+                      );
+                    })}
+                </g>
+              ))}
             </g>
+
+            {/* 역명 라벨들 (가장 위 레이어) - 별도 그룹으로 분리 */}
+            {(showLabels || selectedStation) && (
+              <g id="station-labels" style={{ pointerEvents: 'none' }}>
+                {visibleStations.map(station => {
+                  // 선택된 역이거나 showLabels가 true일 때만 표시
+                  const shouldShowLabel = showLabels || selectedStation === station.id;
+                  
+                  if (!shouldShowLabel) return null;
+                  
+                  return (
+                    <text
+                      key={`label-${station.id}`}
+                      x={station.x}
+                      y={station.y - 3.5} // 더 위로 올림
+                      fontSize="2.2"
+                      fill="#374151"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      style={{ 
+                        pointerEvents: 'none', 
+                        fontWeight: '700', // 더 굵게
+                        stroke: 'white',
+                        strokeWidth: '0.8', // 더 두꺼운 외곽선
+                        paintOrder: 'stroke fill',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        // 텍스트 그림자 효과 추가
+                        filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.8))'
+                      }}
+                    >
+                      {station.name}
+                    </text>
+                  );
+                })}
+              </g>
+            )}
           </svg>
         </SVGContainer>
 
