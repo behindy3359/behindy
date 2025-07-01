@@ -200,7 +200,7 @@ export default function Home() {
       {/* Hero Section */}
       <HeroSection>
         <HeroContent>
-          <h1>🚇 Behindy</h1>
+          <h1>Behindy</h1>
         </HeroContent>
       </HeroSection>
 
@@ -255,65 +255,6 @@ export default function Home() {
           </TechGrid>
         </TechContainer>
       </TechSection>
-
-      {/* 프로젝트 특징 */}
-      {/* <FeaturesSection style={{ background: 'white' }}>
-        <FeaturesContainer>
-          <h2>✨ 프로젝트 특징</h2>
-          
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-            gap: '24px',
-            marginTop: '24px'
-          }}>
-            <FeatureHighlight>
-              <div className="feature-header">
-                <span className="icon">🎮</span>
-                <h3>게임과 실시간 데이터의 결합</h3>
-              </div>
-              <div className="feature-description">
-                실제 지하철 운행 정보를 게임 요소와 결합하여 독창적인 사용자 경험을 제공합니다.
-                텍스트 어드벤처 게임의 배경으로 실시간 지하철 노선도를 활용합니다.
-              </div>
-            </FeatureHighlight>
-
-            <FeatureHighlight>
-              <div className="feature-header">
-                <span className="icon">🎨</span>
-                <h3>시각적 애니메이션</h3>
-              </div>
-              <div className="feature-description">
-                CSS 그라데이션과 SVG 애니메이션을 활용하여 열차의 움직임을 시각화합니다.
-                상행선과 하행선을 구분하여 직관적인 방향성을 표현합니다.
-              </div>
-            </FeatureHighlight>
-
-            <FeatureHighlight>
-              <div className="feature-header">
-                <span className="icon">⚙️</span>
-                <h3>확장 가능한 아키텍처</h3>
-              </div>
-              <div className="feature-description">
-                마이크로서비스 아키텍처로 설계되어 새로운 노선이나 기능을 쉽게 추가할 수 있습니다.
-                Redis 캐싱으로 성능을 최적화하고 API 호출 제한을 우회합니다.
-              </div>
-            </FeatureHighlight>
-          </div>
-        </FeaturesContainer>
-      </FeaturesSection>
-
-      <div style={{ 
-        padding: '20px', 
-        textAlign: 'center', 
-        fontSize: '14px', 
-        color: '#6b7280',
-        background: '#f9fafb'
-      }}>
-        💡 <strong>개발 노트:</strong> 
-        이 프로젝트는 신입 웹 개발자의 포트폴리오 목적으로 제작되었습니다. | 
-        실시간 데이터 연동, 시각적 애니메이션, 풀스택 개발 경험을 한 번에! 🚀
-      </div> */}
     </PublicLayout>
   );
 }

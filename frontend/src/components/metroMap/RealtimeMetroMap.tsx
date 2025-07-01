@@ -410,34 +410,6 @@ export const RealtimeMetroMap: React.FC = () => {
 
   return (
     <Container>
-      {/* 헤더 */}
-      <Header>
-        {/* <StatusIndicator $isLoading={isLoading} $hasError={!!error}>
-          <div className="indicator" />
-          {error ? '연결 실패' : isLoading ? '업데이트 중' : '실시간 연결'}
-        </StatusIndicator> */}
-      </Header>
-
-      {/* 통계 카드 */}
-      {/* <StatsGrid>
-        <StatCard>
-          <div className="stat-number">{METRO_STATS.totalStations}</div>
-          <div className="stat-label">총 지하철역</div>
-        </StatCard>
-        <StatCard>
-          <div className="stat-number">{realtimeData?.totalTrains || 0}</div>
-          <div className="stat-label">운행 중인 열차</div>
-        </StatCard>
-        <StatCard>
-          <div className="stat-number">{visibleStations.length}</div>
-          <div className="stat-label">현재 표시 역</div>
-        </StatCard>
-        <StatCard>
-          <div className="stat-number">{processedRealtimeData.length}</div>
-          <div className="stat-label">실시간 데이터</div>
-        </StatCard>
-      </StatsGrid> */}
-      
       <MapWrapper>
         {/* 컨트롤 패널 */}
         <Controls>
@@ -454,35 +426,6 @@ export const RealtimeMetroMap: React.FC = () => {
                   {line}호선 {/*({totalStations}개역, {trainCount}대)*/}
                 </CheckboxItem>
               ))}
-            </CheckboxGroup>
-          </ControlGroup>
-
-          <ControlGroup>
-            <CheckboxGroup>
-              <CheckboxItem>
-                <input
-                  type="checkbox"
-                  checked={showLines}
-                  onChange={(e) => setShowLines(e.target.checked)}
-                />
-                노선 표시
-              </CheckboxItem>
-              <CheckboxItem>
-                <input
-                  type="checkbox"
-                  checked={showDistricts}
-                  onChange={(e) => setShowDistricts(e.target.checked)}
-                />
-                구 경계
-              </CheckboxItem>
-              <CheckboxItem>
-                <input
-                  type="checkbox"
-                  checked={showHanRiver}
-                  onChange={(e) => setShowHanRiver(e.target.checked)}
-                />
-                한강
-              </CheckboxItem>
               <CheckboxItem>
                 <input
                   type="checkbox"
@@ -566,7 +509,7 @@ export const RealtimeMetroMap: React.FC = () => {
                               cy={station.y}
                               r="1.5"
                               fill="none"
-                              stroke="#ff9900"
+                              stroke="#ffff00"
                               strokeWidth="0.3"
                               opacity="0.8"
                             >
@@ -620,7 +563,7 @@ export const RealtimeMetroMap: React.FC = () => {
                               cx={station.x}
                               cy={station.y}
                               r={0.5}
-                              fill={getStationColor(station)}
+                              fill={'#000000'}
                               opacity="0.7"
                             />
                           )}
@@ -668,58 +611,6 @@ export const RealtimeMetroMap: React.FC = () => {
             )}
           </svg>
         </SVGContainer>
-
-        {/* 선택된 역 정보 */}
-        {/* {selectedStation && (
-          <InfoPanel style={{ marginTop: '12px' }}>
-            {(() => {
-              const station = METRO_STATIONS.find(s => s.id === selectedStation);
-              const realtimeInfo = processedRealtimeData.filter(
-                data => data.frontendStationId === selectedStation
-              );
-              
-              return station ? (
-                <div>
-                  <div className="info-title">
-                    🚇 {station.name}
-                    {station.isTransfer && ' 🔄 환승역'}
-                    {station.hasStory && ' 📚 스토리'}
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                    <div>노선: {station.lines.join(', ')}호선</div>
-                    <div>위치: ({station.x.toFixed(2)}, {station.y.toFixed(2)})</div>
-                    {realtimeInfo.length > 0 && (
-                      <div style={{ marginTop: '8px' }}>
-                        <strong>실시간 정보:</strong>
-                        {realtimeInfo.map((info, index) => (
-                          <div key={index} style={{ marginLeft: '16px' }}>
-                            • {info.direction === 'up' ? '상행' : info.direction === 'down' ? '하행' : '방향미상'}: 
-                            {info.lastUpdated.toLocaleTimeString()} 업데이트
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : null;
-            })()}
-          </InfoPanel>
-        )} */}
-
-        {/* 시스템 정보 */}
-        {/* <InfoPanel>
-          <div className="info-title">시스템 정보</div>
-          <div className="last-updated">
-            마지막 업데이트: {realtimeData?.lastUpdated ? 
-              new Date(realtimeData.lastUpdated).toLocaleString() : '없음'}
-          </div>
-          <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-            <div>데이터 소스: {realtimeData?.dataSource || '알 수 없음'}</div>
-            <div>시스템 상태: {realtimeData?.systemStatus || '알 수 없음'}</div>
-            <div>요청 횟수: {requestCount}회</div>
-            <div>실시간: {realtimeData?.isRealtime ? '예' : '아니오'}</div>
-          </div>
-        </InfoPanel> */}
       </MapWrapper>
     </Container>
   );

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { AnimatePresence } from 'framer-motion';
 import Header from '../header/Header';
 import Sidebar from '../sidebar/Sidebar';
 import { useAuthStore } from '../../../store/authStore';
@@ -301,10 +300,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     </LayoutContainer>
   );
 };
-
-// ================================================================
-// 특수 목적 레이아웃 컴포넌트들
-// ================================================================
 
 // 게임 전용 레이아웃
 export const GameLayout: React.FC<{ children: React.ReactNode }> = ({ 
