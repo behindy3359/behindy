@@ -1,220 +1,235 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import Header from '../header/Header';
-import Sidebar from '../sidebar/Sidebar';
-import { useAuthStore } from '../../../store/authStore';
+import { Menu, X } from 'lucide-react';
+import { Sidebar } from '../sidebar/Sidebar';
 
 interface AppLayoutProps {
   children: React.ReactNode;
   showSidebar?: boolean;
-  sidebarCollapsible?: boolean;
   maxWidth?: string;
   backgroundColor?: string;
+  currentPath?: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    isAuthenticated: boolean;
+  } | null;
 }
 
-const LayoutContainer = styled.div`
+const LayoutContainer = styled.div<{ $isDarkMode: boolean }>`
   min-height: 100vh;
-  background: #fafbfc;
+  background: ${({ $isDarkMode }) => $isDarkMode ? '#111827' : '#fafbfc'};
   display: flex;
-  flex-direction: column;
+  transition: background-color 0.3s ease;
 `;
 
-const MainContainer = styled.div<{ 
-  $hasSidebar: boolean; 
-  $sidebarOpen: boolean;
-  $maxWidth?: string;
-  $backgroundColor?: string;
-}>`
-  flex: 1;
-  display: flex;
-  background: ${({ $backgroundColor }) => $backgroundColor || '#fafbfc'};
+const SidebarWrapper = styled.div<{ $isCollapsed: boolean }>`
+  width: ${({ $isCollapsed }) => $isCollapsed ? '60px' : '280px'};
+  flex-shrink: 0;
+  transition: width 0.3s ease;
   
-  @media (min-width: 1200px) {
-    margin-left: ${({ $hasSidebar, $sidebarOpen }) => 
-      $hasSidebar && $sidebarOpen ? '300px' : '0'
-    };
+  @media (max-width: 1199px) {
+    display: none;
   }
 `;
 
-const ContentArea = styled.main<{ $maxWidth?: string }>`
+const MainContainer = styled.div<{ 
+  $maxWidth?: string;
+  $backgroundColor?: string;
+  $isDarkMode: boolean;
+}>`
   flex: 1;
-  min-height: calc(100vh - 70px);
-  background: white;
-  border-radius: ${({ $maxWidth }) => $maxWidth ? '12px 12px 0 0' : '0'};
-  margin: ${({ $maxWidth }) => $maxWidth ? '20px' : '0'};
-  max-width: ${({ $maxWidth }) => $maxWidth || 'none'};
-  margin: ${({ $maxWidth }) => $maxWidth ? '20px auto' : '0'};
-  box-shadow: ${({ $maxWidth }) => 
-    $maxWidth ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: ${({ $backgroundColor, $isDarkMode }) => 
+    $backgroundColor || ($isDarkMode ? '#111827' : '#fafbfc')
   };
+  transition: background-color 0.3s ease;
+`;
+
+const MobileHeader = styled.header<{ $isDarkMode: boolean }>`
+  display: none;
+  height: 60px;
+  background: ${({ $isDarkMode }) => $isDarkMode ? '#1f2937' : '#ffffff'};
+  border-bottom: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#e5e7eb'};
+  padding: 0 20px;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  
+  @media (max-width: 1199px) {
+    display: flex;
+  }
+`;
+
+const MobileLogo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  .brand-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: #667eea;
+  }
+`;
+
+const MobileMenuButton = styled.button<{ $isDarkMode: boolean }>`
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f3f4f6'};
+  border-radius: 8px;
+  cursor: pointer;
+  color: ${({ $isDarkMode }) => $isDarkMode ? '#d1d5db' : '#6b7280'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ $isDarkMode }) => $isDarkMode ? '#4b5563' : '#e5e7eb'};
+    color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#374151'};
+  }
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+const ContentArea = styled.main<{ 
+  $maxWidth?: string; 
+  $isDarkMode: boolean;
+  $hasMaxWidth: boolean;
+}>`
+  flex: 1;
+  min-height: ${({ $hasMaxWidth }) => $hasMaxWidth ? 'calc(100vh - 120px)' : '100vh'};
+  background: ${({ $isDarkMode, $hasMaxWidth }) => {
+    if ($hasMaxWidth) {
+      return $isDarkMode ? '#1f2937' : 'white';
+    }
+    return 'transparent';
+  }};
+  border-radius: ${({ $hasMaxWidth }) => $hasMaxWidth ? '12px 12px 0 0' : '0'};
+  margin: ${({ $hasMaxWidth }) => $hasMaxWidth ? '20px' : '0'};
+  max-width: ${({ $maxWidth }) => $maxWidth || 'none'};
+  margin: ${({ $hasMaxWidth, $maxWidth }) => {
+    if ($hasMaxWidth && $maxWidth) return '20px auto';
+    if ($hasMaxWidth) return '20px';
+    return '0';
+  }};
+  box-shadow: ${({ $hasMaxWidth, $isDarkMode }) => {
+    if ($hasMaxWidth) {
+      return $isDarkMode 
+        ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)' 
+        : '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+    }
+    return 'none';
+  }};
+  transition: all 0.3s ease;
   
   @media (max-width: 768px) {
     margin: 0;
     border-radius: 0;
     box-shadow: none;
+    background: ${({ $isDarkMode }) => $isDarkMode ? '#111827' : '#fafbfc'};
   }
 `;
 
-const ContentWrapper = styled.div`
-  padding: 0;
+const ContentWrapper = styled.div<{ $withPadding: boolean }>`
+  padding: ${({ $withPadding }) => $withPadding ? '24px' : '0'};
   min-height: 100%;
   
-  &.with-padding {
-    padding: 24px;
-    
-    @media (max-width: 768px) {
-      padding: 16px;
-    }
-  }
-`;
-
-const LoadingOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  
-  .loading-content {
-    text-align: center;
-    
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f3f4f6;
-      border-top: 4px solid #667eea;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 16px;
-    }
-    
-    .loading-text {
-      color: #6b7280;
-      font-size: 16px;
-    }
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-const ErrorBoundary = styled.div`
-  padding: 40px 24px;
-  text-align: center;
-  color: #ef4444;
-  
-  h2 {
-    margin-bottom: 16px;
-    color: #dc2626;
-  }
-  
-  p {
-    color: #6b7280;
-    margin-bottom: 24px;
-  }
-  
-  button {
-    padding: 12px 24px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    
-    &:hover {
-      background: #5a67d8;
-    }
+  @media (max-width: 768px) {
+    padding: ${({ $withPadding }) => $withPadding ? '16px' : '0'};
   }
 `;
 
 // 페이지별 레이아웃 설정
 const getLayoutConfig = (pathname: string) => {
-  // 인증 페이지는 사이드바 없음
   if (pathname.startsWith('/auth')) {
     return {
       showSidebar: false,
-      showHeader: false,
+      contentPadding: false,
+      maxWidth: '500px',
+      backgroundColor: undefined
+    };
+  }
+  
+  if (pathname === '/') {
+    return {
+      showSidebar: false,
       contentPadding: false,
       maxWidth: undefined,
       backgroundColor: undefined
     };
   }
   
-  // 랜딩 페이지
-  if (pathname === '/') {
-    return {
-      showSidebar: false,
-      showHeader: true,
-      contentPadding: false,
-      maxWidth: undefined,
-      backgroundColor: '#fafbfc'
-    };
-  }
-  
-  // 게임 페이지
-  if (pathname.startsWith('/game')) {
+  if (pathname.startsWith('/metro-map') || pathname.startsWith('/game')) {
     return {
       showSidebar: true,
-      showHeader: true,
       contentPadding: false,
       maxWidth: undefined,
-      backgroundColor: '#f8fafc'
+      backgroundColor: undefined
     };
   }
   
-  // 일반 페이지 (대시보드, 프로필 등)
   return {
     showSidebar: true,
-    showHeader: true,
     contentPadding: true,
     maxWidth: '1200px',
-    backgroundColor: '#fafbfc'
+    backgroundColor: undefined
   };
 };
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
   children,
   showSidebar: propShowSidebar,
-  sidebarCollapsible = true,
   maxWidth: propMaxWidth,
-  backgroundColor: propBackgroundColor
+  backgroundColor: propBackgroundColor,
+  currentPath = '/',
+  user = null
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated, checkAuthStatus } = useAuthStore();
-  
-  // 현재 경로 (실제로는 useRouter 사용)
-  const [currentPath, setCurrentPath] = useState('/');
-  
-  useEffect(() => {
-    // 페이지 로드 시 인증 상태 확인
-    const initAuth = async () => {
-      try {
-        await checkAuthStatus();
-      } catch (err) {
-        console.error('Auth check failed:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    initAuth();
-  }, [checkAuthStatus]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // 경로가 변경될 때 사이드바 자동 닫기 (모바일)
+    const handleResize = () => {
+      if (window.innerWidth >= 1200) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     if (window.innerWidth < 1200) {
       setSidebarOpen(false);
     }
@@ -222,12 +237,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   const layoutConfig = getLayoutConfig(currentPath);
   
-  // Props로 전달된 값이 있으면 우선 사용
   const showSidebar = propShowSidebar ?? layoutConfig.showSidebar;
-  const showHeader = layoutConfig.showHeader;
   const contentPadding = layoutConfig.contentPadding;
   const maxWidth = propMaxWidth ?? layoutConfig.maxWidth;
   const backgroundColor = propBackgroundColor ?? layoutConfig.backgroundColor;
+  const hasMaxWidth = Boolean(maxWidth);
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);
@@ -237,62 +251,61 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     setSidebarOpen(false);
   };
 
-  const handleRetry = () => {
-    setError(null);
-    setIsLoading(true);
-    window.location.reload();
+  const handleSidebarCollapseToggle = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
 
-  if (isLoading) {
-    return (
-      <LoadingOverlay>
-        <div className="loading-content">
-          <div className="spinner" />
-          <div className="loading-text">로딩 중...</div>
-        </div>
-      </LoadingOverlay>
-    );
-  }
-
-  if (error) {
-    return (
-      <LayoutContainer>
-        <ErrorBoundary>
-          <h2>오류가 발생했습니다</h2>
-          <p>{error}</p>
-          <button onClick={handleRetry}>다시 시도</button>
-        </ErrorBoundary>
-      </LayoutContainer>
-    );
-  }
+  const handleThemeToggle = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
   return (
-    <LayoutContainer>
-      {/* 헤더 */}
-      {showHeader && (
-        <Header 
-          onMenuToggle={handleSidebarToggle}
-          isMenuOpen={sidebarOpen}
-        />
-      )}
-      
-      <MainContainer
-        $hasSidebar={showSidebar && isAuthenticated()}
-        $sidebarOpen={sidebarOpen}
-        $maxWidth={maxWidth}
-        $backgroundColor={backgroundColor}
-      >
-        {/* 사이드바 */}
-        {showSidebar && isAuthenticated() && (
-          <Sidebar 
+    <LayoutContainer $isDarkMode={isDarkMode}>
+      {/* 데스크톱 사이드바 */}
+      {showSidebar && (
+        <SidebarWrapper $isCollapsed={sidebarCollapsed}>
+          <Sidebar
             isOpen={sidebarOpen}
             onClose={handleSidebarClose}
+            isCollapsed={sidebarCollapsed}
+            onToggleCollapse={handleSidebarCollapseToggle}
+            isDarkMode={isDarkMode}
+            onThemeToggle={handleThemeToggle}
+            currentPath={currentPath}
+            user={user}
           />
-        )}
+        </SidebarWrapper>
+      )}
+
+      <MainContainer
+        $maxWidth={maxWidth}
+        $backgroundColor={backgroundColor}
+        $isDarkMode={isDarkMode}
+      >
+        {/* 모바일 헤더 */}
+        <MobileHeader $isDarkMode={isDarkMode}>
+          <MobileLogo>
+            <div className="logo-icon">B</div>
+            <div className="brand-name">Behindy</div>
+          </MobileLogo>
+          
+          {showSidebar && (
+            <MobileMenuButton 
+              $isDarkMode={isDarkMode}
+              onClick={handleSidebarToggle}
+            >
+              {sidebarOpen ? <X /> : <Menu />}
+            </MobileMenuButton>
+          )}
+        </MobileHeader>
         
         {/* 메인 콘텐츠 */}
-        <ContentArea $maxWidth={maxWidth}>
-          <ContentWrapper className={contentPadding ? 'with-padding' : ''}>
+        <ContentArea 
+          $maxWidth={maxWidth}
+          $isDarkMode={isDarkMode}
+          $hasMaxWidth={hasMaxWidth}
+        >
+          <ContentWrapper $withPadding={contentPadding}>
             {children}
           </ContentWrapper>
         </ContentArea>
@@ -316,21 +329,6 @@ export const GameLayout: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// 인증 페이지 전용 레이아웃 (AuthLayout와 다름)
-export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ 
-  children 
-}) => {
-  return (
-    <AppLayout
-      showSidebar={false}
-      backgroundColor="#ffffff"
-      maxWidth="1200px"
-    >
-      {children}
-    </AppLayout>
-  );
-};
-
 // 대시보드 전용 레이아웃
 export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ 
   children 
@@ -340,6 +338,18 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({
       showSidebar={true}
       backgroundColor="#fafbfc"
       maxWidth="1400px"
+    >
+      {children}
+    </AppLayout>
+  );
+};
+
+export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <AppLayout
+      showSidebar={false}
+      backgroundColor="#ffffff"
+      maxWidth="1200px"
     >
       {children}
     </AppLayout>

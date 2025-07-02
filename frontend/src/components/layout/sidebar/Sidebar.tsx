@@ -1,559 +1,619 @@
-// src/components/layout/Sidebar/Sidebar.tsx
-"use client";
-
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Heart, 
-  Brain, 
+  Home, 
+  Info, 
+  Map, 
+  MessageSquare, 
   User, 
-  Clock, 
-  MapPin, 
-  Star,
+  LogIn, 
+  UserPlus, 
+  LogOut,
+  ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  Gamepad2,
-  Trophy,
-  BookOpen
+  Sun,
+  Moon,
+  Settings,
+  Gamepad2
 } from 'lucide-react';
-import { useCharacterStore } from '../../../store/characterStore';
-import { useGameStore } from '../../../store/gameStore';
 
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  isDarkMode?: boolean;
+  onThemeToggle?: () => void;
+  currentPath?: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    isAuthenticated: boolean;
+  } | null;
 }
 
-const SidebarContainer = styled(motion.aside)<{ $isOpen: boolean }>`
+// 메인 네비게이션 아이템들
+const mainNavItems = [
+  { icon: Home, label: '홈', path: '/', id: 'home' },
+  { icon: Info, label: '소개', path: '/about', id: 'about' },
+  { icon: Map, label: '지하철 노선도', path: '/metro-map', id: 'metro' },
+  { icon: MessageSquare, label: '게시판', path: '/community', id: 'community' }
+];
+
+// 게임 관련 메뉴 (밤 모드에서 추가 표시)
+const gameNavItems = [
+  { icon: Gamepad2, label: '게임', path: '/game', id: 'game' },
+  { icon: Settings, label: '캐릭터', path: '/character', id: 'character' }
+];
+
+const SidebarContainer = styled(motion.aside)<{ 
+  $isOpen: boolean; 
+  $isCollapsed: boolean;
+  $isDarkMode: boolean;
+}>`
   position: fixed;
   left: ${({ $isOpen }) => $isOpen ? '0' : '-300px'};
-  top: 70px;
-  width: 300px;
-  height: calc(100vh - 70px);
-  background: white;
-  border-right: 1px solid #e5e7eb;
+  top: 0;
+  width: ${({ $isCollapsed }) => $isCollapsed ? '60px' : '280px'};
+  height: 100vh;
+  background: ${({ $isDarkMode }) => $isDarkMode ? '#1f2937' : '#ffffff'};
+  border-right: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#e5e7eb'};
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  z-index: 90;
-  transition: left 0.3s ease;
-  overflow-y: auto;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  overflow: hidden;
   
   @media (min-width: 1200px) {
     position: relative;
     left: 0;
-    top: 0;
-    height: calc(100vh - 70px);
     box-shadow: none;
-    border-right: 1px solid #e5e7eb;
-  }
-  
-  @media (max-width: 768px) {
-    width: 280px;
+    border-right: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#e5e7eb'};
   }
 `;
 
-const SidebarContent = styled.div`
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-`;
-
-const Section = styled.div`
-  .section-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: #374151;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-`;
-
-const CharacterCard = styled(motion.div)`
-  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
-  border: 1px solid #c7d2fe;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
-`;
-
-const CharacterHeader = styled.div`
+const SidebarHeader = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding: ${({ $isCollapsed }) => $isCollapsed ? '16px 8px' : '16px 20px'};
+  border-bottom: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f3f4f6'};
+  min-height: 70px;
+`;
+
+const LogoSection = styled.div<{ $isCollapsed: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
   
-  .character-info {
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  
+  .brand-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: #667eea;
+    opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+  }
+`;
+
+const CollapseButton = styled(motion.button)<{ $isDarkMode: boolean }>`
+  display: none;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f3f4f6'};
+  border-radius: 6px;
+  cursor: pointer;
+  color: ${({ $isDarkMode }) => $isDarkMode ? '#d1d5db' : '#6b7280'};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ $isDarkMode }) => $isDarkMode ? '#4b5563' : '#e5e7eb'};
+    color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#374151'};
+  }
+  
+  @media (min-width: 1200px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const SidebarContent = styled.div<{ $isCollapsed: boolean }>`
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 70px);
+  padding: ${({ $isCollapsed }) => $isCollapsed ? '16px 8px' : '16px 20px'};
+  overflow-y: auto;
+  
+  /* 커스텀 스크롤바 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+    
+    &:hover {
+      background: #9ca3af;
+    }
+  }
+`;
+
+const NavSection = styled.div`
+  margin-bottom: 32px;
+`;
+
+const SectionTitle = styled.h3<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
+  font-size: 12px;
+  font-weight: 700;
+  color: ${({ $isDarkMode }) => $isDarkMode ? '#9ca3af' : '#6b7280'};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px 0;
+  opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
+  transition: opacity 0.3s ease;
+  padding-left: 4px;
+`;
+
+const NavItem = styled(motion.div)<{ 
+  $isActive: boolean; 
+  $isDarkMode: boolean;
+  $isCollapsed: boolean;
+}>`
+  .nav-link {
     display: flex;
     align-items: center;
     gap: 12px;
+    padding: ${({ $isCollapsed }) => $isCollapsed ? '12px 8px' : '12px 16px'};
+    border-radius: 8px;
+    text-decoration: none;
+    color: ${({ $isActive, $isDarkMode }) => {
+      if ($isActive) return '#667eea';
+      return $isDarkMode ? '#d1d5db' : '#6b7280';
+    }};
+    background: ${({ $isActive, $isDarkMode }) => {
+      if ($isActive) return $isDarkMode ? 'rgba(102, 126, 234, 0.2)' : '#f0f4ff';
+      return 'transparent';
+    }};
+    cursor: pointer;
+    font-weight: ${({ $isActive }) => $isActive ? '600' : '500'};
+    font-size: 14px;
+    transition: all 0.2s ease;
+    position: relative;
+    justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
+    
+    &:hover {
+      background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f9fafb'};
+      color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#667eea'};
+    }
+    
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    
+    .nav-text {
+      opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+    }
   }
+`;
+
+const AccountSection = styled.div<{ $isCollapsed: boolean }>`
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6; // 하드코딩된 색상으로 변경
+`;
+
+const UserInfo = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: ${({ $isCollapsed }) => $isCollapsed ? '8px' : '12px 16px'};
+  margin-bottom: 12px;
+  background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f8fafc'};
+  border-radius: 8px;
+  justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
   
   .avatar {
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-weight: 700;
-    font-size: 18px;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
   }
   
-  .details {
-    h3 {
-      font-size: 16px;
+  .user-details {
+    opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
+    transition: opacity 0.3s ease;
+    
+    .name {
+      font-size: 14px;
       font-weight: 600;
-      color: #374151;
-      margin: 0 0 4px 0;
+      color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#374151'};
+      margin-bottom: 2px;
     }
     
-    .level {
+    .email {
       font-size: 12px;
-      color: #6b7280;
-      font-weight: 500;
+      color: ${({ $isDarkMode }) => $isDarkMode ? '#9ca3af' : '#6b7280'};
     }
-  }
-  
-  .status-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #10b981;
-    border: 2px solid white;
   }
 `;
 
-const StatsContainer = styled.div`
+const ThemeToggleButton = styled(motion.button)<{ 
+  $isDarkMode: boolean; 
+  $isCollapsed: boolean 
+}>`
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
-`;
-
-const StatBar = styled.div`
-  .stat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-    
-    .stat-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #374151;
-      
-      svg {
-        width: 16px;
-        height: 16px;
-      }
-    }
-    
-    .stat-value {
-      font-size: 14px;
-      font-weight: 600;
-      color: #6b7280;
-    }
+  width: 100%;
+  padding: ${({ $isCollapsed }) => $isCollapsed ? '12px 8px' : '12px 16px'};
+  border: none;
+  background: transparent;
+  color: ${({ $isDarkMode }) => $isDarkMode ? '#d1d5db' : '#6b7280'};
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
+  
+  &:hover {
+    background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f9fafb'};
+    color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#667eea'};
   }
   
-  .stat-bar {
-    height: 8px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 4px;
-    overflow: hidden;
+  .theme-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
   }
   
-  .stat-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.3s ease;
-  }
-  
-  &.health .stat-fill {
-    background: linear-gradient(90deg, #ef4444, #f87171);
-  }
-  
-  &.sanity .stat-fill {
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  .theme-text {
+    opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
   }
 `;
 
-const GameStatus = styled.div`
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
+// 모바일 오버레이
+const MobileOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
   
-  .status-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-    
-    h4 {
-      font-size: 14px;
-      font-weight: 600;
-      color: #374151;
-      margin: 0;
-    }
-    
-    svg {
-      width: 16px;
-      height: 16px;
-      color: #667eea;
-    }
-  }
-  
-  .current-story {
-    font-size: 13px;
-    color: #6b7280;
-    margin-bottom: 8px;
-  }
-  
-  .progress {
-    font-size: 12px;
-    color: #9ca3af;
-  }
-`;
-
-const QuickActions = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  
-  .action-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    
-    &:hover {
-      background: #f9fafb;
-      border-color: #667eea;
-    }
-    
-    svg {
-      width: 18px;
-      height: 18px;
-      color: #667eea;
-    }
-    
-    .action-text {
-      font-size: 14px;
-      color: #374151;
-      font-weight: 500;
-    }
-    
-    .action-arrow {
-      margin-left: auto;
-      color: #9ca3af;
-    }
-  }
-`;
-
-const RecentActivity = styled.div`
-  .activity-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .activity-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 0;
-    border-bottom: 1px solid #f3f4f6;
-    
-    &:last-child {
-      border-bottom: none;
-    }
-    
-    .activity-icon {
-      width: 32px;
-      height: 32px;
-      background: #f3f4f6;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      
-      svg {
-        width: 16px;
-        height: 16px;
-        color: #6b7280;
-      }
-    }
-    
-    .activity-content {
-      flex: 1;
-      
-      .activity-text {
-        font-size: 13px;
-        color: #374151;
-        margin-bottom: 2px;
-      }
-      
-      .activity-time {
-        font-size: 11px;
-        color: #9ca3af;
-      }
-    }
-  }
-`;
-
-const CollapsibleSection = styled.div<{ $isOpen: boolean }>`
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    padding: 8px 0;
-    
-    .section-title {
-      margin: 0;
-    }
-    
-    .chevron {
-      margin-left: auto;
-      color: #9ca3af;
-      transition: transform 0.2s ease;
-      transform: ${({ $isOpen }) => $isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};
-    }
+  @media (min-width: 1200px) {
+    display: none;
   }
 `;
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = true,
-  onClose
+  onClose,
+  isCollapsed = false,
+  onToggleCollapse,
+  isDarkMode = false,
+  onThemeToggle,
+  currentPath = '/',
+  user = null
 }) => {
-  const [showRecentActivity, setShowRecentActivity] = useState(true);
-  const { currentCharacter } = useCharacterStore();
-  const { currentStory, currentPage, character, isPlaying } = useGameStore();
+  const router = useRouter();
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
-  // 캐릭터 정보 (characterStore 또는 gameStore에서 가져오기)
-  const displayCharacter = currentCharacter || character || {
-    charName: "모험가123",
-    charHealth: 85,
-    charSanity: 92,
-    isAlive: true
+  const handleNavigation = (path: string) => {
+    router.push(path);
+    // 모바일에서는 네비게이션 후 사이드바 닫기
+    if (window.innerWidth < 1200 && onClose) {
+      onClose();
+    }
   };
 
-  // 게임 상태 정보
-  const gameInfo = currentStory && currentPage ? {
-    storyTitle: currentStory.storyTitle,
-    currentPage: currentPage.pageNumber || 1,
-    totalPages: currentPage.totalPages || 15,
-    lastPlayed: "진행 중"
-  } : {
-    storyTitle: "게임을 시작해보세요",
-    currentPage: 0,
-    totalPages: 0,
-    lastPlayed: "없음"
+  const handleAuthAction = (action: 'login' | 'signup' | 'logout') => {
+    if (action === 'logout') {
+      // 로그아웃 로직
+      console.log('로그아웃');
+    } else {
+      router.push(`/auth/${action}`);
+    }
+    
+    if (window.innerWidth < 1200 && onClose) {
+      onClose();
+    }
   };
 
-  const recentActivities = [
-    { icon: Gamepad2, text: "새로운 스토리를 시작했습니다", time: "5분 전" },
-    { icon: Trophy, text: "업적 '첫 걸음'을 달성했습니다", time: "1시간 전" },
-    { icon: BookOpen, text: "스토리 '2호선 미스터리'를 완료했습니다", time: "2시간 전" },
-    { icon: Star, text: "레벨 5에 도달했습니다", time: "1일 전" }
-  ];
+  const getUserInitial = (name?: string) => {
+    return name ? name.charAt(0).toUpperCase() : 'U';
+  };
+
+  // 현재 표시할 네비게이션 아이템들 결정
+  const visibleNavItems = [...mainNavItems];
+  if (isDarkMode) {
+    visibleNavItems.push(...gameNavItems);
+  }
 
   return (
     <>
-      <SidebarContainer 
-        $isOpen={isOpen}
-        initial={false}
-        animate={{ x: isOpen ? 0 : -300 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-      >
-        <SidebarContent>
-          {/* 캐릭터 정보 */}
-          <Section>
-            <div className="section-title">캐릭터</div>
-            <CharacterCard
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
-            >
-              <CharacterHeader>
-                <div className="character-info">
-                  <div className="avatar">
-                    {displayCharacter.charName?.charAt(0) || 'U'}
-                  </div>
-                  <div className="details">
-                    <h3>{displayCharacter.charName || '캐릭터 없음'}</h3>
-                  </div>
-                </div>
-                <div className="status-indicator" />
-              </CharacterHeader>
-
-              <StatsContainer>
-                <StatBar className="health">
-                  <div className="stat-header">
-                    <div className="stat-label">
-                      <Heart />
-                      체력
-                    </div>
-                    <div className="stat-value">{displayCharacter.charHealth || 0}/100</div>
-                  </div>
-                  <div className="stat-bar">
-                    <div 
-                      className="stat-fill" 
-                      style={{ width: `${displayCharacter.charHealth || 0}%` }} 
-                    />
-                  </div>
-                </StatBar>
-
-                <StatBar className="sanity">
-                  <div className="stat-header">
-                    <div className="stat-label">
-                      <Brain />
-                      정신력
-                    </div>
-                    <div className="stat-value">{displayCharacter.charSanity || 0}/100</div>
-                  </div>
-                  <div className="stat-bar">
-                    <div 
-                      className="stat-fill" 
-                      style={{ width: `${displayCharacter.charSanity || 0}%` }} 
-                    />
-                  </div>
-                </StatBar>
-              </StatsContainer>
-            </CharacterCard>
-          </Section>
-
-          {/* 게임 상태 */}
-          <Section>
-            <div className="section-title">진행 중인 게임</div>
-            <GameStatus>
-              <div className="status-header">
-                <MapPin />
-                <h4>현재 위치</h4>
-              </div>
-              <div className="current-story">{gameInfo.storyTitle}</div>
-              <div className="progress">
-                {gameInfo.totalPages > 0 ? (
-                  <>
-                    진행률: {gameInfo.currentPage}/{gameInfo.totalPages} 
-                    ({Math.round((gameInfo.currentPage / gameInfo.totalPages) * 100)}%)
-                  </>
-                ) : (
-                  '게임을 시작해보세요'
-                )}
-              </div>
-            </GameStatus>
-          </Section>
-
-          {/* 빠른 액션 */}
-          <Section>
-            <div className="section-title">빠른 액션</div>
-            <QuickActions>
-              <div className="action-item">
-                <Gamepad2 />
-                <span className="action-text">
-                  {isPlaying ? '게임 계속하기' : '새 게임 시작'}
-                </span>
-                <ChevronRight className="action-arrow" />
-              </div>
-              <div className="action-item">
-                <User />
-                <span className="action-text">캐릭터 관리</span>
-                <ChevronRight className="action-arrow" />
-              </div>
-              <div className="action-item">
-                <Trophy />
-                <span className="action-text">업적 확인</span>
-                <ChevronRight className="action-arrow" />
-              </div>
-            </QuickActions>
-          </Section>
-
-          {/* 최근 활동 */}
-          <Section>
-            <CollapsibleSection $isOpen={showRecentActivity}>
-              <div 
-                className="section-header"
-                onClick={() => setShowRecentActivity(!showRecentActivity)}
-              >
-                <div className="section-title">최근 활동</div>
-                <ChevronRight className="chevron" />
-              </div>
-              
-              <AnimatePresence>
-                {showRecentActivity && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <RecentActivity>
-                      <div className="activity-list">
-                        {recentActivities.map((activity, index) => (
-                          <div key={index} className="activity-item">
-                            <div className="activity-icon">
-                              <activity.icon />
-                            </div>
-                            <div className="activity-content">
-                              <div className="activity-text">{activity.text}</div>
-                              <div className="activity-time">{activity.time}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </RecentActivity>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </CollapsibleSection>
-          </Section>
-        </SidebarContent>
-      </SidebarContainer>
-
       {/* 모바일 오버레이 */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <MobileOverlay
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            style={{
-              position: 'fixed',
-              top: 70,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0, 0, 0, 0.3)',
-              zIndex: 80,
-              display: 'none'
-            }}
-            className="mobile-overlay"
             onClick={onClose}
           />
         )}
       </AnimatePresence>
-      
-      <style jsx>{`
-        @media (max-width: 1199px) {
-          .mobile-overlay {
-            display: block !important;
-          }
-        }
-      `}</style>
+
+      {/* 사이드바 */}
+      <SidebarContainer
+        $isOpen={isOpen}
+        $isCollapsed={isCollapsed}
+        $isDarkMode={isDarkMode}
+        initial={false}
+        animate={{ 
+          x: isOpen ? 0 : -300,
+          width: isCollapsed ? 60 : 280 
+        }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+      >
+        {/* 헤더 */}
+        <SidebarHeader $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
+          <LogoSection $isCollapsed={isCollapsed}>
+            <div className="logo-icon">B</div>
+            <div className="brand-name">Behindy</div>
+          </LogoSection>
+          
+          <CollapseButton
+            $isDarkMode={isDarkMode}
+            onClick={onToggleCollapse}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
+          </CollapseButton>
+        </SidebarHeader>
+
+        {/* 콘텐츠 */}
+        <SidebarContent $isCollapsed={isCollapsed}>
+          {/* 메인 네비게이션 */}
+          <NavSection>
+            <SectionTitle $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
+              메인 메뉴
+            </SectionTitle>
+            
+            {visibleNavItems.map((item) => (
+              <NavItem
+                key={item.id}
+                $isActive={currentPath === item.path}
+                $isDarkMode={isDarkMode}
+                $isCollapsed={isCollapsed}
+                onHoverStart={() => setHoveredItem(item.id)}
+                onHoverEnd={() => setHoveredItem(null)}
+                whileHover={{ x: isCollapsed ? 0 : 2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div 
+                  className="nav-link"
+                  onClick={() => handleNavigation(item.path)}
+                >
+                  <item.icon className="nav-icon" />
+                  <span className="nav-text">{item.label}</span>
+                </div>
+              </NavItem>
+            ))}
+          </NavSection>
+
+          {/* 계정 섹션 */}
+          <AccountSection $isCollapsed={isCollapsed}>
+            {user?.isAuthenticated ? (
+              <>
+                {/* 사용자 정보 */}
+                <UserInfo $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
+                  <div className="avatar">
+                    {getUserInitial(user.name)}
+                  </div>
+                  <div className="user-details">
+                    <div className="name">{user.name}</div>
+                    <div className="email">{user.email}</div>
+                  </div>
+                </UserInfo>
+
+                {/* 로그아웃 버튼 */}
+                <NavItem
+                  $isActive={false}
+                  $isDarkMode={isDarkMode}
+                  $isCollapsed={isCollapsed}
+                  whileHover={{ x: isCollapsed ? 0 : 2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div 
+                    className="nav-link"
+                    onClick={() => handleAuthAction('logout')}
+                  >
+                    <LogOut className="nav-icon" />
+                    <span className="nav-text">로그아웃</span>
+                  </div>
+                </NavItem>
+              </>
+            ) : (
+              <>
+                {/* 로그인 버튼 */}
+                <NavItem
+                  $isActive={false}
+                  $isDarkMode={isDarkMode}
+                  $isCollapsed={isCollapsed}
+                  whileHover={{ x: isCollapsed ? 0 : 2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div 
+                    className="nav-link"
+                    onClick={() => handleAuthAction('login')}
+                  >
+                    <LogIn className="nav-icon" />
+                    <span className="nav-text">로그인</span>
+                  </div>
+                </NavItem>
+
+                {/* 회원가입 버튼 */}
+                <NavItem
+                  $isActive={false}
+                  $isDarkMode={isDarkMode}
+                  $isCollapsed={isCollapsed}
+                  whileHover={{ x: isCollapsed ? 0 : 2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div 
+                    className="nav-link"
+                    onClick={() => handleAuthAction('signup')}
+                  >
+                    <UserPlus className="nav-icon" />
+                    <span className="nav-text">회원가입</span>
+                  </div>
+                </NavItem>
+              </>
+            )}
+
+            {/* 테마 토글 */}
+            <ThemeToggleButton
+              $isDarkMode={isDarkMode}
+              $isCollapsed={isCollapsed}
+              onClick={onThemeToggle}
+              whileHover={{ x: isCollapsed ? 0 : 2 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isDarkMode ? (
+                <Sun className="theme-icon" />
+              ) : (
+                <Moon className="theme-icon" />
+              )}
+              <span className="theme-text">
+                {isDarkMode ? '낮 모드' : '밤 모드'}
+              </span>
+            </ThemeToggleButton>
+          </AccountSection>
+        </SidebarContent>
+      </SidebarContainer>
     </>
   );
 };
 
-export default Sidebar;
+// 사용 예시 컴포넌트
+const SidebarDemo: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [currentPath, setCurrentPath] = useState('/');
+  const [user, setUser] = useState<any>(null);
+
+  // 임시 사용자 토글
+  const toggleUser = () => {
+    if (user) {
+      setUser(null);
+    } else {
+      setUser({
+        id: 1,
+        name: '홍길동',
+        email: 'hong@example.com',
+        isAuthenticated: true
+      });
+    }
+  };
+
+  return (
+    <div style={{ 
+      display: 'flex', 
+      height: '100vh',
+      background: isDarkMode ? '#111827' : '#f9fafb',
+      transition: 'background 0.3s ease'
+    }}>
+      <Sidebar
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+        isDarkMode={isDarkMode}
+        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
+        currentPath={currentPath}
+        user={user}
+      />
+      
+      <div style={{ 
+        flex: 1, 
+        padding: '20px',
+        marginLeft: isCollapsed ? '60px' : '280px',
+        transition: 'margin-left 0.3s ease',
+        color: isDarkMode ? '#ffffff' : '#000000'
+      }}>
+        <h1>메인 콘텐츠 영역</h1>
+        <p>사이드바가 완성되었습니다!</p>
+        
+        <div style={{ marginTop: '20px' }}>
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            style={{ marginRight: '10px', padding: '8px 16px' }}
+          >
+            사이드바 {isOpen ? '닫기' : '열기'}
+          </button>
+          
+          <button 
+            onClick={toggleUser}
+            style={{ padding: '8px 16px' }}
+          >
+            {user ? '로그아웃' : '로그인'} 시뮬레이션
+          </button>
+        </div>
+        
+        <div style={{ marginTop: '20px', fontSize: '14px', opacity: 0.7 }}>
+          현재 경로: {currentPath}<br/>
+          테마: {isDarkMode ? '다크' : '라이트'}<br/>
+          접힘 상태: {isCollapsed ? '접힘' : '펼침'}<br/>
+          사용자: {user ? user.name : '로그인 안됨'}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SidebarDemo;
