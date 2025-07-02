@@ -347,7 +347,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({
 export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <AppLayout
-      showSidebar={false}
+      showSidebar={true}
       backgroundColor="#ffffff"
       maxWidth="1200px"
     >
