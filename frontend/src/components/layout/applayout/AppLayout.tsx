@@ -23,9 +23,9 @@ interface AppLayoutProps {
 const LayoutContainer = styled.div<{ $isDarkMode: boolean }>`
   min-height: 100vh;
   background: ${({ $isDarkMode }) => $isDarkMode ? '#111827' : '#fafbfc'};
-  display: flex;
   transition: background-color 0.3s ease;
 `;
+
 
 const SidebarWrapper = styled.div<{ $isCollapsed: boolean }>`
   width: ${({ $isCollapsed }) => $isCollapsed ? '60px' : '280px'};
@@ -33,7 +33,7 @@ const SidebarWrapper = styled.div<{ $isCollapsed: boolean }>`
   transition: width 0.3s ease;
   
   @media (max-width: 1199px) {
-    display: none;
+    width: 0;
   }
 `;
 
@@ -41,15 +41,20 @@ const MainContainer = styled.div<{
   $maxWidth?: string;
   $backgroundColor?: string;
   $isDarkMode: boolean;
+  $sidebarWidth: number;
 }>`
-  flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   background: ${({ $backgroundColor, $isDarkMode }) => 
     $backgroundColor || ($isDarkMode ? '#111827' : '#fafbfc')
   };
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  margin-left: ${({ $sidebarWidth }) => $sidebarWidth}px;
+  
+  @media (max-width: 1199px) {
+    margin-left: 0;
+  }
 `;
 
 const MobileHeader = styled.header<{ $isDarkMode: boolean }>`
@@ -261,7 +266,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   return (
     <LayoutContainer $isDarkMode={isDarkMode}>
-      {/* 데스크톱 사이드바 */}
       {showSidebar && (
         <SidebarWrapper $isCollapsed={sidebarCollapsed}>
           <Sidebar
@@ -281,6 +285,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         $maxWidth={maxWidth}
         $backgroundColor={backgroundColor}
         $isDarkMode={isDarkMode}
+        $sidebarWidth={showSidebar ? (sidebarCollapsed ? 60 : 280) : 0}
       >
         {/* 모바일 헤더 */}
         <MobileHeader $isDarkMode={isDarkMode}>

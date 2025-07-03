@@ -12,11 +12,11 @@ import {
   UserPlus, 
   LogOut,
   ChevronLeft,
-  ChevronRight,
   Sun,
   Moon,
   Settings,
-  Gamepad2
+  Gamepad2,
+  Menu
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -55,20 +55,20 @@ const SidebarContainer = styled(motion.aside)<{
   $isDarkMode: boolean;
 }>`
   position: fixed;
-  left: ${({ $isOpen }) => $isOpen ? '0' : '-300px'};
+  left: 0;
   top: 0;
   width: ${({ $isCollapsed }) => $isCollapsed ? '60px' : '280px'};
   height: 100vh;
   background: ${({ $isDarkMode }) => $isDarkMode ? '#1f2937' : '#ffffff'};
   border-right: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#e5e7eb'};
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: ${({ $isOpen }) => $isOpen ? '2px 0 10px rgba(0, 0, 0, 0.1)' : 'none'};
   z-index: 1000;
   transition: all 0.3s ease;
   overflow: hidden;
+  transform: ${({ $isOpen }) => $isOpen ? 'translateX(0)' : 'translateX(-100%)'};
   
   @media (min-width: 1200px) {
-    position: relative;
-    left: 0;
+    transform: translateX(0);
     box-shadow: none;
     border-right: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#e5e7eb'};
   }
@@ -77,7 +77,7 @@ const SidebarContainer = styled(motion.aside)<{
 const SidebarHeader = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'space-between'};
   padding: ${({ $isCollapsed }) => $isCollapsed ? '16px 8px' : '16px 20px'};
   border-bottom: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f3f4f6'};
   min-height: 70px;
@@ -231,7 +231,7 @@ const NavItem = styled(motion.div)<{
 const AccountSection = styled.div<{ $isCollapsed: boolean }>`
   margin-top: auto;
   padding-top: 16px;
-  border-top: 1px solid #f3f4f6; // 하드코딩된 색상으로 변경
+  border-top: 1px solid #f3f4f6;
 `;
 
 const UserInfo = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
@@ -311,6 +311,43 @@ const ThemeToggleButton = styled(motion.button)<{
     transition: opacity 0.3s ease;
     white-space: nowrap;
   }
+`;
+
+// 접힌 상태에서 보여질 메뉴 버튼
+const CollapsedMenuButton = styled(motion.button)<{ $isDarkMode: boolean }>`
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f3f4f6'};
+  border-radius: 8px;
+  cursor: pointer;
+  color: ${({ $isDarkMode }) => $isDarkMode ? '#d1d5db' : '#6b7280'};
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px auto;
+  
+  &:hover {
+    background: ${({ $isDarkMode }) => $isDarkMode ? '#4b5563' : '#e5e7eb'};
+    color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#374151'};
+    transform: scale(1.05);
+  }
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+// 접힌 상태 콘텐츠 - 햄버거 버튼만
+const CollapsedContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 20px 8px;
+  height: 100vh;
+  align-items: center;
+  justify-content: flex-start;
 `;
 
 // 모바일 오버레이
@@ -399,221 +436,166 @@ export const Sidebar: React.FC<SidebarProps> = ({
         transition={{ duration: 0.3, ease: 'easeInOut' }}
       >
         {/* 헤더 */}
-        <SidebarHeader $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
-          <LogoSection $isCollapsed={isCollapsed}>
-            <div className="logo-icon">B</div>
-            <div className="brand-name">Behindy</div>
-          </LogoSection>
-          
-          <CollapseButton
-            $isDarkMode={isDarkMode}
-            onClick={onToggleCollapse}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
-          </CollapseButton>
-        </SidebarHeader>
+        {isCollapsed ? (
+          // 접힌 상태 - 헤더 없음 (햄버거 버튼은 콘텐츠에서 처리)
+          null
+        ) : (
+          // 펼쳐진 상태 - 로고 + 브랜드명 + 접기 버튼
+          <SidebarHeader $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
+            <LogoSection $isCollapsed={isCollapsed}>
+              <div className="logo-icon">B</div>
+              <div className="brand-name">Behindy</div>
+            </LogoSection>
+            
+            <CollapseButton
+              $isDarkMode={isDarkMode}
+              onClick={onToggleCollapse}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ChevronLeft />
+            </CollapseButton>
+          </SidebarHeader>
+        )}
 
         {/* 콘텐츠 */}
-        <SidebarContent $isCollapsed={isCollapsed}>
-          {/* 메인 네비게이션 */}
-          <NavSection>
-            <SectionTitle $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
-              메인 메뉴
-            </SectionTitle>
-            
-            {visibleNavItems.map((item) => (
-              <NavItem
-                key={item.id}
-                $isActive={currentPath === item.path}
+        {isCollapsed ? (
+          // 접힌 상태 - 햄버거 버튼만 표시
+          <CollapsedContent>
+            <CollapsedMenuButton
+              $isDarkMode={isDarkMode}
+              onClick={onToggleCollapse}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="메뉴 열기"
+            >
+              <Menu />
+            </CollapsedMenuButton>
+          </CollapsedContent>
+        ) : (
+          // 펼쳐진 상태 콘텐츠
+          <SidebarContent $isCollapsed={isCollapsed}>
+            {/* 메인 네비게이션 */}
+            <NavSection>
+              <SectionTitle $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
+                메인 메뉴
+              </SectionTitle>
+              
+              {visibleNavItems.map((item) => (
+                <NavItem
+                  key={item.id}
+                  $isActive={currentPath === item.path}
+                  $isDarkMode={isDarkMode}
+                  $isCollapsed={isCollapsed}
+                  onHoverStart={() => setHoveredItem(item.id)}
+                  onHoverEnd={() => setHoveredItem(null)}
+                  whileHover={{ x: 2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div 
+                    className="nav-link"
+                    onClick={() => handleNavigation(item.path)}
+                  >
+                    <item.icon className="nav-icon" />
+                    <span className="nav-text">{item.label}</span>
+                  </div>
+                </NavItem>
+              ))}
+            </NavSection>
+
+            {/* 계정 섹션 */}
+            <AccountSection $isCollapsed={isCollapsed}>
+              {user?.isAuthenticated ? (
+                <>
+                  {/* 사용자 정보 */}
+                  <UserInfo $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
+                    <div className="avatar">
+                      {getUserInitial(user.name)}
+                    </div>
+                    <div className="user-details">
+                      <div className="name">{user.name}</div>
+                      <div className="email">{user.email}</div>
+                    </div>
+                  </UserInfo>
+
+                  {/* 로그아웃 버튼 */}
+                  <NavItem
+                    $isActive={false}
+                    $isDarkMode={isDarkMode}
+                    $isCollapsed={isCollapsed}
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div 
+                      className="nav-link"
+                      onClick={() => handleAuthAction('logout')}
+                    >
+                      <LogOut className="nav-icon" />
+                      <span className="nav-text">로그아웃</span>
+                    </div>
+                  </NavItem>
+                </>
+              ) : (
+                <>
+                  {/* 로그인 버튼 */}
+                  <NavItem
+                    $isActive={false}
+                    $isDarkMode={isDarkMode}
+                    $isCollapsed={isCollapsed}
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div 
+                      className="nav-link"
+                      onClick={() => handleAuthAction('login')}
+                    >
+                      <LogIn className="nav-icon" />
+                      <span className="nav-text">로그인</span>
+                    </div>
+                  </NavItem>
+
+                  {/* 회원가입 버튼 */}
+                  <NavItem
+                    $isActive={false}
+                    $isDarkMode={isDarkMode}
+                    $isCollapsed={isCollapsed}
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div 
+                      className="nav-link"
+                      onClick={() => handleAuthAction('signup')}
+                    >
+                      <UserPlus className="nav-icon" />
+                      <span className="nav-text">회원가입</span>
+                    </div>
+                  </NavItem>
+                </>
+              )}
+
+              {/* 테마 토글 */}
+              <ThemeToggleButton
                 $isDarkMode={isDarkMode}
                 $isCollapsed={isCollapsed}
-                onHoverStart={() => setHoveredItem(item.id)}
-                onHoverEnd={() => setHoveredItem(null)}
-                whileHover={{ x: isCollapsed ? 0 : 2 }}
+                onClick={onThemeToggle}
+                whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div 
-                  className="nav-link"
-                  onClick={() => handleNavigation(item.path)}
-                >
-                  <item.icon className="nav-icon" />
-                  <span className="nav-text">{item.label}</span>
-                </div>
-              </NavItem>
-            ))}
-          </NavSection>
-
-          {/* 계정 섹션 */}
-          <AccountSection $isCollapsed={isCollapsed}>
-            {user?.isAuthenticated ? (
-              <>
-                {/* 사용자 정보 */}
-                <UserInfo $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
-                  <div className="avatar">
-                    {getUserInitial(user.name)}
-                  </div>
-                  <div className="user-details">
-                    <div className="name">{user.name}</div>
-                    <div className="email">{user.email}</div>
-                  </div>
-                </UserInfo>
-
-                {/* 로그아웃 버튼 */}
-                <NavItem
-                  $isActive={false}
-                  $isDarkMode={isDarkMode}
-                  $isCollapsed={isCollapsed}
-                  whileHover={{ x: isCollapsed ? 0 : 2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div 
-                    className="nav-link"
-                    onClick={() => handleAuthAction('logout')}
-                  >
-                    <LogOut className="nav-icon" />
-                    <span className="nav-text">로그아웃</span>
-                  </div>
-                </NavItem>
-              </>
-            ) : (
-              <>
-                {/* 로그인 버튼 */}
-                <NavItem
-                  $isActive={false}
-                  $isDarkMode={isDarkMode}
-                  $isCollapsed={isCollapsed}
-                  whileHover={{ x: isCollapsed ? 0 : 2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div 
-                    className="nav-link"
-                    onClick={() => handleAuthAction('login')}
-                  >
-                    <LogIn className="nav-icon" />
-                    <span className="nav-text">로그인</span>
-                  </div>
-                </NavItem>
-
-                {/* 회원가입 버튼 */}
-                <NavItem
-                  $isActive={false}
-                  $isDarkMode={isDarkMode}
-                  $isCollapsed={isCollapsed}
-                  whileHover={{ x: isCollapsed ? 0 : 2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div 
-                    className="nav-link"
-                    onClick={() => handleAuthAction('signup')}
-                  >
-                    <UserPlus className="nav-icon" />
-                    <span className="nav-text">회원가입</span>
-                  </div>
-                </NavItem>
-              </>
-            )}
-
-            {/* 테마 토글 */}
-            <ThemeToggleButton
-              $isDarkMode={isDarkMode}
-              $isCollapsed={isCollapsed}
-              onClick={onThemeToggle}
-              whileHover={{ x: isCollapsed ? 0 : 2 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {isDarkMode ? (
-                <Sun className="theme-icon" />
-              ) : (
-                <Moon className="theme-icon" />
-              )}
-              <span className="theme-text">
-                {isDarkMode ? '낮 모드' : '밤 모드'}
-              </span>
-            </ThemeToggleButton>
-          </AccountSection>
-        </SidebarContent>
+                {isDarkMode ? (
+                  <Sun className="theme-icon" />
+                ) : (
+                  <Moon className="theme-icon" />
+                )}
+                <span className="theme-text">
+                  {isDarkMode ? '낮 모드' : '밤 모드'}
+                </span>
+              </ThemeToggleButton>
+            </AccountSection>
+          </SidebarContent>
+        )}
       </SidebarContainer>
     </>
   );
 };
 
-// 사용 예시 컴포넌트
-const SidebarDemo: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [currentPath, setCurrentPath] = useState('/');
-  const [user, setUser] = useState<any>(null);
-
-  // 임시 사용자 토글
-  const toggleUser = () => {
-    if (user) {
-      setUser(null);
-    } else {
-      setUser({
-        id: 1,
-        name: '홍길동',
-        email: 'hong@example.com',
-        isAuthenticated: true
-      });
-    }
-  };
-
-  return (
-    <div style={{ 
-      display: 'flex', 
-      height: '100vh',
-      background: isDarkMode ? '#111827' : '#f9fafb',
-      transition: 'background 0.3s ease'
-    }}>
-      <Sidebar
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        isCollapsed={isCollapsed}
-        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-        isDarkMode={isDarkMode}
-        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
-        currentPath={currentPath}
-        user={user}
-      />
-      
-      <div style={{ 
-        flex: 1, 
-        padding: '20px',
-        marginLeft: isCollapsed ? '60px' : '280px',
-        transition: 'margin-left 0.3s ease',
-        color: isDarkMode ? '#ffffff' : '#000000'
-      }}>
-        <h1>메인 콘텐츠 영역</h1>
-        <p>사이드바가 완성되었습니다!</p>
-        
-        <div style={{ marginTop: '20px' }}>
-          <button 
-            onClick={() => setIsOpen(!isOpen)}
-            style={{ marginRight: '10px', padding: '8px 16px' }}
-          >
-            사이드바 {isOpen ? '닫기' : '열기'}
-          </button>
-          
-          <button 
-            onClick={toggleUser}
-            style={{ padding: '8px 16px' }}
-          >
-            {user ? '로그아웃' : '로그인'} 시뮬레이션
-          </button>
-        </div>
-        
-        <div style={{ marginTop: '20px', fontSize: '14px', opacity: 0.7 }}>
-          현재 경로: {currentPath}<br/>
-          테마: {isDarkMode ? '다크' : '라이트'}<br/>
-          접힘 상태: {isCollapsed ? '접힘' : '펼침'}<br/>
-          사용자: {user ? user.name : '로그인 안됨'}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default SidebarDemo;
+export default Sidebar;
