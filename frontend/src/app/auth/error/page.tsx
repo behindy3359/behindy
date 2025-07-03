@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -49,6 +49,14 @@ const ActionButtons = styled.div`
   margin: 0 auto;
 `;
 
+const LoadingFallback = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #6b7280;
+`;
+
 const getErrorInfo = (errorCode: string) => {
   switch (errorCode) {
     case 'invalid_credentials':
@@ -84,7 +92,8 @@ const getErrorInfo = (errorCode: string) => {
   }
 };
 
-export default function AuthErrorPage() {
+// SearchParams를 사용하는 컴포넌트를 별도로 분리
+function AuthErrorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const errorCode = searchParams.get('code') || 'unknown';
@@ -140,5 +149,18 @@ export default function AuthErrorPage() {
         </Button>
       </ActionButtons>
     </ErrorContainer>
+  );
+}
+
+// 메인 컴포넌트 - Suspense로 감싸기
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={
+      <LoadingFallback>
+        <div>오류 정보를 불러오는 중...</div>
+      </LoadingFallback>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   );
 }

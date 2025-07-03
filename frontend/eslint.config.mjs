@@ -1,6 +1,3 @@
-// frontend/eslint.config.mjs
-// 개발 친화적 ESLint 설정
-
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
@@ -63,47 +60,45 @@ const eslintConfig = [
       // 따옴표 스타일
       "quotes": "off",
       "@typescript-eslint/quotes": "off",
-    },
-    
-    // ============================================================================
-    // 파일별 개별 설정
-    // ============================================================================
-    
-    overrides: [
-      {
-        // 타입 정의 파일들은 더 관대하게
-        files: ["src/types/**/*.ts"],
-        rules: {
-          "@typescript-eslint/no-unused-vars": "off",
-          "@typescript-eslint/no-explicit-any": "off",
-          "@typescript-eslint/no-empty-object-type": "off",
-        }
-      },
-      {
-        // 스토어 파일들 (개발 중이므로 관대하게)
-        files: ["src/store/**/*.ts"],
-        rules: {
-          "@typescript-eslint/no-unused-vars": "off",
-          "react-hooks/exhaustive-deps": "off",
-        }
-      },
-      {
-        // 설정 파일들
-        files: ["src/config/**/*.ts", "src/utils/**/*.ts"],
-        rules: {
-          "@typescript-eslint/no-unused-vars": "off",
-          "@typescript-eslint/no-explicit-any": "warn",
-        }
-      },
-      {
-        // 컴포넌트 파일들 (좀 더 엄격하게)
-        files: ["src/components/**/*.tsx", "src/app/**/*.tsx"],
-        rules: {
-          "@typescript-eslint/no-unused-vars": "warn",  // 컴포넌트에서는 경고
-          "react-hooks/exhaustive-deps": "warn",
-        }
-      }
-    ]
+    }
+  },
+  
+  // ============================================================================
+  // 파일별 개별 설정
+  // ============================================================================
+  
+  {
+    // 타입 정의 파일들은 더 관대하게
+    files: ["src/types/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+    }
+  },
+  {
+    // 스토어 파일들 (개발 중이므로 관대하게)
+    files: ["src/store/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "react-hooks/exhaustive-deps": "off",
+    }
+  },
+  {
+    // 설정 파일들
+    files: ["src/config/**/*.ts", "src/utils/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+    }
+  },
+  {
+    // 컴포넌트 파일들 (좀 더 엄격하게)
+    files: ["src/components/**/*.tsx", "src/app/**/*.tsx"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "warn",  // 컴포넌트에서는 경고
+      "react-hooks/exhaustive-deps": "warn",
+    }
   }
 ];
 

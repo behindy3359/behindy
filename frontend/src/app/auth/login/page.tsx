@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -217,11 +217,20 @@ const DemoCredentials = styled.div`
   }
 `;
 
+const LoadingFallback = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #6b7280;
+`;
+
 // ================================================================
 // Component
 // ================================================================
 
-export default function LoginPage() {
+// SearchParams를 사용하는 컴포넌트를 별도로 분리
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isAuthenticated } = useAuthStore();
@@ -293,7 +302,8 @@ export default function LoginPage() {
   };
 
   const handleForgotPassword = () => {
-    router.push('/auth/forgot-password');
+    // TODO: 비밀번호 찾기 페이지로 이동
+    alert('비밀번호 찾기 기능은 준비 중입니다.');
   };
 
   const handleDemoLogin = () => {
@@ -432,5 +442,18 @@ export default function LoginPage() {
         </motion.a>
       </SignupPrompt>
     </LoginContainer>
+  );
+}
+
+// 메인 컴포넌트 - Suspense로 감싸기
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <LoadingFallback>
+        <div>로그인 페이지를 불러오는 중...</div>
+      </LoadingFallback>
+    }>
+      <LoginPageContent />
+    </Suspense>
   );
 }
