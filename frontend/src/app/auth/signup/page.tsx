@@ -461,8 +461,7 @@ export default function SignupPage() {
 
   return (
     <SignupContainer>
-      <PageTitle>새로운 모험을 시작하세요</PageTitle>
-      <PageSubtitle>몇 분만에 계정을 만들고 지하철 어드벤처에 참여하세요</PageSubtitle>
+      <PageTitle>behindy에 어서오세요!</PageTitle>
 
       {/* 에러 메시지 */}
       <AnimatePresence>

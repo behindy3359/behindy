@@ -51,11 +51,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // SecurityConfig.java의 filterChain 메서드 부분 수정
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
+                // 🎯 CORS 설정 개선
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -73,5 +76,37 @@ public class SecurityConfig {
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // 🎯 CORS 설정 메서드 추가
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // 허용할 Origin 설정
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://behindy.me",
+            "https://behindy.me", 
+            "http://localhost:*"
+        ));
+        
+        // 허용할 HTTP 메서드
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+        ));
+        
+        // 허용할 헤더
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        
+        // 자격 증명 허용
+        configuration.setAllowCredentials(true);
+        
+        // 프리플라이트 요청 캐시 시간
+        configuration.setMaxAge(3600L);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        
+        return source;
     }
 }
