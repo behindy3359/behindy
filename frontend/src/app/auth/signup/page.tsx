@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import styled from 'styled-components';
@@ -24,7 +24,7 @@ import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 
 // ================================================================
-// Types & Validation
+// Types & Validation (타입 정의 수정)
 // ================================================================
 
 interface SignupFormData {
@@ -37,7 +37,7 @@ interface SignupFormData {
   marketingOptIn: boolean;
 }
 
-const signupSchema = yup.object({
+const signupSchema = yup.object().shape({
   name: yup
     .string()
     .required('이름을 입력해주세요')
@@ -68,7 +68,7 @@ const signupSchema = yup.object({
     .boolean()
     .required('개인정보처리방침에 동의해주세요')
     .oneOf([true], '개인정보처리방침에 동의해주세요'),
-  marketingOptIn: yup.boolean(),
+  marketingOptIn: yup.boolean().default(false),
 });
 
 // ================================================================
@@ -413,7 +413,8 @@ export default function SignupPage() {
     }
   }, [isAuthenticated, router]);
 
-  const onSubmit = async (data: SignupFormData) => {
+  // 수정된 onSubmit 함수 (타입 안전성 확보)
+  const onSubmit: SubmitHandler<SignupFormData> = async (data) => {
     try {
       setIsLoading(true);
       setSignupError('');

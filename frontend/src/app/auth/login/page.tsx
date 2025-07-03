@@ -2,17 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 
 // ================================================================
-// Types & Validation
+// Types & Validation (타입 정의 수정)
 // ================================================================
 
 interface LoginFormData {
@@ -260,7 +260,8 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
-  const onSubmit = async (data: LoginFormData) => {
+  // 수정된 onSubmit 함수 (타입 안전성 확보)
+  const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
     try {
       setIsLoading(true);
       setLoginError('');
@@ -292,8 +293,7 @@ export default function LoginPage() {
   };
 
   const handleForgotPassword = () => {
-    // TODO: 비밀번호 찾기 페이지로 이동
-    alert('비밀번호 찾기 기능은 준비 중입니다.');
+    router.push('/auth/forgot-password');
   };
 
   const handleDemoLogin = () => {
