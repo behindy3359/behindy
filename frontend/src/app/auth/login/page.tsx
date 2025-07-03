@@ -307,7 +307,7 @@ function LoginPageContent() {
   };
 
   const handleDemoLogin = () => {
-    setValue('email', 'demo@behindy.me');
+    setValue('email', 'demo@behindy.com');
     setValue('password', 'Ademo123!');
     setValue('rememberMe', false);
   };
