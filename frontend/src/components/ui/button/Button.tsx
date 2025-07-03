@@ -22,6 +22,7 @@ export interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
   className?: string;
   id?: string;
+  style?: React.CSSProperties;
 }
 
 // ================================================================

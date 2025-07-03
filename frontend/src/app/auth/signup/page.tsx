@@ -34,7 +34,7 @@ interface SignupFormData {
   confirmPassword: string;
   agreeToTerms: boolean;
   agreeToPrivacy: boolean;
-  marketingOptIn?: boolean;
+  marketingOptIn: boolean;
 }
 
 const signupSchema = yup.object({
