@@ -1,32 +1,39 @@
-import React from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { devtools } from 'zustand/middleware';
-
-// 타입 import
 import type { 
   AuthState,
   TokenInfo, 
   AuthError,
 } from '@/types/auth/authState';
-import type { CurrentUser, User } from '@/types/auth/authUser';
-import type { LoginRequest as LoginReq, SignupRequest as SignupReq } from '@/types/auth/authRequest';
-import type { AuthResponse as AuthRes, RefreshTokenResponse as RefreshRes } from '@/types/auth/authResponse';
-
-// API 및 설정 import
-import { api } from '@/config';
-import { API_ENDPOINTS } from '@/config';
-import { TokenManager } from '@/config';
+import type { CurrentUser } from '@/types/auth/authUser';
+import type { LoginRequest, SignupRequest } from '@/types/auth/authRequest';
+import { api, API_ENDPOINTS, TokenManager } from '@/config';
 import { env } from '@/config/env';
 
 // ================================================================
-// 응답 타입 정의
+// 백엔드 응답 타입 (AuthController 기준)
 // ================================================================
+
+interface JwtAuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  userId: number;
+  name: string;
+  email: string;
+}
+
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
 
 interface AuthResult {
   success: boolean;
   error?: string;
-  data?: any;
+  data?: unknown;
 }
 
 // ================================================================
@@ -34,10 +41,10 @@ interface AuthResult {
 // ================================================================
 
 interface AuthActions {
-  // 로그인/로그아웃 (응답 형식 변경)
-  login: (credentials: LoginReq) => Promise<AuthResult>;
+  // 로그인/로그아웃
+  login: (credentials: LoginRequest) => Promise<AuthResult>;
   logout: () => Promise<void>;
-  signup: (userData: SignupReq) => Promise<AuthResult>;
+  signup: (userData: SignupRequest) => Promise<AuthResult>;
   
   // 토큰 관리
   refreshToken: () => Promise<boolean>;
@@ -61,10 +68,8 @@ interface AuthActions {
   getUserPermissions: () => string[];
 }
 
-// 전체 스토어 타입
 type AuthStore = AuthState & AuthActions;
 
-// 초기 상태 정의
 const initialState: AuthState = {
   status: 'idle',
   user: null,
@@ -85,22 +90,22 @@ export const useAuthStore = create<AuthStore>()(
   devtools(
     persist(
       (set, get) => ({
-        // 초기 상태
         ...initialState,
 
-        // 로그인/인증 액션들
-
         /**
-         * 사용자 로그인
+         * 사용자 로그인 (백엔드 AuthController와 연동)
          */
-        login: async (credentials: LoginReq): Promise<AuthResult> => {
+        login: async (credentials: LoginRequest): Promise<AuthResult> => {
           try {
             set({ isLoading: true, error: null }, false, 'auth/login/start');
 
-            // API 호출
-            const response = await api.post<AuthRes>(
+            // 백엔드 AuthController의 /api/auth/login 호출
+            const response = await api.post<JwtAuthResponse>(
               API_ENDPOINTS.AUTH.LOGIN,
-              credentials
+              {
+                email: credentials.email,
+                password: credentials.password,
+              }
             );
 
             // 토큰 저장
@@ -112,7 +117,7 @@ export const useAuthStore = create<AuthStore>()(
               name: response.name,
               email: response.email,
               isAuthenticated: true,
-              permissions: [], // 필요시 백엔드에서 제공
+              permissions: [],
             };
 
             const tokens: TokenInfo = {
@@ -136,10 +141,19 @@ export const useAuthStore = create<AuthStore>()(
 
             return { success: true, data: user };
           } catch (error: unknown) {
+            console.error('Login error:', error);
+            
+            const apiError = error as { 
+              response?: { 
+                status?: number; 
+                data?: { message?: string } 
+              } 
+            };
+
             const authError: AuthError = {
-              code: (error as { response?: { status?: number } }).response?.status?.toString() || 'LOGIN_FAILED',
-              message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || '로그인에 실패했습니다.',
-              details: (error as { response?: { data?: unknown } }).response?.data,
+              code: apiError.response?.status?.toString() || 'LOGIN_FAILED',
+              message: apiError.response?.data?.message || '로그인에 실패했습니다.',
+              details: apiError.response?.data,
             };
 
             set(
@@ -159,13 +173,21 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         /**
-         * 사용자 회원가입
+         * 사용자 회원가입 (백엔드 AuthController와 연동)
          */
-        signup: async (userData: SignupReq): Promise<AuthResult> => {
+        signup: async (userData: SignupRequest): Promise<AuthResult> => {
           try {
             set({ isLoading: true, error: null }, false, 'auth/signup/start');
 
-            const response = await api.post(API_ENDPOINTS.AUTH.SIGNUP, userData);
+            // 백엔드 AuthController의 /api/auth/signup 호출
+            const response = await api.post<ApiResponse<number>>(
+              API_ENDPOINTS.AUTH.SIGNUP,
+              {
+                name: userData.name,
+                email: userData.email,
+                password: userData.password,
+              }
+            );
 
             set(
               {
@@ -177,12 +199,27 @@ export const useAuthStore = create<AuthStore>()(
               'auth/signup/success'
             );
 
-            return { success: true, data: response };
+            return { 
+              success: true, 
+              data: { 
+                userId: response.data,
+                message: response.message || '회원가입이 완료되었습니다.'
+              }
+            };
           } catch (error: unknown) {
+            console.error('Signup error:', error);
+            
+            const apiError = error as { 
+              response?: { 
+                status?: number; 
+                data?: { message?: string } 
+              } 
+            };
+
             const authError: AuthError = {
-              code: (error as { response?: { status?: number } }).response?.status?.toString() || 'SIGNUP_FAILED',
-              message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || '회원가입에 실패했습니다.',
-              details: (error as { response?: { data?: unknown } }).response?.data,
+              code: apiError.response?.status?.toString() || 'SIGNUP_FAILED',
+              message: apiError.response?.data?.message || '회원가입에 실패했습니다.',
+              details: apiError.response?.data,
             };
 
             set(
@@ -200,20 +237,19 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         /**
-         * 사용자 로그아웃
+         * 사용자 로그아웃 (백엔드 AuthController와 연동)
          */
         logout: async (): Promise<void> => {
           try {
             const { tokens } = get();
             
-            // 백엔드에 로그아웃 요청 (선택적)
+            // 백엔드에 로그아웃 요청
             if (tokens.refreshToken) {
               try {
-                await api.post(API_ENDPOINTS.AUTH.LOGOUT, {
+                await api.post<ApiResponse>(API_ENDPOINTS.AUTH.LOGOUT, {
                   refreshToken: tokens.refreshToken,
                 });
               } catch (error) {
-                // 로그아웃 API 실패해도 클라이언트 정리는 진행
                 console.warn('Logout API failed:', error);
               }
             }
@@ -242,10 +278,8 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        // 토큰 관리 액션들
-
         /**
-         * 토큰 갱신
+         * 토큰 갱신 (백엔드 AuthController와 연동)
          */
         refreshToken: async (): Promise<boolean> => {
           try {
@@ -255,7 +289,8 @@ export const useAuthStore = create<AuthStore>()(
               throw new Error('No refresh token available');
             }
 
-            const response = await api.post<RefreshRes>(
+            // 백엔드 AuthController의 /api/auth/refresh 호출
+            const response = await api.post<JwtAuthResponse>(
               API_ENDPOINTS.AUTH.REFRESH,
               { refreshToken: tokens.refreshToken }
             );
@@ -281,6 +316,7 @@ export const useAuthStore = create<AuthStore>()(
 
             return true;
           } catch (error: unknown) {
+            console.error('Token refresh failed:', error);
             // 토큰 갱신 실패 시 로그아웃 처리
             await get().logout();
             return false;
@@ -312,7 +348,6 @@ export const useAuthStore = create<AuthStore>()(
           try {
             set({ isLoading: true }, false, 'auth/check/start');
 
-            // localStorage에서 토큰 확인
             const accessToken = TokenManager.getAccessToken();
             const refreshToken = TokenManager.getRefreshToken();
 
@@ -329,15 +364,27 @@ export const useAuthStore = create<AuthStore>()(
               return;
             }
 
-            // 토큰이 있으면 사용자 정보 가져오기 시도
-            await get().fetchCurrentUser();
+            // 토큰이 있으면 사용자 정보 복원
+            // 실제로는 사용자 정보를 가져오는 API가 필요하지만,
+            // 현재는 토큰 검증만 수행
+            set(
+              {
+                status: 'authenticated',
+                tokens: {
+                  accessToken,
+                  refreshToken,
+                  tokenType: 'Bearer',
+                },
+                isLoading: false,
+              },
+              false,
+              'auth/check/success'
+            );
           } catch (error) {
-            // 토큰이 유효하지 않으면 정리
+            console.error('Auth status check failed:', error);
             await get().logout();
           }
         },
-
-        // 사용자 정보 관리
 
         /**
          * 현재 사용자 정보 가져오기
@@ -345,9 +392,7 @@ export const useAuthStore = create<AuthStore>()(
         fetchCurrentUser: async (): Promise<void> => {
           try {
             // 실제로는 사용자 정보를 가져오는 API 엔드포인트가 필요
-            // 현재는 토큰에서 정보를 추출하거나 별도 API 구현 필요
-            
-            // 임시로 토큰 검증만 수행
+            // 현재는 토큰 검증만 수행
             const accessToken = TokenManager.getAccessToken();
             const refreshToken = TokenManager.getRefreshToken();
 
@@ -369,6 +414,7 @@ export const useAuthStore = create<AuthStore>()(
               throw new Error('No valid tokens');
             }
           } catch (error) {
+            console.error('Fetch user failed:', error);
             set(
               {
                 status: 'unauthenticated',
@@ -398,86 +444,56 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         // 상태 관리 액션들
-
-        /**
-         * 로딩 상태 설정
-         */
         setLoading: (loading: boolean): void => {
           set({ isLoading: loading }, false, 'auth/setLoading');
         },
 
-        /**
-         * 에러 설정
-         */
         setError: (error: AuthError | null): void => {
           set({ error }, false, 'auth/setError');
         },
 
-        /**
-         * 에러 정리
-         */
         clearError: (): void => {
           set({ error: null }, false, 'auth/clearError');
         },
 
-        /**
-         * 상태 초기화
-         */
         reset: (): void => {
           TokenManager.clearTokens();
           set(initialState, false, 'auth/reset');
         },
 
         // 인증 유틸리티
-
-        /**
-         * 인증 여부 확인
-         */
         isAuthenticated: (): boolean => {
           const { status, tokens } = get();
           return status === 'authenticated' && !!tokens.accessToken;
         },
 
-        /**
-         * 유효한 토큰 존재 여부
-         */
         hasValidToken: (): boolean => {
           const { tokens } = get();
           return !!tokens.accessToken && !!tokens.refreshToken;
         },
 
-        /**
-         * 토큰 갱신 필요 여부
-         */
         needsRefresh: (): boolean => {
           const { tokens, lastLoginAttempt } = get();
           
-          // 토큰이 없으면 갱신 불가
           if (!tokens.refreshToken) return false;
           
-          // 마지막 로그인 시도가 1시간 이상 지났으면 갱신 시도
           const oneHour = 60 * 60 * 1000;
           return lastLoginAttempt 
             ? Date.now() - lastLoginAttempt > oneHour 
             : true;
         },
 
-        /**
-         * 사용자 권한 목록 가져오기
-         */
         getUserPermissions: (): string[] => {
           const { user } = get();
           return user?.permissions || [];
         },
       }),
       {
-        name: 'auth-store', // localStorage 키
+        name: 'auth-store',
         storage: createJSONStorage(() => localStorage),
-        // 민감한 정보는 persist에서 제외
         partialize: (state) => ({
           user: state.user,
           status: state.status,
-          // 토큰은 TokenManager에서 별도 관리하므로 제외
         }),
       }
     ),
@@ -492,36 +508,15 @@ export const useAuthStore = create<AuthStore>()(
 // 헬퍼 훅들
 // ================================================================
 
-/**
- * 인증 상태 확인 헬퍼
- */
 export const useAuth = () => {
   const store = useAuthStore();
   return {
-    // 상태
     ...store,
-    
-    // 계산된 값들
     isLoggedIn: store.isAuthenticated(),
     hasToken: store.hasValidToken(),
     shouldRefresh: store.needsRefresh(),
     permissions: store.getUserPermissions(),
   };
-};
-
-/**
- * 로그인 필요 여부 확인
- */
-export const useRequireAuth = () => {
-  const { isAuthenticated, checkAuthStatus } = useAuthStore();
-  
-  React.useEffect(() => {
-    if (!isAuthenticated()) {
-      checkAuthStatus();
-    }
-  }, [isAuthenticated, checkAuthStatus]);
-  
-  return isAuthenticated();
 };
 
 export default useAuthStore;
