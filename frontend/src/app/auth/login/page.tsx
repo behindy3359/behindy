@@ -307,8 +307,8 @@ function LoginPageContent() {
   };
 
   const handleDemoLogin = () => {
-    setValue('email', 'demo@behindy.com');
-    setValue('password', 'demo123');
+    setValue('email', 'demo@behindy.me');
+    setValue('password', 'Ademo123!');
     setValue('rememberMe', false);
   };
 
@@ -323,14 +323,7 @@ function LoginPageContent() {
 
       {/* 데모 계정 안내 */}
       <DemoCredentials>
-        <div className="demo-title">🎮 데모 계정으로 체험하기</div>
-        <div className="demo-info">
-          회원가입 없이 바로 체험해보세요!
-        </div>
-        <div className="demo-credentials">
-          <div>📧 이메일: demo@behindy.com</div>
-          <div>🔐 비밀번호: demo123</div>
-        </div>
+        <div className="demo-title">🎮 데모 계정으로 접속하기</div>
         <Button
           variant="ghost"
           size="sm"

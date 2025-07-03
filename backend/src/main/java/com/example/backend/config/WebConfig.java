@@ -10,16 +10,15 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                // 🎯 behindy.me 도메인 허용
                 .allowedOrigins(
                     "http://behindy.me", 
                     "https://behindy.me",
-                    "http://localhost:3000", // 개발용
-                    "http://localhost:3001"  // 개발용
+                    "http://localhost:3000",
+                    "http://localhost:3001"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
                 .allowCredentials(true)
-                .maxAge(3600); // 프리플라이트 요청 캐시 시간 (1시간)
+                .maxAge(3600);
     }
 }
