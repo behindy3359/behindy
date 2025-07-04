@@ -348,26 +348,58 @@ export const PostForm: React.FC<PostFormProps> = ({
   const createPostMutation = useMutation({
     mutationFn: async (data: CreatePostRequest) => {
       try {
-        console.log('게시글 생성 요청:', data);
+        console.group('📝 게시글 생성 시작');
+        console.log('요청 데이터:', data);
+        console.log('API 엔드포인트:', API_ENDPOINTS.POSTS.BASE);
+        console.log('사용자 정보:', user);
+        console.log('인증 상태:', isAuthenticated());
+        
         const response = await api.post<Post>(API_ENDPOINTS.POSTS.BASE, data);
-        console.log('게시글 생성 성공:', response);
+        console.log('✅ 게시글 생성 성공:', response);
+        console.groupEnd();
         return response;
-      } catch (error) {
-        console.error('게시글 생성 실패:', error);
+      } catch (error: any) {
+        console.group('❌ 게시글 생성 실패');
+        console.error('에러 객체:', error);
+        console.error('응답 상태:', error?.response?.status);
+        console.error('응답 데이터:', error?.response?.data);
+        console.error('응답 헤더:', error?.response?.headers);
+        console.error('요청 설정:', error?.config);
+        console.error('네트워크 에러:', error?.code);
+        console.error('메시지:', error?.message);
+        console.groupEnd();
         throw error;
       }
     },
     onSuccess: (newPost) => {
-      console.log('게시글 생성 완료:', newPost);
+      console.group('🎉 게시글 생성 뮤테이션 성공');
+      console.log('생성된 게시글:', newPost);
+      console.log('캐시 무효화 중...');
       queryClient.invalidateQueries({ queryKey: ['posts'] });
+      console.log('onSuccess 콜백 실행:', !!onSuccess);
       onSuccess?.(newPost);
+      console.log('라우터 리다이렉트:', `/community/${newPost.id}`);
+      console.groupEnd();
       router.push(`/community/${newPost.id}`);
     },
     onError: (error: any) => {
-      console.error('게시글 생성 뮤테이션 에러:', error);
-      const errorMessage = error?.response?.data?.message || 
-                         error?.message || 
-                         '게시글 작성에 실패했습니다.';
+      console.group('💥 게시글 생성 뮤테이션 에러');
+      console.error('뮤테이션 에러:', error);
+      console.error('에러 타입:', typeof error);
+      console.error('에러 스택:', error?.stack);
+      
+      let errorMessage = '게시글 작성에 실패했습니다.';
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+        console.log('서버 에러 메시지 사용:', errorMessage);
+      } else if (error?.message) {
+        errorMessage = error.message;
+        console.log('일반 에러 메시지 사용:', errorMessage);
+      }
+      
+      console.log('최종 에러 메시지:', errorMessage);
+      console.groupEnd();
       setSubmitError(errorMessage);
     },
   });

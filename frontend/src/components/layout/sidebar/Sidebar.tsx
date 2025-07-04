@@ -241,7 +241,7 @@ const UserInfo = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
   align-items: center;
   gap: 12px;
   padding: ${({ $isCollapsed }) => $isCollapsed ? '8px' : '12px 16px'};
-  margin-bottom: 30vh;
+  margin-bottom: 12px;
   background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f8fafc'};
   border-radius: 8px;
   justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
