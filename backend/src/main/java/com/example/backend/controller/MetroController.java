@@ -21,7 +21,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/metro")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // 프론트엔드 연동용 (실제 배포시 수정 필요)
 public class MetroController {
 
     private final MetroPositionService metroPositionService;
