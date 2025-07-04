@@ -19,7 +19,7 @@ import {
 import { Button } from '@/components/ui';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, API_ENDPOINTS } from '@/config';
-import type { Post, Comment, PaginatedResponse } from '@/types/community/community';
+import type { Post, CommentListResponse } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { CommentList } from './CommentList';
 import { CommentForm } from './CommentForm';
@@ -310,7 +310,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
   const { data: commentsData, isLoading: isLoadingComments } = useQuery({
     queryKey: ['comments', postId],
     queryFn: async () => {
-      return await api.get<PaginatedResponse<Comment>>(
+      return await api.get<CommentListResponse>(
         API_ENDPOINTS.COMMENTS.BY_POST(postId)
       );
     },
@@ -540,9 +540,9 @@ export const PostDetail: React.FC<PostDetailProps> = ({
             <LoadingState>
               댓글을 불러오는 중...
             </LoadingState>
-          ) : commentsData && commentsData.content.length > 0 ? (
+          ) : commentsData && commentsData.comments.length > 0 ? (
             <CommentList 
-              comments={commentsData.content}
+              comments={commentsData.comments}
               onUpdate={() => {
                 queryClient.invalidateQueries({ queryKey: ['comments', postId] });
               }}

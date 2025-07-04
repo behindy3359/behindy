@@ -18,7 +18,7 @@ import {
 import { Button, Input } from '@/components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { api, buildApiUrl } from '@/config';
-import type { Post, PaginatedResponse } from '@/types/community/community';
+import type { Post, PostListResponse } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 
 // ================================================================
@@ -295,8 +295,7 @@ const usePosts = (page: number = 0, size: number = 10, search: string = '') => {
     queryKey: ['posts', page, size, search],
     queryFn: async () => {
       const url = buildApiUrl.posts({ page, size });
-      const response = await api.get<PaginatedResponse<Post>>(url);
-      return response;
+      return await api.get<PostListResponse>(url);
     },
     staleTime: 5 * 60 * 1000, // 5분
   });
@@ -484,9 +483,9 @@ export const PostList: React.FC<PostListProps> = ({
           <LoadingContainer>
             <div>게시글을 불러오는 중...</div>
           </LoadingContainer>
-        ) : postsData?.content && postsData.content.length > 0 ? (
+        ) : postsData?.posts && postsData.posts.length > 0 ? (
           <AnimatePresence>
-            {postsData.content.map((post, index) => {
+            {postsData.posts.map((post, index) => {
               const hot = isHotPost(post);
               return (
                 <PostItem

@@ -262,7 +262,6 @@ export const CommentForm: React.FC<CommentFormProps> = ({
         const commentData: CreateCommentRequest = {
           content: data.content.trim(),
           postId,
-          ...(parentCommentId && { parentCommentId }),
         };
         await createCommentMutation.mutateAsync(commentData);
       }
