@@ -459,7 +459,7 @@ export const PostList: React.FC<PostListProps> = ({
           </div>
           <div className="stat-content">
             <div className="stat-number">{stats.todayPosts}</div>
-            <div className="stat-label">오늘 작성</div>
+            <div className="stat-label">오늘 작성(공사중)</div>
           </div>
         </StatCard>
 
@@ -472,7 +472,7 @@ export const PostList: React.FC<PostListProps> = ({
           </div>
           <div className="stat-content">
             <div className="stat-number">{stats.activeUsers}</div>
-            <div className="stat-label">활성 사용자</div>
+            <div className="stat-label">활성 사용자(공사중)</div>
           </div>
         </StatCard>
       </StatsBar>

@@ -9,6 +9,7 @@ import { RealtimeMetroMap } from '@/components/metroMap/RealtimeMetroMap';
 export default function Home() {
   const router = useRouter();
 
+  // 사이드바 상태 디버깅
   const [debugInfo, setDebugInfo] = React.useState('');
 
   React.useEffect(() => {
