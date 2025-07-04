@@ -18,6 +18,7 @@ import {
   Gamepad2,
   Menu
 } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -230,6 +231,7 @@ const NavItem = styled(motion.div)<{
 
 const AccountSection = styled.div<{ $isCollapsed: boolean }>`
   margin-top: auto;
+  margin-bottom: 7vh;
   padding-top: 16px;
   border-top: 1px solid #f3f4f6;
 `;
@@ -239,7 +241,7 @@ const UserInfo = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
   align-items: center;
   gap: 12px;
   padding: ${({ $isCollapsed }) => $isCollapsed ? '8px' : '12px 16px'};
-  margin-bottom: 12px;
+  margin-bottom: 30vh;
   background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f8fafc'};
   border-radius: 8px;
   justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
@@ -373,10 +375,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode = false,
   onThemeToggle,
   currentPath = '/',
-  user = null
+  user: propUser = null
 }) => {
   const router = useRouter();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  
+  // AuthStore에서 실제 사용자 정보 가져오기
+  const { user: storeUser, isAuthenticated, logout } = useAuthStore();
+  
+  // PropUser가 있으면 그것을 사용하고, 없으면 store의 user 사용
+  const currentUser = propUser || storeUser;
+  const isLoggedIn = currentUser?.isAuthenticated || isAuthenticated();
 
   const handleNavigation = (path: string) => {
     router.push(path);
@@ -386,10 +395,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const handleAuthAction = (action: 'login' | 'signup' | 'logout') => {
+  const handleAuthAction = async (action: 'login' | 'signup' | 'logout') => {
     if (action === 'logout') {
-      // 로그아웃 로직
-      console.log('로그아웃');
+      try {
+        await logout();
+        router.push('/');
+      } catch (error) {
+        console.error('로그아웃 실패:', error);
+      }
     } else {
       router.push(`/auth/${action}`);
     }
@@ -505,18 +518,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* 계정 섹션 */}
             <AccountSection $isCollapsed={isCollapsed}>
-              {user?.isAuthenticated ? (
+              {isLoggedIn && currentUser ? (
                 <>
                   {/* 사용자 정보 */}
                   <UserInfo $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
                     <div className="avatar">
-                      {getUserInitial(user.name)}
+                      {getUserInitial(currentUser.name)}
                     </div>
                     <div className="user-details">
-                      <div className="name">{user.name}</div>
-                      <div className="email">{user.email}</div>
+                      <div className="name">{currentUser.name}</div>
+                      <div className="email">{currentUser.email}</div>
                     </div>
                   </UserInfo>
+
+                  {/* 프로필 버튼 */}
+                  <NavItem
+                    $isActive={currentPath === '/profile'}
+                    $isDarkMode={isDarkMode}
+                    $isCollapsed={isCollapsed}
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div 
+                      className="nav-link"
+                      onClick={() => handleNavigation('/profile')}
+                    >
+                      <User className="nav-icon" />
+                      <span className="nav-text">프로필</span>
+                    </div>
+                  </NavItem>
 
                   {/* 로그아웃 버튼 */}
                   <NavItem

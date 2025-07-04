@@ -23,81 +23,8 @@ import {
 const Container = styled.div`
   padding: 20px;
   background: #f8fafc;
-  min-height: 100vh;
 `;
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  
-  h1 {
-    font-size: 24px;
-    font-weight: 700;
-    color: #111827;
-    margin: 0;
-  }
-`;
-
-const StatusIndicator = styled.div<{ $isLoading: boolean; $hasError: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  
-  ${({ $hasError, $isLoading }) => {
-    if ($hasError) return 'background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;';
-    if ($isLoading) return 'background: #fffbeb; color: #d97706; border: 1px solid #fed7aa;';
-    return 'background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;';
-  }}
-  
-  .indicator {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: currentColor;
-    
-    ${({ $isLoading }) => $isLoading && `
-      animation: pulse 1.5s ease-in-out infinite;
-    `}
-  }
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-`;
-
-const StatCard = styled.div`
-  background: white;
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  
-  .stat-number {
-    font-size: 18px;
-    font-weight: 700;
-    color: #667eea;
-    margin-bottom: 4px;
-  }
-  
-  .stat-label {
-    font-size: 12px;
-    color: #6b7280;
-  }
-`;
 
 const MapWrapper = styled.div`
   background: white;
@@ -154,26 +81,6 @@ const CheckboxItem = styled.label<{ $color?: string }>`
   }
 `;
 
-const RefreshButton = styled.button`
-  padding: 8px 16px;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  
-  &:hover {
-    background: #5a67d8;
-  }
-  
-  &:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
-  }
-`;
-
 const SVGContainer = styled.div`
   width: 100%;
   overflow-x: auto;
@@ -186,32 +93,6 @@ const SVGContainer = styled.div`
     height: auto;
     min-width: 800px;
     display: block;
-  }
-`;
-
-const InfoPanel = styled.div`
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 16px;
-  
-  .info-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 12px;
-  }
-  
-  .last-updated {
-    font-size: 14px;
-    color: #6b7280;
-    margin-bottom: 8px;
-  }
-  
-  .request-count {
-    font-size: 12px;
-    color: #9ca3af;
   }
 `;
 

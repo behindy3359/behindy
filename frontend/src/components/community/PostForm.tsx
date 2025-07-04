@@ -1,3 +1,5 @@
+// frontend/src/components/community/PostForm.tsx - 오류 수정 버전
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -43,6 +45,17 @@ const postSchema = yup.object({
     .min(10, '내용은 최소 10자 이상이어야 합니다')
     .max(5000, '내용은 최대 5000자까지 입력 가능합니다'),
 });
+
+// ================================================================
+// Component Props
+// ================================================================
+
+export interface PostFormProps {
+  mode: 'create' | 'edit';
+  postId?: number;
+  onSuccess?: (post: Post) => void;
+  onCancel?: () => void;
+}
 
 // ================================================================
 // Styled Components
@@ -264,17 +277,6 @@ const LoadingOverlay = styled(motion.div)`
 `;
 
 // ================================================================
-// Component Props (export 추가)
-// ================================================================
-
-export interface PostFormProps {
-  mode: 'create' | 'edit';
-  postId?: number;
-  onSuccess?: (post: Post) => void;
-  onCancel?: () => void;
-}
-
-// ================================================================
 // Component
 // ================================================================
 
@@ -298,13 +300,19 @@ export const PostForm: React.FC<PostFormProps> = ({
   }, [isAuthenticated, router]);
 
   // 편집 모드일 때 기존 게시글 데이터 가져오기
-  const { data: existingPost, isLoading: isLoadingPost } = useQuery({
+  const { data: existingPost, isLoading: isLoadingPost, error: fetchError } = useQuery({
     queryKey: ['post', postId],
     queryFn: async () => {
       if (!postId) return null;
-      return await api.get<Post>(API_ENDPOINTS.POSTS.BY_ID(postId));
+      try {
+        return await api.get<Post>(API_ENDPOINTS.POSTS.BY_ID(postId));
+      } catch (error) {
+        console.error('게시글 로드 실패:', error);
+        throw error;
+      }
     },
     enabled: mode === 'edit' && !!postId,
+    retry: 1,
   });
 
   const {
@@ -320,17 +328,18 @@ export const PostForm: React.FC<PostFormProps> = ({
       title: '',
       content: '',
     },
+    mode: 'onChange',
   });
 
   // 기존 게시글 데이터로 폼 초기화
   useEffect(() => {
-    if (mode === 'edit' && existingPost) {
+    if (mode === 'edit' && existingPost && !isLoadingPost) {
       reset({
         title: existingPost.title,
         content: existingPost.content,
       });
     }
-  }, [mode, existingPost, reset]);
+  }, [mode, existingPost, isLoadingPost, reset]);
 
   const watchedTitle = watch('title', '');
   const watchedContent = watch('content', '');
@@ -338,17 +347,28 @@ export const PostForm: React.FC<PostFormProps> = ({
   // 게시글 생성 뮤테이션
   const createPostMutation = useMutation({
     mutationFn: async (data: CreatePostRequest) => {
-      return await api.post<Post>(API_ENDPOINTS.POSTS.BASE, data);
+      try {
+        console.log('게시글 생성 요청:', data);
+        const response = await api.post<Post>(API_ENDPOINTS.POSTS.BASE, data);
+        console.log('게시글 생성 성공:', response);
+        return response;
+      } catch (error) {
+        console.error('게시글 생성 실패:', error);
+        throw error;
+      }
     },
     onSuccess: (newPost) => {
+      console.log('게시글 생성 완료:', newPost);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       onSuccess?.(newPost);
       router.push(`/community/${newPost.id}`);
     },
     onError: (error: any) => {
-      setSubmitError(
-        error.response?.data?.message || '게시글 작성에 실패했습니다.'
-      );
+      console.error('게시글 생성 뮤테이션 에러:', error);
+      const errorMessage = error?.response?.data?.message || 
+                         error?.message || 
+                         '게시글 작성에 실패했습니다.';
+      setSubmitError(errorMessage);
     },
   });
 
@@ -356,24 +376,41 @@ export const PostForm: React.FC<PostFormProps> = ({
   const updatePostMutation = useMutation({
     mutationFn: async (data: CreatePostRequest) => {
       if (!postId) throw new Error('Post ID is required');
-      return await api.put<Post>(API_ENDPOINTS.POSTS.BY_ID(postId), data);
+      try {
+        console.log('게시글 수정 요청:', { postId, data });
+        const response = await api.put<Post>(API_ENDPOINTS.POSTS.BY_ID(postId), data);
+        console.log('게시글 수정 성공:', response);
+        return response;
+      } catch (error) {
+        console.error('게시글 수정 실패:', error);
+        throw error;
+      }
     },
     onSuccess: (updatedPost) => {
+      console.log('게시글 수정 완료:', updatedPost);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['post', postId] });
       onSuccess?.(updatedPost);
       router.push(`/community/${updatedPost.id}`);
     },
     onError: (error: any) => {
-      setSubmitError(
-        error.response?.data?.message || '게시글 수정에 실패했습니다.'
-      );
+      console.error('게시글 수정 뮤테이션 에러:', error);
+      const errorMessage = error?.response?.data?.message || 
+                         error?.message || 
+                         '게시글 수정에 실패했습니다.';
+      setSubmitError(errorMessage);
     },
   });
 
   const onSubmit = async (data: PostFormData) => {
     try {
+      console.log('폼 제출 시작:', { mode, data });
       setSubmitError('');
+      
+      if (!data.title?.trim() || !data.content?.trim()) {
+        setSubmitError('제목과 내용을 모두 입력해주세요.');
+        return;
+      }
       
       const postData: CreatePostRequest = {
         title: data.title.trim(),
@@ -386,8 +423,8 @@ export const PostForm: React.FC<PostFormProps> = ({
         await updatePostMutation.mutateAsync(postData);
       }
     } catch (error) {
-      // 에러는 mutation의 onError에서 처리
-      console.error('Post submission error:', error);
+      console.error('폼 제출 에러:', error);
+      // 에러는 mutation의 onError에서 처리됨
     }
   };
 
@@ -405,7 +442,9 @@ export const PostForm: React.FC<PostFormProps> = ({
     router.push('/community');
   };
 
-  const isLoading = isSubmitting || createPostMutation.isPending || updatePostMutation.isPending;
+  const isLoading = isSubmitting || 
+                   createPostMutation.isPending || 
+                   updatePostMutation.isPending;
 
   // 로딩 중일 때
   if (mode === 'edit' && isLoadingPost) {
@@ -423,7 +462,37 @@ export const PostForm: React.FC<PostFormProps> = ({
     );
   }
 
-  // 편집 권한 확인
+  // 게시글 로드 실패
+  if (mode === 'edit' && fetchError) {
+    return (
+      <Container>
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px',
+          color: '#ef4444' 
+        }}>
+          게시글을 불러올 수 없습니다.
+          <br />
+          <button 
+            onClick={handleBack}
+            style={{ 
+              marginTop: '16px',
+              padding: '8px 16px',
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            목록으로 돌아가기
+          </button>
+        </div>
+      </Container>
+    );
+  }
+
+  // 편집 권한 확인 (로딩이 끝난 후)
   if (mode === 'edit' && existingPost && existingPost.authorId !== user?.id) {
     return (
       <Container>
@@ -433,6 +502,21 @@ export const PostForm: React.FC<PostFormProps> = ({
           color: '#ef4444' 
         }}>
           이 게시글을 수정할 권한이 없습니다.
+          <br />
+          <button 
+            onClick={() => router.push(`/community/${postId}`)}
+            style={{ 
+              marginTop: '16px',
+              padding: '8px 16px',
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            게시글로 돌아가기
+          </button>
         </div>
       </Container>
     );
@@ -470,6 +554,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           <PreviewToggle
             $active={isPreview}
             onClick={() => setIsPreview(!isPreview)}
+            type="button"
           >
             <Eye size={16} />
             {isPreview ? '편집' : '미리보기'}
@@ -491,6 +576,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
+        style={{ position: 'relative' }}
       >
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* 제목 섹션 */}
@@ -534,6 +620,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                   {...register('content')}
                   className="content-textarea"
                   placeholder="내용을 입력하세요&#10;&#10;마크다운 문법을 지원합니다:&#10;- **굵은 글씨**&#10;- *기울인 글씨*&#10;- # 제목&#10;- ## 소제목"
+                  disabled={isLoading}
                 />
                 {errors.content && (
                   <div style={{ 
@@ -555,7 +642,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           <BottomActions>
             <ActionGroup>
               <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                작성자: <strong>{user?.name}</strong>
+                작성자: <strong>{user?.name || '사용자'}</strong>
               </span>
             </ActionGroup>
 

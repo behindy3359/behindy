@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -21,7 +20,6 @@ interface AppLayoutProps {
 }
 
 const LayoutContainer = styled.div<{ $isDarkMode: boolean }>`
-  min-height: 100vh;
   background: ${({ $isDarkMode }) => $isDarkMode ? '#111827' : '#fafbfc'};
   transition: background-color 0.3s ease;
 `;
@@ -45,7 +43,6 @@ const MainContainer = styled.div<{
 }>`
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
   background: ${({ $backgroundColor, $isDarkMode }) => 
     $backgroundColor || ($isDarkMode ? '#111827' : '#fafbfc')
   };
@@ -129,7 +126,6 @@ const ContentArea = styled.main<{
   $hasMaxWidth: boolean;
 }>`
   flex: 1;
-  min-height: ${({ $hasMaxWidth }) => $hasMaxWidth ? 'calc(100vh - 120px)' : '100vh'};
   background: ${({ $isDarkMode, $hasMaxWidth }) => {
     if ($hasMaxWidth) {
       return $isDarkMode ? '#1f2937' : 'white';
@@ -164,7 +160,6 @@ const ContentArea = styled.main<{
 
 const ContentWrapper = styled.div<{ $withPadding: boolean }>`
   padding: ${({ $withPadding }) => $withPadding ? '24px' : '0'};
-  min-height: 100%;
   
   @media (max-width: 768px) {
     padding: ${({ $withPadding }) => $withPadding ? '16px' : '0'};
