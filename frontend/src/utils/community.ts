@@ -75,18 +75,3 @@ export const getCategoryColor = (category: string): string => {
   
   return colorMap[category] || '#6b7280';
 };
-
-// 댓글 깊이 계산 (대댓글 시스템용) - 수정됨
-export const calculateCommentDepth = (comment: Comment, allComments: Comment[]): number => {
-  let depth = 0;
-  let currentComment = comment;
-  
-  while (currentComment.parentCommentId) {
-    const parent = allComments.find(c => c.id === currentComment.parentCommentId);
-    if (!parent) break;
-    currentComment = parent;
-    depth++;
-  }
-  
-  return depth;
-};
