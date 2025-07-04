@@ -10,7 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins(
+                .allowedOriginPatterns(
                         "http://behindy.me",
                         "https://behindy.me",
                         "http://localhost:3000",
@@ -21,9 +21,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(true)
                 .maxAge(3600);
 
-        // AI 서버용 추가 매핑 (필요시)
         registry.addMapping("/ai/**")
-                .allowedOrigins(
+                .allowedOriginPatterns(
                         "http://behindy.me",
                         "https://behindy.me"
                 )
