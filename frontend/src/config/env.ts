@@ -47,8 +47,8 @@ interface EnvConfig {
   // 환경변수 설정 객체
   export const env: EnvConfig = {
     // API URLs
-    API_URL: getEnvVar('NEXT_PUBLIC_API_URL', 'http://localhost/api'),
-    AI_URL: getEnvVar('NEXT_PUBLIC_AI_URL', 'http://localhost/ai'),
+    API_URL: getEnvVar('NEXT_PUBLIC_API_URL', 'https://behindy.me/api'),
+    AI_URL: getEnvVar('NEXT_PUBLIC_AI_URL', 'https://behindy.me/ai'),
     
     // 개발 모드
     DEV_MODE: getBooleanEnv('NEXT_PUBLIC_DEV_MODE', true),
