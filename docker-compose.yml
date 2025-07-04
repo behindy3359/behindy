@@ -69,8 +69,8 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"    # 로그 파일 최대 크기
-        max-file: "3"      # 보관할 로그 파일 수
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: postgres:15
