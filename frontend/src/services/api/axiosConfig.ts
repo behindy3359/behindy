@@ -1,3 +1,5 @@
+// frontend/src/services/api/axiosConfig.ts - 수정 버전
+
 import axios from 'axios';
 import { env } from '@/config/env';
 
@@ -7,13 +9,6 @@ export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   error?: string;
-}
-
-// API 에러 타입
-export interface ApiError {
-  status: number;
-  message: string;
-  code?: string;
 }
 
 // 토큰 관리 유틸리티
@@ -41,6 +36,45 @@ class TokenManager {
   }
 }
 
+// 🔥 인증이 필요한 엔드포인트 패턴 정의
+const AUTH_REQUIRED_PATTERNS = [
+  '/auth/logout',      // 로그아웃
+  '/auth/refresh',     // 토큰 갱신
+  '/characters',       // 캐릭터 관련
+  '/game',            // 게임 관련
+  '/posts',           // 게시글 작성/수정/삭제 (GET 제외)
+  '/comments',        // 댓글 작성/수정/삭제
+];
+
+// 🔥 인증이 필요한 HTTP 메서드 정의
+const AUTH_REQUIRED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
+// 🔥 요청에 인증이 필요한지 확인하는 함수
+const requiresAuth = (config: any): boolean => {
+  const url = config.url || '';
+  const method = (config.method || 'GET').toUpperCase();
+  
+  // 특정 엔드포인트들은 항상 인증 필요
+  const needsAuthForEndpoint = AUTH_REQUIRED_PATTERNS.some(pattern => 
+    url.includes(pattern)
+  );
+  
+  // 특정 메서드들은 인증 필요 (POST, PUT, PATCH, DELETE)
+  const needsAuthForMethod = AUTH_REQUIRED_METHODS.includes(method);
+  
+  // 게시글 조회는 예외 (GET /posts, GET /posts/:id)
+  if (method === 'GET' && url.includes('/posts')) {
+    return false; // 게시글 조회는 인증 불필요
+  }
+  
+  // 댓글 조회도 예외 (GET /comments)
+  if (method === 'GET' && url.includes('/comments')) {
+    return false; // 댓글 조회는 인증 불필요
+  }
+  
+  return needsAuthForEndpoint || needsAuthForMethod;
+};
+
 // Axios 인스턴스 생성
 const createApiClient = (baseURL: string) => {
   const client = axios.create({
@@ -51,20 +85,21 @@ const createApiClient = (baseURL: string) => {
     },
   });
 
-  // 요청 인터셉터 - 토큰 자동 추가
+  // 🔥 수정된 요청 인터셉터 - 선택적 토큰 추가
   client.interceptors.request.use(
     (config) => {
-      const token = TokenManager.getAccessToken();
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
+      // 인증이 필요한 요청인지 확인
+      if (requiresAuth(config)) {
+        const token = TokenManager.getAccessToken();
+        if (token && config.headers) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
 
       // 개발 모드에서 요청 로깅
       if (env.DEV_MODE) {
-        console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-          headers: config.headers,
-          data: config.data,
-        });
+        const hasAuth = config.headers?.Authorization ? '🔐' : '🌍';
+        console.log(`${hasAuth} API Request: ${config.method?.toUpperCase()} ${config.url}`);
       }
 
       return config;
@@ -78,14 +113,9 @@ const createApiClient = (baseURL: string) => {
   // 응답 인터셉터 - 토큰 갱신 및 에러 처리
   client.interceptors.response.use(
     (response) => {
-      // 개발 모드에서 응답 로깅
       if (env.DEV_MODE) {
-        console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-          status: response.status,
-          data: response.data,
-        });
+        console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url} (${response.status})`);
       }
-
       return response;
     },
     async (error: unknown) => {
@@ -100,8 +130,12 @@ const createApiClient = (baseURL: string) => {
 
       const originalRequest = axiosError.config;
 
-      // 401 에러 시 토큰 갱신 시도
-      if (axiosError.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      // 🔥 401 에러 시 토큰 갱신 시도 (인증이 필요한 요청에 대해서만)
+      if (axiosError.response?.status === 401 && 
+          originalRequest && 
+          !originalRequest._retry &&
+          requiresAuth(originalRequest)) {
+        
         originalRequest._retry = true;
 
         try {
@@ -115,7 +149,6 @@ const createApiClient = (baseURL: string) => {
             refreshToken,
           });
 
-          // 타입 안전한 응답 처리
           const responseData = refreshResponse.data as { 
             accessToken: string; 
             refreshToken: string; 
@@ -123,7 +156,7 @@ const createApiClient = (baseURL: string) => {
           const { accessToken, refreshToken: newRefreshToken } = responseData;
           TokenManager.setTokens(accessToken, newRefreshToken);
 
-          // 원래 요청 재시도 - unknown을 통한 안전한 타입 변환
+          // 원래 요청 재시도
           const retryConfig = {
             ...originalRequest,
             headers: {
@@ -137,7 +170,6 @@ const createApiClient = (baseURL: string) => {
           // 토큰 갱신 실패 시 로그아웃 처리
           TokenManager.clearTokens();
           
-          // 로그인 페이지로 리다이렉트 (브라우저 환경에서만)
           if (typeof window !== 'undefined') {
             window.location.href = '/auth/login';
           }
@@ -147,11 +179,7 @@ const createApiClient = (baseURL: string) => {
       }
 
       // 에러 로깅
-      console.error(`❌ API Error: ${originalRequest?.method?.toString()?.toUpperCase()} ${originalRequest?.url}`, {
-        status: axiosError.response?.status,
-        message: axiosError.response?.data || axiosError.message,
-        data: axiosError.response?.data,
-      });
+      console.error(`❌ API Error: ${originalRequest?.method?.toString()?.toUpperCase()} ${originalRequest?.url} (${axiosError.response?.status})`);
 
       return Promise.reject(error);
     }
@@ -166,33 +194,54 @@ export const aiClient = createApiClient(env.AI_URL);
 
 // 공통 API 요청 함수들
 export const api = {
-  // GET 요청
+  // GET 요청 (대부분 인증 불필요)
   get: async <T>(url: string, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.get<T>(url, config);
     return response.data;
   },
 
-  // POST 요청
+  // POST 요청 (인증 필요)
   post: async <T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.post<T>(url, data, config);
     return response.data;
   },
 
-  // PUT 요청
+  // PUT 요청 (인증 필요)
   put: async <T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.put<T>(url, data, config);
     return response.data;
   },
 
-  // PATCH 요청
+  // PATCH 요청 (인증 필요)
   patch: async <T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.patch<T>(url, data, config);
     return response.data;
   },
 
-  // DELETE 요청
+  // DELETE 요청 (인증 필요)
   delete: async <T>(url: string, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.delete<T>(url, config);
+    return response.data;
+  },
+};
+
+// 🔥 퍼블릭 API 함수들 (인증 불필요)
+export const publicApi = {
+  // 게시글 목록 조회 (인증 불필요)
+  getPosts: async <T>(url: string, config?: Record<string, unknown>): Promise<T> => {
+    const response = await apiClient.get<T>(url, config);
+    return response.data;
+  },
+
+  // 게시글 상세 조회 (인증 불필요)
+  getPost: async <T>(url: string, config?: Record<string, unknown>): Promise<T> => {
+    const response = await apiClient.get<T>(url, config);
+    return response.data;
+  },
+
+  // 댓글 목록 조회 (인증 불필요)
+  getComments: async <T>(url: string, config?: Record<string, unknown>): Promise<T> => {
+    const response = await apiClient.get<T>(url, config);
     return response.data;
   },
 };

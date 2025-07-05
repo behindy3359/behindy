@@ -20,17 +20,18 @@ import { RealtimeMetroMap } from '@/components/metroMap';
 import { PostCard } from '@/components/community';
 import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
+import { publicApi } from '@/services/api/axiosConfig';
 
 // ================================================================
 // Styled Components - 통일된 너비 적용
 // ================================================================
 
 const Container = styled.div`
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 24px;
   
-  @media (max-width: 1200px) {
+  @media (max-width: 900px) {
     padding: 16px;
   }
 `;
@@ -282,7 +283,7 @@ const useRecentPosts = (limit: number = 6) => {
     queryKey: ['recent-posts', limit],
     queryFn: async () => {
       const url = buildApiUrl.posts({ page: 0, size: limit });
-      return await api.get<PostListResponse>(url);
+      return await publicApi.getPosts<PostListResponse>(url);
     },
     staleTime: 2 * 60 * 1000,
   });

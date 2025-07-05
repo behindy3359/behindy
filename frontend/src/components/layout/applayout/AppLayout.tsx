@@ -1,3 +1,5 @@
+// frontend/src/components/layout/applayout/AppLayout.tsx - 수정 버전
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -12,6 +14,7 @@ interface AppLayoutProps {
   maxWidth?: string;
   backgroundColor?: string;
   currentPath?: string;
+  requiresAuth?: boolean; // 🔥 새로운 prop 추가
   user?: {
     id: number;
     name: string;
@@ -20,11 +23,12 @@ interface AppLayoutProps {
   } | null;
 }
 
+// ... 기존 스타일드 컴포넌트들 유지 ...
+
 const LayoutContainer = styled.div<{ $isDarkMode: boolean }>`
   background: ${({ $isDarkMode }) => $isDarkMode ? '#111827' : '#fafbfc'};
   transition: background-color 0.3s ease;
 `;
-
 
 const SidebarWrapper = styled.div<{ $isCollapsed: boolean }>`
   width: ${({ $isCollapsed }) => $isCollapsed ? '60px' : '280px'};
@@ -167,14 +171,15 @@ const ContentWrapper = styled.div<{ $withPadding: boolean }>`
   }
 `;
 
-// 페이지별 레이아웃 설정
+// 🔥 페이지별 레이아웃 설정 - requiresAuth 추가
 const getLayoutConfig = (pathname: string) => {
   if (pathname.startsWith('/auth')) {
     return {
       showSidebar: false,
       contentPadding: false,
       maxWidth: '500px',
-      backgroundColor: undefined
+      backgroundColor: undefined,
+      requiresAuth: false // 🔥 인증 페이지는 인증 불필요
     };
   }
   
@@ -183,16 +188,43 @@ const getLayoutConfig = (pathname: string) => {
       showSidebar: false,
       contentPadding: false,
       maxWidth: undefined,
-      backgroundColor: undefined
+      backgroundColor: undefined,
+      requiresAuth: false // 🔥 홈페이지는 인증 불필요
     };
   }
   
-  if (pathname.startsWith('/metro-map') || pathname.startsWith('/game')) {
+  if (pathname === '/community' || pathname.startsWith('/community/') && !pathname.includes('/write') && !pathname.includes('/edit')) {
     return {
       showSidebar: true,
       contentPadding: false,
       maxWidth: undefined,
-      backgroundColor: undefined
+      backgroundColor: undefined,
+      requiresAuth: false // 🔥 커뮤니티 조회는 인증 불필요
+    };
+  }
+  
+  if (pathname.startsWith('/metro-map')) {
+    return {
+      showSidebar: true,
+      contentPadding: false,
+      maxWidth: undefined,
+      backgroundColor: undefined,
+      requiresAuth: false // 🔥 지하철 노선도는 인증 불필요
+    };
+  }
+  
+  // 🔥 인증이 필요한 페이지들
+  if (pathname.startsWith('/game') || 
+      pathname.startsWith('/character') || 
+      pathname.startsWith('/profile') ||
+      pathname.includes('/write') ||
+      pathname.includes('/edit')) {
+    return {
+      showSidebar: true,
+      contentPadding: true,
+      maxWidth: '1200px',
+      backgroundColor: undefined,
+      requiresAuth: true // 🔥 인증 필요
     };
   }
   
@@ -200,7 +232,8 @@ const getLayoutConfig = (pathname: string) => {
     showSidebar: true,
     contentPadding: true,
     maxWidth: '1200px',
-    backgroundColor: undefined
+    backgroundColor: undefined,
+    requiresAuth: false // 🔥 기본적으로 인증 불필요
   };
 };
 
@@ -210,6 +243,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   maxWidth: propMaxWidth,
   backgroundColor: propBackgroundColor,
   currentPath = '/',
+  requiresAuth: propRequiresAuth,
   user = null
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -242,6 +276,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const contentPadding = layoutConfig.contentPadding;
   const maxWidth = propMaxWidth ?? layoutConfig.maxWidth;
   const backgroundColor = propBackgroundColor ?? layoutConfig.backgroundColor;
+  const requiresAuth = propRequiresAuth ?? layoutConfig.requiresAuth;
   const hasMaxWidth = Boolean(maxWidth);
 
   const handleSidebarToggle = () => {
@@ -260,7 +295,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     setIsDarkMode(!isDarkMode);
   };
 
-  return (
+  // 🔥 조건부 AuthGuard 적용
+  const renderContent = () => (
     <LayoutContainer $isDarkMode={isDarkMode}>
       {showSidebar && (
         <SidebarWrapper $isCollapsed={sidebarCollapsed}>
@@ -313,9 +349,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       </MainContainer>
     </LayoutContainer>
   );
+
+  // 🔥 인증이 필요한 페이지만 AuthGuard로 감싸기
+  if (requiresAuth) {
+    return (
+      <AuthGuard>
+        {renderContent()}
+      </AuthGuard>
+    );
+  }
+
+  // 🔥 인증이 불필요한 페이지는 바로 렌더링
+  return renderContent();
 };
 
-// 게임 전용 레이아웃
+// 게임 전용 레이아웃 (인증 필요)
 export const GameLayout: React.FC<{ children: React.ReactNode }> = ({ 
   children 
 }) => {
@@ -324,12 +372,14 @@ export const GameLayout: React.FC<{ children: React.ReactNode }> = ({
       showSidebar={true}
       backgroundColor="#0f172a"
       maxWidth={undefined}
+      requiresAuth={true} // 🔥 게임은 인증 필요
     >
       {children}
     </AppLayout>
   );
 };
 
+// 🔥 기존 RootLayout 수정 - AuthGuard 제거
 export default function RootLayout({ 
   children 
 }: { 
@@ -338,32 +388,27 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <AuthGuard>
-          {children}
-        </AuthGuard>
+        {/* 🔥 전역 AuthGuard 제거 - 각 레이아웃에서 선택적 적용 */}
+        {children}
       </body>
     </html>
   );
 }
 
-// PublicLayout - 인증 체크 없음 (홈, 커뮤니티 목록 등)
+// 🔥 PublicLayout - 인증 체크 없음 (홈, 커뮤니티 목록 등)
 export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div>
-      <Sidebar />
-      <main>{children}</main>
-    </div>
+    <AppLayout requiresAuth={false}>
+      {children}
+    </AppLayout>
   );
 };
 
-// DashboardLayout - 인증 체크 있음 (글쓰기, 프로필 등)
+// 🔥 DashboardLayout - 인증 체크 있음 (글쓰기, 프로필 등)
 export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <AuthGuard>
-      <div>
-        <Sidebar />
-        <main>{children}</main>
-      </div>
-    </AuthGuard>
+    <AppLayout requiresAuth={true}>
+      {children}
+    </AppLayout>
   );
 };
