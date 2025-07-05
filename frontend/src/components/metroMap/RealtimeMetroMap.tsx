@@ -8,24 +8,24 @@ import {
   SVG_CONFIG,
   type Station,
   type RealtimeStationData
-} from '../../data/metro/stationsData';
-import { SEOUL_DISTRICTS, HAN_RIVER } from '../../data/metro/seoulDistrictData';
+} from '@/data/metro/stationsData';
+import { SEOUL_DISTRICTS, HAN_RIVER } from '@/data/metro/seoulDistrictData';
 import { 
   getVisibleLineConnections,
   type LineConnection 
-} from '../../data/metro/metroLineConnections';
+} from '@/data/metro/metroLineConnections';
 
 // ================================================================
-// 간소화된 스타일드 컴포넌트들 (레이어 최소화)
+// 간소화된 스타일드 컴포넌트들
 // ================================================================
 
-// 메인 컨테이너 - 불필요한 래핑 제거
+// 메인 컨테이너
 const MapContainer = styled.div`
   width: 100%;
   /* 기존의 복잡한 padding, background, shadow 등 제거 */
 `;
 
-// 컨트롤 패널 - 간소화
+// 컨트롤 패널
 const Controls = styled.div`
   display: flex;
   gap: 16px;
@@ -110,7 +110,7 @@ const StatusIndicator = styled.div`
 `;
 
 // ================================================================
-// 백엔드 API 타입 (기존과 동일)
+// 백엔드 API 타입
 // ================================================================
 
 interface MetroApiResponse {

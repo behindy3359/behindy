@@ -16,7 +16,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { api, buildApiUrl } from '@/config';
 import type { PostListResponse } from '@/types/community/community';
-import { RealtimeMetroMap } from '@/components/metromap/RealtimeMetroMap';
+import { RealtimeMetroMap } from '@/components/metromap';
 import { PostCard } from '@/components/community';
 import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
