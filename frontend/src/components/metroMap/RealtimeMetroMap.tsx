@@ -400,7 +400,7 @@ export const RealtimeMetroMap: React.FC = () => {
                       cy={station.y}
                       r="1.5"
                       fill="none"
-                      stroke="#ff6b35"
+                      stroke="#ffff00"
                       strokeWidth="0.8"
                       opacity="0.9"
                     >
@@ -430,7 +430,7 @@ export const RealtimeMetroMap: React.FC = () => {
                     cx={station.x}
                     cy={station.y}
                     r="0.7"
-                    fill={hasRealtimeData ? "#ff6b35" : "#2d3748"}
+                    fill={hasRealtimeData ? "#ffff00" : "#2d3748"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
                     style={{ cursor: 'pointer' }}
@@ -454,7 +454,7 @@ export const RealtimeMetroMap: React.FC = () => {
                     x={station.x}
                     y={station.y - 4}
                     fontSize="2.5"
-                    fill="#ff6b35"
+                    fill="#000000"
                     textAnchor="middle"
                     dominantBaseline="middle"
                     style={{ 
@@ -466,25 +466,6 @@ export const RealtimeMetroMap: React.FC = () => {
                     }}
                   >
                     {station.name}
-                  </text>
-                  
-                  {/* 방향 표시 */}
-                  <text
-                    x={station.x}
-                    y={station.y + 4.5}
-                    fontSize="1.8"
-                    fill="#2d3748"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    style={{ 
-                      fontWeight: '600',
-                      stroke: 'white',
-                      strokeWidth: '0.8',
-                      paintOrder: 'stroke fill',
-                      fontFamily: 'system-ui, sans-serif'
-                    }}
-                  >
-                    {trainData.lineNumber}호선 {trainData.direction === 'up' ? '↑' : '↓'}
                   </text>
                 </g>
               );

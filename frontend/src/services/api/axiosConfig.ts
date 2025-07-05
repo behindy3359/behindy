@@ -139,7 +139,7 @@ const createApiClient = (baseURL: string) => {
           
           // 로그인 페이지로 리다이렉트 (브라우저 환경에서만)
           if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+            window.location.href = '/auth/login';
           }
           
           return Promise.reject(refreshError);
