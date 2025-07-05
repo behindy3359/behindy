@@ -1,4 +1,3 @@
-// src/components/ui/Modal/Modal.tsx
 import React, { useEffect, useCallback } from 'react';
 import styled, { css } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -106,7 +105,7 @@ const ModalContainer = styled(motion.div)<{
   
   ${({ size = 'md' }) => modalSizes[size]}
   
-  ${({ variant, size }) => variant === 'slide-right' && css`
+  ${({ variant }) => variant === 'slide-right' && css`
     position: fixed;
     right: 20px;
     top: 20px;

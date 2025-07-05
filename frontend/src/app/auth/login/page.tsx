@@ -242,8 +242,6 @@ function LoginPageContent() {
     register,
     handleSubmit,
     formState: { errors, isValid },
-    setValue,
-    reset,
   } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),
     mode: 'onChange',

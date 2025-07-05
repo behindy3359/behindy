@@ -7,12 +7,10 @@ import {
   getStationsByLine,
   SVG_CONFIG,
   type Station,
-  type RealtimeStationData
 } from '@/data/metro/stationsData';
 import { SEOUL_DISTRICTS, HAN_RIVER } from '@/data/metro/seoulDistrictData';
 import { 
-  getVisibleLineConnections,
-  type LineConnection 
+  getVisibleLineConnections, 
 } from '@/data/metro/metroLineConnections';
 
 // ================================================================
@@ -268,12 +266,7 @@ export const RealtimeMetroMap: React.FC = () => {
   const handleStationClick = (stationId: number) => {
     setSelectedStation(selectedStation === stationId ? null : stationId);
   };
-
-  const getStationColor = (station: Station) => {
-    const primaryLine = station.lines[0];
-    return LINE_COLORS[primaryLine as keyof typeof LINE_COLORS];
-  };
-
+  
   return (
     <MapContainer>
       {/* 간소화된 컨트롤 패널 */}

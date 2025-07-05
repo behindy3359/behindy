@@ -256,7 +256,6 @@ const getPasswordRequirements = (password: string) => [
 export const SignupForm: React.FC = () => {
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [signupError, setSignupError] = useState<string>('');
-  const [password, setPassword] = useState('');
   
   const { signup } = useAuthStore();
 

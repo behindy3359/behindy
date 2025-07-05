@@ -1,5 +1,3 @@
-// frontend/src/app/about/page.tsx
-
 "use client";
 
 import React from 'react';
@@ -9,11 +7,6 @@ import {
   Train, 
   GamepadIcon, 
   Users, 
-  Zap,
-  Heart,
-  Code,
-  Target,
-  Lightbulb
 } from 'lucide-react';
 import { PublicLayout } from '@/components/layout';
 
@@ -323,7 +316,7 @@ export default function AboutPage() {
             transition={{ duration: 0.6, delay: 1.4 }}
           >
             <p>
-              <span className="highlight">Behindy</span>는 "Behind"와 "Discovery"의 합성어로, 
+              <span className="highlight">Behindy</span>는 &quot;behind&quot;와 &quot;discovery&quot;의 합성어로,
               일상적인 지하철 공간 뒤에 숨겨진 특별한 이야기들을 발견한다는 의미를 담고 있습니다.
             </p>
             

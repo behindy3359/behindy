@@ -142,7 +142,7 @@ export const getStoriesByTheme = () => {
   });
 };
 
-export default {
+const gameUtils = {
   canStartGameAtStation,
   getStationStoryInfo,
   getStoryStationsByLine,
@@ -151,3 +151,5 @@ export default {
   getRecommendedStories,
   getStoriesByTheme
 };
+
+export default gameUtils

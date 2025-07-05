@@ -14,8 +14,7 @@ import {
   Home, 
   Map, 
   GamepadIcon,
-  MessageSquare,
-  Trophy
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '../../ui';
 import { useAuthStore } from '../../../store/authStore';

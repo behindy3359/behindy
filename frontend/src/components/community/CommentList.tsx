@@ -3,8 +3,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, 
+import {
   Calendar, 
   Edit3, 
   Trash2, 
@@ -462,9 +461,7 @@ const CommentItemComponent: React.FC<{
 
 export const CommentList: React.FC<CommentListProps> = ({ 
   comments, 
-  onUpdate = () => {},
-  maxDepth = 3,
-  showReplies = true
+  onUpdate = () => {}
 }) => {
   if (!comments || comments.length === 0) {
     return (
@@ -477,7 +474,7 @@ export const CommentList: React.FC<CommentListProps> = ({
   return (
     <div>
       <AnimatePresence>
-        {comments.map((comment, index) => (
+        {comments.map((comment) => (
           <CommentItemComponent
             key={comment.id}
             comment={comment}

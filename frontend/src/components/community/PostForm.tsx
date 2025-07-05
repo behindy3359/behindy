@@ -323,7 +323,6 @@ export const PostForm: React.FC<PostFormProps> = ({
     register,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors, isSubmitting },
     reset
   } = useForm<PostFormData>({

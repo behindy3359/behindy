@@ -195,9 +195,11 @@ export const areStationsConnected = (stationId1: number, stationId2: number): bo
 };
 
 
-export default {
+const metroLineConnections = {
   generateLineConnections,
   getLineConnection,
   getVisibleLineConnections,
   areStationsConnected,
 };
+
+export default metroLineConnections;

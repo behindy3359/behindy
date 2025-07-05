@@ -17,6 +17,23 @@ import { useAuthStore } from '@/store/authStore';
 // Types & Validation
 // ================================================================
 
+const isAxiosError = (error: unknown): error is {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      error?: string;
+    };
+  };
+  message?: string;
+} => {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error
+  );
+};
+
 interface CommentFormData {
   content: string;
 }
@@ -178,7 +195,6 @@ export interface CommentFormProps {
 
 export const CommentForm: React.FC<CommentFormProps> = ({
   postId,
-  parentCommentId,
   editingComment,
   onSuccess,
   onCancel,
@@ -194,7 +210,6 @@ export const CommentForm: React.FC<CommentFormProps> = ({
     watch,
     formState: { errors, isSubmitting },
     reset,
-    setValue,
     setFocus
   } = useForm<CommentFormData>({
     resolver: yupResolver(commentSchema),
@@ -223,14 +238,22 @@ export const CommentForm: React.FC<CommentFormProps> = ({
       setSubmitError('');
       onSuccess?.();
     },
-    onError: (error: any) => {
-      setSubmitError(
-        error.response?.data?.message || '댓글 작성에 실패했습니다.'
-      );
+    onError: (error: unknown) => {
+      let errorMessage = '댓글 작성에 실패했습니다.';
+      
+      if (isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || 
+                      error.response?.data?.error || 
+                      error.message || 
+                      errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setSubmitError(errorMessage);
     },
   });
-
-  // 댓글 수정 뮤테이션
+  
   const updateCommentMutation = useMutation({
     mutationFn: async (data: { content: string }) => {
       if (!editingComment) throw new Error('No comment to edit');
@@ -243,10 +266,19 @@ export const CommentForm: React.FC<CommentFormProps> = ({
       setSubmitError('');
       onSuccess?.();
     },
-    onError: (error: any) => {
-      setSubmitError(
-        error.response?.data?.message || '댓글 수정에 실패했습니다.'
-      );
+    onError: (error: unknown) => {
+      let errorMessage = '댓글 수정에 실패했습니다.';
+      
+      if (isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || 
+                      error.response?.data?.error || 
+                      error.message || 
+                      errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setSubmitError(errorMessage);
     },
   });
 

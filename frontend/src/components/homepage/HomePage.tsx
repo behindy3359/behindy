@@ -9,12 +9,9 @@ import {
   Plus, 
   ArrowRight,
   Train,
-  Users,
-  TrendingUp,
-  Clock
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { api, buildApiUrl } from '@/config';
+import { buildApiUrl } from '@/config';
 import type { PostListResponse } from '@/types/community/community';
 import { RealtimeMetroMap } from '@/components/metroMap';
 import { PostCard } from '@/components/community';

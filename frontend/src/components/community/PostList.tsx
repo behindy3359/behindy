@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
   Search, 
-  Filter, 
   MessageSquare,
   TrendingUp,
   User,
@@ -18,7 +17,7 @@ import {
 import { Button, Input } from '@/components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { api, buildApiUrl } from '@/config';
-import type { Post, PostListResponse } from '@/types/community/community';
+import type { PostListResponse } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { PostCard } from './PostCard';
 

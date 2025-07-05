@@ -627,8 +627,7 @@ export const debugLog = {
 // ================================================================
 // 기본 export
 // ================================================================
-
-export default {
+const authHelpers = {
   // 폼 검증
   validateEmail,
   validatePassword,
@@ -662,3 +661,5 @@ export default {
   // 디버깅
   debugLog
 };
+
+export default authHelpers;

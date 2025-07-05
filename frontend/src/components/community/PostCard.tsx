@@ -4,8 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { 
-  User, 
+import {
   Clock, 
   MessageSquare, 
   Heart, 

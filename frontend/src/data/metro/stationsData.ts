@@ -661,11 +661,16 @@ export const transformApiDataToFrontend = (apiTrains: any[]): RealtimeStationDat
  * 실제 API 데이터로 역 정보 업데이트
  * (개발 단계에서 한 번 실행하여 realApiId 필드 채우기)
  */
-export const updateStationDataWithApiIds = (apiStationList: any[]) => {
+export const updateStationDataWithApiIds = (apiStationList: Array<{
+  stationId: string;
+  stationName: string;
+  subwayLine?: string;
+  lineNumber?: string;
+}>) => {
   const updatedStations = METRO_STATIONS.map(station => {
     // API 데이터에서 매칭되는 역 찾기
     const apiMatch = apiStationList.find(api => {
-      const apiLineNumber = parseInt(api.subwayLine || api.lineNumber);
+      const apiLineNumber = parseInt(api.subwayLine || api.lineNumber || '0');
       return api.stationName === station.name && 
              station.lines.includes(apiLineNumber);
     });
@@ -858,7 +863,7 @@ export const STORY_STATIONS = [
 // 기본 export
 // ================================================================
 
-export default {
+const stationsData = {
   METRO_STATIONS,
   LINE_COLORS,
   LineBitUtils,
@@ -872,3 +877,5 @@ export default {
   SVG_CONFIG,
   STORY_STATIONS
 };
+
+export default stationsData;

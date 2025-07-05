@@ -2,7 +2,6 @@
 
 import React, { useState, forwardRef } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // ================================================================
@@ -284,7 +283,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     ref
   ) => {
     const [showPassword, setShowPassword] = useState(false);
-    const [isFocused, setIsFocused] = useState(false);
 
     const isPassword = type === 'password';
     const hasError = Boolean(error);
@@ -294,15 +292,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     const inputType = isPassword && showPassword ? 'text' : type;
 
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      setIsFocused(true);
-      onFocus?.(e);
-    };
+    // const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    //   setIsFocused(true);
+    //   onFocus?.(e);
+    // };
 
-    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-      setIsFocused(false);
-      onBlur?.(e);
-    };
+    // const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    //   setIsFocused(false);
+    //   onBlur?.(e);
+    // };
 
     const togglePasswordVisibility = () => {
       setShowPassword(!showPassword);
@@ -331,8 +329,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             value={value}
             defaultValue={defaultValue}
             onChange={onChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
             disabled={disabled}
             readOnly={readOnly}
             required={required}

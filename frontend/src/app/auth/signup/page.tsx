@@ -108,13 +108,6 @@ const PageTitle = styled.h1`
   margin: 0 0 8px 0;
 `;
 
-const PageSubtitle = styled.p`
-  color: #6b7280;
-  text-align: center;
-  margin: 0 0 32px 0;
-  font-size: 16px;
-`;
-
 const SignupForm = styled.form`
   display: flex;
   flex-direction: column;
@@ -386,7 +379,6 @@ export default function SignupPage() {
     handleSubmit,
     watch,
     formState: { errors, isValid },
-    reset,
   } = useForm<SignupFormData>({
     resolver: yupResolver(signupSchema),
     mode: 'onChange',

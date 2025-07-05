@@ -15,8 +15,7 @@ import {
   HelpCircle,
   ChevronRight,
   Star,
-  Clock,
-  TrendingUp
+  Clock
 } from 'lucide-react';
 
 interface NavigationProps {

@@ -1,5 +1,3 @@
-// frontend/src/services/api/axiosConfig.ts - 수정 버전
-
 import axios from 'axios';
 import { env } from '@/config/env';
 
@@ -50,7 +48,12 @@ const AUTH_REQUIRED_PATTERNS = [
 const AUTH_REQUIRED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 // 🔥 요청에 인증이 필요한지 확인하는 함수
-const requiresAuth = (config: any): boolean => {
+const requiresAuth = (config: {
+  url?: string;
+  method?: string;
+  headers?: Record<string, string>;
+  _retry?: boolean;
+}): boolean => {
   const url = config.url || '';
   const method = (config.method || 'GET').toUpperCase();
   
@@ -74,6 +77,7 @@ const requiresAuth = (config: any): boolean => {
   
   return needsAuthForEndpoint || needsAuthForMethod;
 };
+
 
 // Axios 인스턴스 생성
 const createApiClient = (baseURL: string) => {
