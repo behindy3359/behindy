@@ -197,7 +197,7 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
 export const RealtimeMetroMap: React.FC = () => {
   const [visibleLines, setVisibleLines] = useState<number[]>([1, 2, 3, 4]);
   const [showDistricts, setShowDistricts] = useState(true);
-  const [showStationNames, setShowStationNames] = useState(true); // 전체 역명 표시 토글
+  const [showStationNames, setShowStationNames] = useState(false); // 전체 역명 표시 토글
   const [clickedStations, setClickedStations] = useState<Set<number>>(new Set()); // 개별 클릭된 역들
 
   // 실시간 데이터 훅
@@ -291,23 +291,18 @@ export const RealtimeMetroMap: React.FC = () => {
   };
 
   const handleStationNamesToggle = () => {
-    if (showStationNames) {
-      // 켜져있으면 끄고, 개별 클릭도 모두 초기화
-      setShowStationNames(false);
-      setClickedStations(new Set());
-    } else {
-      // 꺼져있으면 켜기
-      setShowStationNames(true);
-    }
+    setShowStationNames(prev => !prev);
+    // 토글할 때마다 개별 클릭 선택도 초기화
+    setClickedStations(new Set());
   };
 
   // 역명 표시 여부 결정 로직
   const shouldShowStationName = (stationId: number, hasRealtimeData: boolean) => {
-    // 전체 토글이 꺼져있으면 표시 안함
+    // 전체 토글이 꺼져있으면 표시 안함 (지하철 도착 역 포함)
     if (!showStationNames) return false;
     
     // 전체 토글이 켜져있으면:
-    // 1. 실시간 데이터가 있는 역은 항상 표시
+    // 1. 실시간 데이터가 있는 역은 표시
     // 2. 개별 클릭된 역도 표시
     return hasRealtimeData || clickedStations.has(stationId);
   };
