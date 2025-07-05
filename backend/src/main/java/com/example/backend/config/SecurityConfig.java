@@ -2,6 +2,7 @@ package com.example.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.example.backend.security.jwt.JwtAuthenticationEntryPoint;
@@ -83,15 +84,17 @@ public class SecurityConfig {
         return source;
     }
 
+// SecurityConfig.java 수정
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                // ✅ 명시적 CORS 설정으로 변경
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // 기존 공개 엔드포인트
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/metro/**").permitAll()
@@ -99,6 +102,13 @@ public class SecurityConfig {
                         .requestMatchers("/test/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/").permitAll()
+
+                        // 🎯 추가: 게시판 및 댓글 조회 공개
+                        .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()           // 게시글 목록
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()        // 개별 게시글
+                        .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()     // 댓글 조회
+
+                        // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 );
 

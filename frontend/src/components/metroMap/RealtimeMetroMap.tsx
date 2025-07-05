@@ -191,14 +191,13 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
 };
 
 // ================================================================
-// 메인 컴포넌트 (대폭 간소화)
+// 메인 컴포넌트
 // ================================================================
 
 export const RealtimeMetroMap: React.FC = () => {
   const [visibleLines, setVisibleLines] = useState<number[]>([1, 2, 3, 4]);
   const [showDistricts, setShowDistricts] = useState(true);
-  const [showStationNames, setShowStationNames] = useState(false); // 전체 역명 표시 토글
-  const [clickedStations, setClickedStations] = useState<Set<number>>(new Set()); // 개별 클릭된 역들
+  const [clickedStations, setClickedStations] = useState<Set<number>>(new Set()); // 역명 표시할 역들
 
   // 실시간 데이터 훅
   const { data: realtimeData, isLoading, error } = useMetroRealtime(30000);
@@ -234,6 +233,17 @@ export const RealtimeMetroMap: React.FC = () => {
       };
     }).filter(train => train !== null);
   }, [realtimeData]);
+
+  // 현재 도착 역들의 ID 목록
+  const arrivalStationIds = useMemo(() => {
+    return processedRealtimeData.map(train => train.frontendStationId);
+  }, [processedRealtimeData]);
+
+  // 도착 역들이 모두 표시되어 있는지 확인
+  const areAllArrivalStationsShown = useMemo(() => {
+    if (arrivalStationIds.length === 0) return false;
+    return arrivalStationIds.every(id => clickedStations.has(id));
+  }, [arrivalStationIds, clickedStations]);
 
   // 노선 연결 데이터
   const lineConnections = useMemo(() => {
@@ -278,6 +288,7 @@ export const RealtimeMetroMap: React.FC = () => {
     );
   };
 
+  // 개별 역 클릭 - 단순 토글
   const handleStationClick = (stationId: number) => {
     setClickedStations(prev => {
       const newSet = new Set(prev);
@@ -290,21 +301,21 @@ export const RealtimeMetroMap: React.FC = () => {
     });
   };
 
-  const handleStationNamesToggle = () => {
-    setShowStationNames(prev => !prev);
-    // 토글할 때마다 개별 클릭 선택도 초기화
-    setClickedStations(new Set());
-  };
-
-  // 역명 표시 여부 결정 로직
-  const shouldShowStationName = (stationId: number, hasRealtimeData: boolean) => {
-    // 전체 토글이 꺼져있으면 표시 안함 (지하철 도착 역 포함)
-    if (!showStationNames) return false;
-    
-    // 전체 토글이 켜져있으면:
-    // 1. 실시간 데이터가 있는 역은 표시
-    // 2. 개별 클릭된 역도 표시
-    return hasRealtimeData || clickedStations.has(stationId);
+  // 도착 역 일괄 토글
+  const handleArrivalStationsToggle = () => {
+    setClickedStations(prev => {
+      const newSet = new Set(prev);
+      
+      if (areAllArrivalStationsShown) {
+        // 모든 도착 역이 표시되어 있으면 → 모든 도착 역 제거
+        arrivalStationIds.forEach(id => newSet.delete(id));
+      } else {
+        // 일부만 표시되어 있거나 없으면 → 모든 도착 역 추가
+        arrivalStationIds.forEach(id => newSet.add(id));
+      }
+      
+      return newSet;
+    });
   };
   
   return (
@@ -346,27 +357,40 @@ export const RealtimeMetroMap: React.FC = () => {
             </CheckboxItem>
           ))}
           
-          {/* 역명 표시 토글 */}
+          {/* 도착 역 표시 토글 */}
           <CheckboxItem>
             <input
               type="checkbox"
-              checked={showStationNames}
-              onChange={handleStationNamesToggle}
+              checked={areAllArrivalStationsShown}
+              onChange={handleArrivalStationsToggle}
             />
             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-              🏷️ 역명 표시
+              🚇 도착 역 표시
             </span>
-            {clickedStations.size > 0 && (
+            {arrivalStationIds.length > 0 && (
               <span style={{ 
                 fontSize: '11px', 
-                color: '#6366f1', 
+                color: '#ff6b35', 
                 fontWeight: '500',
                 marginLeft: '4px'
               }}>
-                (+{clickedStations.size}개 선택)
+                ({arrivalStationIds.length}개 역)
               </span>
             )}
           </CheckboxItem>
+          
+          {/* 선택된 역 개수 표시 */}
+          {clickedStations.size > 0 && (
+            <CheckboxItem style={{ border: 'none', background: 'transparent', padding: '6px 0' }}>
+              <span style={{ 
+                fontSize: '12px', 
+                color: '#6366f1', 
+                fontWeight: '600'
+              }}>
+                🏷️ {clickedStations.size}개 역명 표시중
+              </span>
+            </CheckboxItem>
+          )}
         </CheckboxGroup>
 
         <StatusIndicator>
@@ -513,17 +537,17 @@ export const RealtimeMetroMap: React.FC = () => {
             })}
           </g>
 
-          {/* 역명 라벨 - 조건부 표시 */}
+          {/* 역명 라벨 - clickedStations에 있는 역들만 표시 */}
           <g id="station-labels">
             {visibleStations.map(station => {
+              // clickedStations에 포함된 역만 역명 표시
+              if (!clickedStations.has(station.id)) return null;
+              if (!visibleLines.some(line => station.lines.includes(line))) return null;
+              
               const realtimeInfo = processedRealtimeData.filter(
                 data => data.frontendStationId === station.id
               );
               const hasRealtimeData = realtimeInfo.length > 0;
-              
-              // 역명 표시 여부 확인
-              if (!shouldShowStationName(station.id, hasRealtimeData)) return null;
-              if (!visibleLines.some(line => station.lines.includes(line))) return null;
               
               return (
                 <g key={`label-${station.id}`}>
