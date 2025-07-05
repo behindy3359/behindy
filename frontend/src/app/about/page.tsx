@@ -16,7 +16,6 @@ import {
   Lightbulb
 } from 'lucide-react';
 import { PublicLayout } from '@/components/layout';
-import { Metadata } from 'next';
 
 // ================================================================
 // Styled Components
@@ -229,11 +228,6 @@ const ContactSection = styled.div`
 // ================================================================
 // Component
 // ================================================================
-export const metadata: Metadata = {
-  title: '소개',
-  description: 'Behindy 프로젝트 소개. 지하철 노선도 기반 텍스트 어드벤처 게임의 개발 배경과 기술 스택을 확인하세요.',
-}
-
 export default function AboutPage() {
   const features = [
     {

@@ -10,7 +10,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogIn, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
-import { Metadata } from 'next';
 
 // ================================================================
 // Types & Validation (타입 정의 수정)
@@ -229,11 +228,6 @@ const LoadingFallback = styled.div`
 // ================================================================
 // Component
 // ================================================================
-
-export const metadata: Metadata = {
-  title: '로그인',
-  description: 'Behindy에 로그인하세요',
-}
 
 // SearchParams를 사용하는 컴포넌트를 별도로 분리
 function LoginPageContent() {

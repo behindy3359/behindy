@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
-import { Metadata } from 'next';
 
 // ================================================================
 // Types & Validation (타입 정의 수정)
@@ -372,11 +371,6 @@ const getPasswordStrengthText = (strength: number): string => {
 // ================================================================
 // Component
 // ================================================================
-
-export const metadata: Metadata = {
-  title: '회원가입',
-  description: 'Behindy에 회원가입하세요',
-}
 
 export default function SignupPage() {
   const router = useRouter();

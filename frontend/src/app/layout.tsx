@@ -1,6 +1,6 @@
 
 import type { Metadata } from 'next'
-import './globals.css' // 🔥 전역 CSS 파일 추가
+import './globals.css'
 
 // 🔥 메타데이터 설정 (브라우저 탭 제목)
 export const metadata: Metadata = {
