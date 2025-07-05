@@ -378,19 +378,6 @@ export const RealtimeMetroMap: React.FC = () => {
               </span>
             )}
           </CheckboxItem>
-          
-          {/* 선택된 역 개수 표시 */}
-          {clickedStations.size > 0 && (
-            <CheckboxItem style={{ border: 'none', background: 'transparent', padding: '6px 0' }}>
-              <span style={{ 
-                fontSize: '12px', 
-                color: '#6366f1', 
-                fontWeight: '600'
-              }}>
-                🏷️ {clickedStations.size}개 역명 표시중
-              </span>
-            </CheckboxItem>
-          )}
         </CheckboxGroup>
 
         <StatusIndicator>

@@ -27,7 +27,7 @@ const CardContainer = styled(motion.div)`
   transition: all 0.3s ease;
   height: 320px; /* 🔥 고정 높이 */
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* 🎯 flex 컨테이너로 설정 */
   
   &:hover {
     border-color: #667eea;
@@ -40,6 +40,7 @@ const CardHeader = styled.div`
   padding: 16px 20px 12px 20px;
   background: #f9fafb;
   border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0; /* 🎯 헤더 크기 고정 */
 `;
 
 const AuthorInfo = styled.div`
@@ -105,6 +106,10 @@ const MetroLine = styled.div<{ $lineNumber?: string }>`
 
 const CardContent = styled.div`
   padding: 20px;
+  flex: 1; /* 🎯 남은 공간 모두 차지 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 내용이 넘치지 않도록 */
 `;
 
 const PostTitle = styled.h3`
@@ -117,17 +122,19 @@ const PostTitle = styled.h3`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex-shrink: 0; /* 🎯 타이틀 크기 고정 */
 `;
 
 const PostPreview = styled.p`
   color: #6b7280;
   font-size: 14px;
   line-height: 1.6;
-  margin: 0 0 16px 0;
+  margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex: 1; /* 🎯 남은 공간에서 늘어남 */
 `;
 
 const CardFooter = styled.div`
@@ -137,6 +144,8 @@ const CardFooter = styled.div`
   padding: 12px 20px;
   background: #f9fafb;
   border-top: 1px solid #f3f4f6;
+  flex-shrink: 0; /* 🎯 푸터를 하단에 고정 */
+  margin-top: auto; /* 🎯 푸터를 맨 아래로 밀어냄 */
 `;
 
 const StatsGroup = styled.div`

@@ -63,7 +63,7 @@ const SidebarContainer = styled(motion.aside)<{
   border-right: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#e5e7eb'};
   box-shadow: ${({ $isOpen }) => $isOpen ? '2px 0 10px rgba(0, 0, 0, 0.1)' : 'none'};
   z-index: 1000;
-  transition: all 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease; /* 🎯 width 전환 추가 */
   overflow: hidden;
   transform: ${({ $isOpen }) => $isOpen ? 'translateX(0)' : 'translateX(-100%)'};
   
@@ -83,10 +83,19 @@ const SidebarHeader = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }
   min-height: 70px;
 `;
 
+// 🎯 로고 섹션을 클릭 가능하게 수정
 const LogoSection = styled.div<{ $isCollapsed: boolean }>`
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer; /* 🎯 클릭 가능 표시 */
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(102, 126, 234, 0.1);
+  }
   
   .logo-icon {
     width: 32px;
@@ -109,10 +118,11 @@ const LogoSection = styled.div<{ $isCollapsed: boolean }>`
     opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
     transition: opacity 0.3s ease;
     white-space: nowrap;
+    overflow: hidden; /* 🎯 넘침 방지 */
   }
 `;
 
-const CollapseButton = styled(motion.button)<{ $isDarkMode: boolean }>`
+const CollapseButton = styled(motion.button)<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
   display: none;
   width: 32px;
   height: 32px;
@@ -122,6 +132,7 @@ const CollapseButton = styled(motion.button)<{ $isDarkMode: boolean }>`
   cursor: pointer;
   color: ${({ $isDarkMode }) => $isDarkMode ? '#d1d5db' : '#6b7280'};
   transition: all 0.2s ease;
+  flex-shrink: 0; /* 🎯 버튼 크기 고정 */
   
   &:hover {
     background: ${({ $isDarkMode }) => $isDarkMode ? '#4b5563' : '#e5e7eb'};
@@ -137,6 +148,8 @@ const CollapseButton = styled(motion.button)<{ $isDarkMode: boolean }>`
   svg {
     width: 16px;
     height: 16px;
+    transform: ${({ $isCollapsed }) => $isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)'};
+    transition: transform 0.3s ease;
   }
 `;
 
@@ -146,6 +159,7 @@ const SidebarContent = styled.div<{ $isCollapsed: boolean }>`
   height: calc(100vh - 70px);
   padding: ${({ $isCollapsed }) => $isCollapsed ? '16px 8px' : '16px 20px'};
   overflow-y: auto;
+  overflow-x: hidden; /* 🎯 가로 스크롤 방지 */
   
   /* 커스텀 스크롤바 */
   &::-webkit-scrollbar {
@@ -180,6 +194,8 @@ const SectionTitle = styled.h3<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
   opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
   transition: opacity 0.3s ease;
   padding-left: 4px;
+  white-space: nowrap; /* 🎯 텍스트 줄바꿈 방지 */
+  overflow: hidden;
 `;
 
 const NavItem = styled(motion.div)<{ 
@@ -224,6 +240,8 @@ const NavItem = styled(motion.div)<{
       opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
       transition: opacity 0.3s ease;
       white-space: nowrap;
+      overflow: hidden;
+      min-width: ${({ $isCollapsed }) => $isCollapsed ? '0' : 'auto'};
     }
   }
 `;
@@ -244,6 +262,7 @@ const UserInfo = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
   background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f8fafc'};
   border-radius: 8px;
   justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
+  overflow: hidden; /* 🎯 넘침 방지 */
   
   .avatar {
     width: 32px;
@@ -262,17 +281,25 @@ const UserInfo = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
   .user-details {
     opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
     transition: opacity 0.3s ease;
+    overflow: hidden;
+    min-width: 0; /* 🎯 flexbox 넘침 방지 */
     
     .name {
       font-size: 14px;
       font-weight: 600;
       color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#374151'};
       margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .email {
       font-size: 12px;
       color: ${({ $isDarkMode }) => $isDarkMode ? '#9ca3af' : '#6b7280'};
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 `;
@@ -295,6 +322,7 @@ const ThemeToggleButton = styled(motion.button)<{
   font-weight: 500;
   transition: all 0.2s ease;
   justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
+  overflow: hidden; /* 🎯 넘침 방지 */
   
   &:hover {
     background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f9fafb'};
@@ -311,6 +339,8 @@ const ThemeToggleButton = styled(motion.button)<{
     opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
     transition: opacity 0.3s ease;
     white-space: nowrap;
+    overflow: hidden;
+    min-width: 0;
   }
 `;
 
@@ -394,6 +424,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  // 🎯 로고 클릭 핸들러 추가
+  const handleLogoClick = () => {
+    router.push('/');
+    if (window.innerWidth < 1200 && onClose) {
+      onClose();
+    }
+  };
+
   const handleAuthAction = async (action: 'login' | 'signup' | 'logout') => {
     if (action === 'logout') {
       try {
@@ -442,50 +480,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
         $isDarkMode={isDarkMode}
         initial={false}
         animate={{ 
-          x: isOpen ? 0 : -300,
-          width: isCollapsed ? 60 : 280 
+          x: isOpen ? 0 : -300
+          // 🎯 width는 CSS transition으로 처리하므로 제거
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
       >
-        {/* 헤더 */}
-        {isCollapsed ? (
-          // 접힌 상태 - 헤더 없음 (햄버거 버튼은 콘텐츠에서 처리)
-          null
-        ) : (
-          // 펼쳐진 상태 - 로고 + 브랜드명 + 접기 버튼
-          <SidebarHeader $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
-            <LogoSection $isCollapsed={isCollapsed}>
-              <div className="logo-icon">B</div>
-              <div className="brand-name">Behindy</div>
-            </LogoSection>
-            
-            <CollapseButton
-              $isDarkMode={isDarkMode}
-              onClick={onToggleCollapse}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ChevronLeft />
-            </CollapseButton>
-          </SidebarHeader>
-        )}
+        {/* 헤더 - 항상 표시 */}
+        <SidebarHeader $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
+          {/* 🎯 로고 섹션에 클릭 이벤트 추가 */}
+          <LogoSection $isCollapsed={isCollapsed} onClick={handleLogoClick}>
+            <div className="logo-icon">B</div>
+            {!isCollapsed && <div className="brand-name">Behindy</div>}
+          </LogoSection>
+          
+          {/* 접기/펼치기 버튼 - 접힌 상태에서도 표시 */}
+          <CollapseButton
+            $isDarkMode={isDarkMode}
+            $isCollapsed={isCollapsed}
+            onClick={onToggleCollapse}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            title={isCollapsed ? "메뉴 펼치기" : "메뉴 접기"}
+          >
+            <ChevronLeft />
+          </CollapseButton>
+        </SidebarHeader>
 
-        {/* 콘텐츠 */}
-        {isCollapsed ? (
-          // 접힌 상태 - 햄버거 버튼만 표시
-          <CollapsedContent>
-            <CollapsedMenuButton
-              $isDarkMode={isDarkMode}
-              onClick={onToggleCollapse}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title="메뉴 열기"
-            >
-              <Menu />
-            </CollapsedMenuButton>
-          </CollapsedContent>
-        ) : (
-          // 펼쳐진 상태 콘텐츠
+        {/* 콘텐츠 - 접힌 상태에서는 숨김 */}
+        {!isCollapsed && (
           <SidebarContent $isCollapsed={isCollapsed}>
             {/* 메인 네비게이션 */}
             <NavSection>
