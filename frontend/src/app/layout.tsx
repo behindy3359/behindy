@@ -1,4 +1,5 @@
 
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import type { Metadata } from 'next'
 
 // 🔥 메타데이터 설정 (브라우저 탭 제목)
@@ -44,8 +45,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        {children}
+        <AuthGuard>
+          {children}
+        </AuthGuard>
       </body>
     </html>
   );
 }
+

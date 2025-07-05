@@ -330,21 +330,6 @@ export const GameLayout: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export default function RootLayout({ 
-  children 
-}: { 
-  children: React.ReactNode 
-}) {
-  return (
-    <html lang="ko">
-      <body>
-        <AuthGuard>
-          {children}
-        </AuthGuard>
-      </body>
-    </html>
-  );
-}
 
 // PublicLayout - 인증 체크 없음 (홈, 커뮤니티 목록 등)
 export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

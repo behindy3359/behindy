@@ -8,7 +8,7 @@ Web text adventure shifting from everyday subway life to a surreal world of urba
 1. docker, Git Actions 사용해서 개발 환경 구축하기
   nignx, next.js, springboot, fastApi
 
-2. 각 컨테이너간의 통신 확인
+2. 각 컨테이너간의 통신 확인 / 배포환경 테스트
 
 3. springboot 1차 작업
   - 기본 api(인증, 게시글, 지하철 노선도) 
@@ -17,6 +17,7 @@ Web text adventure shifting from everyday subway life to a surreal world of urba
   - 기본기능 (인증, 게시글, 지하철 노선도)
 
 5. 컨테이너간 통신 재확인, 배포환경에서의 통신 확인 cors 해결 
+  - 코드 리뷰 후 리팩토링
 
 6. fastAPI 1차 작업
   - llmAPI 와의 통신, 프롬프트 작성
@@ -29,8 +30,12 @@ Web text adventure shifting from everyday subway life to a surreal world of urba
 8. next.js 2차 작업
   - 게임 프론트엔드 구체화
 
-9. springboot 3차 작업
+9. 코드 리뷰 후 리팩토링
+
+10. springboot 3차 작업
   - 운영 기능 구체화(로깅, 통계, 보안)
+
+11. 지속적 개선/ 강화
 
 <hr>
 
