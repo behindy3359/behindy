@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Menu, X } from 'lucide-react';
 import { Sidebar } from '../sidebar/Sidebar';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -329,31 +330,40 @@ export const GameLayout: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// 대시보드 전용 레이아웃
-export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ 
+export default function RootLayout({ 
   children 
-}) => {
+}: { 
+  children: React.ReactNode 
+}) {
   return (
-    <AppLayout
-      showSidebar={true}
-      backgroundColor="#fafbfc"
-      maxWidth="1400px"
-    >
-      {children}
-    </AppLayout>
+    <html lang="ko">
+      <body>
+        <AuthGuard>
+          {children}
+        </AuthGuard>
+      </body>
+    </html>
   );
-};
+}
 
+// PublicLayout - 인증 체크 없음 (홈, 커뮤니티 목록 등)
 export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <AppLayout
-      showSidebar={true}
-      backgroundColor="#ffffff"
-      maxWidth="1200px"
-    >
-      {children}
-    </AppLayout>
+    <div>
+      <Sidebar />
+      <main>{children}</main>
+    </div>
   );
 };
 
-export default AppLayout;
+// DashboardLayout - 인증 체크 있음 (글쓰기, 프로필 등)
+export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <AuthGuard>
+      <div>
+        <Sidebar />
+        <main>{children}</main>
+      </div>
+    </AuthGuard>
+  );
+};

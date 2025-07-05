@@ -478,8 +478,9 @@ export const normalizeEmail = (email: string): string => {
 /**
  * 로그인 후 리다이렉트 URL 관리
  */
+
+// authStore.ts 내부의 redirectManager 수정:
 export const redirectManager = {
-  // 현재 URL 저장
   saveCurrentUrl: (): void => {
     if (typeof window === 'undefined') return;
     
@@ -487,13 +488,11 @@ export const redirectManager = {
     
     // 인증 페이지가 아닌 경우만 저장
     if (!currentPath.startsWith('/auth')) {
-      safeStorage.set('auth_redirect_url', currentPath);
+      localStorage.setItem('auth_redirect_url', currentPath);
     }
   },
 
-  // 저장된 URL 가져오기
   getRedirectUrl: (defaultUrl = '/'): string => {
-    // URL 파라미터 확인
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const redirectParam = urlParams.get('redirect');
@@ -503,26 +502,26 @@ export const redirectManager = {
       }
     }
 
-    // 저장된 URL 확인
-    const saved = safeStorage.get('auth_redirect_url');
+    const saved = localStorage.getItem('auth_redirect_url');
     if (saved && saved.startsWith('/')) {
-      safeStorage.remove('auth_redirect_url');
+      localStorage.removeItem('auth_redirect_url');
       return saved;
     }
 
     return defaultUrl;
   },
 
-  // 인증 필요 시 로그인 페이지로 이동
+  // 올바른 로그인 경로로 이동
   redirectToLogin: (returnTo?: string): void => {
     if (typeof window === 'undefined') return;
     
     if (returnTo) {
-      safeStorage.set('auth_redirect_url', returnTo);
+      localStorage.setItem('auth_redirect_url', returnTo);
     } else {
       redirectManager.saveCurrentUrl();
     }
 
+    // 🔥 중요: /auth/login으로 리다이렉트 (not /login)
     window.location.href = '/auth/login';
   }
 };

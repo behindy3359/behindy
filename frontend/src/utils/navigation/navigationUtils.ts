@@ -1,18 +1,52 @@
-export const PROTECTED_ROUTES = ['/game', '/character', '/profile'];
+
+export const PROTECTED_ROUTES = [
+  '/community/write',      // 글쓰기만 보호
+  '/community/edit',       // 글 수정만 보호  
+  '/game',                // 게임 시작
+  '/character',           // 캐릭터 생성
+  '/profile'              // 프로필
+];
+
+export const PUBLIC_ROUTES = [
+  '/',                    // 홈페이지 (퍼블릭!)
+  '/community',           // 커뮤니티 목록 (퍼블릭!)
+  '/community/[id]',      // 게시글 상세 (퍼블릭!)
+  '/metro',               // 지하철 노선도 (퍼블릭!)
+  '/auth/login',
+  '/auth/signup',
+  '/auth/error',
+  '/auth/forgot-password'
+];
+
 export const AUTH_ROUTES = ['/auth/login', '/auth/signup'];
 
 /**
- * 인증이 필요한 라우트인지 확인
+ * 인증이 필요한 라우트인지 확인 (매우 제한적으로 적용)
  */
 export const requiresAuth = (path: string): boolean => {
-  return PROTECTED_ROUTES.some(route => path.startsWith(route));
+  return PROTECTED_ROUTES.some(route => {
+    if (route.includes('[')) {
+      // 동적 라우트 처리
+      const pattern = route.replace(/\[.*?\]/g, '[^/]+');
+      const regex = new RegExp(`^${pattern}$`);
+      return regex.test(path);
+    }
+    return path.startsWith(route);
+  });
 };
 
 /**
- * 인증된 사용자가 접근하면 안 되는 페이지인지 확인
+ * 퍼블릭 라우트인지 확인
  */
-export const isAuthRoute = (path: string): boolean => {
-  return AUTH_ROUTES.some(route => path.startsWith(route));
+export const isPublicRoute = (path: string): boolean => {
+  return PUBLIC_ROUTES.some(route => {
+    if (route.includes('[')) {
+      const pattern = route.replace(/\[.*?\]/g, '[^/]+');
+      const regex = new RegExp(`^${pattern}$`);
+      return regex.test(path);
+    }
+    return path === route || path.startsWith(route);
+  });
 };
 
 /**

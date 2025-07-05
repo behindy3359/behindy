@@ -1,72 +1,86 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { Loading } from '@/components/ui/loading/Loading';
+import { requiresAuth, isPublicRoute } from '@/utils/navigation/navigationUtils';
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  requireAuth?: boolean;
-  redirectTo?: string;
 }
 
-export const AuthGuard: React.FC<AuthGuardProps> = ({
-  children,
-  requireAuth = false,
-  redirectTo = '/auth/login'
-}) => {
+export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, checkAuthStatus, isLoading } = useAuthStore();
-  const [isChecking, setIsChecking] = useState(true);
+  const { isAuthenticated, status } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      await checkAuthStatus();
-      setIsChecking(false);
+      // 로딩 중이면 대기
+      if (status === 'loading') {
+        return;
+      }
+
+      // 1. 퍼블릭 라우트는 항상 허용
+      if (isPublicRoute(pathname)) {
+        console.log('✅ 퍼블릭 라우트 접근:', pathname);
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. 보호된 라우트만 인증 확인
+      if (requiresAuth(pathname)) {
+        if (!isAuthenticated()) {
+          console.log('🔒 보호된 라우트 - 로그인 필요:', pathname);
+          // 올바른 로그인 경로로 리다이렉트
+          router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
+          return;
+        }
+        console.log('✅ 인증된 사용자 - 접근 허용:', pathname);
+      }
+
+      setIsLoading(false);
     };
 
     checkAuth();
-  }, [checkAuthStatus]);
+  }, [pathname, isAuthenticated, status, router]);
 
-  useEffect(() => {
-    if (!isChecking && !isLoading) {
-      if (requireAuth && !isAuthenticated()) {
-        // 인증이 필요한 페이지에 비인증 사용자가 접근
-        const loginUrl = new URL(redirectTo, window.location.origin);
-        loginUrl.searchParams.set('redirect', pathname);
-        router.push(loginUrl.toString());
-      } else if (!requireAuth && isAuthenticated()) {
-        // 인증된 사용자가 인증 페이지에 접근
-        router.push('/');
-      }
-    }
-  }, [isChecking, isLoading, isAuthenticated, requireAuth, router, pathname, redirectTo]);
-
-  // 로딩 중이거나 권한 체크 중일 때
-  if (isChecking || isLoading) {
+  // 로딩 중일 때
+  if (isLoading || status === 'loading') {
     return (
-      <Loading 
-        variant="spinner" 
-        size="lg" 
-        fullScreen 
-        message="인증 상태를 확인하는 중..." 
-      />
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#f9fafb'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          color: '#6b7280'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid #f3f4f6',
+            borderTop: '3px solid #667eea',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          로딩 중...
+          <style jsx>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </div>
     );
-  }
-
-  // 인증이 필요한데 인증되지 않은 경우
-  if (requireAuth && !isAuthenticated()) {
-    return null; // 리다이렉트 처리 중
-  }
-
-  // 인증된 사용자가 인증 페이지에 접근하는 경우
-  if (!requireAuth && isAuthenticated()) {
-    return null; // 리다이렉트 처리 중
   }
 
   return <>{children}</>;
 };
-
-export default AuthGuard;

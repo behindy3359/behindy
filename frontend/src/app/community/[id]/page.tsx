@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostDetail } from '@/components/community/PostDetail';
-import { DashboardLayout } from '@/components/layout';
+import { DashboardLayout, PublicLayout } from '@/components/layout';
 
 const queryClient = new QueryClient();
 
@@ -28,9 +28,9 @@ export default function PostDetailPage() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <DashboardLayout>
+      <PublicLayout>
         <PostDetail postId={postId} />
-      </DashboardLayout>
+      </PublicLayout>
     </QueryClientProvider>
   );
 }

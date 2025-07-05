@@ -429,7 +429,7 @@ export const PostList: React.FC<PostListProps> = ({
 
   const handleWritePost = () => {
     if (!isAuthenticated()) {
-      router.push('/auth/login');
+      router.push('/auth/login?redirect=/community/write');
       return;
     }
     router.push('/community/write');
