@@ -4,7 +4,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { PublicLayout } from '@/components/layout';
-import { RealtimeMetroMap } from '@/components/metroMap/RealtimeMetroMap';
+import { RealtimeMetroMap } from '@/components/metromap/RealtimeMetroMap';
 
 export default function Home() {
   const router = useRouter();

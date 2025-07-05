@@ -1,27 +1,25 @@
 "use client";
 
 import React from 'react';
-import styled from 'styled-components';
-import { useRouter } from 'next/navigation';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PublicLayout } from '@/components/layout';
-import { RealtimeMetroMap } from '@/components/metroMap/RealtimeMetroMap';
+import { HomePage } from '@/components/homepage/HomePage';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5분
+      retry: 1,
+    },
+  },
+});
 
 export default function Home() {
-  const router = useRouter();
-
-  const [debugInfo, setDebugInfo] = React.useState('');
-
-  React.useEffect(() => {
-    setDebugInfo(`
-      화면 너비: ${window.innerWidth}px
-      사이드바 예상: ${window.innerWidth >= 1200 ? '표시됨' : '숨겨짐'}
-      현재 경로: ${window.location.pathname}
-    `);
-  }, []);
-
   return (
-    <PublicLayout>
-      <RealtimeMetroMap />
-    </PublicLayout>
+    <QueryClientProvider client={queryClient}>
+      <PublicLayout>
+        <HomePage />
+      </PublicLayout>
+    </QueryClientProvider>
   );
 }

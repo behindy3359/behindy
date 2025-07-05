@@ -40,11 +40,11 @@ interface SidebarProps {
 const mainNavItems = [
   { icon: Home, label: '홈', path: '/', id: 'home' },
   { icon: Info, label: '소개', path: '/about', id: 'about' },
-  { icon: Map, label: '지하철 노선도', path: '/metro-map', id: 'metro' },
+  // { icon: Map, label: '지하철 노선도', path: '/metro-map', id: 'metro' },
   { icon: MessageSquare, label: '게시판', path: '/community', id: 'community' }
 ];
 
-// 게임 관련 메뉴 (밤 모드에서 추가 표시)
+// 게임 관련 메뉴
 const gameNavItems = [
   { icon: Gamepad2, label: '게임', path: '/game', id: 'game' },
   { icon: Settings, label: '캐릭터', path: '/character', id: 'character' }
