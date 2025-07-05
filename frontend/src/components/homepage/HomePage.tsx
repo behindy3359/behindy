@@ -8,7 +8,10 @@ import {
   MessageSquare, 
   Plus, 
   ArrowRight,
-  Train
+  Train,
+  Users,
+  TrendingUp,
+  Clock
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api, buildApiUrl } from '@/config';
@@ -19,150 +22,212 @@ import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 
 // ================================================================
-// Styled Components
+// Styled Components - 통일된 너비 적용
 // ================================================================
 
 const Container = styled.div`
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 32px;
-  min-height: calc(100vh - 80px);
   
   @media (max-width: 1200px) {
-    grid-template-columns: 1fr;
-    gap: 24px;
     padding: 16px;
   }
 `;
 
+// 상단 지하철 노선도 섹션
 const MetroSection = styled.div`
   background: white;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
-  padding: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  
-  .metro-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    
-    h2 {
-      font-size: 20px;
-      font-weight: 700;
-      color: #111827;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .live-indicator {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: #10b981;
-      font-size: 14px;
-      font-weight: 500;
-      
-      &::before {
-        content: '';
-        width: 8px;
-        height: 8px;
-        background: #10b981;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-      }
-    }
-  }
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
+  margin-bottom: 32px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 `;
 
-const CommunitySection = styled.div`
+const MetroHeader = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-const SectionHeader = styled.div`
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 20px 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px 24px;
+  border-bottom: 1px solid #f3f4f6;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   
-  .header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-  
-  .section-title {
-    font-size: 18px;
+  h2 {
+    font-size: 20px;
     font-weight: 700;
     color: #111827;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+  }
+  
+  .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #ef4444;
+    font-size: 14px;
+    font-weight: 600;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 4px 8px;
+    border-radius: 12px;
+    
+    &::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+  }
+`;
+
+// 지하철 노선도 컨테이너 - 레이어 간소화
+const MetroMapContainer = styled.div`
+  /* 기존의 복잡한 레이어 제거 */
+  padding: 0;
+  background: none;
+  
+  /* RealtimeMetroMap 컴포넌트의 내부 Container 스타일 무력화 */
+  & > div {
+    padding: 0 !important;
+    background: none !important;
+    margin: 0 !important;
+  }
+  
+  /* 지도 래퍼의 불필요한 스타일 제거 */
+  & > div > div {
+    background: none !important;
+    border-radius: 0 !important;
+    padding: 20px !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+`;
+
+// 하단 커뮤니티 섹션
+const CommunitySection = styled.div`
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+`;
+
+const CommunityHeader = styled.div`
+  padding: 24px;
+  border-bottom: 1px solid #f3f4f6;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 20px;
   }
   
   .stat-item {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
     
-    .stat-number {
-      font-size: 20px;
-      font-weight: 700;
-      color: #667eea;
-      margin-bottom: 4px;
+    .stat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
     }
     
-    .stat-label {
-      font-size: 12px;
-      color: #6b7280;
-      font-weight: 500;
+    .stat-content {
+      .stat-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1;
+        margin-bottom: 2px;
+      }
+      
+      .stat-label {
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 500;
+      }
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .header-top {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+    }
+    
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
   }
 `;
 
 const PostGrid = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
 `;
 
 const EmptyState = styled.div`
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 40px 24px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 60px 20px;
   
   .empty-icon {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 16px;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
     color: #d1d5db;
   }
   
   .empty-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     color: #374151;
     margin-bottom: 8px;
@@ -171,34 +236,33 @@ const EmptyState = styled.div`
   .empty-description {
     color: #6b7280;
     font-size: 14px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     line-height: 1.5;
   }
 `;
 
 const LoadingState = styled.div`
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 40px 24px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 60px 20px;
   color: #6b7280;
+  font-size: 16px;
 `;
 
 const ViewAllButton = styled(motion.div)`
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  margin: 0 24px 24px 24px;
   padding: 16px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
   cursor: pointer;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
   transition: all 0.2s ease;
   
   &:hover {
-    border-color: #667eea;
-    background: #f8faff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   }
   
   .view-all-content {
@@ -206,9 +270,6 @@ const ViewAllButton = styled(motion.div)`
     align-items: center;
     justify-content: center;
     gap: 8px;
-    color: #667eea;
-    font-weight: 600;
-    font-size: 14px;
   }
 `;
 
@@ -216,14 +277,14 @@ const ViewAllButton = styled(motion.div)`
 // Hook
 // ================================================================
 
-const useRecentPosts = (limit: number = 5) => {
+const useRecentPosts = (limit: number = 6) => {
   return useQuery({
     queryKey: ['recent-posts', limit],
     queryFn: async () => {
       const url = buildApiUrl.posts({ page: 0, size: limit });
       return await api.get<PostListResponse>(url);
     },
-    staleTime: 2 * 60 * 1000, // 2분
+    staleTime: 2 * 60 * 1000,
   });
 };
 
@@ -235,7 +296,7 @@ export const HomePage: React.FC = () => {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   
-  const { data: postsData, isLoading, error } = useRecentPosts(5);
+  const { data: postsData, isLoading, error } = useRecentPosts(6);
 
   const handleWritePost = () => {
     if (!isAuthenticated()) {
@@ -248,19 +309,12 @@ export const HomePage: React.FC = () => {
   const handleViewAllPosts = () => {
     router.push('/community');
   };
-
-  // 임시 통계 데이터 (추후 API에서 제공)
-  const stats = {
-    totalPosts: postsData?.totalElements || 0,
-    activeUsers: 24,
-    todayPosts: 8
-  };
-
+  
   return (
     <Container>
       {/* 지하철 노선도 섹션 */}
       <MetroSection>
-        <div className="metro-header">
+        <MetroHeader>
           <h2>
             <Train size={24} />
             실시간 지하철 노선도
@@ -268,18 +322,19 @@ export const HomePage: React.FC = () => {
           <div className="live-indicator">
             LIVE
           </div>
-        </div>
+        </MetroHeader>
         
-        <RealtimeMetroMap />
+        <MetroMapContainer>
+          <RealtimeMetroMap />
+        </MetroMapContainer>
       </MetroSection>
 
       {/* 커뮤니티 섹션 */}
       <CommunitySection>
-        {/* 커뮤니티 헤더 & 통계 */}
-        <SectionHeader>
+        <CommunityHeader>
           <div className="header-top">
             <h3 className="section-title">
-              <MessageSquare size={20} />
+              <MessageSquare size={22} />
               승객들의 이야기
             </h3>
             
@@ -292,39 +347,24 @@ export const HomePage: React.FC = () => {
               글쓰기
             </Button>
           </div>
-          
-          <div className="stats-grid">
-            <div className="stat-item">
-              <div className="stat-number">{stats.totalPosts}</div>
-              <div className="stat-label">총 게시글</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">{stats.todayPosts}</div>
-              <div className="stat-label">오늘 작성</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">{stats.activeUsers}</div>
-              <div className="stat-label">활성 사용자</div>
-            </div>
-          </div>
-        </SectionHeader>
+        </CommunityHeader>
 
         {/* 게시글 목록 */}
-        <PostGrid>
-          {isLoading ? (
-            <LoadingState>
-              최근 게시글을 불러오는 중...
-            </LoadingState>
-          ) : error ? (
-            <EmptyState>
-              <MessageSquare className="empty-icon" />
-              <div className="empty-title">게시글을 불러올 수 없습니다</div>
-              <div className="empty-description">
-                잠시 후 다시 시도해주세요
-              </div>
-            </EmptyState>
-          ) : postsData?.posts && postsData.posts.length > 0 ? (
-            <>
+        {isLoading ? (
+          <LoadingState>
+            최근 게시글을 불러오는 중...
+          </LoadingState>
+        ) : error ? (
+          <EmptyState>
+            <MessageSquare className="empty-icon" />
+            <div className="empty-title">게시글을 불러올 수 없습니다</div>
+            <div className="empty-description">
+              잠시 후 다시 시도해주세요
+            </div>
+          </EmptyState>
+        ) : postsData?.posts && postsData.posts.length > 0 ? (
+          <>
+            <PostGrid>
               {postsData.posts.map((post, index) => (
                 <motion.div
                   key={post.id}
@@ -339,37 +379,36 @@ export const HomePage: React.FC = () => {
                   />
                 </motion.div>
               ))}
-              
-              {/* 더보기 버튼 */}
-              <ViewAllButton
-                onClick={handleViewAllPosts}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="view-all-content">
-                  <span>모든 게시글 보기</span>
-                  <ArrowRight size={16} />
-                </div>
-              </ViewAllButton>
-            </>
-          ) : (
-            <EmptyState>
-              <MessageSquare className="empty-icon" />
-              <div className="empty-title">첫 번째 이야기를 들려주세요</div>
-              <div className="empty-description">
-                지하철에서 경험한 흥미로운 이야기나<br />
-                신기한 경험을 공유해보세요
+            </PostGrid>
+            
+            <ViewAllButton
+              onClick={handleViewAllPosts}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="view-all-content">
+                <span>모든 게시글 보기</span>
+                <ArrowRight size={18} />
               </div>
-              <Button
-                variant="primary"
-                onClick={handleWritePost}
-                leftIcon={<Plus />}
-              >
-                첫 게시글 작성하기
-              </Button>
-            </EmptyState>
-          )}
-        </PostGrid>
+            </ViewAllButton>
+          </>
+        ) : (
+          <EmptyState>
+            <MessageSquare className="empty-icon" />
+            <div className="empty-title">첫 번째 이야기를 들려주세요</div>
+            <div className="empty-description">
+              지하철에서 경험한 흥미로운 이야기나<br />
+              신기한 경험을 공유해보세요
+            </div>
+            <Button
+              variant="primary"
+              onClick={handleWritePost}
+              leftIcon={<Plus />}
+            >
+              첫 게시글 작성하기
+            </Button>
+          </EmptyState>
+        )}
       </CommunitySection>
     </Container>
   );

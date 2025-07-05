@@ -5,47 +5,34 @@ import {
   LINE_COLORS, 
   LineBitUtils,
   getStationsByLine,
-  searchStations,
-  METRO_STATS,
   SVG_CONFIG,
-  transformApiDataToFrontend,
   type Station,
   type RealtimeStationData
 } from '../../data/metro/stationsData';
 import { SEOUL_DISTRICTS, HAN_RIVER } from '../../data/metro/seoulDistrictData';
 import { 
-  generateLineConnections, 
   getVisibleLineConnections,
   type LineConnection 
 } from '../../data/metro/metroLineConnections';
 
-// 스타일드 컴포넌트들
-const Container = styled.div`
-  padding: 20px;
-  background: #f8fafc;
+// ================================================================
+// 간소화된 스타일드 컴포넌트들 (레이어 최소화)
+// ================================================================
+
+// 메인 컨테이너 - 불필요한 래핑 제거
+const MapContainer = styled.div`
+  width: 100%;
+  /* 기존의 복잡한 padding, background, shadow 등 제거 */
 `;
 
-
-const MapWrapper = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-`;
-
+// 컨트롤 패널 - 간소화
 const Controls = styled.div`
   display: flex;
   gap: 16px;
   margin-bottom: 16px;
   flex-wrap: wrap;
   align-items: center;
-`;
-
-const ControlGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: 16px 0;
 `;
 
 const CheckboxGroup = styled.div`
@@ -60,12 +47,15 @@ const CheckboxItem = styled.label<{ $color?: string }>`
   gap: 6px;
   font-size: 14px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background 0.2s ease;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid #e5e7eb;
+  background: white;
   
   &:hover {
-    background: #f3f4f6;
+    background: #f8fafc;
+    border-color: #cbd5e1;
   }
   
   input[type="checkbox"] {
@@ -77,13 +67,13 @@ const CheckboxItem = styled.label<{ $color?: string }>`
     height: 12px;
     border-radius: 50%;
     background: ${({ $color }) => $color || '#666'};
-    border: 1px solid #e5e7eb;
+    border: 1px solid rgba(255,255,255,0.8);
   }
 `;
 
+// SVG 컨테이너 - 레이어 제거
 const SVGContainer = styled.div`
   width: 100%;
-  overflow-x: auto;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fafbfc;
@@ -96,7 +86,33 @@ const SVGContainer = styled.div`
   }
 `;
 
-// 백엔드 API 응답 타입
+// 상태 표시 - 간단한 인디케이터
+const StatusIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: auto;
+  
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+`;
+
+// ================================================================
+// 백엔드 API 타입 (기존과 동일)
+// ================================================================
+
 interface MetroApiResponse {
   success: boolean;
   message: string;
@@ -121,12 +137,14 @@ interface MetroApiResponse {
   };
 }
 
-// 실시간 데이터 훅
+// ================================================================
+// 실시간 데이터 훅 (간소화)
+// ================================================================
+
 const useMetroRealtime = (intervalMs: number = 30000) => {
   const [data, setData] = useState<MetroApiResponse['data'] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [requestCount, setRequestCount] = useState(0);
 
   const fetchData = async () => {
     try {
@@ -138,16 +156,13 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
       
       if (result.success && result.data) {
         setData(result.data);
-        console.log(result.data);
       } else {
         setError(result.message || '데이터를 불러올 수 없습니다.');
       }
       
-      setRequestCount(prev => prev + 1);
-      
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
-      setError(`네트워크 오류: ${errorMessage}`);
+      const errorMessage = err instanceof Error ? err.message : '네트워크 오류';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -157,59 +172,35 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
     fetchData();
     const interval = setInterval(fetchData, intervalMs);
     
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('👀 탭 활성화 - 즉시 업데이트');
-        fetchData();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    return () => clearInterval(interval);
   }, [intervalMs]);
 
-  return {
-    data,
-    isLoading,
-    error,
-    refreshData: fetchData,
-    requestCount
-  };
+  return { data, isLoading, error, refreshData: fetchData };
 };
 
-// 메인 컴포넌트
+// ================================================================
+// 메인 컴포넌트 (대폭 간소화)
+// ================================================================
+
 export const RealtimeMetroMap: React.FC = () => {
   const [visibleLines, setVisibleLines] = useState<number[]>([1, 2, 3, 4]);
   const [showDistricts, setShowDistricts] = useState(true);
-  const [showHanRiver, setShowHanRiver] = useState(true);
-  const [showLabels, setShowLabels] = useState(false);
-  const [showLines, setShowLines] = useState(true);
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
 
   // 실시간 데이터 훅
-  const { 
-    data: realtimeData, 
-    isLoading, 
-    error, 
-    refreshData,
-    requestCount
-  } = useMetroRealtime(30000); // 30초 간격
+  const { data: realtimeData, isLoading, error } = useMetroRealtime(30000);
 
+  // 실시간 데이터 처리
   const processedRealtimeData = useMemo(() => {
     if (!realtimeData?.positions) return [];
     
-    // 백엔드 데이터를 프론트엔드 형식으로 변환
-    const converted = realtimeData.positions.map(train => {
-      // 1차: API ID로 매핑 시도
+    return realtimeData.positions.map(train => {
+      // API ID로 매핑
       let frontendStation = METRO_STATIONS.find(station => 
         station.realApiId === train.stationId
       );
       
-      // 2차: 역명 + 노선으로 매핑 시도 (fallback)
+      // 역명으로 fallback 매핑
       if (!frontendStation) {
         frontendStation = METRO_STATIONS.find(station => 
           station.name === train.stationName && 
@@ -217,9 +208,7 @@ export const RealtimeMetroMap: React.FC = () => {
         );
       }
       
-      if (!frontendStation) {
-        return null;
-      }
+      if (!frontendStation) return null;
       
       return {
         frontendStationId: frontendStation.id,
@@ -231,24 +220,20 @@ export const RealtimeMetroMap: React.FC = () => {
         trainId: train.trainId
       };
     }).filter(train => train !== null);
-    
-    console.log(`✅ 매핑 완료: ${converted.length}/${realtimeData.positions.length} 열차`);
-    return converted;
   }, [realtimeData]);
 
-  // 표시할 노선 연결 계산
+  // 노선 연결 데이터
   const lineConnections = useMemo(() => {
-    return showLines ? getVisibleLineConnections(visibleLines) : [];
-  }, [visibleLines, showLines]);
+    return getVisibleLineConnections(visibleLines);
+  }, [visibleLines]);
 
-  // 표시할 역들 필터링
+  // 표시할 역들
   const visibleStations = useMemo(() => {
     return METRO_STATIONS.filter(station => {
-      const matchesLine = LineBitUtils.matchesFilter(
+      return LineBitUtils.matchesFilter(
         LineBitUtils.linesToBits(station.lines), 
         visibleLines
       );
-      return matchesLine;
     });
   }, [visibleLines]);
 
@@ -265,12 +250,13 @@ export const RealtimeMetroMap: React.FC = () => {
         line,
         color,
         totalStations: stations.length,
-        visible: visibleLines.includes(line),
-        trainCount
+        trainCount,
+        visible: visibleLines.includes(line)
       };
     });
   }, [visibleLines, processedRealtimeData]);
 
+  // 이벤트 핸들러들
   const handleLineToggle = (line: number) => {
     setVisibleLines(prev => 
       prev.includes(line) 
@@ -283,216 +269,229 @@ export const RealtimeMetroMap: React.FC = () => {
     setSelectedStation(selectedStation === stationId ? null : stationId);
   };
 
-  // 주 노선 색상 가져오기 함수
   const getStationColor = (station: Station) => {
     const primaryLine = station.lines[0];
     return LINE_COLORS[primaryLine as keyof typeof LINE_COLORS];
   };
 
   return (
-    <Container>
-      <MapWrapper>
-        {/* 컨트롤 패널 */}
-        <Controls>
-          <ControlGroup>
-            <CheckboxGroup>
-              {lineStats.map(({ line, color, totalStations, trainCount }) => (
-                <CheckboxItem key={line} $color={color}>
-                  <input
-                    type="checkbox"
-                    checked={visibleLines.includes(line)}
-                    onChange={() => handleLineToggle(line)}
-                  />
-                  <div className="color-dot" />
-                  {line}호선 {/*({totalStations}개역, {trainCount}대)*/}
-                </CheckboxItem>
-              ))}
-              <CheckboxItem>
-                <input
-                  type="checkbox"
-                  checked={showLabels}
-                  onChange={(e) => setShowLabels(e.target.checked)}
-                />
-                역명 표시
-              </CheckboxItem>
-            </CheckboxGroup>
-          </ControlGroup>
-        </Controls>
-
-        {/* SVG 지도 */}
-        <SVGContainer>
-          <svg 
-            viewBox={SVG_CONFIG.viewBox}
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* 구청 경계 (가장 아래 레이어) */}
-            {showDistricts && (
-              <g id="districts" opacity="0.6">
-                {SEOUL_DISTRICTS.map(district => (
-                  <path
-                    key={district.id}
-                    d={district.path}
-                    fill={district.fill}
-                    stroke="#e2e8f0"
-                    strokeWidth="0.5"
-                  />
-                ))}
-              </g>
-            )}
-
-            {/* 한강 (두 번째 레이어) */}
-            {showHanRiver && (
-              <path
-                d={HAN_RIVER.path}
-                fill={HAN_RIVER.fill}
-                opacity={HAN_RIVER.opacity}
+    <MapContainer>
+      {/* 간소화된 컨트롤 패널 */}
+      <Controls>
+        <CheckboxGroup>
+          {lineStats.map(({ line, color, trainCount }) => (
+            <CheckboxItem key={line} $color={color}>
+              <input
+                type="checkbox"
+                checked={visibleLines.includes(line)}
+                onChange={() => handleLineToggle(line)}
               />
-            )}
+              <div className="color-dot" />
+              {line}호선
+              {trainCount > 0 ? (
+                <span style={{ 
+                  fontSize: '12px', 
+                  color: '#ff6b35', 
+                  fontWeight: '700',
+                  marginLeft: '4px',
+                  background: 'rgba(255, 107, 53, 0.1)',
+                  padding: '2px 6px',
+                  borderRadius: '8px'
+                }}>
+                  🚇 {trainCount}대
+                </span>
+              ) : (
+                <span style={{ 
+                  fontSize: '11px', 
+                  color: '#9ca3af', 
+                  fontWeight: '500',
+                  marginLeft: '4px'
+                }}>
+                  운행정보 없음
+                </span>
+              )}
+            </CheckboxItem>
+          ))}
+        </CheckboxGroup>
 
-            {/* 노선 (세 번째 레이어) */}
-            {showLines && (
-              <g id="metro-lines">
-                {lineConnections.map(connection => (
-                  <g key={`line-${connection.lineNumber}`}>
-                    {connection.segments.map((segment, index) => (
-                      <path
-                        key={`segment-${connection.lineNumber}-${index}`}
-                        d={segment.path}
-                        stroke={segment.color}
-                        strokeWidth="2"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        opacity="0.8"
-                      />
-                    ))}
-                  </g>
-                ))}
-              </g>
-            )}
-            <g id="station-circles">
-              {[1, 2, 3, 4].map(lineNumber => (
-                <g key={`line-${lineNumber}-stations`} id={`line-${lineNumber}-circles`}>
-                  {visibleStations
-                    .filter(station => station.lines.includes(lineNumber))
-                    .map(station => {
-                      const realtimeInfo = processedRealtimeData.filter(
-                        data => data.frontendStationId === station.id
-                      );
-                      const hasRealtimeData = realtimeInfo.length > 0;
-                      
-                      return (
-                        <g key={`${station.id}-line-${lineNumber}`}>
-                          {/* 실시간 데이터가 있는 역의 외곽 링 애니메이션 */}
-                          {hasRealtimeData && (
-                            <circle
-                              cx={station.x}
-                              cy={station.y}
-                              r="1.5"
-                              fill="none"
-                              stroke="#ffff00"
-                              strokeWidth="0.3"
-                              opacity="0.8"
-                            >
-                              <animate
-                                attributeName="r"
-                                values="0.8;2.0;0.8"
-                                dur="3s"
-                                repeatCount="indefinite"
-                              />
-                              <animate
-                                attributeName="opacity"
-                                values="0.8;0.2;0.8"
-                                dur="3s"
-                                repeatCount="indefinite"
-                              />
-                            </circle>
-                          )}
-                          
-                          {/* 역 원 (배경) */}
-                          <circle
-                            cx={station.x}
-                            cy={station.y}
-                            r={selectedStation === station.id ? 1.2 : station.isTransfer ? 0.8 : 0.6}
-                            fill="white"
-                            stroke={getStationColor(station)}
-                            strokeWidth={selectedStation === station.id ? "1.2" : "0.8"}
-                            style={{ cursor: 'pointer' }}
-                            onClick={() => handleStationClick(station.id)}
-                          />
-                          
-                          {/* 실시간 데이터가 있는 역의 중심 점 */}
-                          {hasRealtimeData && (
-                            <circle
-                              cx={station.x}
-                              cy={station.y}
-                              r="0.4"
-                              fill="#10b981"
-                            >
-                              <animate
-                                attributeName="fill"
-                                values="#10b981;#34d399;#10b981"
-                                dur="2s"
-                                repeatCount="indefinite"
-                              />
-                            </circle>
-                          )}
-                          
-                          {/* 환승역 표시 */}
-                          {station.isTransfer && (
-                            <circle
-                              cx={station.x}
-                              cy={station.y}
-                              r={0.5}
-                              fill={'#000000'}
-                              opacity="0.7"
-                            />
-                          )}
-                        </g>
-                      );
-                    })}
-                </g>
+        <StatusIndicator>
+          {isLoading && <div className="status-dot" />}
+          {error ? (
+            <span style={{ color: '#ef4444' }}>❌ 연결 오류</span>
+          ) : (
+            <span>
+              🔴 실시간 업데이트 
+              {processedRealtimeData.length > 0 && (
+                <span style={{ 
+                  marginLeft: '8px',
+                  fontWeight: '600',
+                  color: '#ff6b35'
+                }}>
+                  (총 {processedRealtimeData.length}대 운행중)
+                </span>
+              )}
+            </span>
+          )}
+        </StatusIndicator>
+      </Controls>
+
+      {/* 간소화된 SVG 지도 */}
+      <SVGContainer>
+        <svg 
+          viewBox={SVG_CONFIG.viewBox}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* 구청 경계 (선택적) */}
+          {showDistricts && (
+            <g id="districts" opacity="0.4">
+              {SEOUL_DISTRICTS.map(district => (
+                <path
+                  key={district.id}
+                  d={district.path}
+                  fill={district.fill}
+                  stroke="#e2e8f0"
+                  strokeWidth="0.3"
+                />
               ))}
             </g>
+          )}
 
-            {/* 역명 라벨들 (가장 위 레이어) - 별도 그룹으로 분리 */}
-            {(showLabels || selectedStation) && (
-              <g id="station-labels" style={{ pointerEvents: 'none' }}>
-                {visibleStations.map(station => {
-                  // 선택된 역이거나 showLabels가 true일 때만 표시
-                  const shouldShowLabel = showLabels || selectedStation === station.id;
-                  
-                  if (!shouldShowLabel) return null;
-                  
-                  return (
-                    <text
-                      key={`label-${station.id}`}
-                      x={station.x}
-                      y={station.y - 3.5} // 더 위로 올림
-                      fontSize="2.2"
-                      fill="#374151"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      style={{ 
-                        pointerEvents: 'none', 
-                        fontWeight: '700', // 더 굵게
-                        stroke: 'white',
-                        strokeWidth: '0.8', // 더 두꺼운 외곽선
-                        paintOrder: 'stroke fill',
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        // 텍스트 그림자 효과 추가
-                        filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.8))'
-                      }}
-                    >
-                      {station.name}
-                    </text>
-                  );
-                })}
+          {/* 한강 */}
+          <path
+            d={HAN_RIVER.path}
+            fill={HAN_RIVER.fill}
+            opacity={HAN_RIVER.opacity}
+          />
+
+          {/* 지하철 노선 */}
+          <g id="metro-lines">
+            {lineConnections.map(connection => (
+              <g key={`line-${connection.lineNumber}`}>
+                {connection.segments.map((segment, index) => (
+                  <path
+                    key={`segment-${connection.lineNumber}-${index}`}
+                    d={segment.path}
+                    stroke={segment.color}
+                    strokeWidth="2.5"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.9"
+                  />
+                ))}
               </g>
-            )}
-          </svg>
-        </SVGContainer>
-      </MapWrapper>
-    </Container>
+            ))}
+          </g>
+
+          {/* 지하철역들 - 모든 역을 동일한 검은색 원으로 통일 */}
+          <g id="stations">
+            {visibleStations.map(station => {
+              const realtimeInfo = processedRealtimeData.filter(
+                data => data.frontendStationId === station.id
+              );
+              const hasRealtimeData = realtimeInfo.length > 0;
+              
+              return (
+                <g key={`station-${station.id}`}>
+                  {/* 열차 도착시에만 애니메이션 (외곽 링) */}
+                  {hasRealtimeData && (
+                    <circle
+                      cx={station.x}
+                      cy={station.y}
+                      r="1.5"
+                      fill="none"
+                      stroke="#ff6b35"
+                      strokeWidth="0.8"
+                      opacity="0.9"
+                    >
+                      <animate
+                        attributeName="r"
+                        values="1.0;2.8;1.0"
+                        dur="2.5s"
+                        repeatCount="indefinite"
+                      />
+                      <animate
+                        attributeName="opacity"
+                        values="0.9;0.1;0.9"
+                        dur="2.5s"
+                        repeatCount="indefinite"
+                      />
+                      <animate
+                        attributeName="stroke-width"
+                        values="0.8;0.3;0.8"
+                        dur="2.5s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                  )}
+                  
+                  {/* 모든 역을 동일한 크기의 검은색 원으로 표시 */}
+                  <circle
+                    cx={station.x}
+                    cy={station.y}
+                    r="0.7"
+                    fill={hasRealtimeData ? "#ff6b35" : "#2d3748"}
+                    stroke="#ffffff"
+                    strokeWidth="0.3"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleStationClick(station.id)}
+                  />
+                </g>
+              );
+            })}
+          </g>
+
+          {/* 현재 열차 위치만 역명 표시 */}
+          <g id="train-position-labels">
+            {processedRealtimeData.map(trainData => {
+              const station = METRO_STATIONS.find(s => s.id === trainData.frontendStationId);
+              if (!station || !visibleLines.includes(trainData.lineNumber)) return null;
+              
+              return (
+                <g key={`train-${trainData.trainId}`}>
+                  {/* 역명 라벨 */}
+                  <text
+                    x={station.x}
+                    y={station.y - 4}
+                    fontSize="2.5"
+                    fill="#ff6b35"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    style={{ 
+                      fontWeight: '700',
+                      stroke: 'white',
+                      strokeWidth: '1.0',
+                      paintOrder: 'stroke fill',
+                      fontFamily: 'system-ui, sans-serif'
+                    }}
+                  >
+                    {station.name}
+                  </text>
+                  
+                  {/* 방향 표시 */}
+                  <text
+                    x={station.x}
+                    y={station.y + 4.5}
+                    fontSize="1.8"
+                    fill="#2d3748"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    style={{ 
+                      fontWeight: '600',
+                      stroke: 'white',
+                      strokeWidth: '0.8',
+                      paintOrder: 'stroke fill',
+                      fontFamily: 'system-ui, sans-serif'
+                    }}
+                  >
+                    {trainData.lineNumber}호선 {trainData.direction === 'up' ? '↑' : '↓'}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        </svg>
+      </SVGContainer>
+    </MapContainer>
   );
 };

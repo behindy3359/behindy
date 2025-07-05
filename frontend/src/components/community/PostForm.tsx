@@ -62,9 +62,13 @@ export interface PostFormProps {
 // ================================================================
 
 const Container = styled.div`
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
+  
+  @media (max-width: 1200px) {
+    padding: 16px;
+  }
 `;
 
 const Header = styled.div`
