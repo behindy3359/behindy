@@ -1,9 +1,9 @@
 "use client";
 
 import React from 'react';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostList } from '@/components/community/PostList';
-import { PublicLayout } from '@/components/layout';
+import { DashboardLayout, PublicLayout } from '@/components/layout';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,8 +16,10 @@ const queryClient = new QueryClient({
 
 export default function CommunityPage() {
   return (
-    <PublicLayout>
-      <PostList />
-    </PublicLayout>
+    <QueryClientProvider client={queryClient}>
+      <PublicLayout>
+        <PostList />
+      </PublicLayout>
+    </QueryClientProvider>
   );
 }
