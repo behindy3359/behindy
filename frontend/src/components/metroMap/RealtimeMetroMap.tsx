@@ -69,18 +69,32 @@ const CheckboxItem = styled.label<{ $color?: string }>`
   }
 `;
 
-// SVG 컨테이너 - 레이어 제거
+// SVG 컨테이너 - 반응형으로 수정
 const SVGContainer = styled.div`
   width: 100%;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fafbfc;
+  overflow: hidden;
   
   svg {
     width: 100%;
     height: auto;
-    min-width: 800px;
+    max-width: 100%;
     display: block;
+    
+    /* 반응형 크기 조정 */
+    @media (max-width: 1200px) {
+      min-height: 500px;
+    }
+    
+    @media (max-width: 768px) {
+      min-height: 400px;
+    }
+    
+    @media (max-width: 480px) {
+      min-height: 300px;
+    }
   }
 `;
 
@@ -183,7 +197,8 @@ const useMetroRealtime = (intervalMs: number = 30000) => {
 export const RealtimeMetroMap: React.FC = () => {
   const [visibleLines, setVisibleLines] = useState<number[]>([1, 2, 3, 4]);
   const [showDistricts, setShowDistricts] = useState(true);
-  const [selectedStation, setSelectedStation] = useState<number | null>(null);
+  const [showStationNames, setShowStationNames] = useState(true); // 전체 역명 표시 토글
+  const [clickedStations, setClickedStations] = useState<Set<number>>(new Set()); // 개별 클릭된 역들
 
   // 실시간 데이터 훅
   const { data: realtimeData, isLoading, error } = useMetroRealtime(30000);
@@ -264,7 +279,37 @@ export const RealtimeMetroMap: React.FC = () => {
   };
 
   const handleStationClick = (stationId: number) => {
-    setSelectedStation(selectedStation === stationId ? null : stationId);
+    setClickedStations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(stationId)) {
+        newSet.delete(stationId);
+      } else {
+        newSet.add(stationId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleStationNamesToggle = () => {
+    if (showStationNames) {
+      // 켜져있으면 끄고, 개별 클릭도 모두 초기화
+      setShowStationNames(false);
+      setClickedStations(new Set());
+    } else {
+      // 꺼져있으면 켜기
+      setShowStationNames(true);
+    }
+  };
+
+  // 역명 표시 여부 결정 로직
+  const shouldShowStationName = (stationId: number, hasRealtimeData: boolean) => {
+    // 전체 토글이 꺼져있으면 표시 안함
+    if (!showStationNames) return false;
+    
+    // 전체 토글이 켜져있으면:
+    // 1. 실시간 데이터가 있는 역은 항상 표시
+    // 2. 개별 클릭된 역도 표시
+    return hasRealtimeData || clickedStations.has(stationId);
   };
   
   return (
@@ -305,6 +350,28 @@ export const RealtimeMetroMap: React.FC = () => {
               )}
             </CheckboxItem>
           ))}
+          
+          {/* 역명 표시 토글 */}
+          <CheckboxItem>
+            <input
+              type="checkbox"
+              checked={showStationNames}
+              onChange={handleStationNamesToggle}
+            />
+            <span style={{ fontSize: '14px', fontWeight: '500' }}>
+              🏷️ 역명 표시
+            </span>
+            {clickedStations.size > 0 && (
+              <span style={{ 
+                fontSize: '11px', 
+                color: '#6366f1', 
+                fontWeight: '500',
+                marginLeft: '4px'
+              }}>
+                (+{clickedStations.size}개 선택)
+              </span>
+            )}
+          </CheckboxItem>
         </CheckboxGroup>
 
         <StatusIndicator>
@@ -376,13 +443,14 @@ export const RealtimeMetroMap: React.FC = () => {
             ))}
           </g>
 
-          {/* 지하철역들 - 모든 역을 동일한 검은색 원으로 통일 */}
+          {/* 지하철역들 - 모든 역이 클릭 가능하도록 수정 */}
           <g id="stations">
             {visibleStations.map(station => {
               const realtimeInfo = processedRealtimeData.filter(
                 data => data.frontendStationId === station.id
               );
               const hasRealtimeData = realtimeInfo.length > 0;
+              const isClicked = clickedStations.has(station.id);
               
               return (
                 <g key={`station-${station.id}`}>
@@ -418,15 +486,31 @@ export const RealtimeMetroMap: React.FC = () => {
                     </circle>
                   )}
                   
-                  {/* 모든 역을 동일한 크기의 검은색 원으로 표시 */}
+                  {/* 개별 클릭된 역에 대한 시각적 표시 */}
+                  {isClicked && !hasRealtimeData && (
+                    <circle
+                      cx={station.x}
+                      cy={station.y}
+                      r="1.2"
+                      fill="none"
+                      stroke="#6366f1"
+                      strokeWidth="0.5"
+                      opacity="0.8"
+                    />
+                  )}
+                  
+                  {/* 모든 역이 클릭 가능한 원 */}
                   <circle
                     cx={station.x}
                     cy={station.y}
                     r="0.7"
-                    fill={hasRealtimeData ? "#ffff00" : "#2d3748"}
+                    fill={hasRealtimeData ? "#ffff00" : (isClicked ? "#6366f1" : "#2d3748")}
                     stroke="#ffffff"
                     strokeWidth="0.3"
-                    style={{ cursor: 'pointer' }}
+                    style={{ 
+                      cursor: 'pointer',
+                      transition: 'fill 0.2s ease'
+                    }}
                     onClick={() => handleStationClick(station.id)}
                   />
                 </g>
@@ -434,28 +518,35 @@ export const RealtimeMetroMap: React.FC = () => {
             })}
           </g>
 
-          {/* 현재 열차 위치만 역명 표시 */}
-          <g id="train-position-labels">
-            {processedRealtimeData.map(trainData => {
-              const station = METRO_STATIONS.find(s => s.id === trainData.frontendStationId);
-              if (!station || !visibleLines.includes(trainData.lineNumber)) return null;
+          {/* 역명 라벨 - 조건부 표시 */}
+          <g id="station-labels">
+            {visibleStations.map(station => {
+              const realtimeInfo = processedRealtimeData.filter(
+                data => data.frontendStationId === station.id
+              );
+              const hasRealtimeData = realtimeInfo.length > 0;
+              
+              // 역명 표시 여부 확인
+              if (!shouldShowStationName(station.id, hasRealtimeData)) return null;
+              if (!visibleLines.some(line => station.lines.includes(line))) return null;
               
               return (
-                <g key={`train-${trainData.trainId}`}>
+                <g key={`label-${station.id}`}>
                   {/* 역명 라벨 */}
                   <text
                     x={station.x}
                     y={station.y - 4}
                     fontSize="2.5"
-                    fill="#000000"
+                    fill={hasRealtimeData ? "#000000" : "#6366f1"}
                     textAnchor="middle"
                     dominantBaseline="middle"
                     style={{ 
-                      fontWeight: '700',
+                      fontWeight: hasRealtimeData ? '700' : '600',
                       stroke: 'white',
                       strokeWidth: '1.0',
                       paintOrder: 'stroke fill',
-                      fontFamily: 'system-ui, sans-serif'
+                      fontFamily: 'system-ui, sans-serif',
+                      pointerEvents: 'none' // 라벨 클릭 방지
                     }}
                   >
                     {station.name}
