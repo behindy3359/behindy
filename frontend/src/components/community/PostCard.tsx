@@ -26,6 +26,9 @@ const CardContainer = styled(motion.div)`
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
+  height: 320px; /* 🔥 고정 높이 */
+  display: flex;
+  flex-direction: column;
   
   &:hover {
     border-color: #667eea;

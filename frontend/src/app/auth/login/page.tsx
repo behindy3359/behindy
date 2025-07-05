@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogIn, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
+import { Metadata } from 'next';
 
 // ================================================================
 // Types & Validation (타입 정의 수정)
@@ -229,6 +230,11 @@ const LoadingFallback = styled.div`
 // Component
 // ================================================================
 
+export const metadata: Metadata = {
+  title: '로그인',
+  description: 'Behindy에 로그인하세요',
+}
+
 // SearchParams를 사용하는 컴포넌트를 별도로 분리
 function LoginPageContent() {
   const router = useRouter();
@@ -306,10 +312,36 @@ function LoginPageContent() {
     alert('비밀번호 찾기 기능은 준비 중입니다.');
   };
 
-  const handleDemoLogin = () => {
-    setValue('email', 'demo@demo.com');
-    setValue('password', 'Ademo123!');
-    setValue('rememberMe', false);
+  const handleDemoLogin = async () => {
+    try {
+      setIsLoading(true);
+      setLoginError('');
+      setLoginSuccess('');
+
+      // 🔥 데모 계정으로 즉시 로그인 시도
+      const result = await login({
+        email: 'demo@demo.com',
+        password: 'Ademo123!',
+        rememberMe: false,
+      });
+
+      if (result.success) {
+        setLoginSuccess('데모 계정 로그인 성공! 잠시 후 이동합니다...');
+        
+        // 성공 메시지 표시 후 리다이렉트
+        setTimeout(() => {
+          const redirectTo = searchParams.get('redirect') || '/';
+          router.push(redirectTo);
+        }, 1500);
+      } else {
+        setLoginError(result.error || '데모 계정 로그인에 실패했습니다.');
+      }
+    } catch (error) {
+      setLoginError('데모 계정 로그인 중 오류가 발생했습니다.');
+      console.error('Demo login error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const navigateToSignup = () => {

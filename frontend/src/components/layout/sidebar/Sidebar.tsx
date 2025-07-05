@@ -36,18 +36,18 @@ interface SidebarProps {
   } | null;
 }
 
-// 메인 네비게이션 아이템들
-const mainNavItems = [
+// 낮 모드 메뉴 (퍼블릭)
+const dayNavItems = [
   { icon: Home, label: '홈', path: '/', id: 'home' },
   { icon: Info, label: '소개', path: '/about', id: 'about' },
-  // { icon: Map, label: '지하철 노선도', path: '/metro-map', id: 'metro' },
   { icon: MessageSquare, label: '게시판', path: '/community', id: 'community' }
 ];
 
-// 게임 관련 메뉴
-const gameNavItems = [
+// 밤 모드 메뉴 (게임/개인 기능)
+const nightNavItems = [
   { icon: Gamepad2, label: '게임', path: '/game', id: 'game' },
-  { icon: Settings, label: '캐릭터', path: '/character', id: 'character' }
+  { icon: Settings, label: '캐릭터', path: '/character', id: 'character' },
+  { icon: User, label: '기록', path: '/records', id: 'records' }
 ];
 
 const SidebarContainer = styled(motion.aside)<{ 
@@ -417,9 +417,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   // 현재 표시할 네비게이션 아이템들 결정
-  const visibleNavItems = [...mainNavItems];
+  const visibleNavItems = [...dayNavItems];
   if (isDarkMode) {
-    visibleNavItems.push(...gameNavItems);
+    visibleNavItems.push(...nightNavItems);
   }
 
   return (
