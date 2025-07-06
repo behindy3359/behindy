@@ -13,9 +13,7 @@ import {
   getVisibleLineConnections, 
 } from '@/data/metro/metroLineConnections';
 
-// ================================================================
-// 간소화된 스타일드 컴포넌트들
-// ================================================================
+// 스타일드 컴포넌트들
 
 // 메인 컨테이너
 const MapContainer = styled.div`
@@ -121,10 +119,7 @@ const StatusIndicator = styled.div`
   }
 `;
 
-// ================================================================
 // 백엔드 API 타입
-// ================================================================
-
 interface MetroApiResponse {
   success: boolean;
   message: string;
@@ -149,10 +144,7 @@ interface MetroApiResponse {
   };
 }
 
-// ================================================================
-// 실시간 데이터 훅 (간소화)
-// ================================================================
-
+// 실시간 데이터 훅
 const useMetroRealtime = (intervalMs: number = 30000) => {
   const [data, setData] = useState<MetroApiResponse['data'] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -320,7 +312,6 @@ export const RealtimeMetroMap: React.FC = () => {
   
   return (
     <MapContainer>
-      {/* 간소화된 컨트롤 패널 */}
       <Controls>
         <CheckboxGroup>
           {lineStats.map(({ line, color, trainCount }) => (
@@ -357,7 +348,6 @@ export const RealtimeMetroMap: React.FC = () => {
             </CheckboxItem>
           ))}
           
-          {/* 도착 역 표시 토글 */}
           <CheckboxItem>
             <input
               type="checkbox"
@@ -400,8 +390,6 @@ export const RealtimeMetroMap: React.FC = () => {
           )}
         </StatusIndicator>
       </Controls>
-
-      {/* 간소화된 SVG 지도 */}
       <SVGContainer>
         <svg 
           viewBox={SVG_CONFIG.viewBox}
