@@ -11,9 +11,6 @@ interface EnvConfig {
     TOKEN_KEY: string;
     REFRESH_TOKEN_KEY: string;
     
-    // 게임 설정
-    GAME_SAVE_INTERVAL: number;
-    
     // 앱 정보
     APP_NAME: string;
     APP_VERSION: string;
@@ -47,23 +44,20 @@ interface EnvConfig {
   // 환경변수 설정 객체
   export const env: EnvConfig = {
     // API URLs
-    API_URL: getEnvVar('NEXT_PUBLIC_API_URL', 'https://behindy.me/api'),
-    AI_URL: getEnvVar('NEXT_PUBLIC_AI_URL', 'https://behindy.me/ai'),
+    API_URL: getEnvVar('NEXT_PUBLIC_API_URL'),
+    AI_URL: getEnvVar('NEXT_PUBLIC_AI_URL'),
     
     // 개발 모드
     DEV_MODE: getBooleanEnv('NEXT_PUBLIC_DEV_MODE', true),
-    LOG_LEVEL: (getEnvVar('NEXT_PUBLIC_LOG_LEVEL', 'debug') as EnvConfig['LOG_LEVEL']),
+    LOG_LEVEL: (getEnvVar('NEXT_PUBLIC_LOG_LEVEL') as EnvConfig['LOG_LEVEL']),
     
     // 토큰 관리
-    TOKEN_KEY: getEnvVar('NEXT_PUBLIC_TOKEN_KEY', 'behindy_access_token'),
-    REFRESH_TOKEN_KEY: getEnvVar('NEXT_PUBLIC_REFRESH_TOKEN_KEY', 'behindy_refresh_token'),
-    
-    // 게임 설정
-    GAME_SAVE_INTERVAL: getNumberEnv('NEXT_PUBLIC_GAME_SAVE_INTERVAL', 30000),
+    TOKEN_KEY: getEnvVar('NEXT_PUBLIC_TOKEN_KEY'),
+    REFRESH_TOKEN_KEY: getEnvVar('NEXT_PUBLIC_REFRESH_TOKEN_KEY'),
     
     // 앱 정보
-    APP_NAME: getEnvVar('NEXT_PUBLIC_APP_NAME', 'Behindy'),
-    APP_VERSION: getEnvVar('NEXT_PUBLIC_APP_VERSION', '1.0.0'),
+    APP_NAME: getEnvVar('NEXT_PUBLIC_APP_NAME'),
+    APP_VERSION: getEnvVar('NEXT_PUBLIC_APP_VERSION'),
   };
   
   // 개발용 환경변수 출력 (프로덕션에서는 제외)
