@@ -165,14 +165,6 @@ export const generateLineConnections = (): LineConnection[] => {
 };
 
 /**
- * 특정 노선의 연결만 가져오기
- */
-export const getLineConnection = (lineNumber: number): LineConnection | undefined => {
-  const connections = generateLineConnections();
-  return connections.find(conn => conn.lineNumber === lineNumber);
-};
-
-/**
  * 보이는 노선들의 연결만 가져오기
  */
 export const getVisibleLineConnections = (visibleLines: number[]): LineConnection[] => {
@@ -180,26 +172,9 @@ export const getVisibleLineConnections = (visibleLines: number[]): LineConnectio
   return allConnections.filter(conn => visibleLines.includes(conn.lineNumber));
 };
 
-/**
- * 두 역 사이의 직접 연결 여부 확인
- */
-export const areStationsConnected = (stationId1: number, stationId2: number): boolean => {
-  const connections = generateLineConnections();
-  
-  return connections.some(lineConn => 
-    lineConn.segments.some(segment => 
-      (segment.fromStationId === stationId1 && segment.toStationId === stationId2) ||
-      (segment.fromStationId === stationId2 && segment.toStationId === stationId1)
-    )
-  );
-};
-
-
 const metroLineConnections = {
   generateLineConnections,
-  getLineConnection,
-  getVisibleLineConnections,
-  areStationsConnected,
+  getVisibleLineConnections
 };
 
 export default metroLineConnections;

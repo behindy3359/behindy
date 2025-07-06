@@ -133,9 +133,7 @@ export const validatePassword = (password: string): {
   };
 };
 
-/**
- * 이름 검증 (한국어 + 영어)
- */
+// 이름 검증 (한국어 + 영어)
 export const validateName = (name: string): { isValid: boolean; message?: string } => {
   if (!name || name.trim() === '') {
     return { isValid: false, message: '이름을 입력해주세요.' };
@@ -164,9 +162,7 @@ export const validateName = (name: string): { isValid: boolean; message?: string
   return { isValid: true };
 };
 
-/**
- * 비밀번호 확인
- */
+// 비밀번호 확인
 export const validatePasswordConfirm = (
   password: string, 
   confirmPassword: string
@@ -186,9 +182,7 @@ export const validatePasswordConfirm = (
 // JWT 토큰 유틸리티
 // ================================================================
 
-/**
- * JWT 토큰 디코딩 (안전한 방식)
- */
+// JWT 토큰 디코딩 (안전한 방식)
 export const safeDecodeJWT = (token: string): JWTPayload | null => {
   try {
     if (!token || token.split('.').length !== 3) {
@@ -209,9 +203,7 @@ export const safeDecodeJWT = (token: string): JWTPayload | null => {
   }
 };
 
-/**
- * 토큰 만료 시간 확인
- */
+// 토큰 만료 시간 확인
 export const getTokenExpiry = (token: string): Date | null => {
   const decoded = safeDecodeJWT(token);
   if (!decoded || !decoded.exp) return null;
@@ -219,9 +211,7 @@ export const getTokenExpiry = (token: string): Date | null => {
   return new Date(decoded.exp * 1000);
 };
 
-/**
- * 토큰이 만료되었는지 확인
- */
+// 토큰이 만료되었는지 확인
 export const isTokenExpired = (token: string): boolean => {
   const expiry = getTokenExpiry(token);
   if (!expiry) return true;
@@ -229,9 +219,7 @@ export const isTokenExpired = (token: string): boolean => {
   return Date.now() >= expiry.getTime();
 };
 
-/**
- * 토큰 만료까지 남은 시간 (분)
- */
+// 토큰 만료까지 남은 시간 (분)
 export const getTokenTimeRemaining = (token: string): number => {
   const expiry = getTokenExpiry(token);
   if (!expiry) return 0;
@@ -240,9 +228,7 @@ export const getTokenTimeRemaining = (token: string): number => {
   return Math.max(0, Math.floor(remaining / (1000 * 60)));
 };
 
-/**
- * 토큰 갱신이 필요한지 확인 (만료 5분 전)
- */
+// 토큰 갱신이 필요한지 확인 (만료 5분 전)
 export const shouldRefreshToken = (token: string, minutesThreshold = 5): boolean => {
   const timeRemaining = getTokenTimeRemaining(token);
   return timeRemaining > 0 && timeRemaining <= minutesThreshold;
@@ -252,9 +238,7 @@ export const shouldRefreshToken = (token: string, minutesThreshold = 5): boolean
 // 에러 처리 유틸리티
 // ================================================================
 
-/**
- * API 에러를 사용자 친화적 메시지로 변환
- */
+// API 에러를 사용자 친화적 메시지로 변환
 export const parseApiError = (error: unknown): AuthError => {
   // Axios 에러
   if (error && typeof error === 'object' && 'response' in error) {
@@ -446,33 +430,6 @@ export const safeStorage = {
 };
 
 // ================================================================
-// 폼 데이터 정리
-// ================================================================
-
-/**
- * 폼 데이터 전처리 (trim, normalize)
- */
-export const sanitizeFormData = <T extends Record<string, unknown>>(data: T): T => {
-  const sanitized = { ...data };
-  
-  Object.entries(sanitized).forEach(([key, value]) => {
-    if (typeof value === 'string') {
-      // 문자열 양쪽 공백 제거
-      sanitized[key as keyof T] = value.trim() as T[keyof T];
-    }
-  });
-
-  return sanitized;
-};
-
-/**
- * 이메일 정규화 (소문자 변환)
- */
-export const normalizeEmail = (email: string): string => {
-  return email.toLowerCase().trim();
-};
-
-// ================================================================
 // 리다이렉트 관리
 // ================================================================
 
@@ -527,104 +484,6 @@ export const redirectManager = {
   }
 };
 
-// ================================================================
-// 디바이스 정보
-// ================================================================
-
-/**
- * 디바이스 및 브라우저 정보 수집
- */
-export const getDeviceInfo = () => {
-  if (typeof window === 'undefined') {
-    return {
-      userAgent: 'Server',
-      platform: 'Server',
-      isMobile: false,
-      browserName: 'Unknown',
-      browserVersion: 'Unknown',
-      osName: 'Unknown'
-    };
-  }
-
-  const userAgent = navigator.userAgent;
-  const platform = navigator.platform;
-
-  // 모바일 기기 감지
-  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-
-  // 브라우저 감지
-  let browserName = 'Unknown';
-  let browserVersion = 'Unknown';
-
-  if (userAgent.includes('Chrome')) {
-    browserName = 'Chrome';
-    const match = userAgent.match(/Chrome\/(\d+)/);
-    browserVersion = match ? match[1] : 'Unknown';
-  } else if (userAgent.includes('Firefox')) {
-    browserName = 'Firefox';
-    const match = userAgent.match(/Firefox\/(\d+)/);
-    browserVersion = match ? match[1] : 'Unknown';
-  } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
-    browserName = 'Safari';
-    const match = userAgent.match(/Version\/(\d+)/);
-    browserVersion = match ? match[1] : 'Unknown';
-  } else if (userAgent.includes('Edge')) {
-    browserName = 'Edge';
-    const match = userAgent.match(/Edge\/(\d+)/);
-    browserVersion = match ? match[1] : 'Unknown';
-  }
-
-  // OS 감지
-  let osName = 'Unknown';
-  if (userAgent.includes('Windows')) osName = 'Windows';
-  else if (userAgent.includes('Mac')) osName = 'macOS';
-  else if (userAgent.includes('Linux')) osName = 'Linux';
-  else if (userAgent.includes('Android')) osName = 'Android';
-  else if (userAgent.includes('iOS')) osName = 'iOS';
-
-  return {
-    userAgent,
-    platform,
-    isMobile,
-    browserName,
-    browserVersion,
-    osName
-  };
-};
-
-// ================================================================
-// 디버깅 유틸리티
-// ================================================================
-
-/**
- * 개발 환경에서만 로그 출력
- */
-export const debugLog = {
-  info: (message: string, ...args: unknown[]) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔍 [AUTH] ${message}`, ...args);
-    }
-  },
-
-  error: (message: string, error?: unknown) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error(`❌ [AUTH] ${message}`, error);
-    }
-  },
-
-  warn: (message: string, ...args: unknown[]) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(`⚠️ [AUTH] ${message}`, ...args);
-    }
-  },
-
-  success: (message: string, ...args: unknown[]) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`✅ [AUTH] ${message}`, ...args);
-    }
-  }
-};
-
 const authHelpers = {
   // 폼 검증
   validateEmail,
@@ -646,18 +505,8 @@ const authHelpers = {
   // 스토리지
   safeStorage,
   
-  // 데이터 정리
-  sanitizeFormData,
-  normalizeEmail,
-  
   // 리다이렉트
-  redirectManager,
-  
-  // 디바이스 정보
-  getDeviceInfo,
-  
-  // 디버깅
-  debugLog
+  redirectManager
 };
 
 export default authHelpers;

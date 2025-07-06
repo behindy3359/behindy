@@ -429,40 +429,6 @@ export const LINE_COLORS = {
   4: '#00A5DE',  // 4호선 - 라이트블루
 } as const;
 
-// ================================================================
-// 비트 연산 유틸리티
-// ================================================================
-
-// 🔧 유틸리티 함수들
-
-/**
- * 실제 API ID로 역 찾기
- */
-export const getStationByApiId = (apiId: string): Station | undefined => {
-  return METRO_STATIONS.find(station => station.realApiId === apiId);
-};
-
-/**
- * 프론트엔드 ID로 API ID 찾기
- */
-export const getApiIdByStationId = (stationId: number): string | undefined => {
-  const station = METRO_STATIONS.find(s => s.id === stationId);
-  return station?.realApiId;
-};
-
-/**
- * 역명으로 API ID 찾기 (임시 매핑용)
- */
-export const getApiIdByStationName = (stationName: string, lineNumber?: number): string | undefined => {
-  const stations = METRO_STATIONS.filter(s => s.name === stationName);
-  
-  if (lineNumber) {
-    const station = stations.find(s => s.lines.includes(lineNumber));
-    return station?.realApiId;
-  }
-  
-  return stations[0]?.realApiId;
-};
 
 /**
  * 실시간 데이터를 프론트엔드 형식으로 변환
@@ -475,50 +441,6 @@ export interface RealtimeStationData {
   trainCount: number;
   lastUpdated: Date;
 }
-
-export const transformApiDataToFrontend = (apiTrains: any[]): RealtimeStationData[] => {
-  return apiTrains
-    .map(trainData => {
-      // 1차: API ID로 찾기
-      let station = getStationByApiId(trainData.stationId);
-      
-      // 2차: 역명으로 찾기 (fallback)
-      if (!station) {
-        const lineNumber = parseInt(trainData.subwayLine);
-        station = METRO_STATIONS.find(s => 
-          s.name === trainData.stationName && 
-          s.lines.includes(lineNumber)
-        );
-        
-        if (station) {
-          console.warn(`API ID 매핑 실패, 역명으로 매칭: ${trainData.stationName} (API ID: ${trainData.stationId})`);
-        }
-      }
-      
-      if (!station) {
-        console.warn(`매핑되지 않은 역: ${trainData.stationName} (API ID: ${trainData.stationId})`);
-        return null;
-      }
-      
-      // 방향 정규화
-      let direction: 'up' | 'down' | 'unknown' = 'unknown';
-      if (trainData.direction) {
-        const dir = trainData.direction.toLowerCase();
-        if (dir.includes('상행') || dir.includes('up')) direction = 'up';
-        else if (dir.includes('하행') || dir.includes('down')) direction = 'down';
-      }
-      
-      return {
-        frontendStationId: station.id,
-        stationName: station.name,
-        lineNumber: station.lines[0], // 첫 번째 노선 사용
-        direction,
-        trainCount: trainData.trainCount || 1,
-        lastUpdated: new Date()
-      };
-    })
-    .filter((data): data is RealtimeStationData => data !== null);
-};
 
 export const LineBitUtils = {
   /**
@@ -571,11 +493,6 @@ export const getStationsByLine = (lineNumber: number): Station[] => {
     station.lines.includes(lineNumber)
   );
 };
-
-// // 모든 환승역 반환
-// export const getTransferStations = (): Station[] => {
-//   return METRO_STATIONS.filter(station => station.isTransfer);
-// };
 
 /**
  * 역명으로 검색
