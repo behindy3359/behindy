@@ -1,5 +1,3 @@
-import { SessionInfo } from "./authSession";
-
   // 회원가입 요청 데이터
   export interface SignupRequest {
     name: string;
@@ -36,10 +34,3 @@ import { SessionInfo } from "./authSession";
     name?: string;
     email?: string;
   }
-  
-  // 활성 세션 목록
-  export interface ActiveSession {
-    current: SessionInfo;
-    others: SessionInfo[];
-  }
-  

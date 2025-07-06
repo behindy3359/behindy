@@ -1,6 +1,16 @@
 import { jwtDecode } from 'jwt-decode';
 import type { AuthError } from '@/types/auth/authState';
-import type { JWTPayload } from '@/types/auth/authJwt';
+
+  // JWT 페이로드 구조
+  export interface JWTPayload {
+    sub: string; // 사용자 ID
+    name: string;
+    email: string;
+    iat: number; // 발급 시간
+    exp: number; // 만료 시간
+    iss?: string; // 발급자
+    aud?: string; // 대상
+  }
 
 // 폼 검증 유틸리티
 // 이메일 형식 검증 (한국 도메인 포함)

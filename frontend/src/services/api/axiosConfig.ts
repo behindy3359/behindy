@@ -32,6 +32,12 @@ class TokenManager {
     localStorage.removeItem(env.TOKEN_KEY);
     localStorage.removeItem(env.REFRESH_TOKEN_KEY);
   }
+  // 유효한 토큰 존재 여부
+  static hasValidTokens = (): boolean => {
+    const accessToken = TokenManager.getAccessToken();
+    const refreshToken = TokenManager.getRefreshToken();
+    return Boolean(accessToken && refreshToken);
+  };
 }
 
 // 🔥 인증이 필요한 엔드포인트 패턴 정의
