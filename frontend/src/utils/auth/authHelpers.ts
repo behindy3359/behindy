@@ -1,22 +1,15 @@
-// frontend/src/utils/auth/authHelpers.ts
 import { jwtDecode } from 'jwt-decode';
 import type { AuthError } from '@/types/auth/authState';
 import type { JWTPayload } from '@/types/auth/authJwt';
 
-// ================================================================
 // 폼 검증 유틸리티
-// ================================================================
-
-/**
- * 이메일 형식 검증 (한국 도메인 포함)
- */
+// 이메일 형식 검증 (한국 도메인 포함)
 export const validateEmail = (email: string): { isValid: boolean; message?: string } => {
   if (!email || email.trim() === '') {
     return { isValid: false, message: '이메일을 입력해주세요.' };
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const koreanEmailRegex = /^[^\s@]+@[^\s@]+\.(co\.kr|kr|com|net|org)$/;
   
   const normalizedEmail = email.toLowerCase().trim();
   
@@ -32,9 +25,7 @@ export const validateEmail = (email: string): { isValid: boolean; message?: stri
   return { isValid: true };
 };
 
-/**
- * 비밀번호 강도 검증
- */
+// 비밀번호 강도 검증
 export const validatePassword = (password: string): {
   isValid: boolean;
   score: number;
@@ -624,9 +615,6 @@ export const debugLog = {
   }
 };
 
-// ================================================================
-// 기본 export
-// ================================================================
 const authHelpers = {
   // 폼 검증
   validateEmail,
