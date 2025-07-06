@@ -6,6 +6,10 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=https://behindy.me/api
       - NEXT_PUBLIC_AI_URL=https://behindy.me/ai
+      - TZ=Asia/Seoul  # 시간대 추가
+    volumes:
+      - /etc/localtime:/etc/localtime:ro  # 호스트 시간 동기화
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - internal
     depends_on:
@@ -47,6 +51,10 @@ services:
       - SEOUL_METRO_CACHE_TTL=180
       - SEOUL_METRO_API_UPDATE_INTERVAL=${METRO_UPDATE_INTERVAL}
       - SEOUL_METRO_MONITORING_DAILY_LIMIT=${METRO_DAILY_LIMIT}
+      - TZ=Asia/Seoul  # 시간대 추가
+    volumes:
+      - /etc/localtime:/etc/localtime:ro  # 호스트 시간 동기화
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - internal
     depends_on:
@@ -64,6 +72,11 @@ services:
     restart: always
     expose:
       - 8000
+    environment:
+      - TZ=Asia/Seoul  # 시간대 추가
+    volumes:
+      - /etc/localtime:/etc/localtime:ro  # 호스트 시간 동기화
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - internal
     logging:
@@ -80,10 +93,14 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
+      TZ: Asia/Seoul
+      PGTZ: Asia/Seoul
     ports:
       - "${DB_PORT}:5432"
     volumes:
       - ./pgdata:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - internal
 
@@ -92,8 +109,13 @@ services:
     container_name: redis
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      - TZ=Asia/Seoul
     ports:
       - "${REDIS_PORT}:6379"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - internal
 
@@ -104,10 +126,14 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - TZ=Asia/Seoul
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
+      - /etc/localtime:/etc/localtime:ros
+      - /etc/timezone:/etc/timezone:ro
     depends_on:
       - frontend
     networks:

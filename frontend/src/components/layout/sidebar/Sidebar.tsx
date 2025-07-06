@@ -1,233 +1,196 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+"use client";
+
+import React from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, 
-  Info,
+  Info, 
+  Train, 
   MessageSquare, 
   User, 
   LogIn, 
   UserPlus, 
-  LogOut,
-  ChevronLeft,
+  Menu,
+  X,
   Sun,
   Moon,
-  Settings,
-  Gamepad2,
-  Menu
+  Settings
 } from 'lucide-react';
+import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 
-interface SidebarProps {
-  isOpen?: boolean;
-  onClose?: () => void;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
-  isDarkMode?: boolean;
-  onThemeToggle?: () => void;
-  currentPath?: string;
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-    isAuthenticated: boolean;
-  } | null;
-}
+// ================================================================
+// Styled Components (Props Forwarding 수정됨)
+// ================================================================
 
-// 낮 모드 메뉴 (퍼블릭)
-const dayNavItems = [
-  { icon: Home, label: '홈', path: '/', id: 'home' },
-  { icon: Info, label: '소개', path: '/about', id: 'about' },
-  { icon: MessageSquare, label: '게시판', path: '/community', id: 'community' }
-];
-
-// 밤 모드 메뉴 (게임/개인 기능)
-const nightNavItems = [
-  { icon: Gamepad2, label: '게임', path: '/game', id: 'game' },
-  { icon: Settings, label: '캐릭터', path: '/character', id: 'character' },
-  { icon: User, label: '기록', path: '/records', id: 'records' }
-];
-
-const SidebarContainer = styled(motion.aside)<{ 
-  $isOpen: boolean; 
-  $isCollapsed: boolean;
-  $isDarkMode: boolean;
-}>`
+const SidebarContainer = styled(motion.aside).withConfig({
+  shouldForwardProp: (prop) => !['$isOpen', '$isMobile'].includes(prop),
+})<{ $isOpen: boolean; $isMobile: boolean }>`
   position: fixed;
-  left: 0;
   top: 0;
-  width: ${({ $isCollapsed }) => $isCollapsed ? '60px' : '280px'};
+  left: 0;
   height: 100vh;
-  background: ${({ $isDarkMode }) => $isDarkMode ? '#1f2937' : '#ffffff'};
-  border-right: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#e5e7eb'};
-  box-shadow: ${({ $isOpen }) => $isOpen ? '2px 0 10px rgba(0, 0, 0, 0.1)' : 'none'};
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   z-index: 1000;
-  transition: width 0.3s ease, transform 0.3s ease; /* 🎯 width 전환 추가 */
-  overflow: hidden;
-  transform: ${({ $isOpen }) => $isOpen ? 'translateX(0)' : 'translateX(-100%)'};
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   
-  @media (min-width: 1200px) {
-    transform: translateX(0);
-    box-shadow: none;
-    border-right: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#e5e7eb'};
+  /* 데스크톱: 280px ↔ 60px */
+  @media (min-width: 768px) {
+    width: ${({ $isOpen }) => ($isOpen ? '280px' : '60px')};
+    transition: width 0.3s ease;
+  }
+  
+  /* 모바일: 오버레이 */
+  @media (max-width: 767px) {
+    width: ${({ $isOpen }) => ($isOpen ? '280px' : '0px')};
+    transform: translateX(${({ $isOpen }) => ($isOpen ? '0' : '-100%')});
+    transition: all 0.3s ease;
   }
 `;
 
-const SidebarHeader = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'space-between'};
-  padding: ${({ $isCollapsed }) => $isCollapsed ? '16px 8px' : '16px 20px'};
-  border-bottom: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f3f4f6'};
-  min-height: 70px;
+const SidebarOverlay = styled(motion.div).withConfig({
+  shouldForwardProp: (prop) => !['$visible'].includes(prop),
+})<{ $visible: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: ${({ $visible }) => ($visible ? 'block' : 'none')};
+  
+  @media (min-width: 768px) {
+    display: none;
+  }
 `;
 
-// 🎯 로고 섹션을 클릭 가능하게 수정
-const LogoSection = styled.div<{ $isCollapsed: boolean }>`
+// 헤더 섹션 (햄버거 버튼만)
+const HeaderSection = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
+})<{ $isOpen: boolean }>`
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
+  align-items: center;
+  justify-content: ${({ $isOpen }) => ($isOpen ? 'space-between' : 'center')};
+  min-height: 80px;
+`;
+
+const BrandLogo = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
+})<{ $isOpen: boolean }>`
+  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   align-items: center;
   gap: 12px;
-  cursor: pointer; /* 🎯 클릭 가능 표시 */
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
   
-  &:hover {
-    background: rgba(102, 126, 234, 0.1);
-  }
-  
-  .logo-icon {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 8px;
+  .logo {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    flex-shrink: 0;
+    font-size: 20px;
+    font-weight: 800;
   }
   
   .brand-name {
     font-size: 20px;
-    font-weight: 800;
-    color: #667eea;
-    opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
-    transition: opacity 0.3s ease;
-    white-space: nowrap;
-    overflow: hidden; /* 🎯 넘침 방지 */
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  
+  @media (max-width: 767px) {
+    display: flex;
   }
 `;
 
-const CollapseButton = styled(motion.button)<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
-  display: none;
-  width: 32px;
-  height: 32px;
+const ToggleButton = styled.button`
+  background: rgba(255, 255, 255, 0.1);
   border: none;
-  background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f3f4f6'};
-  border-radius: 6px;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: ${({ $isDarkMode }) => $isDarkMode ? '#d1d5db' : '#6b7280'};
   transition: all 0.2s ease;
-  flex-shrink: 0; /* 🎯 버튼 크기 고정 */
   
   &:hover {
-    background: ${({ $isDarkMode }) => $isDarkMode ? '#4b5563' : '#e5e7eb'};
-    color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#374151'};
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
   }
   
-  @media (min-width: 1200px) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  svg {
-    width: 16px;
-    height: 16px;
-    transform: ${({ $isCollapsed }) => $isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)'};
-    transition: transform 0.3s ease;
+  @media (max-width: 767px) {
+    position: absolute;
+    right: 20px;
+    top: 22px;
   }
 `;
 
-const SidebarContent = styled.div<{ $isCollapsed: boolean }>`
-  display: flex;
+// 메인 네비게이션 (접혀있을 때는 완전히 숨김)
+const NavigationSection = styled.nav.withConfig({
+  shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
+})<{ $isOpen: boolean }>`
+  flex: 1;
+  padding: 20px 0;
+  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   flex-direction: column;
-  height: calc(100vh - 70px);
-  padding: ${({ $isCollapsed }) => $isCollapsed ? '16px 8px' : '16px 20px'};
-  overflow-y: auto;
-  overflow-x: hidden; /* 🎯 가로 스크롤 방지 */
+  gap: 8px;
   
-  /* 커스텀 스크롤바 */
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 2px;
-    
-    &:hover {
-      background: #9ca3af;
-    }
+  @media (max-width: 767px) {
+    display: flex;
   }
 `;
 
-const NavSection = styled.div`
-  margin-bottom: 32px;
-`;
-
-const SectionTitle = styled.h3<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
-  font-size: 12px;
-  font-weight: 700;
-  color: ${({ $isDarkMode }) => $isDarkMode ? '#9ca3af' : '#6b7280'};
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 12px 0;
-  opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
-  transition: opacity 0.3s ease;
-  padding-left: 4px;
-  white-space: nowrap; /* 🎯 텍스트 줄바꿈 방지 */
-  overflow: hidden;
-`;
-
-const NavItem = styled(motion.div)<{ 
-  $isActive: boolean; 
-  $isDarkMode: boolean;
-  $isCollapsed: boolean;
-}>`
-  .nav-link {
+const NavItem = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['$isActive', '$isOpen'].includes(prop),
+})<{ $isActive: boolean; $isOpen: boolean }>`
+  margin: 0 12px;
+  
+  a {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: ${({ $isCollapsed }) => $isCollapsed ? '12px 8px' : '12px 16px'};
-    border-radius: 8px;
+    gap: 16px;
+    padding: 12px 16px;
+    color: white;
     text-decoration: none;
-    color: ${({ $isActive, $isDarkMode }) => {
-      if ($isActive) return '#667eea';
-      return $isDarkMode ? '#d1d5db' : '#6b7280';
-    }};
-    background: ${({ $isActive, $isDarkMode }) => {
-      if ($isActive) return $isDarkMode ? 'rgba(102, 126, 234, 0.2)' : '#f0f4ff';
-      return 'transparent';
-    }};
-    cursor: pointer;
-    font-weight: ${({ $isActive }) => $isActive ? '600' : '500'};
-    font-size: 14px;
+    border-radius: 12px;
     transition: all 0.2s ease;
     position: relative;
-    justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
+    overflow: hidden;
+    
+    /* Active 상태 */
+    ${({ $isActive }) =>
+      $isActive &&
+      `
+      background: rgba(255, 255, 255, 0.15);
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 24px;
+        background: white;
+        border-radius: 0 2px 2px 0;
+      }
+    `}
     
     &:hover {
-      background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f9fafb'};
-      color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#667eea'};
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(4px);
     }
     
     .nav-icon {
@@ -236,414 +199,236 @@ const NavItem = styled(motion.div)<{
       flex-shrink: 0;
     }
     
-    .nav-text {
-      opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
-      transition: opacity 0.3s ease;
+    .nav-label {
+      font-size: 14px;
+      font-weight: 500;
+      opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+      transition: opacity 0.2s ease;
       white-space: nowrap;
-      overflow: hidden;
-      min-width: ${({ $isCollapsed }) => $isCollapsed ? '0' : 'auto'};
+      
+      @media (max-width: 767px) {
+        opacity: 1;
+      }
     }
   }
 `;
 
-const AccountSection = styled.div<{ $isCollapsed: boolean }>`
-  margin-top: auto;
-  margin-bottom: 7vh;
-  padding-top: 16px;
-  border-top: 1px solid #f3f4f6;
+// 계정 섹션 (접혀있을 때는 완전히 숨김)
+const AccountSection = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
+})<{ $isOpen: boolean }>`
+  padding: 20px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
+  flex-direction: column;
+  gap: 8px;
+  
+  @media (max-width: 767px) {
+    display: flex;
+  }
 `;
 
-const UserInfo = styled.div<{ $isDarkMode: boolean; $isCollapsed: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: ${({ $isCollapsed }) => $isCollapsed ? '8px' : '12px 16px'};
-  margin-bottom: 12px;
-  background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f8fafc'};
-  border-radius: 8px;
-  justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
-  overflow: hidden; /* 🎯 넘침 방지 */
+// 하단 테마 토글 섹션 (접혀있을 때는 완전히 숨김)
+const BottomSection = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
+})<{ $isOpen: boolean }>`
+  padding: 20px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
   
-  .avatar {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 50%;
+  @media (max-width: 767px) {
+    display: block;
+  }
+  
+  .theme-toggle {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 16px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
     color: white;
-    font-weight: 600;
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-  
-  .user-details {
-    opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
-    transition: opacity 0.3s ease;
-    overflow: hidden;
-    min-width: 0; /* 🎯 flexbox 넘침 방지 */
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    justify-content: flex-start;
     
-    .name {
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .theme-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    
+    .theme-label {
       font-size: 14px;
-      font-weight: 600;
-      color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#374151'};
-      margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .email {
-      font-size: 12px;
-      color: ${({ $isDarkMode }) => $isDarkMode ? '#9ca3af' : '#6b7280'};
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-weight: 500;
     }
   }
 `;
 
-const ThemeToggleButton = styled(motion.button)<{ 
-  $isDarkMode: boolean; 
-  $isCollapsed: boolean 
-}>`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: ${({ $isCollapsed }) => $isCollapsed ? '12px 8px' : '12px 16px'};
-  border: none;
-  background: transparent;
-  color: ${({ $isDarkMode }) => $isDarkMode ? '#d1d5db' : '#6b7280'};
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  justify-content: ${({ $isCollapsed }) => $isCollapsed ? 'center' : 'flex-start'};
-  overflow: hidden; /* 🎯 넘침 방지 */
-  
-  &:hover {
-    background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f9fafb'};
-    color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#667eea'};
-  }
-  
-  .theme-icon {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-  
-  .theme-text {
-    opacity: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
-    transition: opacity 0.3s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    min-width: 0;
-  }
-`;
+// ================================================================
+// Component
+// ================================================================
 
-// 접힌 상태에서 보여질 메뉴 버튼
-const CollapsedMenuButton = styled(motion.button)<{ $isDarkMode: boolean }>`
-  width: 44px;
-  height: 44px;
-  border: none;
-  background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f3f4f6'};
-  border-radius: 8px;
-  cursor: pointer;
-  color: ${({ $isDarkMode }) => $isDarkMode ? '#d1d5db' : '#6b7280'};
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 8px auto;
-  
-  &:hover {
-    background: ${({ $isDarkMode }) => $isDarkMode ? '#4b5563' : '#e5e7eb'};
-    color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#374151'};
-    transform: scale(1.05);
-  }
-  
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-`;
+interface SidebarProps {
+  className?: string;
+}
 
-// 접힌 상태 콘텐츠 - 햄버거 버튼만
-const CollapsedContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 20px 8px;
-  height: 100vh;
-  align-items: center;
-  justify-content: flex-start;
-`;
-
-// 모바일 오버레이
-const MobileOverlay = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  
-  @media (min-width: 1200px) {
-    display: none;
-  }
-`;
-
-export const Sidebar: React.FC<SidebarProps> = ({
-  isOpen = true,
-  onClose,
-  isCollapsed = false,
-  onToggleCollapse,
-  isDarkMode = false,
-  onThemeToggle,
-  currentPath = '/',
-  user: propUser = null
-}) => {
+export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const router = useRouter();
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  
-  // AuthStore에서 실제 사용자 정보 가져오기
-  const { user: storeUser, isAuthenticated, logout } = useAuthStore();
-  
-  // PropUser가 있으면 그것을 사용하고, 없으면 store의 user 사용
-  const currentUser = propUser || storeUser;
-  const isLoggedIn = currentUser?.isAuthenticated || isAuthenticated();
+  const pathname = usePathname();
+  const { sidebar, toggleSidebar } = useUIStore();
+  const { isAuthenticated, logout, user } = useAuthStore();
+  const [isDarkTheme, setIsDarkTheme] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
 
-  const handleNavigation = (path: string) => {
-    router.push(path);
-    // 모바일에서는 네비게이션 후 사이드바 닫기
-    if (window.innerWidth < 1200 && onClose) {
-      onClose();
-    }
-  };
+  // 모바일 감지
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  // 🎯 로고 클릭 핸들러 추가
-  const handleLogoClick = () => {
-    router.push('/');
-    if (window.innerWidth < 1200 && onClose) {
-      onClose();
-    }
-  };
+  // 네비게이션 아이템 정의
+  const navItems = [
+    { path: '/', label: '홈', icon: Home },
+    { path: '/about', label: '소개', icon: Info },
+    { path: '/metro', label: '지하철 노선도', icon: Train },
+    { path: '/community', label: '게시판', icon: MessageSquare },
+  ];
 
-  const handleAuthAction = async (action: 'login' | 'signup' | 'logout') => {
+  // 계정 관련 아이템
+  const accountItems = isAuthenticated() ? [
+    { path: '/profile', label: user?.name || '프로필', icon: User },
+    { action: 'logout', label: '로그아웃', icon: LogIn },
+  ] : [
+    { path: '/auth/login', label: '로그인', icon: LogIn },
+    { path: '/auth/signup', label: '회원가입', icon: UserPlus },
+  ];
+
+  const handleNavigation = (path?: string, action?: string) => {
     if (action === 'logout') {
-      try {
-        await logout();
-        router.push('/');
-      } catch (error) {
-        console.error('로그아웃 실패:', error);
-      }
-    } else {
-      router.push(`/auth/${action}`);
+      logout();
+      router.push('/');
+    } else if (path) {
+      router.push(path);
     }
     
-    if (window.innerWidth < 1200 && onClose) {
-      onClose();
+    // 모바일에서는 네비게이션 후 사이드바 닫기
+    if (isMobile && sidebar.isOpen) {
+      toggleSidebar();
     }
   };
 
-  const getUserInitial = (name?: string) => {
-    return name ? name.charAt(0).toUpperCase() : 'U';
+  const handleThemeToggle = () => {
+    setIsDarkTheme(!isDarkTheme);
+    // 여기서 실제 테마 변경 로직 구현
   };
 
-  // 현재 표시할 네비게이션 아이템들 결정
-  const visibleNavItems = [...dayNavItems];
-  if (isDarkMode) {
-    visibleNavItems.push(...nightNavItems);
-  }
+  const handleOverlayClick = () => {
+    if (isMobile) {
+      toggleSidebar();
+    }
+  };
 
   return (
     <>
       {/* 모바일 오버레이 */}
       <AnimatePresence>
-        {isOpen && (
-          <MobileOverlay
+        {isMobile && sidebar.isOpen && (
+          <SidebarOverlay
+            $visible={sidebar.isOpen}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleOverlayClick}
           />
         )}
       </AnimatePresence>
 
-      {/* 사이드바 */}
+      {/* 사이드바 메인 */}
       <SidebarContainer
-        $isOpen={isOpen}
-        $isCollapsed={isCollapsed}
-        $isDarkMode={isDarkMode}
+        $isOpen={sidebar.isOpen}
+        $isMobile={isMobile}
+        className={className}
         initial={false}
-        animate={{ 
-          x: isOpen ? 0 : -300
-          // 🎯 width는 CSS transition으로 처리하므로 제거
+        animate={{
+          width: isMobile ? (sidebar.isOpen ? 280 : 0) : (sidebar.isOpen ? 280 : 60)
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
       >
-        {/* 헤더 - 항상 표시 */}
-        <SidebarHeader $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
-          {/* 🎯 로고 섹션에 클릭 이벤트 추가 */}
-          <LogoSection $isCollapsed={isCollapsed} onClick={handleLogoClick}>
-            <div className="logo-icon">B</div>
-            {!isCollapsed && <div className="brand-name">Behindy</div>}
-          </LogoSection>
+        {/* 헤더 섹션 - 햄버거 버튼만 */}
+        <HeaderSection $isOpen={sidebar.isOpen}>
+          <BrandLogo $isOpen={sidebar.isOpen}>
+            <div className="logo">B</div>
+            <div className="brand-name">Behindy</div>
+          </BrandLogo>
           
-          {/* 접기/펼치기 버튼 - 접힌 상태에서도 표시 */}
-          <CollapseButton
-            $isDarkMode={isDarkMode}
-            $isCollapsed={isCollapsed}
-            onClick={onToggleCollapse}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            title={isCollapsed ? "메뉴 펼치기" : "메뉴 접기"}
-          >
-            <ChevronLeft />
-          </CollapseButton>
-        </SidebarHeader>
+          <ToggleButton onClick={toggleSidebar}>
+            {sidebar.isOpen ? <X size={20} /> : <Menu size={20} />}
+          </ToggleButton>
+        </HeaderSection>
 
-        {/* 콘텐츠 - 접힌 상태에서는 숨김 */}
-        {!isCollapsed && (
-          <SidebarContent $isCollapsed={isCollapsed}>
-            {/* 메인 네비게이션 */}
-            <NavSection>
-              <SectionTitle $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
-                메인 메뉴
-              </SectionTitle>
-              
-              {visibleNavItems.map((item) => (
-                <NavItem
-                  key={item.id}
-                  $isActive={currentPath === item.path}
-                  $isDarkMode={isDarkMode}
-                  $isCollapsed={isCollapsed}
-                  onHoverStart={() => setHoveredItem(item.id)}
-                  onHoverEnd={() => setHoveredItem(null)}
-                  whileHover={{ x: 2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div 
-                    className="nav-link"
-                    onClick={() => handleNavigation(item.path)}
-                  >
-                    <item.icon className="nav-icon" />
-                    <span className="nav-text">{item.label}</span>
-                  </div>
-                </NavItem>
-              ))}
-            </NavSection>
+        {/* 메인 네비게이션 - 펼쳐져 있을 때만 표시 */}
+        <NavigationSection $isOpen={sidebar.isOpen}>
+          {navItems.map((item) => (
+            <NavItem
+              key={item.path}
+              $isActive={pathname === item.path}
+              $isOpen={sidebar.isOpen}
+            >
+              <a href="#" onClick={(e) => {
+                e.preventDefault();
+                handleNavigation(item.path);
+              }}>
+                <item.icon className="nav-icon" />
+                <span className="nav-label">{item.label}</span>
+              </a>
+            </NavItem>
+          ))}
+        </NavigationSection>
 
-            {/* 계정 섹션 */}
-            <AccountSection $isCollapsed={isCollapsed}>
-              {isLoggedIn && currentUser ? (
-                <>
-                  {/* 사용자 정보 */}
-                  <UserInfo $isDarkMode={isDarkMode} $isCollapsed={isCollapsed}>
-                    <div className="avatar">
-                      {getUserInitial(currentUser.name)}
-                    </div>
-                    <div className="user-details">
-                      <div className="name">{currentUser.name}</div>
-                      <div className="email">{currentUser.email}</div>
-                    </div>
-                  </UserInfo>
+        {/* 계정 섹션 - 펼쳐져 있을 때만 표시 */}
+        <AccountSection $isOpen={sidebar.isOpen}>
+          {accountItems.map((item, index) => (
+            <NavItem
+              key={item.path || item.action || index}
+              $isActive={false}
+              $isOpen={sidebar.isOpen}
+            >
+              <a href="#" onClick={(e) => {
+                e.preventDefault();
+                handleNavigation(item.path, item.action);
+              }}>
+                <item.icon className="nav-icon" />
+                <span className="nav-label">{item.label}</span>
+              </a>
+            </NavItem>
+          ))}
+        </AccountSection>
 
-                  {/* 프로필 버튼 */}
-                  <NavItem
-                    $isActive={currentPath === '/profile'}
-                    $isDarkMode={isDarkMode}
-                    $isCollapsed={isCollapsed}
-                    whileHover={{ x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div 
-                      className="nav-link"
-                      onClick={() => handleNavigation('/profile')}
-                    >
-                      <User className="nav-icon" />
-                      <span className="nav-text">프로필</span>
-                    </div>
-                  </NavItem>
-
-                  {/* 로그아웃 버튼 */}
-                  <NavItem
-                    $isActive={false}
-                    $isDarkMode={isDarkMode}
-                    $isCollapsed={isCollapsed}
-                    whileHover={{ x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div 
-                      className="nav-link"
-                      onClick={() => handleAuthAction('logout')}
-                    >
-                      <LogOut className="nav-icon" />
-                      <span className="nav-text">로그아웃</span>
-                    </div>
-                  </NavItem>
-                </>
-              ) : (
-                <>
-                  {/* 로그인 버튼 */}
-                  <NavItem
-                    $isActive={false}
-                    $isDarkMode={isDarkMode}
-                    $isCollapsed={isCollapsed}
-                    whileHover={{ x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div 
-                      className="nav-link"
-                      onClick={() => handleAuthAction('login')}
-                    >
-                      <LogIn className="nav-icon" />
-                      <span className="nav-text">로그인</span>
-                    </div>
-                  </NavItem>
-
-                  {/* 회원가입 버튼 */}
-                  <NavItem
-                    $isActive={false}
-                    $isDarkMode={isDarkMode}
-                    $isCollapsed={isCollapsed}
-                    whileHover={{ x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div 
-                      className="nav-link"
-                      onClick={() => handleAuthAction('signup')}
-                    >
-                      <UserPlus className="nav-icon" />
-                      <span className="nav-text">회원가입</span>
-                    </div>
-                  </NavItem>
-                </>
-              )}
-
-              {/* 테마 토글 */}
-              <ThemeToggleButton
-                $isDarkMode={isDarkMode}
-                $isCollapsed={isCollapsed}
-                onClick={onThemeToggle}
-                whileHover={{ x: 2 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {isDarkMode ? (
-                  <Sun className="theme-icon" />
-                ) : (
-                  <Moon className="theme-icon" />
-                )}
-                <span className="theme-text">
-                  {isDarkMode ? '낮 모드' : '밤 모드'}
-                </span>
-              </ThemeToggleButton>
-            </AccountSection>
-          </SidebarContent>
-        )}
+        {/* 하단 테마 토글 - 펼쳐져 있을 때만 표시 */}
+        <BottomSection $isOpen={sidebar.isOpen}>
+          <button className="theme-toggle" onClick={handleThemeToggle}>
+            {isDarkTheme ? (
+              <Sun className="theme-icon" />
+            ) : (
+              <Moon className="theme-icon" />
+            )}
+            <span className="theme-label">
+              {isDarkTheme ? '라이트 모드' : '다크 모드'}
+            </span>
+          </button>
+        </BottomSection>
       </SidebarContainer>
     </>
   );

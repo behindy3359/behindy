@@ -1,354 +1,197 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { Menu, X } from 'lucide-react';
 import { Sidebar } from '../sidebar/Sidebar';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { useUIStore } from '@/store/uiStore';
 
-interface AppLayoutProps {
-  children: React.ReactNode;
-  showSidebar?: boolean;
-  maxWidth?: string;
-  backgroundColor?: string;
-  currentPath?: string;
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-    isAuthenticated: boolean;
-  } | null;
-}
+// ================================================================
+// Styled Components
+// ================================================================
 
-const LayoutContainer = styled.div<{ $isDarkMode: boolean }>`
-  background: ${({ $isDarkMode }) => $isDarkMode ? '#111827' : '#fafbfc'};
-  transition: background-color 0.3s ease;
+const LayoutContainer = styled.div`
+  display: flex;
+  min-height: 100vh;
+  background: #fafbfc;
 `;
 
-
-const SidebarWrapper = styled.div<{ $isCollapsed: boolean }>`
-  width: ${({ $isCollapsed }) => $isCollapsed ? '60px' : '280px'};
-  flex-shrink: 0;
-  transition: width 0.3s ease;
-  
-  @media (max-width: 1199px) {
-    width: 0;
-  }
-`;
-
-const MainContainer = styled.div<{ 
-  $maxWidth?: string;
-  $backgroundColor?: string;
-  $isDarkMode: boolean;
-  $sidebarWidth: number;
+const MainContent = styled.main.withConfig({
+  shouldForwardProp: (prop) => !['$sidebarOpen', '$isMobile', '$layoutType'].includes(prop),
+})<{ 
+  $sidebarOpen: boolean; 
+  $isMobile: boolean; 
+  $layoutType: 'header' | 'sidebar';
 }>`
+  flex: 1;
   display: flex;
   flex-direction: column;
-  background: ${({ $backgroundColor, $isDarkMode }) => 
-    $backgroundColor || ($isDarkMode ? '#111827' : '#fafbfc')
-  };
-  transition: all 0.3s ease;
-  margin-left: ${({ $sidebarWidth }) => $sidebarWidth}px;
   
-  @media (max-width: 1199px) {
-    margin-left: 0;
+  /* 사이드바 레이아웃인 경우 */
+  ${({ $layoutType, $sidebarOpen, $isMobile }) => 
+    $layoutType === 'sidebar' && `
+      /* 데스크톱: 사이드바 너비만큼 마진 */
+      @media (min-width: 768px) {
+        margin-left: ${$sidebarOpen ? '280px' : '60px'};
+        transition: margin-left 0.3s ease;
+      }
+      
+      /* 모바일: 마진 없음 (오버레이 방식) */
+      @media (max-width: 767px) {
+        margin-left: 0;
+      }
+    `
+  }
+  
+  /* 헤더 레이아웃인 경우 */
+  ${({ $layoutType }) => 
+    $layoutType === 'header' && `
+      margin-left: 0;
+      padding-top: 60px; /* 헤더 높이만큼 */
+    `
   }
 `;
 
-const MobileHeader = styled.header<{ $isDarkMode: boolean }>`
-  display: none;
-  height: 60px;
-  background: ${({ $isDarkMode }) => $isDarkMode ? '#1f2937' : '#ffffff'};
-  border-bottom: 1px solid ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#e5e7eb'};
-  padding: 0 20px;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  
-  @media (max-width: 1199px) {
-    display: flex;
-  }
+const ContentArea = styled.div`
+  flex: 1;
+  padding: 0;
+  position: relative;
+  overflow-x: hidden;
 `;
 
-const MobileLogo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  
-  .logo-icon {
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-  }
-  
-  .brand-name {
-    font-size: 18px;
-    font-weight: 800;
-    color: #667eea;
-  }
-`;
-
-const MobileMenuButton = styled.button<{ $isDarkMode: boolean }>`
-  width: 40px;
-  height: 40px;
+// 모바일 토글 버튼 (사이드바 레이아웃에서만 표시)
+const MobileToggleButton = styled.button.withConfig({
+  shouldForwardProp: (prop) => !['$visible'].includes(prop),
+})<{ $visible: boolean }>`
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
-  background: ${({ $isDarkMode }) => $isDarkMode ? '#374151' : '#f3f4f6'};
-  border-radius: 8px;
-  cursor: pointer;
-  color: ${({ $isDarkMode }) => $isDarkMode ? '#d1d5db' : '#6b7280'};
-  display: flex;
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: ${({ $visible }) => ($visible ? 'flex' : 'none')};
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${({ $isDarkMode }) => $isDarkMode ? '#4b5563' : '#e5e7eb'};
-    color: ${({ $isDarkMode }) => $isDarkMode ? '#f9fafb' : '#374151'};
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
   }
   
-  svg {
-    width: 20px;
-    height: 20px;
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  @media (min-width: 768px) {
+    display: none;
   }
 `;
 
-const ContentArea = styled.main<{ 
-  $maxWidth?: string; 
-  $isDarkMode: boolean;
-  $hasMaxWidth: boolean;
-}>`
-  flex: 1;
-  background: ${({ $isDarkMode, $hasMaxWidth }) => {
-    if ($hasMaxWidth) {
-      return $isDarkMode ? '#1f2937' : 'white';
-    }
-    return 'transparent';
-  }};
-  border-radius: ${({ $hasMaxWidth }) => $hasMaxWidth ? '12px 12px 0 0' : '0'};
-  margin: ${({ $hasMaxWidth }) => $hasMaxWidth ? '20px' : '0'};
-  max-width: ${({ $maxWidth }) => $maxWidth || 'none'};
-  margin: ${({ $hasMaxWidth, $maxWidth }) => {
-    if ($hasMaxWidth && $maxWidth) return '20px auto';
-    if ($hasMaxWidth) return '20px';
-    return '0';
-  }};
-  box-shadow: ${({ $hasMaxWidth, $isDarkMode }) => {
-    if ($hasMaxWidth) {
-      return $isDarkMode 
-        ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)' 
-        : '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-    }
-    return 'none';
-  }};
-  transition: all 0.3s ease;
-  
-  @media (max-width: 768px) {
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
-    background: ${({ $isDarkMode }) => $isDarkMode ? '#111827' : '#fafbfc'};
-  }
-`;
+// ================================================================
+// Component
+// ================================================================
 
-const ContentWrapper = styled.div<{ $withPadding: boolean }>`
-  padding: ${({ $withPadding }) => $withPadding ? '24px' : '0'};
-  
-  @media (max-width: 768px) {
-    padding: ${({ $withPadding }) => $withPadding ? '16px' : '0'};
-  }
-`;
+interface AppLayoutProps {
+  children: React.ReactNode;
+  className?: string;
+  layoutType?: 'header' | 'sidebar';  // 👈 레이아웃 타입 선택
+}
 
-// 페이지별 레이아웃 설정
-const getLayoutConfig = (pathname: string) => {
-  if (pathname.startsWith('/auth')) {
-    return {
-      showSidebar: false,
-      contentPadding: false,
-      maxWidth: '500px',
-      backgroundColor: undefined
-    };
-  }
-  
-  if (pathname === '/') {
-    return {
-      showSidebar: false,
-      contentPadding: false,
-      maxWidth: undefined,
-      backgroundColor: undefined
-    };
-  }
-  
-  if (pathname.startsWith('/metro-map') || pathname.startsWith('/game')) {
-    return {
-      showSidebar: true,
-      contentPadding: false,
-      maxWidth: undefined,
-      backgroundColor: undefined
-    };
-  }
-  
-  return {
-    showSidebar: true,
-    contentPadding: true,
-    maxWidth: '1200px',
-    backgroundColor: undefined
-  };
-};
-
-export const AppLayout: React.FC<AppLayoutProps> = ({
-  children,
-  showSidebar: propShowSidebar,
-  maxWidth: propMaxWidth,
-  backgroundColor: propBackgroundColor,
-  currentPath = '/',
-  user = null
+export const AppLayout: React.FC<AppLayoutProps> = ({ 
+  children, 
+  className,
+  layoutType = 'sidebar'  // 👈 기본값은 sidebar
 }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { sidebar, toggleSidebar } = useUIStore();
+  const [isMobile, setIsMobile] = React.useState(false);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1200) {
-        setSidebarOpen(true);
-      } else {
-        setSidebarOpen(false);
-      }
+  // 모바일 감지
+  React.useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
     };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  useEffect(() => {
-    if (window.innerWidth < 1200) {
-      setSidebarOpen(false);
-    }
-  }, [currentPath]);
-
-  const layoutConfig = getLayoutConfig(currentPath);
-  
-  const showSidebar = propShowSidebar ?? layoutConfig.showSidebar;
-  const contentPadding = layoutConfig.contentPadding;
-  const maxWidth = propMaxWidth ?? layoutConfig.maxWidth;
-  const backgroundColor = propBackgroundColor ?? layoutConfig.backgroundColor;
-  const hasMaxWidth = Boolean(maxWidth);
-
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleSidebarClose = () => {
-    setSidebarOpen(false);
-  };
-
-  const handleSidebarCollapseToggle = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
-
-  const handleThemeToggle = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
   return (
-    <LayoutContainer $isDarkMode={isDarkMode}>
-      {showSidebar && (
-        <SidebarWrapper $isCollapsed={sidebarCollapsed}>
-          <Sidebar
-            isOpen={sidebarOpen}
-            onClose={handleSidebarClose}
-            isCollapsed={sidebarCollapsed}
-            onToggleCollapse={handleSidebarCollapseToggle}
-            isDarkMode={isDarkMode}
-            onThemeToggle={handleThemeToggle}
-            currentPath={currentPath}
-            user={user}
-          />
-        </SidebarWrapper>
+    <LayoutContainer className={className}>
+      {/* 사이드바 (사이드바 레이아웃에서만 렌더링) */}
+      {layoutType === 'sidebar' && <Sidebar />}
+      
+      {/* 헤더 (헤더 레이아웃에서만 렌더링) */}
+      {layoutType === 'header' && (
+        <header style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '60px',
+          background: 'white',
+          borderBottom: '1px solid #e5e7eb',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 24px'
+        }}>
+          {/* 기존 헤더 내용을 여기에 */}
+          <h1>Header Layout</h1>
+        </header>
+      )}
+      
+      {/* 모바일 토글 버튼 (사이드바 레이아웃에서만) */}
+      {layoutType === 'sidebar' && (
+        <MobileToggleButton
+          $visible={isMobile && !sidebar.isOpen}
+          onClick={toggleSidebar}
+          aria-label="메뉴 열기"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path 
+              d="M3 12h18M3 6h18M3 18h18" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+        </MobileToggleButton>
       )}
 
-      <MainContainer
-        $maxWidth={maxWidth}
-        $backgroundColor={backgroundColor}
-        $isDarkMode={isDarkMode}
-        $sidebarWidth={showSidebar ? (sidebarCollapsed ? 60 : 280) : 0}
+      {/* 메인 컨텐츠 */}
+      <MainContent 
+        $sidebarOpen={sidebar.isOpen} 
+        $isMobile={isMobile}
+        $layoutType={layoutType}
       >
-        {/* 모바일 헤더 */}
-        <MobileHeader $isDarkMode={isDarkMode}>
-          <MobileLogo>
-            <div className="logo-icon">B</div>
-            <div className="brand-name">Behindy</div>
-          </MobileLogo>
-          
-          {showSidebar && (
-            <MobileMenuButton 
-              $isDarkMode={isDarkMode}
-              onClick={handleSidebarToggle}
-            >
-              {sidebarOpen ? <X /> : <Menu />}
-            </MobileMenuButton>
-          )}
-        </MobileHeader>
-        
-        {/* 메인 콘텐츠 */}
-        <ContentArea 
-          $maxWidth={maxWidth}
-          $isDarkMode={isDarkMode}
-          $hasMaxWidth={hasMaxWidth}
-        >
-          <ContentWrapper $withPadding={contentPadding}>
-            {children}
-          </ContentWrapper>
+        <ContentArea>
+          {children}
         </ContentArea>
-      </MainContainer>
+      </MainContent>
     </LayoutContainer>
   );
 };
 
-// 게임 전용 레이아웃
-export const GameLayout: React.FC<{ children: React.ReactNode }> = ({ 
-  children 
-}) => {
-  return (
-    <AppLayout
-      showSidebar={true}
-      backgroundColor="#0f172a"
-      maxWidth={undefined}
-    >
-      {children}
-    </AppLayout>
-  );
-};
+// 편의성을 위한 래퍼 컴포넌트들
+export const PublicLayout: React.FC<Omit<AppLayoutProps, 'layoutType'>> = (props) => (
+  <AppLayout {...props} layoutType="sidebar" />
+);
 
+export const DashboardLayout: React.FC<Omit<AppLayoutProps, 'layoutType'>> = (props) => (
+  <AppLayout {...props} layoutType="sidebar" />
+);
 
-// PublicLayout - 인증 체크 없음 (홈, 커뮤니티 목록 등)
-export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <div>
-      <Sidebar />
-      <main>{children}</main>
-    </div>
-  );
-};
+export const HeaderLayout: React.FC<Omit<AppLayoutProps, 'layoutType'>> = (props) => (
+  <AppLayout {...props} layoutType="header" />
+);
 
-// DashboardLayout - 인증 체크 있음 (글쓰기, 프로필 등)
-export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <AuthGuard>
-      <div>
-        <Sidebar />
-        <main>{children}</main>
-      </div>
-    </AuthGuard>
-  );
-};
+export default AppLayout;
