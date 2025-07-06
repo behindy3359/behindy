@@ -379,10 +379,10 @@ export default function AboutPage() {
                 <strong>프로젝트:</strong> Behindy - 지하철 텍스트 어드벤처
               </div>
               <div className="contact-item">
-                <strong>개발 기간:</strong> 2024년 하반기
+                <strong>메일:</strong> 여기입니다.
               </div>
               <div className="contact-item">
-                <strong>목적:</strong> 웹 개발자 취업용 포트폴리오
+                <strong>깃허브:</strong> 여기입니다.
               </div>
             </div>
           </ContactSection>

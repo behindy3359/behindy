@@ -302,7 +302,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const navItems = [
     { path: '/', label: '홈', icon: Home },
     { path: '/about', label: '소개', icon: Info },
-    { path: '/metro', label: '지하철 노선도', icon: Train },
+    // { path: '/metro', label: '지하철 노선도', icon: Train },
     { path: '/community', label: '게시판', icon: MessageSquare },
   ];
 
@@ -425,7 +425,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               <Moon className="theme-icon" />
             )}
             <span className="theme-label">
-              {isDarkTheme ? '라이트 모드' : '다크 모드'}
+              {isDarkTheme ? '라이트 모드' : '다크 모드'} | 공사중
             </span>
           </button>
         </BottomSection>

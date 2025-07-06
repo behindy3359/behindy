@@ -389,17 +389,6 @@ const CommentItemComponent: React.FC<{
                   <Heart size={12} />
                   {likeCount > 0 && <span className="count">{likeCount}</span>}
                 </FooterButton>
-
-                {!isReply && (
-                  <FooterButton
-                    onClick={handleReply}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Reply size={12} />
-                    답글
-                  </FooterButton>
-                )}
               </FooterActions>
 
               <CommentTime>
