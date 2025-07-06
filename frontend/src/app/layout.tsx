@@ -2,7 +2,6 @@
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import type { Metadata } from 'next'
 
-// 🔥 메타데이터 설정 (브라우저 탭 제목)
 export const metadata: Metadata = {
   title: {
     default: 'Behindy - 지하철 텍스트 어드벤처',

@@ -64,11 +64,6 @@ const getErrorInfo = (errorCode: string) => {
         title: '로그인 정보가 올바르지 않습니다',
         message: '이메일 또는 비밀번호를 확인해주세요.',
       };
-    case 'account_locked':
-      return {
-        title: '계정이 잠겨있습니다',
-        message: '보안을 위해 계정이 일시적으로 잠겼습니다. 잠시 후 다시 시도해주세요.',
-      };
     case 'email_exists':
       return {
         title: '이미 사용 중인 이메일입니다',

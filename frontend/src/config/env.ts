@@ -31,16 +31,6 @@ interface EnvConfig {
     return value.toLowerCase() === 'true';
   }
   
-  function getNumberEnv(key: string, defaultValue: number): number {
-    const value = process.env[key];
-    if (!value) return defaultValue;
-    const parsed = parseInt(value, 10);
-    if (isNaN(parsed)) {
-      throw new Error(`Invalid number value for ${key}: ${value}`);
-    }
-    return parsed;
-  }
-  
   // 환경변수 설정 객체
   export const env: EnvConfig = {
     // API URLs

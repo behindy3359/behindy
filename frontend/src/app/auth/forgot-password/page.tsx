@@ -151,10 +151,8 @@ function ForgotPasswordContent() {
       setIsLoading(true);
       setError('');
 
-      // TODO: 실제 비밀번호 재설정 API 호출
       // const response = await api.post('/auth/forgot-password', data);
-      
-      // 시뮬레이션
+      // 임시로 동작하게...      
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       setSubmittedEmail(data.email);
