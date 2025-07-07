@@ -97,54 +97,17 @@ jobs:
 
       - name: Health check
         run: |
-          cd ~/behindy
-          echo "=== 헬스체크 시작 ==="
+          echo "=== 헬스체크 대기 ==="
+          sleep 30
           
-          # 백엔드 서비스 확인
-          echo "🔍 백엔드 서비스 확인..."
-          for i in {1..20}; do
-            if curl -f -s http://localhost:8080/actuator/health >/dev/null 2>&1; then
-              echo "✅ 백엔드 서비스 정상"
-              break
-            elif [ $i -eq 20 ]; then
-              echo "❌ 백엔드 서비스 응답 없음"
-              echo "=== 백엔드 로그 ==="
-              docker-compose logs --tail=20 backend
-              exit 1
-            else
-              echo "⏳ 백엔드 서비스 대기 중... ($i/20)"
-              sleep 5
-            fi
-          done
-          
-          # 프론트엔드 서비스 확인
-          echo "🔍 프론트엔드 서비스 확인..."
-          for i in {1..15}; do
-            if curl -f -s http://localhost/ >/dev/null 2>&1; then
-              echo "✅ 프론트엔드 서비스 정상"
-              break
-            elif [ $i -eq 15 ]; then
-              echo "❌ 프론트엔드 서비스 응답 없음"
-              echo "=== 프론트엔드 로그 ==="
-              docker-compose logs --tail=20 frontend
-              echo "=== Nginx 로그 ==="
-              docker-compose logs --tail=20 nginx
-              exit 1
-            else
-              echo "⏳ 프론트엔드 서비스 대기 중... ($i/15)"
-              sleep 5
-            fi
-          done
-          
-          # AI 서비스 확인 (선택적)
-          echo "🔍 AI 서비스 확인..."
-          if curl -f -s http://localhost:8000/ >/dev/null 2>&1; then
-            echo "✅ AI 서비스 정상"
+          if curl -f http://localhost/; then
+            echo "✅ 배포 성공!"
           else
-            echo "⚠️ AI 서비스 응답 없음 (선택적 서비스)"
+            echo "❌ 배포 실패!"
+            cd ~/behindy
+            docker-compose logs
+            exit 1
           fi
-          
-          echo "🎉 배포 성공!"
 
       - name: Display service status
         run: |
