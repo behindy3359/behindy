@@ -1,14 +1,30 @@
 services:
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_AI_URL=${NEXT_PUBLIC_AI_URL}
+        - NEXT_PUBLIC_DEV_MODE=${NEXT_PUBLIC_DEV_MODE}
+        - NEXT_PUBLIC_LOG_LEVEL=${NEXT_PUBLIC_LOG_LEVEL}
+        - NEXT_PUBLIC_TOKEN_KEY=${NEXT_PUBLIC_TOKEN_KEY}
+        - NEXT_PUBLIC_REFRESH_TOKEN_KEY=${NEXT_PUBLIC_REFRESH_TOKEN_KEY}
+        - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
+        - NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
     container_name: frontend
     restart: always
     environment:
-      - NEXT_PUBLIC_API_URL=https://behindy.me/api
-      - NEXT_PUBLIC_AI_URL=https://behindy.me/ai
-      - TZ=Asia/Seoul  # 시간대 추가
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_AI_URL=${NEXT_PUBLIC_AI_URL}
+      - NEXT_PUBLIC_DEV_MODE=${NEXT_PUBLIC_DEV_MODE}
+      - NEXT_PUBLIC_LOG_LEVEL=${NEXT_PUBLIC_LOG_LEVEL}
+      - NEXT_PUBLIC_TOKEN_KEY=${NEXT_PUBLIC_TOKEN_KEY}
+      - NEXT_PUBLIC_REFRESH_TOKEN_KEY=${NEXT_PUBLIC_REFRESH_TOKEN_KEY}
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
+      - NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
+      - TZ=Asia/Seoul
     volumes:
-      - /etc/localtime:/etc/localtime:ro  # 호스트 시간 동기화
+      - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
       - internal
@@ -30,7 +46,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_URL=db:5432/behindy
+      - DB_URL=db:5432/${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       
@@ -42,7 +58,7 @@ services:
       - FIELD_KEY=${FIELD_KEY}
       - TABLE_KEY=${TABLE_KEY}
       
-      - SEOUL_METRO_API_KEY=${SEOUL_METRO_API_KEY:-TEMP_KEY}
+      - SEOUL_METRO_API_KEY=${SEOUL_METRO_API_KEY}
       - SEOUL_METRO_API_BASE_URL=http://swopenapi.seoul.go.kr/api/subway
       - SEOUL_METRO_API_ENABLED=${METRO_API_ENABLED}
       - SEOUL_METRO_API_TIMEOUT=10000
@@ -51,9 +67,9 @@ services:
       - SEOUL_METRO_CACHE_TTL=180
       - SEOUL_METRO_API_UPDATE_INTERVAL=${METRO_UPDATE_INTERVAL}
       - SEOUL_METRO_MONITORING_DAILY_LIMIT=${METRO_DAILY_LIMIT}
-      - TZ=Asia/Seoul  # 시간대 추가
+      - TZ=Asia/Seoul
     volumes:
-      - /etc/localtime:/etc/localtime:ro  # 호스트 시간 동기화
+      - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
       - internal
@@ -73,9 +89,9 @@ services:
     expose:
       - 8000
     environment:
-      - TZ=Asia/Seoul  # 시간대 추가
+      - TZ=Asia/Seoul
     volumes:
-      - /etc/localtime:/etc/localtime:ro  # 호스트 시간 동기화
+      - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
       - internal
@@ -132,7 +148,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
-      - /etc/localtime:/etc/localtime:ros
+      - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     depends_on:
       - frontend

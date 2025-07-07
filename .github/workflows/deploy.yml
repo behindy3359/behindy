@@ -34,30 +34,223 @@ jobs:
           git reset --hard origin/main
           echo "[+] Force sync complete"
 
-      - name: Build and restart containers
+      - name: Verify environment file
         run: |
           cd ~/behindy
           
-          docker-compose down --volumes --remove-orphans
-          docker-compose up --build -d
+          # 🔥 환경변수 파일 확인
+          if [ ! -f .env ]; then
+            echo "❌ .env 파일이 없습니다!"
+            echo "📋 .env.example을 참고하여 .env 파일을 생성해주세요."
+            echo ""
+            echo "다음 명령어로 생성할 수 있습니다:"
+            echo "cp .env.example .env"
+            echo "nano .env  # 실제 값들로 편집"
+            exit 1
+          fi
           
-          docker builder prune -f
+          # 🔥 필수 환경변수 확인
+          echo "✅ .env 파일 확인됨"
+          echo "🔍 필수 환경변수 검증 중..."
+          
+          source .env
+          
+          # Next.js 빌드에 필요한 환경변수들 확인
+          required_vars=(
+            "NEXT_PUBLIC_API_URL"
+            "NEXT_PUBLIC_AI_URL" 
+            "NEXT_PUBLIC_TOKEN_KEY"
+            "NEXT_PUBLIC_REFRESH_TOKEN_KEY"
+            "NEXT_PUBLIC_APP_NAME"
+            "NEXT_PUBLIC_APP_VERSION"
+            "DB_USER"
+            "DB_PASS"
+            "DB_NAME"
+            "REDIS_PASSWORD"
+            "JWT_SECRET"
+          )
+          
+          missing_vars=()
+          for var in "${required_vars[@]}"; do
+            if [ -z "${!var}" ]; then
+              missing_vars+=("$var")
+            fi
+          done
+          
+          if [ ${#missing_vars[@]} -ne 0 ]; then
+            echo "❌ 다음 환경변수들이 설정되지 않았습니다:"
+            printf '%s\n' "${missing_vars[@]}"
+            echo ""
+            echo "📋 .env 파일에서 해당 변수들을 설정해주세요."
+            exit 1
+          fi
+          
+          echo "✅ 모든 필수 환경변수가 설정되었습니다."
+          
+          # 🔥 환경변수 값 검증 (민감정보 제외)
+          echo "🔧 환경변수 설정 확인:"
+          echo "  - NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL"
+          echo "  - NEXT_PUBLIC_AI_URL: $NEXT_PUBLIC_AI_URL"
+          echo "  - NEXT_PUBLIC_APP_NAME: $NEXT_PUBLIC_APP_NAME"
+          echo "  - NEXT_PUBLIC_APP_VERSION: $NEXT_PUBLIC_APP_VERSION"
+          echo "  - DB_NAME: $DB_NAME"
+          echo "  - DB_USER: $DB_USER"
+
+      - name: Stop existing containers
+        run: |
+          cd ~/behindy
+          echo "🛑 기존 컨테이너 중지 중..."
+          
+          # 컨테이너 graceful 중지 (30초 타임아웃)
+          docker-compose down --timeout 30
+          
+          echo "✅ 컨테이너 중지 완료"
+
+      - name: Clean up old images
+        run: |
+          cd ~/behindy
+          echo "🧹 오래된 이미지 정리 중..."
+          
+          # 사용하지 않는 이미지들 정리
+          docker image prune -f
+          
+          # behindy 관련 이미지들 정리 (latest 태그가 아닌 것들)
+          docker images | grep behindy | grep -v latest | awk '{print $3}' | xargs -r docker rmi -f || true
+          
+          echo "✅ 이미지 정리 완료"
+
+      - name: Build and start containers
+        run: |
+          cd ~/behindy
+          echo "🏗️ 컨테이너 빌드 및 시작 중..."
+          
+          # 🔥 환경변수 파일 로드하여 빌드
+          set -a  # 모든 변수를 export
+          source .env
+          set +a
+          
+          # 빌드 캐시 없이 새로 빌드 (frontend만)
+          echo "📦 프론트엔드 이미지 새로 빌드 중..."
+          docker-compose build --no-cache frontend
+          
+          # 다른 서비스들은 캐시 사용하여 빌드
+          echo "📦 다른 서비스들 빌드 중..."
+          docker-compose build backend aiserver
+          
+          # 모든 컨테이너 시작
+          echo "🚀 모든 서비스 시작 중..."
+          docker-compose up -d
+          
+          echo "✅ 컨테이너 시작 완료"
+
+      - name: Wait for services
+        run: |
+          echo "⏳ 서비스 시작 대기 중..."
+          sleep 15
+          
+          echo "🔍 컨테이너 상태 확인..."
+          docker-compose ps
 
       - name: Health check
         run: |
-          echo "=== 헬스체크 대기 ==="
-          sleep 30
+          cd ~/behindy
+          echo "=== 헬스체크 시작 ==="
           
-          if curl -f http://localhost/; then
-            echo "✅ 배포 성공!"
+          # 🔥 개별 서비스 헬스체크
+          echo "🔍 백엔드 서비스 확인..."
+          for i in {1..12}; do  # 최대 1분 대기
+            if curl -f -s http://localhost:8080/actuator/health >/dev/null 2>&1; then
+              echo "✅ 백엔드 서비스 정상"
+              break
+            elif [ $i -eq 12 ]; then
+              echo "❌ 백엔드 서비스 응답 없음"
+              docker-compose logs backend
+              exit 1
+            else
+              echo "⏳ 백엔드 서비스 대기 중... ($i/12)"
+              sleep 5
+            fi
+          done
+          
+          echo "🔍 프론트엔드 서비스 확인..."
+          for i in {1..12}; do  # 최대 1분 대기
+            if curl -f -s http://localhost/ >/dev/null 2>&1; then
+              echo "✅ 프론트엔드 서비스 정상"
+              break
+            elif [ $i -eq 12 ]; then
+              echo "❌ 프론트엔드 서비스 응답 없음"
+              docker-compose logs frontend
+              docker-compose logs nginx
+              exit 1
+            else
+              echo "⏳ 프론트엔드 서비스 대기 중... ($i/12)"
+              sleep 5
+            fi
+          done
+          
+          echo "🔍 AI 서비스 확인..."
+          if curl -f -s http://localhost:8000/ >/dev/null 2>&1; then
+            echo "✅ AI 서비스 정상"
           else
-            echo "❌ 배포 실패!"
-            docker-compose logs
-            exit 1
+            echo "⚠️ AI 서비스 응답 없음 (선택적 서비스)"
           fi
+          
+          echo "🎉 배포 성공!"
+
+      - name: Display service status
+        run: |
+          cd ~/behindy
+          echo "=== 최종 서비스 상태 ==="
+          
+          echo "📊 컨테이너 상태:"
+          docker-compose ps
+          
+          echo ""
+          echo "💾 디스크 사용량:"
+          df -h
+          
+          echo ""
+          echo "🐳 Docker 이미지 목록:"
+          docker images | head -10
+          
+          echo ""
+          echo "🔗 서비스 접속 정보:"
+          echo "  - 프론트엔드: http://$(curl -s ifconfig.me)/"
+          echo "  - 백엔드 API: http://$(curl -s ifconfig.me):8080/"
+          echo "  - AI 서비스: http://$(curl -s ifconfig.me):8000/"
 
       - name: Final cleanup
         run: |
-          docker image prune -f
+          cd ~/behindy
+          echo "🧹 최종 정리 작업..."
+          
+          # 빌드 캐시 정리
+          docker builder prune -f
+          
+          # 사용하지 않는 볼륨 정리
+          docker volume prune -f
+          
+          # 사용하지 않는 네트워크 정리  
+          docker network prune -f
+          
           echo "=== 최종 디스크 상태 ==="
           df -h
+          
+          echo "✅ 배포 완료!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "💥 배포 실패 - 로그 정보:"
+          echo ""
+          echo "=== 컨테이너 상태 ==="
+          docker-compose ps || true
+          echo ""
+          echo "=== 최근 로그 (frontend) ==="
+          docker-compose logs --tail=50 frontend || true
+          echo ""
+          echo "=== 최근 로그 (backend) ==="  
+          docker-compose logs --tail=50 backend || true
+          echo ""
+          echo "=== 최근 로그 (nginx) ==="
+          docker-compose logs --tail=50 nginx || true

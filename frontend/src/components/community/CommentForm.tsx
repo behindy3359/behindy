@@ -13,10 +13,7 @@ import { api, API_ENDPOINTS } from '@/config';
 import type { Comment, CreateCommentRequest } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 
-// ================================================================
 // Types & Validation
-// ================================================================
-
 const isAxiosError = (error: unknown): error is {
   response?: {
     status?: number;
@@ -46,10 +43,7 @@ const commentSchema = yup.object({
     .max(1000, '댓글은 최대 1000자까지 입력 가능합니다'),
 });
 
-// ================================================================
 // Styled Components
-// ================================================================
-
 const FormContainer = styled(motion.div)`
   background: #f9fafb;
   border-radius: 8px;
@@ -175,10 +169,7 @@ const Tips = styled.div`
   }
 `;
 
-// ================================================================
 // Component Props (export 추가)
-// ================================================================
-
 export interface CommentFormProps {
   postId: number;
   parentCommentId?: number;
@@ -189,10 +180,7 @@ export interface CommentFormProps {
   autoFocus?: boolean;
 }
 
-// ================================================================
 // Component
-// ================================================================
-
 export const CommentForm: React.FC<CommentFormProps> = ({
   postId,
   editingComment,
@@ -298,7 +286,6 @@ export const CommentForm: React.FC<CommentFormProps> = ({
         await createCommentMutation.mutateAsync(commentData);
       }
     } catch (error) {
-      // 에러는 mutation의 onError에서 처리
       console.error('Comment submission error:', error);
     }
   };

@@ -87,7 +87,6 @@ const getErrorInfo = (errorCode: string) => {
   }
 };
 
-// SearchParams를 사용하는 컴포넌트를 별도로 분리
 function AuthErrorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();

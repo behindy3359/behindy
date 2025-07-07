@@ -1,4 +1,3 @@
-// RealtimeMetroMap.tsx
 import React, { useMemo } from 'react';
 import { getVisibleLineConnections } from '@/data/metro/metroLineConnections';
 import { MapContainer } from './styles';

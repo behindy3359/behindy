@@ -1,4 +1,3 @@
-// frontend/src/config/env.ts
 interface EnvConfig {
   // API URLs
   API_URL: string;
@@ -17,19 +16,21 @@ interface EnvConfig {
   APP_VERSION: string;
 }
 
-// 🔥 환경변수 검증 및 파싱 (더 안전한 방식)
+// 환경변수 검증 및 파싱 (더 안전한 방식)
 function getEnvVar(key: string, defaultValue?: string): string {
-  // 클라이언트 사이드에서는 NEXT_PUBLIC_ 변수만 접근 가능
-  const value = typeof window !== 'undefined' 
-    ? (window as any).__ENV__?.[key] || process.env[key] 
-    : process.env[key];
+  // Next.js 빌드 시점과 런타임 모두 고려
+  const value = process.env[key];
     
-  if (value) return value;
+  if (value !== undefined && value !== '') return value;
   if (defaultValue !== undefined) return defaultValue;
   
-  // 🚨 환경변수가 없으면 명확한 에러 메시지 출력
+  // 환경변수가 없으면 명확한 에러 메시지 출력
   console.error(`❌ Missing required environment variable: ${key}`);
-  console.error(`🔍 Available environment variables:`, Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_')));
+  console.error(`🔍 Available NEXT_PUBLIC_ variables:`, 
+    Object.keys(process.env)
+      .filter(k => k.startsWith('NEXT_PUBLIC_'))
+      .reduce((acc, key) => ({ ...acc, [key]: process.env[key] || 'undefined' }), {})
+  );
   
   throw new Error(`Missing required environment variable: ${key}`);
 }
@@ -39,33 +40,28 @@ function getBooleanEnv(key: string, defaultValue: boolean = false): boolean {
   return value.toLowerCase() === 'true';
 }
 
-// 🔥 환경변수 설정 객체 (빌드 시점에 검증)
+// 환경변수 설정 객체
 export const env: EnvConfig = (() => {
   try {
     console.log('🔧 Loading environment variables...');
     
-    // 현재 사용 가능한 환경변수 로깅
-    const availableEnvVars = Object.keys(process.env).filter(key => 
-      key.startsWith('NEXT_PUBLIC_')
-    );
-    console.log('📋 Available NEXT_PUBLIC_ variables:', availableEnvVars);
-    
+    // Docker 환경에서 사용할 기본값들
     const config = {
       // API URLs
-      API_URL: getEnvVar('NEXT_PUBLIC_API_URL'),
-      AI_URL: getEnvVar('NEXT_PUBLIC_AI_URL'),
+      API_URL: getEnvVar('NEXT_PUBLIC_API_URL', 'https://behindy.me/api'),
+      AI_URL: getEnvVar('NEXT_PUBLIC_AI_URL', 'https://behindy.me/ai'),
       
       // 개발 모드
-      DEV_MODE: getBooleanEnv('NEXT_PUBLIC_DEV_MODE', true),
-      LOG_LEVEL: (getEnvVar('NEXT_PUBLIC_LOG_LEVEL', 'debug') as EnvConfig['LOG_LEVEL']),
+      DEV_MODE: getBooleanEnv('NEXT_PUBLIC_DEV_MODE', false),
+      LOG_LEVEL: (getEnvVar('NEXT_PUBLIC_LOG_LEVEL', 'info') as EnvConfig['LOG_LEVEL']),
       
       // 토큰 관리
-      TOKEN_KEY: getEnvVar('NEXT_PUBLIC_TOKEN_KEY'),
-      REFRESH_TOKEN_KEY: getEnvVar('NEXT_PUBLIC_REFRESH_TOKEN_KEY'),
+      TOKEN_KEY: getEnvVar('NEXT_PUBLIC_TOKEN_KEY', 'behindy_access_token'),
+      REFRESH_TOKEN_KEY: getEnvVar('NEXT_PUBLIC_REFRESH_TOKEN_KEY', 'behindy_refresh_token'),
       
       // 앱 정보
-      APP_NAME: getEnvVar('NEXT_PUBLIC_APP_NAME'),
-      APP_VERSION: getEnvVar('NEXT_PUBLIC_APP_VERSION'),
+      APP_NAME: getEnvVar('NEXT_PUBLIC_APP_NAME', 'Behindy'),
+      APP_VERSION: getEnvVar('NEXT_PUBLIC_APP_VERSION', '1.0.0'),
     };
     
     console.log('✅ Environment configuration loaded successfully');
@@ -85,7 +81,6 @@ export const env: EnvConfig = (() => {
       console.group('🔍 Environment Debug Information');
       console.log('Current working directory:', process.cwd());
       console.log('NODE_ENV:', process.env.NODE_ENV);
-      console.log('All environment variables:', process.env);
       console.log('NEXT_PUBLIC_ variables only:', 
         Object.entries(process.env)
           .filter(([key]) => key.startsWith('NEXT_PUBLIC_'))
@@ -98,7 +93,7 @@ export const env: EnvConfig = (() => {
   }
 })();
 
-// 🔥 런타임 환경변수 체크 함수 (개발 도구)
+//  런타임 환경변수 체크 함수
 export const debugEnvironment = () => {
   if (typeof window !== 'undefined') {
     console.group('🔍 Client-side Environment Debug');
@@ -117,7 +112,7 @@ export const debugEnvironment = () => {
   }
 };
 
-// 개발용 환경변수 출력 (프로덕션에서는 제외)
+// 개발용 환경변수 출력
 if (env.DEV_MODE && typeof window !== 'undefined') {
   debugEnvironment();
 }
