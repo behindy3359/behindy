@@ -35,21 +35,21 @@ export interface InputProps {
 }
 
 // ================================================================
-// Styled Components (props 필터링 추가)
+// Styled Components (theme 색상 시스템 적용)
 // ================================================================
 
 const InputWrapper = styled.div<{ $fullWidth?: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ${({ theme }) => theme.spacing[2]};
   width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
 `;
 
 const Label = styled.label`
-  font-size: 0.875rem;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.25rem;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: ${({ theme }) => theme.spacing[1]};
 `;
 
 const InputContainer = styled.div.withConfig({
@@ -60,7 +60,7 @@ const InputContainer = styled.div.withConfig({
   display: flex;
   align-items: center;
   
-  ${({ size }) => {
+  ${({ size, theme }) => {
     switch (size) {
       case 'sm':
         return `height: 2.25rem;`;
@@ -83,35 +83,35 @@ const StyledInput = styled.input.withConfig({
   size?: string;
 }>`
   width: 100%;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: #111827;
-  background: #ffffff;
+  border: 2px solid ${({ theme }) => theme.colors.border.medium};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.primary};
+  background: ${({ theme }) => theme.colors.background.primary};
   transition: all 0.2s ease-in-out;
 
-  ${({ size }) => {
+  ${({ size, theme }) => {
     switch (size) {
       case 'sm':
         return `
-          padding: 0.5rem 0.75rem;
+          padding: ${theme.spacing[2]} ${theme.spacing[4]};
           height: 2.25rem;
         `;
       case 'lg':
         return `
-          padding: 0.875rem 1rem;
+          padding: ${theme.spacing[4]} ${theme.spacing[4]};
           height: 3rem;
-          font-size: 1rem;
+          font-size: ${theme.typography.fontSize.base};
         `;
       default:
         return `
-          padding: 0.625rem 0.875rem;
+          padding: ${theme.spacing[2]} ${theme.spacing[4]};
           height: 2.5rem;
         `;
     }
   }}
 
-  ${({ hasLeftIcon, size }) => {
+  ${({ hasLeftIcon, size, theme }) => {
     if (hasLeftIcon) {
       const padding = size === 'lg' ? '2.5rem' : size === 'sm' ? '2rem' : '2.25rem';
       return `padding-left: ${padding};`;
@@ -119,7 +119,7 @@ const StyledInput = styled.input.withConfig({
     return '';
   }}
 
-  ${({ hasRightIcon, size }) => {
+  ${({ hasRightIcon, size, theme }) => {
     if (hasRightIcon) {
       const padding = size === 'lg' ? '2.5rem' : size === 'sm' ? '2rem' : '2.25rem';
       return `padding-right: ${padding};`;
@@ -128,43 +128,45 @@ const StyledInput = styled.input.withConfig({
   }}
 
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.colors.text.tertiary};
   }
 
   &:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: ${({ theme }) => theme.colors.primary[500]};
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 
   &:disabled {
-    background: #f9fafb;
-    color: #9ca3af;
+    background: ${({ theme }) => theme.colors.background.secondary};
+    color: ${({ theme }) => theme.colors.text.tertiary};
     cursor: not-allowed;
   }
 
   &:read-only {
-    background: #f9fafb;
+    background: ${({ theme }) => theme.colors.background.secondary};
   }
 
-  ${({ hasError }) =>
+  /* Error state */
+  ${({ hasError, theme }) =>
     hasError &&
     `
-    border-color: #ef4444;
+    border-color: ${theme.colors.error};
     
     &:focus {
-      border-color: #ef4444;
+      border-color: ${theme.colors.error};
       box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
     }
   `}
 
-  ${({ hasSuccess }) =>
+  /* Success state */
+  ${({ hasSuccess, theme }) =>
     hasSuccess &&
     `
-    border-color: #10b981;
+    border-color: ${theme.colors.success};
     
     &:focus {
-      border-color: #10b981;
+      border-color: ${theme.colors.success};
       box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
   `}
@@ -177,12 +179,13 @@ const IconWrapper = styled.div<{ position: 'left' | 'right'; size?: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.text.secondary};
   pointer-events: none;
   z-index: 1;
 
-  ${({ position, size }) => {
-    const offset = size === 'lg' ? '0.875rem' : size === 'sm' ? '0.625rem' : '0.75rem';
+  ${({ position, size, theme }) => {
+    const offset = size === 'lg' ? theme.spacing[4] : 
+                   size === 'sm' ? theme.spacing[2] : theme.spacing[4];
     return position === 'left' ? `left: ${offset};` : `right: ${offset};`;
   }}
 
@@ -194,27 +197,29 @@ const IconWrapper = styled.div<{ position: 'left' | 'right'; size?: string }>`
 
 const ToggleButton = styled.button<{ size?: string }>`
   position: absolute;
-  right: ${({ size }) => (size === 'lg' ? '0.875rem' : size === 'sm' ? '0.625rem' : '0.75rem')};
+  right: ${({ size, theme }) => 
+    size === 'lg' ? theme.spacing[4] : 
+    size === 'sm' ? theme.spacing[2] : theme.spacing[4]};
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.text.secondary};
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
+  padding: ${({ theme }) => theme.spacing[1]};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
   display: flex;
   align-items: center;
   justify-content: center;
   transition: color 0.2s ease;
 
   &:hover {
-    color: #374151;
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 
   &:focus {
     outline: none;
-    color: #667eea;
+    color: ${({ theme }) => theme.colors.primary[500]};
   }
 
   svg {
@@ -224,22 +229,22 @@ const ToggleButton = styled.button<{ size?: string }>`
 `;
 
 const HelperText = styled.div<{ hasError?: boolean; hasSuccess?: boolean }>`
-  font-size: 0.75rem;
-  color: #6b7280;
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  color: ${({ theme }) => theme.colors.text.secondary};
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: ${({ theme }) => theme.spacing[1]};
 
-  ${({ hasError }) =>
+  ${({ hasError, theme }) =>
     hasError &&
     `
-    color: #ef4444;
+    color: ${theme.colors.error};
   `}
 
-  ${({ hasSuccess }) =>
+  ${({ hasSuccess, theme }) =>
     hasSuccess &&
     `
-    color: #10b981;
+    color: ${theme.colors.success};
   `}
 
   svg {
@@ -291,16 +296,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const hasRightIcon = Boolean(rightIcon) || isPassword;
 
     const inputType = isPassword && showPassword ? 'text' : type;
-
-    // const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    //   setIsFocused(true);
-    //   onFocus?.(e);
-    // };
-
-    // const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    //   setIsFocused(false);
-    //   onBlur?.(e);
-    // };
 
     const togglePasswordVisibility = () => {
       setShowPassword(!showPassword);

@@ -1,5 +1,3 @@
-// frontend/src/components/community/PostForm.tsx - 오류 수정 버전
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -23,9 +21,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, API_ENDPOINTS } from '@/config';
 import type { Post, CreatePostRequest } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
+import { 
+  validators, 
+  apiErrorHandler, 
+  INPUT_LIMITS,
+  SUCCESS_MESSAGES,
+  ERROR_MESSAGES
+} from '@/utils/common';
 
 // ================================================================
-// Types & Validation
+// Types & Validation (상수 중앙화 적용)
 // ================================================================
 
 interface PostFormData {
@@ -33,17 +38,32 @@ interface PostFormData {
   content: string;
 }
 
+// 🔥 상수를 활용한 검증 스키마
 const postSchema = yup.object({
   title: yup
     .string()
     .required('제목을 입력해주세요')
-    .min(2, '제목은 최소 2자 이상이어야 합니다')
-    .max(100, '제목은 최대 100자까지 입력 가능합니다'),
+    .test('title-validation', function(value) {
+      if (!value) return this.createError({ message: '제목을 입력해주세요' });
+      
+      const result = validators.postTitle(value);
+      if (!result.isValid) {
+        return this.createError({ message: result.message });
+      }
+      return true;
+    }),
   content: yup
     .string()
     .required('내용을 입력해주세요')
-    .min(10, '내용은 최소 10자 이상이어야 합니다')
-    .max(5000, '내용은 최대 5000자까지 입력 가능합니다'),
+    .test('content-validation', function(value) {
+      if (!value) return this.createError({ message: '내용을 입력해주세요' });
+      
+      const result = validators.postContent(value);
+      if (!result.isValid) {
+        return this.createError({ message: result.message });
+      }
+      return true;
+    }),
 });
 
 // ================================================================
@@ -58,16 +78,16 @@ export interface PostFormProps {
 }
 
 // ================================================================
-// Styled Components
+// Styled Components (theme 색상 시스템 적용)
 // ================================================================
 
 const Container = styled.div`
-  max-width: 900px;
+  max-width: ${({ theme }) => theme.container.lg};
   margin: 0 auto;
-  padding: 24px;
+  padding: ${({ theme }) => theme.spacing[6]};
   
   @media (max-width: 1200px) {
-    padding: 16px;
+    padding: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
@@ -75,86 +95,87 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  padding-bottom: ${({ theme }) => theme.spacing[4]};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
 const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: ${({ theme }) => theme.spacing[4]};
 `;
 
 const BackButton = styled(motion.button)`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
   background: none;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  color: #6b7280;
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.secondary};
   cursor: pointer;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
   transition: all 0.2s ease;
   
   &:hover {
-    background: #f9fafb;
-    color: #374151;
+    background: ${({ theme }) => theme.colors.background.secondary};
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 `;
 
 const Title = styled.h1`
-  font-size: 24px;
+  font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
   font-weight: 700;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: ${({ theme }) => theme.spacing[2]};
 `;
 
 const Actions = styled.div`
   display: flex;
-  gap: 12px;
+  gap: ${({ theme }) => theme.spacing[4]};
   align-items: center;
 `;
 
 const FormContainer = styled(motion.div)`
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  background: ${({ theme }) => theme.colors.background.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.xl};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
   overflow: hidden;
+  box-shadow: ${({ theme }) => theme.shadows.card};
 `;
 
 const FormSection = styled.div`
-  padding: 24px;
+  padding: ${({ theme }) => theme.spacing[6]};
   
   &:not(:last-child) {
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
   }
 `;
 
 const TitleSection = styled(FormSection)`
   .title-input {
     .input-wrapper {
-      margin-bottom: 8px;
+      margin-bottom: ${({ theme }) => theme.spacing[2]};
     }
     
     input {
-      font-size: 20px;
+      font-size: ${({ theme }) => theme.typography.fontSize.xl};
       font-weight: 600;
       border: none;
-      padding: 12px 0;
+      padding: ${({ theme }) => theme.spacing[4]} 0;
       
       &:focus {
         box-shadow: none;
-        border-bottom: 2px solid #667eea;
+        border-bottom: 2px solid ${({ theme }) => theme.colors.primary[500]};
       }
       
       &::placeholder {
-        color: #9ca3af;
+        color: ${({ theme }) => theme.colors.text.tertiary};
         font-weight: 400;
       }
     }
@@ -162,8 +183,8 @@ const TitleSection = styled(FormSection)`
   
   .char-count {
     text-align: right;
-    font-size: 12px;
-    color: #9ca3af;
+    font-size: ${({ theme }) => theme.typography.fontSize.xs};
+    color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `;
 
@@ -173,32 +194,33 @@ const ContentSection = styled(FormSection)`
     min-height: 400px;
     border: none;
     resize: vertical;
-    font-size: 16px;
+    font-size: ${({ theme }) => theme.typography.fontSize.base};
     line-height: 1.6;
     font-family: inherit;
     padding: 0;
+    color: ${({ theme }) => theme.colors.text.primary};
     
     &:focus {
       outline: none;
     }
     
     &::placeholder {
-      color: #9ca3af;
+      color: ${({ theme }) => theme.colors.text.tertiary};
     }
   }
   
   .char-count {
     text-align: right;
-    font-size: 12px;
-    color: #9ca3af;
-    margin-top: 8px;
+    font-size: ${({ theme }) => theme.typography.fontSize.xs};
+    color: ${({ theme }) => theme.colors.text.tertiary};
+    margin-top: ${({ theme }) => theme.spacing[2]};
   }
 `;
 
 const PreviewMode = styled.div`
   .preview-content {
     line-height: 1.8;
-    color: #374151;
+    color: ${({ theme }) => theme.colors.text.primary};
     white-space: pre-wrap;
     word-break: break-word;
     
@@ -225,46 +247,49 @@ const BottomActions = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
+  padding: ${({ theme }) => theme.spacing[6]};
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-top: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
 const ActionGroup = styled.div`
   display: flex;
-  gap: 12px;
+  gap: ${({ theme }) => theme.spacing[4]};
   align-items: center;
 `;
 
 const PreviewToggle = styled.button<{ $active: boolean }>`
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  background: ${({ $active }) => $active ? '#667eea' : 'white'};
-  color: ${({ $active }) => $active ? 'white' : '#6b7280'};
-  border-radius: 6px;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  background: ${({ $active, theme }) => 
+    $active ? theme.colors.primary[500] : theme.colors.background.primary};
+  color: ${({ $active, theme }) => 
+    $active ? theme.colors.text.inverse : theme.colors.text.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   cursor: pointer;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${({ $active }) => $active ? '#5a67d8' : '#f9fafb'};
+    background: ${({ $active, theme }) => 
+      $active ? theme.colors.primary[600] : theme.colors.background.secondary};
   }
 `;
 
 const ErrorMessage = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[4]};
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #dc2626;
-  font-size: 14px;
-  margin-bottom: 16px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.error};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
 
 const LoadingOverlay = styled(motion.div)`
@@ -353,9 +378,6 @@ export const PostForm: React.FC<PostFormProps> = ({
       try {
         console.group('📝 게시글 생성 시작');
         console.log('요청 데이터:', data);
-        console.log('API 엔드포인트:', API_ENDPOINTS.POSTS.BASE);
-        console.log('사용자 정보:', user);
-        console.log('인증 상태:', isAuthenticated());
         
         const response = await api.post<Post>(API_ENDPOINTS.POSTS.BASE, data);
         console.log('✅ 게시글 생성 성공:', response);
@@ -363,47 +385,21 @@ export const PostForm: React.FC<PostFormProps> = ({
         return response;
       } catch (error: any) {
         console.group('❌ 게시글 생성 실패');
-        console.error('에러 객체:', error);
-        console.error('응답 상태:', error?.response?.status);
-        console.error('응답 데이터:', error?.response?.data);
-        console.error('응답 헤더:', error?.response?.headers);
-        console.error('요청 설정:', error?.config);
-        console.error('네트워크 에러:', error?.code);
-        console.error('메시지:', error?.message);
+        console.error('에러:', error);
         console.groupEnd();
         throw error;
       }
     },
     onSuccess: (newPost) => {
-      console.group('🎉 게시글 생성 뮤테이션 성공');
-      console.log('생성된 게시글:', newPost);
-      console.log('캐시 무효화 중...');
+      console.log('🎉 게시글 생성 완료:', newPost);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      console.log('onSuccess 콜백 실행:', !!onSuccess);
       onSuccess?.(newPost);
-      console.log('라우터 리다이렉트:', `/community/${newPost.id}`);
-      console.groupEnd();
       router.push(`/community/${newPost.id}`);
     },
     onError: (error: any) => {
-      console.group('💥 게시글 생성 뮤테이션 에러');
-      console.error('뮤테이션 에러:', error);
-      console.error('에러 타입:', typeof error);
-      console.error('에러 스택:', error?.stack);
-      
-      let errorMessage = '게시글 작성에 실패했습니다.';
-      
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-        console.log('서버 에러 메시지 사용:', errorMessage);
-      } else if (error?.message) {
-        errorMessage = error.message;
-        console.log('일반 에러 메시지 사용:', errorMessage);
-      }
-      
-      console.log('최종 에러 메시지:', errorMessage);
-      console.groupEnd();
-      setSubmitError(errorMessage);
+      // 🔥 통합된 에러 처리 사용
+      const errorInfo = apiErrorHandler.parseError(error);
+      setSubmitError(errorInfo.message);
     },
   });
 
@@ -429,11 +425,9 @@ export const PostForm: React.FC<PostFormProps> = ({
       router.push(`/community/${updatedPost.id}`);
     },
     onError: (error: any) => {
-      console.error('게시글 수정 뮤테이션 에러:', error);
-      const errorMessage = error?.response?.data?.message || 
-                         error?.message || 
-                         '게시글 수정에 실패했습니다.';
-      setSubmitError(errorMessage);
+      // 🔥 통합된 에러 처리 사용
+      const errorInfo = apiErrorHandler.parseError(error);
+      setSubmitError(errorInfo.message);
     },
   });
 
@@ -443,7 +437,7 @@ export const PostForm: React.FC<PostFormProps> = ({
       setSubmitError('');
       
       if (!data.title?.trim() || !data.content?.trim()) {
-        setSubmitError('제목과 내용을 모두 입력해주세요.');
+        setSubmitError(ERROR_MESSAGES.REQUIRED_FIELD); // 🔥 상수 사용
         return;
       }
       
@@ -459,7 +453,6 @@ export const PostForm: React.FC<PostFormProps> = ({
       }
     } catch (error) {
       console.error('폼 제출 에러:', error);
-      // 에러는 mutation의 onError에서 처리됨
     }
   };
 
@@ -506,7 +499,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           padding: '40px',
           color: '#ef4444' 
         }}>
-          게시글을 불러올 수 없습니다.
+          {ERROR_MESSAGES.UNKNOWN_ERROR} {/* 🔥 상수 사용 */}
           <br />
           <button 
             onClick={handleBack}
@@ -527,7 +520,7 @@ export const PostForm: React.FC<PostFormProps> = ({
     );
   }
 
-  // 편집 권한 확인 (로딩이 끝난 후)
+  // 편집 권한 확인
   if (mode === 'edit' && existingPost && existingPost.authorId !== user?.id) {
     return (
       <Container>
@@ -635,7 +628,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                   fullWidth
                 />
                 <div className="char-count">
-                  {watchedTitle.length}/100
+                  {watchedTitle.length}/{INPUT_LIMITS.POST_TITLE_MAX_LENGTH} {/* 🔥 상수 사용 */}
                 </div>
               </div>
             )}
@@ -667,7 +660,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                   </div>
                 )}
                 <div className="char-count">
-                  {watchedContent.length}/5000
+                  {watchedContent.length}/{INPUT_LIMITS.POST_CONTENT_MAX_LENGTH} {/* 🔥 상수 사용 */}
                 </div>
               </>
             )}

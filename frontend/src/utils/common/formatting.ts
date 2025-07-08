@@ -7,8 +7,7 @@ import { ko } from 'date-fns/locale';
  */
 export const formatters = {
   /**
-   * 상대적 시간 포맷팅 (예: "3분 전", "2시간 전")
-   * 기존: formatTimeAgo, formatRelativeTime 통합
+   * 상대적 시간 포맷팅 (예: "3분 전", "2시간 전"
    */
   relativeTime: (dateString: string | Date): string => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;

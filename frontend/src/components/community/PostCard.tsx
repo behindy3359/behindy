@@ -16,151 +16,152 @@ import type { Post } from '@/types/community/community';
 import { formatters } from '@/utils/common';
 
 // ================================================================
-// Styled Components
+// Styled Components (theme 색상 시스템 적용)
 // ================================================================
 
 const CardContainer = styled(motion.div)`
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  background: ${({ theme }) => theme.colors.background.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.xl};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
-  height: 320px; /* 🔥 고정 높이 */
+  height: 320px;
   display: flex;
-  flex-direction: column; /* 🎯 flex 컨테이너로 설정 */
+  flex-direction: column;
+  box-shadow: ${({ theme }) => theme.shadows.card};
   
   &:hover {
-    border-color: #667eea;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    border-color: ${({ theme }) => theme.colors.primary[500]};
+    box-shadow: ${({ theme }) => theme.shadows.lg};
     transform: translateY(-2px);
   }
 `;
 
 const CardHeader = styled.div`
-  padding: 16px 20px 12px 20px;
-  background: #f9fafb;
-  border-bottom: 1px solid #f3f4f6;
-  flex-shrink: 0; /* 🎯 헤더 크기 고정 */
+  padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+  flex-shrink: 0;
 `;
 
 const AuthorInfo = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
 const AuthorLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: ${({ theme }) => theme.spacing[2]};
 `;
 
 const Avatar = styled.div`
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: ${({ theme }) => theme.colors.text.inverse};
   font-weight: 600;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
 const AuthorName = styled.span`
   font-weight: 600;
-  color: #374151;
-  font-size: 14px;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
 const PostTime = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
-  color: #9ca3af;
-  font-size: 12px;
+  gap: ${({ theme }) => theme.spacing[1]};
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
 `;
 
 const MetroLine = styled.div<{ $lineNumber?: string }>`
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 11px;
+  gap: ${({ theme }) => theme.spacing[1]};
+  padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.borderRadius.xl};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: 600;
-  color: white;
+  color: ${({ theme }) => theme.colors.text.inverse};
   
-  ${({ $lineNumber }) => {
+  ${({ $lineNumber, theme }) => {
     switch($lineNumber) {
-      case '1': return 'background: #0052A4;'; // 1호선 블루
-      case '2': return 'background: #00A84D;'; // 2호선 그린
-      case '3': return 'background: #EF7C1C;'; // 3호선 오렌지
-      case '4': return 'background: #00A5DE;'; // 4호선 블루
-      default: return 'background: #6b7280;';  // 기본 회색
+      case '1': return `background: ${theme.colors.metro.line1};`;
+      case '2': return `background: ${theme.colors.metro.line2};`;
+      case '3': return `background: ${theme.colors.metro.line3};`;
+      case '4': return `background: ${theme.colors.metro.line4};`;
+      default: return `background: ${theme.colors.gray[500]};`;
     }
   }}
 `;
 
 const CardContent = styled.div`
-  padding: 20px;
-  flex: 1; /* 🎯 남은 공간 모두 차지 */
+  padding: ${({ theme }) => theme.spacing[6]};
+  flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* 내용이 넘치지 않도록 */
+  overflow: hidden;
 `;
 
 const PostTitle = styled.h3`
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.typography.fontSize.base};
   font-weight: 600;
-  color: #111827;
-  margin: 0 0 12px 0;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing[4]} 0;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  flex-shrink: 0; /* 🎯 타이틀 크기 고정 */
+  flex-shrink: 0;
 `;
 
 const PostPreview = styled.p`
-  color: #6b7280;
-  font-size: 14px;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  flex: 1; /* 🎯 남은 공간에서 늘어남 */
+  flex: 1;
 `;
 
 const CardFooter = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: #f9fafb;
-  border-top: 1px solid #f3f4f6;
-  flex-shrink: 0; /* 🎯 푸터를 하단에 고정 */
-  margin-top: auto; /* 🎯 푸터를 맨 아래로 밀어냄 */
+  padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-top: 1px solid ${({ theme }) => theme.colors.border.light};
+  flex-shrink: 0;
+  margin-top: auto;
 `;
 
 const StatsGroup = styled.div`
   display: flex;
-  gap: 16px;
+  gap: ${({ theme }) => theme.spacing[4]};
   align-items: center;
 `;
 
 const StatItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
-  color: #6b7280;
-  font-size: 13px;
+  gap: ${({ theme }) => theme.spacing[1]};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
   
   svg {
     width: 14px;
@@ -175,9 +176,9 @@ const StatItem = styled.div`
 const ReadMoreButton = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
-  color: #667eea;
-  font-size: 13px;
+  gap: ${({ theme }) => theme.spacing[1]};
+  color: ${({ theme }) => theme.colors.primary[500]};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: 500;
   
   svg {
@@ -193,13 +194,13 @@ const ReadMoreButton = styled.div`
 
 const HotBadge = styled.div`
   position: absolute;
-  top: 12px;
-  right: 12px;
-  background: #ef4444;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 11px;
+  top: ${({ theme }) => theme.spacing[4]};
+  right: ${({ theme }) => theme.spacing[4]};
+  background: ${({ theme }) => theme.colors.error};
+  color: ${({ theme }) => theme.colors.text.inverse};
+  padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.borderRadius.xl};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: 600;
   z-index: 1;
 `;
@@ -216,32 +217,23 @@ export interface PostCardProps {
 }
 
 // ================================================================
-// Helper Functions
+// Helper Functions (formatters 활용)
 // ================================================================
 
 const getAuthorInitial = (name: string): string => {
-  return name.charAt(0).toUpperCase();
+  return formatters.getUserInitial(name); // 🔥 통합된 함수 사용
 };
 
 const extractMetroLine = (content: string): string | null => {
-  // 게시글 내용에서 지하철 호선 추출 (1호선, 2호선 등)
   const lineMatch = content.match(/([1-4])호선/);
   return lineMatch ? lineMatch[1] : null;
 };
 
 const isHotPost = (post: Post): boolean => {
-  // HOT 게시글 판단 로직 (24시간 내 작성, 임시)
   const postDate = new Date(post.createdAt);
   const now = new Date();
   const hoursDiff = (now.getTime() - postDate.getTime()) / (1000 * 60 * 60);
   return hoursDiff < 24;
-};
-
-const truncateText = (text: string, maxLength: number): string => {
-  const cleanText = text.replace(/<[^>]*>/g, ''); // HTML 태그 제거
-  return cleanText.length > maxLength 
-    ? cleanText.substring(0, maxLength) + '...'
-    : cleanText;
 };
 
 // ================================================================
@@ -265,6 +257,10 @@ export const PostCard: React.FC<PostCardProps> = ({
       router.push(`/community/${post.id}`);
     }
   };
+
+  // 🔥 통합된 포맷터 사용
+  const timeAgo = formatters.relativeTime(post.createdAt);
+  const preview = formatters.createPostPreview(post.content, compact ? 80 : 120);
 
   return (
     <CardContainer
@@ -295,7 +291,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           
           <PostTime>
             <Clock size={12} />
-            {formatters.relativeTime(post.createdAt)}
+            {timeAgo} {/* 🔥 통합된 시간 포맷팅 */}
           </PostTime>
         </AuthorInfo>
       </CardHeader>
@@ -303,7 +299,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       <CardContent>
         <PostTitle>{post.title}</PostTitle>
         <PostPreview>
-          {truncateText(post.content, compact ? 80 : 120)}
+          {preview} {/* 🔥 통합된 텍스트 미리보기 */}
         </PostPreview>
       </CardContent>
 
@@ -311,17 +307,17 @@ export const PostCard: React.FC<PostCardProps> = ({
         <StatsGroup>
           <StatItem>
             <MessageSquare />
-            <span className="count">0</span> {/* 추후 API에서 댓글 수 제공 */}
+            <span className="count">0</span>
           </StatItem>
           
           <StatItem>
             <Heart />
-            <span className="count">0</span> {/* 추후 API에서 좋아요 수 제공 */}
+            <span className="count">0</span>
           </StatItem>
           
           <StatItem>
             <Eye />
-            <span className="count">0</span> {/* 추후 API에서 조회 수 제공 */}
+            <span className="count">0</span>
           </StatItem>
         </StatsGroup>
 

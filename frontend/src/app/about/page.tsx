@@ -9,20 +9,11 @@ import {
   Users, 
 } from 'lucide-react';
 import { PublicLayout } from '@/components/layout';
+import { PageContainer } from '@/styles/commonStyles';
 
 // ================================================================
 // Styled Components
 // ================================================================
-
-const Container = styled.div`
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 40px 24px;
-  
-  @media (max-width: 900px) {
-    padding: 24px 16px;
-  }
-`;
 
 const HeroSection = styled.div`
   text-align: center;
@@ -247,7 +238,7 @@ export default function AboutPage() {
 
   return (
     <PublicLayout>
-      <Container>
+      <PageContainer>
         {/* Hero Section */}
         <HeroSection>
           <motion.h1 
@@ -387,7 +378,7 @@ export default function AboutPage() {
             </div>
           </ContactSection>
         </motion.div>
-      </Container>
+      </PageContainer>
     </PublicLayout>
   );
 }

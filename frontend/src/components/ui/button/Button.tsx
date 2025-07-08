@@ -26,11 +26,10 @@ export interface ButtonProps {
 }
 
 // ================================================================
-// Styled Components (props 필터링 추가)
+// Styled Components (색상 시스템 통합)
 // ================================================================
 
 const StyledButton = styled(motion.button).withConfig({
-  // DOM으로 전달하지 않을 props 필터링
   shouldForwardProp: (prop) => 
     !['variant', 'size', 'isLoading', 'fullWidth', 'leftIcon', 'rightIcon'].includes(prop)
 })<ButtonProps>`
@@ -42,7 +41,7 @@ const StyledButton = styled(motion.button).withConfig({
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -50,73 +49,75 @@ const StyledButton = styled(motion.button).withConfig({
   font-family: inherit;
   
   /* Size variants */
-  ${({ size }) => {
+  ${({ size, theme }) => {
     switch (size) {
       case 'sm':
         return `
-          padding: 0.5rem 1rem;
-          font-size: 0.875rem;
-          line-height: 1.25rem;
+          padding: ${theme.spacing[2]} ${theme.spacing[4]};
+          font-size: ${theme.typography.fontSize.sm};
+          line-height: 1.25;
         `;
       case 'lg':
         return `
-          padding: 0.75rem 2rem;
-          font-size: 1rem;
-          line-height: 1.5rem;
+          padding: ${theme.spacing[4]} ${theme.spacing[8]};
+          font-size: ${theme.typography.fontSize.base};
+          line-height: 1.5;
         `;
       default:
         return `
-          padding: 0.625rem 1.5rem;
-          font-size: 0.875rem;
-          line-height: 1.25rem;
+          padding: ${theme.spacing[2]} ${theme.spacing[6]};
+          font-size: ${theme.typography.fontSize.sm};
+          line-height: 1.25;
         `;
     }
   }}
 
-  /* Color variants */
-  ${({ variant }) => {
+  /* Color variants (theme 기반) */
+  ${({ variant, theme }) => {
     switch (variant) {
       case 'primary':
         return `
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          box-shadow: 0 4px 14px 0 rgba(102, 126, 234, 0.3);
+          background: linear-gradient(135deg, ${theme.colors.primary[500]} 0%, ${theme.colors.secondary[500]} 100%);
+          color: ${theme.colors.text.inverse};
+          box-shadow: ${theme.shadows.button};
           
           &:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px 0 rgba(102, 126, 234, 0.4);
+            box-shadow: ${theme.shadows.buttonHover};
+            background: linear-gradient(135deg, ${theme.colors.primary[600]} 0%, ${theme.colors.secondary[600]} 100%);
           }
           
           &:active:not(:disabled) {
             transform: translateY(0);
-            box-shadow: 0 2px 8px 0 rgba(102, 126, 234, 0.3);
+            box-shadow: ${theme.shadows.button};
           }
         `;
       case 'secondary':
         return `
-          background: #f8fafc;
-          color: #475569;
-          border-color: #e2e8f0;
+          background: ${theme.colors.background.secondary};
+          color: ${theme.colors.text.secondary};
+          border-color: ${theme.colors.border.medium};
           
           &:hover:not(:disabled) {
-            background: #f1f5f9;
-            border-color: #cbd5e1;
+            background: ${theme.colors.background.tertiary};
+            border-color: ${theme.colors.border.dark};
+            color: ${theme.colors.text.primary};
           }
           
           &:active:not(:disabled) {
-            background: #e2e8f0;
+            background: ${theme.colors.border.medium};
           }
         `;
       case 'outline':
         return `
           background: transparent;
-          color: #667eea;
-          border-color: #667eea;
+          color: ${theme.colors.primary[500]};
+          border-color: ${theme.colors.primary[500]};
           
           &:hover:not(:disabled) {
             background: rgba(102, 126, 234, 0.1);
-            color: #5a67d8;
-            border-color: #5a67d8;
+            color: ${theme.colors.primary[600]};
+            border-color: ${theme.colors.primary[600]};
           }
           
           &:active:not(:disabled) {
@@ -126,21 +127,21 @@ const StyledButton = styled(motion.button).withConfig({
       case 'ghost':
         return `
           background: transparent;
-          color: #64748b;
+          color: ${theme.colors.text.secondary};
           
           &:hover:not(:disabled) {
-            background: #f8fafc;
-            color: #475569;
+            background: ${theme.colors.background.secondary};
+            color: ${theme.colors.text.primary};
           }
           
           &:active:not(:disabled) {
-            background: #f1f5f9;
+            background: ${theme.colors.background.tertiary};
           }
         `;
       case 'destructive':
         return `
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-          color: white;
+          background: linear-gradient(135deg, ${theme.colors.error} 0%, #dc2626 100%);
+          color: ${theme.colors.text.inverse};
           box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.3);
           
           &:hover:not(:disabled) {
@@ -155,18 +156,18 @@ const StyledButton = styled(motion.button).withConfig({
         `;
       default:
         return `
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          box-shadow: 0 4px 14px 0 rgba(102, 126, 234, 0.3);
+          background: linear-gradient(135deg, ${theme.colors.primary[500]} 0%, ${theme.colors.secondary[500]} 100%);
+          color: ${theme.colors.text.inverse};
+          box-shadow: ${theme.shadows.button};
           
           &:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px 0 rgba(102, 126, 234, 0.4);
+            box-shadow: ${theme.shadows.buttonHover};
           }
           
           &:active:not(:disabled) {
             transform: translateY(0);
-            box-shadow: 0 2px 8px 0 rgba(102, 126, 234, 0.3);
+            box-shadow: ${theme.shadows.button};
           }
         `;
     }

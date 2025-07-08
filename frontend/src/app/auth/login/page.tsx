@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import styled from 'styled-components';
@@ -12,7 +12,7 @@ import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 
 // ================================================================
-// Types & Validation (타입 정의 수정)
+// 🔥 핵심: 간단하고 실용적인 접근
 // ================================================================
 
 interface LoginFormData {
@@ -21,259 +21,115 @@ interface LoginFormData {
   rememberMe: boolean;
 }
 
+// 🔥 기본적인 검증만 (복잡한 커스텀 검증 제거)
 const loginSchema = yup.object().shape({
-  email: yup
-    .string()
-    .required('이메일을 입력해주세요')
-    .email('올바른 이메일 형식이 아닙니다'),
-  password: yup
-    .string()
-    .required('비밀번호를 입력해주세요')
-    .min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
+  email: yup.string().required('이메일을 입력해주세요').email('올바른 이메일 형식이 아닙니다'),
+  password: yup.string().required('비밀번호를 입력해주세요').min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
   rememberMe: yup.boolean().default(false),
 });
 
 // ================================================================
-// Styled Components
+// 🔥 스타일: 핵심만 theme 적용, 나머지는 인라인
 // ================================================================
 
-const LoginContainer = styled.div`
+const Container = styled.div`
   width: 100%;
 `;
 
-const PageTitle = styled.h1`
-  font-size: 28px;
+const Title = styled.h1`
+  font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
   font-weight: 700;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.text.primary};
   text-align: center;
-  margin: 0 0 8px 0;
+  margin: 0 0 ${({ theme }) => theme.spacing[2]} 0;
 `;
 
-const PageSubtitle = styled.p`
-  color: #6b7280;
+const Subtitle = styled.p`
+  color: ${({ theme }) => theme.colors.text.secondary};
   text-align: center;
-  margin: 0 0 32px 0;
-  font-size: 16px;
+  margin: 0 0 ${({ theme }) => theme.spacing[8]} 0;
+  font-size: ${({ theme }) => theme.typography.fontSize.base};
 `;
 
-const LoginForm = styled.form`
+const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: ${({ theme }) => theme.spacing[6]};
 `;
 
-const CheckboxContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: -8px 0 8px 0;
-`;
-
-const CheckboxWrapper = styled.label`
+// 🔥 Alert 재사용 (회원가입과 동일)
+const Alert = styled(motion.div)<{ $type: 'error' | 'success' }>`
   display: flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #374151;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   
-  input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    border: 2px solid #d1d5db;
-    background: white;
-    cursor: pointer;
-    
-    &:checked {
-      background-color: #667eea;
-      border-color: #667eea;
-      background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-8 8-.5-.5 8-8 .5.5z'/%3e%3cpath d='m6.854 7.146-2-2-.5.5 2 2 .5-.5z'/%3e%3c/svg%3e");
-    }
-  }
+  ${({ $type }) => $type === 'error' ? `
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+  ` : `
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+  `}
 `;
 
-const ForgotPasswordLink = styled.button`
-  background: none;
-  border: none;
-  color: #667eea;
-  font-size: 14px;
-  cursor: pointer;
-  text-decoration: none;
-  
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-const ErrorAlert = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #dc2626;
-  font-size: 14px;
-  margin-bottom: 16px;
-  
-  svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-`;
-
-const SuccessAlert = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  color: #16a34a;
-  font-size: 14px;
-  margin-bottom: 16px;
-  
-  svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-`;
-
-const Divider = styled.div`
-  display: flex;
-  align-items: center;
-  margin: 32px 0;
-  
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #e5e7eb;
-  }
-  
-  span {
-    padding: 0 16px;
-    color: #9ca3af;
-    font-size: 14px;
-    font-weight: 500;
-  }
-`;
-
-const SignupPrompt = styled.div`
+const DemoBox = styled.div`
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
   text-align: center;
-  margin-top: 24px;
-  font-size: 14px;
-  color: #6b7280;
   
-  a {
-    color: #667eea;
-    text-decoration: none;
+  .title {
+    font-size: ${({ theme }) => theme.typography.fontSize.sm};
     font-weight: 600;
-    margin-left: 4px;
-    
-    &:hover {
-      text-decoration: underline;
-    }
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin-bottom: ${({ theme }) => theme.spacing[2]};
   }
-`;
-
-const DemoCredentials = styled.div`
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 24px;
-  
-  .demo-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #475569;
-    margin-bottom: 8px;
-  }
-  
-  .demo-info {
-    font-size: 13px;
-    color: #64748b;
-    line-height: 1.4;
-  }
-  
-  .demo-credentials {
-    background: white;
-    border-radius: 4px;
-    padding: 8px;
-    margin-top: 8px;
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: 12px;
-    
-    div {
-      margin: 2px 0;
-    }
-  }
-`;
-
-const LoadingFallback = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  color: #6b7280;
 `;
 
 // ================================================================
-// Component
+// 🔥 메인 컴포넌트 - 대폭 단순화
 // ================================================================
 
-// SearchParams를 사용하는 컴포넌트를 별도로 분리
-function LoginPageContent() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isAuthenticated } = useAuthStore();
-  const [loginError, setLoginError] = useState<string>('');
-  const [loginSuccess, setLoginSuccess] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isValid },
-  } = useForm<LoginFormData>({
+  const { register, handleSubmit, formState: { errors, isValid } } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),
     mode: 'onChange',
-    defaultValues: {
-      email: '',
-      password: '',
-      rememberMe: false,
-    },
+    defaultValues: { email: '', password: '', rememberMe: false },
   });
 
-  // 이미 로그인된 사용자는 홈으로 리다이렉트
   useEffect(() => {
-    if (isAuthenticated()) {
-      router.push('/');
-    }
+    if (isAuthenticated()) router.push('/');
   }, [isAuthenticated, router]);
 
-  // URL 파라미터에서 성공 메시지 확인
+  // URL 파라미터에서 회원가입 성공 메시지 확인
   useEffect(() => {
-    const message = searchParams.get('message');
-    if (message === 'signup_success') {
-      setLoginSuccess('회원가입이 완료되었습니다. 로그인해주세요.');
+    if (searchParams.get('message') === 'signup_success') {
+      setSuccess('회원가입이 완료되었습니다. 로그인해주세요.');
     }
   }, [searchParams]);
 
-  // 수정된 onSubmit 함수 (타입 안전성 확보)
-  const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
-    try {
-      setIsLoading(true);
-      setLoginError('');
-      setLoginSuccess('');
+  // 🔥 제출 로직 - 단순화
+  const onSubmit = async (data: LoginFormData) => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
+    try {
       const result = await login({
         email: data.email,
         password: data.password,
@@ -281,36 +137,27 @@ function LoginPageContent() {
       });
 
       if (result.success) {
-        setLoginSuccess('로그인 성공! 잠시 후 이동합니다...');
-        
-        // 성공 메시지 표시 후 리다이렉트
+        setSuccess('로그인 성공! 잠시 후 이동합니다...');
         setTimeout(() => {
           const redirectTo = searchParams.get('redirect') || '/';
           router.push(redirectTo);
         }, 1500);
       } else {
-        setLoginError(result.error || '로그인에 실패했습니다.');
+        setError(result.error || '로그인에 실패했습니다.');
       }
-    } catch (error) {
-      setLoginError('로그인 중 오류가 발생했습니다.');
-      console.error('Login error:', error);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || '로그인 중 오류가 발생했습니다.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleForgotPassword = () => {
-    // TODO: 비밀번호 찾기 페이지로 이동
-    alert('비밀번호 찾기 기능은 준비 중입니다.');
-  };
-
+  // 🔥 데모 로그인 - 단순화
   const handleDemoLogin = async () => {
-    try {
-      setIsLoading(true);
-      setLoginError('');
-      setLoginSuccess('');
+    setLoading(true);
+    setError('');
 
-      // 🔥 데모 계정으로 즉시 로그인 시도
+    try {
       const result = await login({
         email: 'demo@demo.com',
         password: 'Ademo123!',
@@ -318,159 +165,98 @@ function LoginPageContent() {
       });
 
       if (result.success) {
-        setLoginSuccess('데모 계정 로그인 성공! 잠시 후 이동합니다...');
-        
-        // 성공 메시지 표시 후 리다이렉트
+        setSuccess('데모 계정 로그인 성공! 잠시 후 이동합니다...');
         setTimeout(() => {
           const redirectTo = searchParams.get('redirect') || '/';
           router.push(redirectTo);
         }, 1500);
       } else {
-        setLoginError(result.error || '데모 계정 로그인에 실패했습니다.');
+        setError(result.error || '데모 계정 로그인에 실패했습니다.');
       }
-    } catch (error) {
-      setLoginError('데모 계정 로그인 중 오류가 발생했습니다.');
-      console.error('Demo login error:', error);
+    } catch (err: any) {
+      setError('데모 계정 로그인 중 오류가 발생했습니다.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const navigateToSignup = () => {
-    router.push('/auth/signup');
-  };
-
   return (
-    <LoginContainer>
-      <PageTitle>다시 오신 것을 환영합니다</PageTitle>
-      <PageSubtitle>계정에 로그인하여 게임을 계속하세요</PageSubtitle>
+    <Container>
+      <Title>다시 오신 것을 환영합니다</Title>
+      <Subtitle>계정에 로그인하여 게임을 계속하세요</Subtitle>
 
-      {/* 데모 계정 안내 */}
-      <DemoCredentials>
-        <div className="demo-title">🎮 데모 계정으로 접속하기</div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleDemoLogin}
-          style={{ marginTop: '8px', width: '100%' }}
-        >
+      {/* 🔥 데모 계정 - 단순화 */}
+      <DemoBox>
+        <div className="title">🎮 데모 계정으로 접속하기</div>
+        <Button variant="ghost" size="sm" onClick={handleDemoLogin} disabled={loading} style={{ width: '100%' }}>
           데모 계정 정보 입력
         </Button>
-      </DemoCredentials>
+      </DemoBox>
 
-      {/* 에러 메시지 */}
+      {/* 🔥 Alert 재사용 */}
       <AnimatePresence>
-        {loginError && (
-          <ErrorAlert
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <AlertCircle />
-            {loginError}
-          </ErrorAlert>
+        {error && (
+          <Alert $type="error" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+            <AlertCircle size={16} />
+            {error}
+          </Alert>
+        )}
+        {success && (
+          <Alert $type="success" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+            <CheckCircle size={16} />
+            {success}
+          </Alert>
         )}
       </AnimatePresence>
 
-      {/* 성공 메시지 */}
-      <AnimatePresence>
-        {loginSuccess && (
-          <SuccessAlert
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CheckCircle />
-            {loginSuccess}
-          </SuccessAlert>
-        )}
-      </AnimatePresence>
+      <Form onSubmit={handleSubmit(onSubmit)}>
+        <Input {...register('email')} type="email" label="이메일" placeholder="your.email@example.com"
+               leftIcon={<Mail size={20} />} error={errors.email?.message} fullWidth autoFocus />
 
-      <LoginForm onSubmit={handleSubmit(onSubmit)}>
-        <Input
-          {...register('email')}
-          type="email"
-          label="이메일"
-          placeholder="your.email@example.com"
-          leftIcon={<Mail size={20} />}
-          error={errors.email?.message}
-          fullWidth
-          autoComplete="email"
-          autoFocus
-        />
+        <Input {...register('password')} type="password" label="비밀번호" placeholder="비밀번호를 입력하세요"
+               leftIcon={<Lock size={20} />} error={errors.password?.message} fullWidth />
 
-        <Input
-          {...register('password')}
-          type="password"
-          label="비밀번호"
-          placeholder="비밀번호를 입력하세요"
-          leftIcon={<Lock size={20} />}
-          error={errors.password?.message}
-          fullWidth
-          autoComplete="current-password"
-        />
-
-        <CheckboxContainer>
-          <CheckboxWrapper>
-            <input
-              {...register('rememberMe')}
-              type="checkbox"
-              id="rememberMe"
-            />
+        {/* 🔥 체크박스와 링크 - 인라인 스타일로 단순화 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '-8px 0 8px 0' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
+            <input {...register('rememberMe')} type="checkbox" />
             로그인 상태 유지
-          </CheckboxWrapper>
-
-          <ForgotPasswordLink 
-            type="button" 
-            onClick={handleForgotPassword}
-          >
+          </label>
+          
+          <button type="button" onClick={() => router.push('/auth/forgot-password')}
+                  style={{ background: 'none', border: 'none', color: '#667eea', fontSize: '14px', cursor: 'pointer', textDecoration: 'none' }}>
             비밀번호를 잊으셨나요?
-          </ForgotPasswordLink>
-        </CheckboxContainer>
+          </button>
+        </div>
 
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          fullWidth
-          isLoading={isLoading}
-          leftIcon={<LogIn size={20} />}
-          disabled={!isValid || isLoading}
-        >
-          {isLoading ? '로그인 중...' : '로그인'}
+        <Button type="submit" variant="primary" size="lg" fullWidth isLoading={loading}
+                leftIcon={<LogIn size={20} />} disabled={!isValid || loading}>
+          {loading ? '로그인 중...' : '로그인'}
         </Button>
-      </LoginForm>
+      </Form>
 
-      <Divider>
-        <span>또는</span>
-      </Divider>
+      {/* 🔥 구분선과 회원가입 링크 - 단순화 */}
+      <div style={{ display: 'flex', alignItems: 'center', margin: '32px 0' }}>
+        <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }}></div>
+        <span style={{ padding: '0 16px', color: '#9ca3af', fontSize: '14px', fontWeight: '500' }}>또는</span>
+        <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }}></div>
+      </div>
 
-      <SignupPrompt>
+      <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: '#6b7280' }}>
         아직 계정이 없으신가요?
-        <motion.a
-          onClick={navigateToSignup}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          style={{ cursor: 'pointer' }}
-        >
+        <motion.button onClick={() => router.push('/auth/signup')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                       style={{ background: 'none', border: 'none', color: '#667eea', fontWeight: '600', marginLeft: '4px', cursor: 'pointer', textDecoration: 'none' }}>
           회원가입
-        </motion.a>
-      </SignupPrompt>
-    </LoginContainer>
+        </motion.button>
+      </div>
+    </Container>
   );
 }
 
-// 메인 컴포넌트 - Suspense로 감싸기
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <LoadingFallback>
-        <div>로그인 페이지를 불러오는 중...</div>
-      </LoadingFallback>
-    }>
-      <LoginPageContent />
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>로그인 페이지를 불러오는 중...</div>}>
+      <LoginContent />
     </Suspense>
   );
 }

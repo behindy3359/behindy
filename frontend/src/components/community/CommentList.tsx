@@ -20,34 +20,35 @@ import { CommentForm } from './CommentForm/CommentForm';
 import { formatters } from '@/utils/common';
 
 // ================================================================
-// Styled Components
+// Styled Components (theme 색상 시스템 적용)
 // ================================================================
 
 const CommentContainer = styled(motion.div)`
   & + & {
-    margin-top: 16px;
+    margin-top: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
 const CommentItem = styled.div<{ $isReply?: boolean }>`
-  padding: 16px;
-  background: ${({ $isReply }) => $isReply ? '#f9fafb' : 'white'};
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: ${({ theme }) => theme.spacing[4]};
+  background: ${({ $isReply, theme }) => 
+    $isReply ? theme.colors.background.secondary : theme.colors.background.primary};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   margin-left: ${({ $isReply }) => $isReply ? '32px' : '0'};
   position: relative;
   
-  ${({ $isReply }) => $isReply && `
+  ${({ $isReply, theme }) => $isReply && `
     &::before {
       content: '';
       position: absolute;
       left: -16px;
-      top: 16px;
+      top: ${theme.spacing[4]};
       width: 12px;
       height: 12px;
-      border-left: 2px solid #d1d5db;
-      border-bottom: 2px solid #d1d5db;
-      border-bottom-left-radius: 4px;
+      border-left: 2px solid ${theme.colors.border.dark};
+      border-bottom: 2px solid ${theme.colors.border.dark};
+      border-bottom-left-radius: ${theme.borderRadius.sm};
     }
   `}
 `;
@@ -56,45 +57,45 @@ const CommentHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
 const CommentMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: ${({ theme }) => theme.spacing[4]};
   
   .user-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: ${({ theme }) => theme.spacing[2]};
     
     .avatar {
       width: 28px;
       height: 28px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
+      color: ${({ theme }) => theme.colors.text.inverse};
       font-weight: 600;
-      font-size: 12px;
+      font-size: ${({ theme }) => theme.typography.fontSize.xs};
     }
     
     .name {
       font-weight: 600;
-      color: #374151;
-      font-size: 14px;
+      color: ${({ theme }) => theme.colors.text.primary};
+      font-size: ${({ theme }) => theme.typography.fontSize.sm};
     }
   }
   
   .date {
-    font-size: 12px;
-    color: #9ca3af;
+    font-size: ${({ theme }) => theme.typography.fontSize.xs};
+    color: ${({ theme }) => theme.colors.text.tertiary};
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: ${({ theme }) => theme.spacing[1]};
   }
 `;
 
@@ -103,16 +104,16 @@ const CommentActions = styled.div`
 `;
 
 const ActionButton = styled(motion.button)`
-  padding: 4px;
+  padding: ${({ theme }) => theme.spacing[1]};
   background: none;
   border: none;
-  border-radius: 4px;
-  color: #9ca3af;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  color: ${({ theme }) => theme.colors.text.tertiary};
   cursor: pointer;
   
   &:hover {
-    background: #f3f4f6;
-    color: #6b7280;
+    background: ${({ theme }) => theme.colors.background.secondary};
+    color: ${({ theme }) => theme.colors.text.secondary};
   }
 `;
 
@@ -120,11 +121,11 @@ const ActionMenu = styled(motion.div)`
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 4px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: ${({ theme }) => theme.spacing[1]};
+  background: ${({ theme }) => theme.colors.background.primary};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: ${({ theme }) => theme.shadows.lg};
   z-index: 100;
   min-width: 120px;
   overflow: hidden;
@@ -134,25 +135,27 @@ const MenuItem = styled.button<{ $danger?: boolean }>`
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 13px;
-  color: ${({ $danger }) => $danger ? '#ef4444' : '#374151'};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  color: ${({ $danger, theme }) => 
+    $danger ? theme.colors.error : theme.colors.text.primary};
   transition: background 0.2s ease;
   
   &:hover {
-    background: ${({ $danger }) => $danger ? '#fef2f2' : '#f9fafb'};
+    background: ${({ $danger, theme }) => 
+      $danger ? '#fef2f2' : theme.colors.background.secondary};
   }
 `;
 
 const CommentContent = styled.div`
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
-  color: #374151;
-  margin-bottom: 12px;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   white-space: pre-wrap;
   word-break: break-word;
 `;
@@ -165,26 +168,28 @@ const CommentFooter = styled.div`
 
 const FooterActions = styled.div`
   display: flex;
-  gap: 16px;
+  gap: ${({ theme }) => theme.spacing[4]};
   align-items: center;
 `;
 
 const FooterButton = styled(motion.button)<{ $active?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
+  gap: ${({ theme }) => theme.spacing[1]};
+  padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[2]};
   background: none;
   border: none;
-  border-radius: 4px;
-  font-size: 12px;
-  color: ${({ $active }) => $active ? '#667eea' : '#9ca3af'};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  color: ${({ $active, theme }) => 
+    $active ? theme.colors.primary[500] : theme.colors.text.tertiary};
   cursor: pointer;
   transition: all 0.2s ease;
   
   &:hover {
-    background: #f3f4f6;
-    color: ${({ $active }) => $active ? '#5a67d8' : '#6b7280'};
+    background: ${({ theme }) => theme.colors.background.secondary};
+    color: ${({ $active, theme }) => 
+      $active ? theme.colors.primary[600] : theme.colors.text.secondary};
   }
   
   .count {
@@ -193,31 +198,31 @@ const FooterButton = styled(motion.button)<{ $active?: boolean }>`
 `;
 
 const CommentTime = styled.div`
-  font-size: 12px;
-  color: #9ca3af;
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  color: ${({ theme }) => theme.colors.text.tertiary};
 `;
 
 const EditingContainer = styled.div`
-  margin-top: 12px;
-  padding: 12px;
+  margin-top: ${({ theme }) => theme.spacing[4]};
+  padding: ${({ theme }) => theme.spacing[4]};
   background: #f0f4ff;
-  border-radius: 6px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   border: 1px solid #c7d2fe;
 `;
 
 const ReplyContainer = styled.div`
-  margin-top: 16px;
+  margin-top: ${({ theme }) => theme.spacing[4]};
 `;
 
 const LoadingState = styled.div`
   text-align: center;
-  padding: 20px;
-  color: #9ca3af;
-  font-size: 14px;
+  padding: ${({ theme }) => theme.spacing[6]};
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
 // ================================================================
-// Component Props (export 추가)
+// Component Props
 // ================================================================
 
 export interface CommentListProps {
@@ -240,8 +245,8 @@ const CommentItemComponent: React.FC<{
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [isLiked, setIsLiked] = useState(false); // 추후 API 연동
-  const [likeCount, setLikeCount] = useState(0); // 추후 API 연동
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
 
   // 댓글 삭제 뮤테이션
   const deleteCommentMutation = useMutation({
@@ -253,8 +258,9 @@ const CommentItemComponent: React.FC<{
     },
   });
 
+  // 🔥 통합된 포맷터 사용
   const getUserInitial = (name: string) => {
-    return name.charAt(0).toUpperCase();
+    return formatters.getUserInitial(name);
   };
 
   const handleEdit = () => {
@@ -308,7 +314,7 @@ const CommentItemComponent: React.FC<{
             </div>
             <div className="date">
               <Calendar size={12} />
-              {formatters.relativeTime(comment.createdAt)}
+              {formatters.relativeTime(comment.createdAt)} {/* 🔥 통합된 시간 포맷팅 */}
             </div>
           </CommentMeta>
 

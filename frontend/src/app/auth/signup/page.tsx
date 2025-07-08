@@ -22,9 +22,10 @@ import {
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
+import { validators, apiErrorHandler, CONFIRM_MESSAGES } from '@/utils/common';
 
 // ================================================================
-// Types & Validation (타입 정의 수정)
+// Types & Validation (통합된 validators 사용)
 // ================================================================
 
 interface SignupFormData {
@@ -37,29 +38,56 @@ interface SignupFormData {
   marketingOptIn: boolean;
 }
 
+// 🔥 통합된 검증 시스템 사용
 const signupSchema = yup.object().shape({
   name: yup
     .string()
     .required('이름을 입력해주세요')
-    .min(2, '이름은 최소 2자 이상이어야 합니다')
-    .max(50, '이름은 최대 50자까지 입력 가능합니다')
-    .matches(/^[가-힣a-zA-Z\s]+$/, '이름에는 한글, 영문, 공백만 사용 가능합니다'),
+    .test('name-validation', function(value) {
+      if (!value) return this.createError({ message: '이름을 입력해주세요' });
+      
+      const result = validators.name(value);
+      if (!result.isValid) {
+        return this.createError({ message: result.message });
+      }
+      return true;
+    }),
   email: yup
     .string()
     .required('이메일을 입력해주세요')
-    .email('올바른 이메일 형식이 아닙니다'),
+    .test('email-validation', function(value) {
+      if (!value) return this.createError({ message: '이메일을 입력해주세요' });
+      
+      const result = validators.email(value);
+      if (!result.isValid) {
+        return this.createError({ message: result.message });
+      }
+      return true;
+    }),
   password: yup
     .string()
     .required('비밀번호를 입력해주세요')
-    .min(8, '비밀번호는 최소 8자 이상이어야 합니다')
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-      '비밀번호는 대소문자, 숫자, 특수문자를 포함해야 합니다'
-    ),
+    .test('password-validation', function(value) {
+      if (!value) return this.createError({ message: '비밀번호를 입력해주세요' });
+      
+      const result = validators.password(value);
+      if (!result.isValid) {
+        return this.createError({ message: result.messages[0] || '비밀번호가 올바르지 않습니다' });
+      }
+      return true;
+    }),
   confirmPassword: yup
     .string()
     .required('비밀번호 확인을 입력해주세요')
-    .oneOf([yup.ref('password')], '비밀번호가 일치하지 않습니다'),
+    .test('password-confirm-validation', function(value) {
+      const { password } = this.parent;
+      
+      const result = validators.passwordConfirm(password, value || '');
+      if (!result.isValid) {
+        return this.createError({ message: result.message });
+      }
+      return true;
+    }),
   agreeToTerms: yup
     .boolean()
     .required('이용약관에 동의해주세요')
@@ -72,7 +100,7 @@ const signupSchema = yup.object().shape({
 });
 
 // ================================================================
-// Styled Components
+// Styled Components (theme 시스템 적용)
 // ================================================================
 
 const SignupContainer = styled.div`
@@ -80,105 +108,104 @@ const SignupContainer = styled.div`
   max-height: 80vh;
   overflow-y: auto;
   
-  /* 커스텀 스크롤바 */
   &::-webkit-scrollbar {
     width: 6px;
   }
   
   &::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
+    background: ${({ theme }) => theme.colors.background.tertiary};
+    border-radius: ${({ theme }) => theme.borderRadius.sm};
   }
   
   &::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
+    background: ${({ theme }) => theme.colors.border.dark};
+    border-radius: ${({ theme }) => theme.borderRadius.sm};
     
     &:hover {
-      background: #94a3b8;
+      background: ${({ theme }) => theme.colors.gray[400]};
     }
   }
 `;
 
 const PageTitle = styled.h1`
-  font-size: 28px;
+  font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
   font-weight: 700;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.text.primary};
   text-align: center;
-  margin: 0 0 8px 0;
+  margin: 0 0 ${({ theme }) => theme.spacing[2]} 0;
 `;
 
 const SignupForm = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: ${({ theme }) => theme.spacing[6]};
 `;
 
 const PasswordStrengthContainer = styled.div<{ $strength: number }>`
-  margin-top: 12px;
+  margin-top: ${({ theme }) => theme.spacing[4]};
   
   .strength-bar {
     width: 100%;
     height: 6px;
-    background: #f1f5f9;
-    border-radius: 3px;
+    background: ${({ theme }) => theme.colors.background.tertiary};
+    border-radius: ${({ theme }) => theme.borderRadius.sm};
     overflow: hidden;
-    margin-bottom: 8px;
+    margin-bottom: ${({ theme }) => theme.spacing[2]};
     
     .strength-fill {
       height: 100%;
       transition: all 0.3s ease;
-      border-radius: 3px;
+      border-radius: ${({ theme }) => theme.borderRadius.sm};
       
-      ${({ $strength }) => {
-        if ($strength <= 1) return 'width: 25%; background: #ef4444;';
-        if ($strength <= 2) return 'width: 50%; background: #f59e0b;';
-        if ($strength <= 3) return 'width: 75%; background: #eab308;';
-        return 'width: 100%; background: #10b981;';
+      ${({ $strength, theme }) => {
+        if ($strength <= 1) return `width: 25%; background: ${theme.colors.error};`;
+        if ($strength <= 2) return `width: 50%; background: ${theme.colors.warning};`;
+        if ($strength <= 3) return `width: 75%; background: #eab308;`;
+        return `width: 100%; background: ${theme.colors.success};`;
       }}
     }
   }
   
   .strength-text {
-    font-size: 12px;
+    font-size: ${({ theme }) => theme.typography.fontSize.xs};
     font-weight: 500;
     
-    ${({ $strength }) => {
-      if ($strength <= 1) return 'color: #ef4444;';
-      if ($strength <= 2) return 'color: #f59e0b;';
-      if ($strength <= 3) return 'color: #eab308;';
-      return 'color: #10b981;';
+    ${({ $strength, theme }) => {
+      if ($strength <= 1) return `color: ${theme.colors.error};`;
+      if ($strength <= 2) return `color: ${theme.colors.warning};`;
+      if ($strength <= 3) return `color: #eab308;`;
+      return `color: ${theme.colors.success};`;
     }}
   }
 `;
 
 const PasswordRequirements = styled.div`
-  margin-top: 8px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  margin-top: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[4]};
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
   
   .requirements-title {
-    font-size: 12px;
+    font-size: ${({ theme }) => theme.typography.fontSize.xs};
     font-weight: 600;
-    color: #475569;
-    margin-bottom: 8px;
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin-bottom: ${({ theme }) => theme.spacing[2]};
   }
   
   .requirement {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
-    font-size: 11px;
+    gap: ${({ theme }) => theme.spacing[2]};
+    margin-bottom: ${({ theme }) => theme.spacing[1]};
+    font-size: ${({ theme }) => theme.typography.fontSize.xs};
     
     &.met {
-      color: #10b981;
+      color: ${({ theme }) => theme.colors.success};
     }
     
     &.unmet {
-      color: #ef4444;
+      color: ${({ theme }) => theme.colors.error};
     }
     
     svg {
@@ -189,14 +216,14 @@ const PasswordRequirements = styled.div`
 `;
 
 const AgreementSection = styled.div`
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
-  background: #fafbfc;
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing[6]};
+  background: ${({ theme }) => theme.colors.background.secondary};
 `;
 
 const AgreementItem = styled.div`
-  margin-bottom: 16px;
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   
   &:last-child {
     margin-bottom: 0;
@@ -206,36 +233,37 @@ const AgreementItem = styled.div`
 const CheckboxWrapper = styled.label<{ $required?: boolean }>`
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: ${({ theme }) => theme.spacing[4]};
   cursor: pointer;
-  font-size: 14px;
-  color: #374151;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.primary};
   line-height: 1.5;
   
   input[type="checkbox"] {
     width: 18px;
     height: 18px;
-    border-radius: 4px;
-    border: 2px solid ${({ $required }) => $required ? '#dc2626' : '#d1d5db'};
-    background: white;
+    border-radius: ${({ theme }) => theme.borderRadius.sm};
+    border: 2px solid ${({ $required, theme }) => 
+      $required ? theme.colors.error : theme.colors.border.dark};
+    background: ${({ theme }) => theme.colors.background.primary};
     cursor: pointer;
     margin-top: 2px;
     flex-shrink: 0;
     
     &:checked {
-      background-color: #667eea;
-      border-color: #667eea;
+      background-color: ${({ theme }) => theme.colors.primary[500]};
+      border-color: ${({ theme }) => theme.colors.primary[500]};
       background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-8 8-.5-.5 8-8 .5.5z'/%3e%3cpath d='m6.854 7.146-2-2-.5.5 2 2 .5-.5z'/%3e%3c/svg%3e");
     }
   }
   
   .required-mark {
-    color: #dc2626;
+    color: ${({ theme }) => theme.colors.error};
     font-weight: 600;
   }
   
   .link {
-    color: #667eea;
+    color: ${({ theme }) => theme.colors.primary[500]};
     text-decoration: none;
     
     &:hover {
@@ -247,14 +275,14 @@ const CheckboxWrapper = styled.label<{ $required?: boolean }>`
 const ErrorAlert = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: ${({ theme }) => theme.spacing[4]};
+  padding: ${({ theme }) => theme.spacing[4]};
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #dc2626;
-  font-size: 14px;
-  margin-bottom: 16px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.error};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   
   svg {
     width: 20px;
@@ -266,14 +294,14 @@ const ErrorAlert = styled(motion.div)`
 const SuccessAlert = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: ${({ theme }) => theme.spacing[4]};
+  padding: ${({ theme }) => theme.spacing[4]};
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  color: #16a34a;
-  font-size: 14px;
-  margin-bottom: 16px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.success};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   
   svg {
     width: 20px;
@@ -285,35 +313,35 @@ const SuccessAlert = styled(motion.div)`
 const Divider = styled.div`
   display: flex;
   align-items: center;
-  margin: 24px 0;
+  margin: ${({ theme }) => theme.spacing[6]} 0;
   
   &::before,
   &::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: #e5e7eb;
+    background: ${({ theme }) => theme.colors.border.light};
   }
   
   span {
-    padding: 0 16px;
-    color: #9ca3af;
-    font-size: 14px;
+    padding: 0 ${({ theme }) => theme.spacing[4]};
+    color: ${({ theme }) => theme.colors.text.tertiary};
+    font-size: ${({ theme }) => theme.typography.fontSize.sm};
     font-weight: 500;
   }
 `;
 
 const LoginPrompt = styled.div`
   text-align: center;
-  margin-top: 24px;
-  font-size: 14px;
-  color: #6b7280;
+  margin-top: ${({ theme }) => theme.spacing[6]};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
   
   a {
-    color: #667eea;
+    color: ${({ theme }) => theme.colors.primary[500]};
     text-decoration: none;
     font-weight: 600;
-    margin-left: 4px;
+    margin-left: ${({ theme }) => theme.spacing[1]};
     
     &:hover {
       text-decoration: underline;
@@ -322,28 +350,8 @@ const LoginPrompt = styled.div`
 `;
 
 // ================================================================
-// Helper Functions
+// Helper Functions (통합된 validators 활용)
 // ================================================================
-
-const calculatePasswordStrength = (password: string): number => {
-  let strength = 0;
-  
-  if (password.length >= 8) strength++;
-  if (/[a-z]/.test(password)) strength++;
-  if (/[A-Z]/.test(password)) strength++;
-  if (/\d/.test(password)) strength++;
-  if (/[@$!%*?&]/.test(password)) strength++;
-  
-  return Math.min(strength, 4);
-};
-
-const getPasswordRequirements = (password: string) => [
-  { text: '8자 이상', met: password.length >= 8 },
-  { text: '소문자 포함', met: /[a-z]/.test(password) },
-  { text: '대문자 포함', met: /[A-Z]/.test(password) },
-  { text: '숫자 포함', met: /\d/.test(password) },
-  { text: '특수문자 포함', met: /[@$!%*?&]/.test(password) },
-];
 
 const getPasswordStrengthText = (strength: number): string => {
   switch (strength) {
@@ -395,8 +403,13 @@ export default function SignupPage() {
 
   const watchedPassword = watch('password', '');
   const watchedConfirmPassword = watch('confirmPassword', '');
-  const passwordStrength = calculatePasswordStrength(watchedPassword);
-  const passwordRequirements = getPasswordRequirements(watchedPassword);
+
+  // 🔥 통합된 검증 시스템 사용
+  const passwordValidation = validators.password(watchedPassword);
+  const passwordRequirements = passwordValidation.messages.map((msg, index) => ({
+    text: msg,
+    met: passwordValidation.score > index
+  }));
 
   // 이미 로그인된 사용자는 홈으로 리다이렉트
   useEffect(() => {
@@ -405,7 +418,6 @@ export default function SignupPage() {
     }
   }, [isAuthenticated, router]);
 
-  // 수정된 onSubmit 함수 (타입 안전성 확보)
   const onSubmit: SubmitHandler<SignupFormData> = async (data) => {
     try {
       setIsLoading(true);
@@ -421,15 +433,18 @@ export default function SignupPage() {
       if (result.success) {
         setSignupSuccess('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...');
         
-        // 성공 메시지 표시 후 로그인 페이지로 이동
         setTimeout(() => {
           router.push('/auth/login?message=signup_success');
         }, 2000);
       } else {
-        setSignupError(result.error || '회원가입에 실패했습니다.');
+        // 🔥 통합된 에러 처리 사용
+        const errorInfo = apiErrorHandler.parseError(result.error);
+        setSignupError(errorInfo.message);
       }
-    } catch (error) {
-      setSignupError('회원가입 중 오류가 발생했습니다.');
+    } catch (error: unknown) {
+      // 🔥 통합된 에러 처리 사용
+      const errorInfo = apiErrorHandler.parseError(error);
+      setSignupError(errorInfo.message);
       console.error('Signup error:', error);
     } finally {
       setIsLoading(false);
@@ -535,12 +550,12 @@ export default function SignupPage() {
           
           {/* 비밀번호 강도 표시 */}
           {watchedPassword && (
-            <PasswordStrengthContainer $strength={passwordStrength}>
+            <PasswordStrengthContainer $strength={passwordValidation.score}>
               <div className="strength-bar">
                 <div className="strength-fill" />
               </div>
               <div className="strength-text">
-                비밀번호 강도: {getPasswordStrengthText(passwordStrength)}
+                비밀번호 강도: {getPasswordStrengthText(passwordValidation.score)}
               </div>
             </PasswordStrengthContainer>
           )}
