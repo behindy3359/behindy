@@ -24,7 +24,6 @@ import type { Post, CreatePostRequest } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { 
   INPUT_LIMITS,
-  SUCCESS_MESSAGES,
   ERROR_MESSAGES,
   LOADING_MESSAGES, 
   ACTION_MESSAGES 
@@ -378,7 +377,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         console.log('✅ 게시글 생성 성공:', response);
         console.groupEnd();
         return response;
-      } catch (error: any) {
+      } catch (error) {
         console.group('❌ 게시글 생성 실패');
         console.error('에러:', error);
         console.groupEnd();
@@ -391,7 +390,7 @@ export const PostForm: React.FC<PostFormProps> = ({
       onSuccess?.(newPost);
       router.push(`/community/${newPost.id}`);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       const errorInfo = apiErrorHandler.parseError(error);
       setSubmitError(errorInfo.message);
     },
@@ -418,7 +417,7 @@ export const PostForm: React.FC<PostFormProps> = ({
       onSuccess?.(updatedPost);
       router.push(`/community/${updatedPost.id}`);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       const errorInfo = apiErrorHandler.parseError(error);
       setSubmitError(errorInfo.message);
     },

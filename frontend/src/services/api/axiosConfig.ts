@@ -2,12 +2,12 @@ import axios from 'axios';
 import { env } from '@/config/env';
 import { SECURITY_CONFIG, validateSecurityConfig } from '@/utils/common/constants';
 
-// 🔒 보안 설정 검증 (앱 시작시 한 번 실행)
+// 보안 설정 검증
 if (typeof window !== 'undefined') {
   validateSecurityConfig();
 }
 
-// 토큰 관리 유틸리티 (보안 상수 사용)
+// 토큰 관리 유틸리티
 class TokenManager {
   static getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;

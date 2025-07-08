@@ -55,7 +55,7 @@ const MainContent = styled.main.withConfig({
   }
   
   /* 사이드바 레이아웃인 경우 */
-  ${({ $layoutType, $sidebarOpen, $isMobile }) => 
+  ${({ $layoutType, $sidebarOpen }) => 
     $layoutType === 'sidebar' && `
       /* 데스크톱: 사이드바 너비만큼 마진 */
       @media (min-width: 768px) {

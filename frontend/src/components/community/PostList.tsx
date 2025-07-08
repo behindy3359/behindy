@@ -398,7 +398,7 @@ export const PostList: React.FC<PostListProps> = ({
   viewMode: initialViewMode = 'grid'
 }) => {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [searchQuery, setSearchQuery] = useState('');

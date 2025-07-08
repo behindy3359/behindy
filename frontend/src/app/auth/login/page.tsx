@@ -141,7 +141,7 @@ function LoginContent() {
       } else {
         setError(ERROR_MESSAGES.LOGIN_FAILED);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(ERROR_MESSAGES.LOGIN_ERROR);
     } finally {
       setLoading(false);
@@ -169,7 +169,7 @@ function LoginContent() {
       } else {
         setError(ERROR_MESSAGES.DEMO_LOGIN_FAILED);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(ERROR_MESSAGES.DEMO_LOGIN_ERROR);
     } finally {
       setLoading(false);

@@ -6,8 +6,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, 
-  Info, 
-  Train, 
+  Info,
   MessageSquare, 
   User, 
   LogIn, 
@@ -15,8 +14,7 @@ import {
   Menu,
   X,
   Sun,
-  Moon,
-  Settings
+  Moon
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';

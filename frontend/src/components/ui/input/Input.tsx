@@ -60,7 +60,7 @@ const InputContainer = styled.div.withConfig({
   display: flex;
   align-items: center;
   
-  ${({ size, theme }) => {
+  ${({ size }) => {
     switch (size) {
       case 'sm':
         return `height: 2.25rem;`;
@@ -111,7 +111,7 @@ const StyledInput = styled.input.withConfig({
     }
   }}
 
-  ${({ hasLeftIcon, size, theme }) => {
+  ${({ hasLeftIcon, size }) => {
     if (hasLeftIcon) {
       const padding = size === 'lg' ? '2.5rem' : size === 'sm' ? '2rem' : '2.25rem';
       return `padding-left: ${padding};`;
@@ -119,7 +119,7 @@ const StyledInput = styled.input.withConfig({
     return '';
   }}
 
-  ${({ hasRightIcon, size, theme }) => {
+  ${({ hasRightIcon, size }) => {
     if (hasRightIcon) {
       const padding = size === 'lg' ? '2.5rem' : size === 'sm' ? '2rem' : '2.25rem';
       return `padding-right: ${padding};`;
@@ -265,8 +265,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       value,
       defaultValue,
       onChange,
-      onBlur,
-      onFocus,
       disabled = false,
       readOnly = false,
       required = false,

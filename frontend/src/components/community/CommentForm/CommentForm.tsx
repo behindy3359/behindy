@@ -13,7 +13,6 @@ import { api,  } from '@/services/api/axiosConfig';
 
 import type { Comment, CreateCommentRequest } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
-import { ERROR_MESSAGES } from '@/utils/common/constants';
 import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
 
 interface CommentFormData {

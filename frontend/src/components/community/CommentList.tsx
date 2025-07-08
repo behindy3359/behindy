@@ -8,7 +8,6 @@ import {
   Edit3, 
   Trash2, 
   MoreHorizontal,
-  Reply,
   Heart,
   Flag
 } from 'lucide-react';
@@ -237,11 +236,11 @@ export interface CommentListProps {
 // Single Comment Component
 // ================================================================
 
-const CommentItemComponent: React.FC<{
+const CommentItemComponent = React.memo<{
   comment: Comment;
   onUpdate: () => void;
   isReply?: boolean;
-}> = React.memo(({ comment, onUpdate, isReply = false }) => {
+}>(function CommentItemComponent({ comment, onUpdate, isReply = false }) {
   const { user } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);

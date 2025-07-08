@@ -341,7 +341,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           API_ENDPOINTS.COMMENTS.BY_POST(postId)
         );
       } catch (error) {
-        const errorInfo = apiErrorHandler.parseError(error);
+        const errorInfo = apiErrorHandler.parseError(commentsError);
         console.error('Comments load error:', errorInfo);
         
         showToast({
