@@ -93,7 +93,7 @@ const SidebarOverlay = styled(motion.div).withConfig({
   }
 `;
 
-// 헤더 섹션 (햄버거 버튼만)
+// 헤더 섹션
 const HeaderSection = styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
@@ -162,7 +162,7 @@ const ToggleButton = styled.button`
   }
 `;
 
-// 메인 네비게이션 (스크롤 가능 영역)
+// 메인 네비게이션
 const NavigationSection = styled.nav.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
@@ -193,7 +193,7 @@ const NavigationSection = styled.nav.withConfig({
   }
 `;
 
-const NavItem = styled.div.withConfig({
+const NavItem = React.memo(styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isActive', '$isOpen'].includes(prop),
 })<{ $isActive: boolean; $isOpen: boolean }>`
   margin: 0 12px;
@@ -252,7 +252,12 @@ const NavItem = styled.div.withConfig({
       }
     }
   }
-`;
+`,(prevProps, nextProps) => {
+  return (
+    prevProps.$isActive === nextProps.$isActive &&
+    prevProps.$isOpen === nextProps.$isOpen
+  );
+});
 
 // 계정 섹션
 const AccountSection = styled.div.withConfig({
@@ -420,7 +425,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           </ToggleButton>
         </HeaderSection>
 
-        {/* 메인 네비게이션 - 스크롤 가능 */}
+        {/* 메인 네비게이션 */}
         <NavigationSection $isOpen={sidebar.isOpen}>
           {navItems.map((item) => (
             <NavItem

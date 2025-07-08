@@ -136,6 +136,15 @@ export type Theme = typeof theme;
 export const gradients = {
   primary: `linear-gradient(135deg, ${theme.colors.primary[500]} 0%, ${theme.colors.secondary[500]} 100%)`,
   primaryHover: `linear-gradient(135deg, ${theme.colors.primary[600]} 0%, ${theme.colors.secondary[600]} 100%)`,
+  
+  // 🆕 추가 그라데이션들
+  success: `linear-gradient(135deg, ${theme.colors.success} 0%, #059669 100%)`,
+  error: `linear-gradient(135deg, ${theme.colors.error} 0%, #dc2626 100%)`,
+  card: `linear-gradient(135deg, ${theme.colors.background.secondary} 0%, ${theme.colors.background.primary} 100%)`,
+  
+  // 🆕 방향별 그라데이션
+  vertical: `linear-gradient(180deg, ${theme.colors.primary[500]} 0%, ${theme.colors.secondary[500]} 100%)`,
+  radial: `radial-gradient(circle, ${theme.colors.primary[500]} 0%, ${theme.colors.secondary[500]} 100%)`,
 } as const;
 
 // 자주 사용하는 미디어 쿼리

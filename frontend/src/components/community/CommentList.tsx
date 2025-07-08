@@ -241,7 +241,7 @@ const CommentItemComponent: React.FC<{
   comment: Comment;
   onUpdate: () => void;
   isReply?: boolean;
-}> = ({ comment, onUpdate, isReply = false }) => {
+}> = React.memo(({ comment, onUpdate, isReply = false }) => {
   const { user } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -430,7 +430,14 @@ const CommentItemComponent: React.FC<{
       )}
     </CommentContainer>
   );
-};
+}, (prevProps, nextProps) => {
+  // 댓글 내용이 변경되지 않았으면 리렌더링 스킵
+  return (
+    prevProps.comment.id === nextProps.comment.id &&
+    prevProps.comment.updatedAt === nextProps.comment.updatedAt &&
+    prevProps.isReply === nextProps.isReply
+  );
+});
 
 // ================================================================
 // Main Component

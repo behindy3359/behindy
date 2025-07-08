@@ -182,9 +182,8 @@ function LoginContent() {
       <Subtitle>계정에 로그인하여 게임을 계속하세요</Subtitle>
 
       <DemoBox>
-        <div className="title">🎮 데모 계정으로 접속하기</div>
         <Button variant="ghost" size="sm" onClick={handleDemoLogin} disabled={loading} style={{ width: '100%' }}>
-          데모 계정 정보 입력
+          🎮 데모 계정으로 접속하기
         </Button>
       </DemoBox>
 

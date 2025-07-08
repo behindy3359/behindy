@@ -236,7 +236,7 @@ const isHotPost = (post: Post): boolean => {
 // Component
 // ================================================================
 
-export const PostCard: React.FC<PostCardProps> = ({
+export const PostCard: React.FC<PostCardProps> = React.memo(({
   post,
   showMetroLine = true,
   compact = false,
@@ -320,6 +320,12 @@ export const PostCard: React.FC<PostCardProps> = ({
       </CardFooter>
     </CardContainer>
   );
-};
-
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.post.id === nextProps.post.id &&
+    prevProps.post.updatedAt === nextProps.post.updatedAt &&
+    prevProps.showMetroLine === nextProps.showMetroLine &&
+    prevProps.compact === nextProps.compact
+  );
+});
 export default PostCard;
