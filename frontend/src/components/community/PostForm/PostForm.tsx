@@ -32,6 +32,7 @@ import {
 
 import { validators } from '@/utils/common/validation';
 import { apiErrorHandler, API_ENDPOINTS } from '@/utils/common/api';
+import { PageContainer } from '@/styles/commonStyles';
 
 // ================================================================
 // Types & Validation
@@ -84,16 +85,6 @@ export interface PostFormProps {
 // ================================================================
 // Styled Components
 // ================================================================
-
-const Container = styled.div`
-  max-width: ${({ theme }) => theme.container.lg};
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing[6]};
-  
-  @media (max-width: 1200px) {
-    padding: ${({ theme }) => theme.spacing[4]};
-  }
-`;
 
 const Header = styled.div`
   display: flex;
@@ -479,7 +470,7 @@ export const PostForm: React.FC<PostFormProps> = ({
   // 로딩 중일 때
   if (mode === 'edit' && isLoadingPost) {
     return (
-      <Container>
+      <PageContainer>
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -488,14 +479,14 @@ export const PostForm: React.FC<PostFormProps> = ({
         }}>
           {LOADING_MESSAGES.POST_LOADING}
         </div>
-      </Container>
+      </PageContainer>
     );
   }
 
   // 게시글 로드 실패
   if (mode === 'edit' && fetchError) {
     return (
-      <Container>
+      <PageContainer>
         <div style={{ 
           textAlign: 'center', 
           padding: '40px',
@@ -518,14 +509,14 @@ export const PostForm: React.FC<PostFormProps> = ({
             {ACTION_MESSAGES.GO_TO_LIST}
           </button>
         </div>
-      </Container>
+      </PageContainer>
     );
   }
 
   // 편집 권한 확인
   if (mode === 'edit' && existingPost && existingPost.authorId !== user?.id) {
     return (
-      <Container>
+      <PageContainer>
         <div style={{ 
           textAlign: 'center', 
           padding: '40px',
@@ -548,12 +539,12 @@ export const PostForm: React.FC<PostFormProps> = ({
             {ACTION_MESSAGES.GO_BACK}
           </button>
         </div>
-      </Container>
+      </PageContainer>
     );
   }
 
   return (
-    <Container>
+    <PageContainer>
       <Header>
         <HeaderLeft>
           <BackButton
@@ -718,7 +709,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           </LoadingOverlay>
         )}
       </FormContainer>
-    </Container>
+    </PageContainer>
   );
 };
 

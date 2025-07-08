@@ -32,13 +32,35 @@ const SidebarContainer = styled(motion.aside).withConfig({
   position: fixed;
   top: 0;
   left: 0;
-  height: 100vh;
+  height: 100vh; /* 전체 화면 높이 */
   background: ${gradients.primary};
   color: white;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  
+  /* 추가: 스크롤 처리 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* 스크롤바 스타일링 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+  }
   
   /* 데스크톱: 280px ↔ 60px */
   @media (min-width: 768px) {
@@ -81,6 +103,7 @@ const HeaderSection = styled.div.withConfig({
   align-items: center;
   justify-content: ${({ $isOpen }) => ($isOpen ? 'space-between' : 'center')};
   min-height: 80px;
+  flex-shrink: 0; /* 추가: 헤더 크기 고정 */
 `;
 
 const BrandLogo = styled.div.withConfig({
@@ -125,6 +148,7 @@ const ToggleButton = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0; /* 추가: 버튼 크기 고정 */
   
   &:hover {
     background: rgba(255, 255, 255, 0.2);
@@ -138,18 +162,34 @@ const ToggleButton = styled.button`
   }
 `;
 
-// 메인 네비게이션 (접혀있을 때는 완전히 숨김)
+// 메인 네비게이션 (스크롤 가능 영역)
 const NavigationSection = styled.nav.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
-  flex: 1;
+  flex: 1; /* 추가: 남은 공간 모두 차지 */
   padding: 20px 0;
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto; /* 추가: 내비게이션 영역 스크롤 */
+  overflow-x: hidden;
   
   @media (max-width: 767px) {
     display: flex;
+  }
+  
+  /* 내비게이션 영역만의 스크롤바 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
   }
 `;
 
@@ -214,7 +254,7 @@ const NavItem = styled.div.withConfig({
   }
 `;
 
-// 계정 섹션 (접혀있을 때는 완전히 숨김)
+// 계정 섹션
 const AccountSection = styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
@@ -223,6 +263,7 @@ const AccountSection = styled.div.withConfig({
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   flex-direction: column;
   gap: 8px;
+  flex-shrink: 0; /* 추가: 계정 섹션 크기 고정 */
   
   @media (max-width: 767px) {
     display: flex;
@@ -236,6 +277,7 @@ const BottomSection = styled.div.withConfig({
   padding: 20px 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
+  flex-shrink: 0; /* 추가: 하단 섹션 크기 고정 */
   
   @media (max-width: 767px) {
     display: block;
@@ -303,7 +345,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const navItems = [
     { path: '/', label: '홈', icon: Home },
     { path: '/about', label: '소개', icon: Info },
-    // { path: '/metro', label: '지하철 노선도', icon: Train },
     { path: '/community', label: '게시판', icon: MessageSquare },
   ];
 
@@ -379,7 +420,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           </ToggleButton>
         </HeaderSection>
 
-        {/* 메인 네비게이션 - 펼쳐져 있을 때만 표시 */}
+        {/* 메인 네비게이션 - 스크롤 가능 */}
         <NavigationSection $isOpen={sidebar.isOpen}>
           {navItems.map((item) => (
             <NavItem
@@ -398,7 +439,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           ))}
         </NavigationSection>
 
-        {/* 계정 섹션 - 펼쳐져 있을 때만 표시 */}
+        {/* 계정 섹션 */}
         <AccountSection $isOpen={sidebar.isOpen}>
           {accountItems.map((item, index) => (
             <NavItem
@@ -417,7 +458,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           ))}
         </AccountSection>
 
-        {/* 하단 테마 토글 - 펼쳐져 있을 때만 표시 */}
+        {/* 하단 테마 토글 */}
         <BottomSection $isOpen={sidebar.isOpen}>
           <button className="theme-toggle" onClick={handleThemeToggle}>
             {isDarkTheme ? (

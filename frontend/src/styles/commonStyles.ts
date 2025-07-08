@@ -1,9 +1,6 @@
 import styled from 'styled-components';
 
-/**
- * 공통 컨테이너 스타일 - 프로젝트 전체 일관성 확보
- * 현재 모든 페이지에서 max-width: 900px를 사용하고 있음
- */
+// 공통 컨테이너 스타일 - 프로젝트 전체 일관성 확보
 
 // 메인 페이지 컨테이너
 export const PageContainer = styled.div`

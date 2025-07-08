@@ -8,8 +8,9 @@ import { gradients } from '@/styles/theme';
 const AuthLayoutContainer = styled.div`
   min-height: 100vh;
   background: ${gradients.primary};
-  align-items: center;
-  justify-content: center;
+  display: flex; /* 추가: Flexbox 사용 */
+  align-items: center; /* 추가: 수직 중앙 정렬 */
+  justify-content: center; /* 추가: 수평 중앙 정렬 */
   padding: 20px;
   position: relative;
   overflow: hidden;
@@ -41,6 +42,29 @@ const AuthCard = styled(motion.div)`
   max-width: 450px;
   overflow: hidden;
   position: relative;
+  
+  /* 추가: 최대 높이 제한 및 스크롤 처리 */
+  max-height: 90vh;
+  overflow-y: auto;
+  
+  /* 스크롤바 스타일링 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.3);
+    }
+  }
 `;
 
 const BrandSection = styled.div`
@@ -80,6 +104,12 @@ const BrandSection = styled.div`
 
 const ContentSection = styled.div`
   padding: 40px;
+  
+  /* 추가: 최소 높이 설정으로 내용이 적어도 중앙에 위치 */
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 `;
 
 const FloatingElement = styled(motion.div)`
@@ -155,6 +185,7 @@ export default function AuthLayout({
             B
           </motion.div>
           <div className="brand-name">Behindy</div>
+          <div className="tagline">지하철 노선도 기반 텍스트 어드벤처</div>
         </BrandSection>
 
         <ContentSection>

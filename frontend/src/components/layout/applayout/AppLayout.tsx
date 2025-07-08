@@ -13,6 +13,10 @@ const LayoutContainer = styled.div`
   display: flex;
   min-height: 100vh;
   background: #fafbfc;
+  
+  /* 추가: 전체 레이아웃이 스크롤되지 않도록 고정 */
+  position: relative;
+  overflow: hidden;
 `;
 
 const MainContent = styled.main.withConfig({
@@ -25,6 +29,30 @@ const MainContent = styled.main.withConfig({
   flex: 1;
   display: flex;
   flex-direction: column;
+  
+  /* 추가: 메인 콘텐츠 자체 스크롤 처리 */
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* 스크롤바 스타일링 */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
   
   /* 사이드바 레이아웃인 경우 */
   ${({ $layoutType, $sidebarOpen, $isMobile }) => 
@@ -55,7 +83,9 @@ const ContentArea = styled.div`
   flex: 1;
   padding: 0;
   position: relative;
-  overflow-x: hidden;
+  
+  /* 추가: 콘텐츠 영역 최소 높이 보장 */
+  min-height: calc(100vh - 0px); /* 헤더가 있다면 헤더 높이만큼 빼기 */
 `;
 
 // 모바일 토글 버튼 (사이드바 레이아웃에서만 표시)
@@ -100,13 +130,13 @@ const MobileToggleButton = styled.button.withConfig({
 interface AppLayoutProps {
   children: React.ReactNode;
   className?: string;
-  layoutType?: 'header' | 'sidebar';  // 👈 레이아웃 타입 선택
+  layoutType?: 'header' | 'sidebar';
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ 
   children, 
   className,
-  layoutType = 'sidebar'  // 👈 기본값은 sidebar
+  layoutType = 'sidebar'
 }) => {
   const { sidebar, toggleSidebar } = useUIStore();
   const [isMobile, setIsMobile] = React.useState(false);
@@ -143,7 +173,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           alignItems: 'center',
           padding: '0 24px'
         }}>
-          {/* 기존 헤더 내용을 여기에 */}
           <h1>Header Layout</h1>
         </header>
       )}

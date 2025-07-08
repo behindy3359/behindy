@@ -23,20 +23,11 @@ import { useAuthStore } from '@/store/authStore';
 import { PostCard } from './PostCard';
 import { ERROR_MESSAGES, LOADING_MESSAGES } from '@/utils/common/constants';
 import { buildApiUrl } from '@/utils/common/api';
+import { PageContainer } from '@/styles/commonStyles';
 
 // ================================================================
 // Styled Components
 // ================================================================
-
-const Container = styled.div`
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px;
-  
-  @media (max-width: 1200px) {
-    padding: 16px;
-  }
-`;
 
 const Header = styled.div`
   display: flex;
@@ -449,7 +440,7 @@ export const PostList: React.FC<PostListProps> = ({
 
   if (error) {
     return (
-      <Container>
+      <PageContainer>
         <div style={{ 
           textAlign: 'center', 
           padding: '40px', 
@@ -457,12 +448,12 @@ export const PostList: React.FC<PostListProps> = ({
         }}>
           {ERROR_MESSAGES.POST_LOAD_ERROR}
         </div>
-      </Container>
+      </PageContainer>
     );
   }
 
   return (
-    <Container>
+    <PageContainer>
       <Header>
         <HeaderLeft>
           <Title>
@@ -714,7 +705,7 @@ export const PostList: React.FC<PostListProps> = ({
           </PageButton>
         </Pagination>
       )}
-    </Container>
+    </PageContainer>
   );
 };
 

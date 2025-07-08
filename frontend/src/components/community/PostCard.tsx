@@ -217,12 +217,8 @@ export interface PostCardProps {
 }
 
 // ================================================================
-// Helper Functions (formatters 활용)
+// Helper Functions
 // ================================================================
-
-const getAuthorInitial = (name: string): string => {
-  return formatters.getUserInitial(name); // 🔥 통합된 함수 사용
-};
 
 const extractMetroLine = (content: string): string | null => {
   const lineMatch = content.match(/([1-4])호선/);
@@ -258,10 +254,6 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  // 🔥 통합된 포맷터 사용
-  const timeAgo = formatters.relativeTime(post.createdAt);
-  const preview = formatters.createPostPreview(post.content, compact ? 80 : 120);
-
   return (
     <CardContainer
       onClick={handleClick}
@@ -278,7 +270,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         <AuthorInfo>
           <AuthorLeft>
             <Avatar>
-              {getAuthorInitial(post.authorName)}
+              {formatters.getUserInitial(post.authorName)}
             </Avatar>
             <AuthorName>{post.authorName}</AuthorName>
             {metroLine && (
@@ -291,7 +283,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           
           <PostTime>
             <Clock size={12} />
-            {timeAgo} {/* 🔥 통합된 시간 포맷팅 */}
+            {formatters.relativeTime(post.createdAt)}
           </PostTime>
         </AuthorInfo>
       </CardHeader>
@@ -299,7 +291,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       <CardContent>
         <PostTitle>{post.title}</PostTitle>
         <PostPreview>
-          {preview} {/* 🔥 통합된 텍스트 미리보기 */}
+          {formatters.createPostPreview(post.content, compact ? 80 : 120)}
         </PostPreview>
       </CardContent>
 

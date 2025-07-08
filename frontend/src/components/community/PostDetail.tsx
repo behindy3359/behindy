@@ -29,20 +29,11 @@ import { useToast } from '@/store/uiStore';
 
 import { CommentList } from './CommentList';
 import { CommentForm } from './CommentForm/CommentForm';
+import { PageContainer } from '@/styles/commonStyles';
 
 // ================================================================
 // Styled Components
 // ================================================================
-
-const Container = styled.div`
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px;
-  
-  @media (max-width: 1200px) {
-    padding: 16px;
-  }
-`;
 
 const Header = styled.div`
   display: flex;
@@ -402,26 +393,26 @@ export const PostDetail: React.FC<PostDetailProps> = ({
 
   if (isLoading) {
     return (
-      <Container>
+      <PageContainer>
         <LoadingState>
           {LOADING_MESSAGES.POST_LOADING}
         </LoadingState>
-      </Container>
+      </PageContainer>
     );
   }
 
   if (error || !post) {
     return (
-      <Container>
+      <PageContainer>
         <ErrorState>
           {ERROR_MESSAGES.POST_LOAD_ERROR}
         </ErrorState>
-      </Container>
+      </PageContainer>
     );
   }
 
   return (
-    <Container>
+    <PageContainer>
       <Header>
         <BackButton
           onClick={handleBack}
@@ -599,7 +590,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           onClick={() => setShowMenu(false)}
         />
       )}
-    </Container>
+    </PageContainer>
   );
 };
 

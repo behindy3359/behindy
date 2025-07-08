@@ -259,11 +259,6 @@ const CommentItemComponent: React.FC<{
     },
   });
 
-  // 🔥 통합된 포맷터 사용
-  const getUserInitial = (name: string) => {
-    return formatters.getUserInitial(name);
-  };
-
   const handleEdit = () => {
     setIsEditing(true);
     setShowMenu(false);
@@ -305,7 +300,7 @@ const CommentItemComponent: React.FC<{
           <CommentMeta>
             <div className="user-info">
               <div className="avatar">
-                {getUserInitial(comment.authorName)}
+                {formatters.getUserInitial(comment.authorName)}
               </div>
               <span className="name">{comment.authorName}</span>
             </div>
