@@ -13,7 +13,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { buildApiUrl } from '@/config';
 import type { PostListResponse } from '@/types/community/community';
-import { RealtimeMetroMap } from '@/components/metroMap';
+import { RealtimeMetroMap } from '@/components/metroMap/RealtimeMetroMap';
 import { PostCard } from '@/components/community';
 import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';

@@ -13,6 +13,7 @@ import {
   MapPin
 } from 'lucide-react';
 import type { Post } from '@/types/community/community';
+import { formatters } from '@/utils/common';
 
 // ================================================================
 // Styled Components
@@ -222,18 +223,6 @@ const getAuthorInitial = (name: string): string => {
   return name.charAt(0).toUpperCase();
 };
 
-const formatTimeAgo = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-  
-  if (diffInMinutes < 1) return '방금 전';
-  if (diffInMinutes < 60) return `${diffInMinutes}분 전`;
-  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}시간 전`;
-  if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)}일 전`;
-  return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-};
-
 const extractMetroLine = (content: string): string | null => {
   // 게시글 내용에서 지하철 호선 추출 (1호선, 2호선 등)
   const lineMatch = content.match(/([1-4])호선/);
@@ -306,7 +295,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           
           <PostTime>
             <Clock size={12} />
-            {formatTimeAgo(post.createdAt)}
+            {formatters.relativeTime(post.createdAt)}
           </PostTime>
         </AuthorInfo>
       </CardHeader>

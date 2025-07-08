@@ -9,7 +9,7 @@ import { HomePage } from '@/components/homepage/HomePage';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5분
+      staleTime: 5 * 60 * 1000,
       retry: 1,
     },
   },

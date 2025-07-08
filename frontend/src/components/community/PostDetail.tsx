@@ -21,7 +21,7 @@ import { api, API_ENDPOINTS } from '@/config';
 import type { Post, CommentListResponse } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { CommentList } from './CommentList';
-import { CommentForm } from './CommentForm';
+import { CommentForm } from './CommentForm/CommentForm';
 
 // ================================================================
 // Styled Components

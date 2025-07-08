@@ -16,7 +16,8 @@ import { useMutation } from '@tanstack/react-query';
 import { api, API_ENDPOINTS } from '@/config';
 import type { Comment } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
-import { CommentForm } from './CommentForm';
+import { CommentForm } from './CommentForm/CommentForm';
+import { formatters } from '@/utils/common';
 
 // ================================================================
 // Styled Components
@@ -252,17 +253,6 @@ const CommentItemComponent: React.FC<{
     },
   });
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return '방금 전';
-    if (diffInMinutes < 60) return `${diffInMinutes}분 전`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}시간 전`;
-    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-  };
-
   const getUserInitial = (name: string) => {
     return name.charAt(0).toUpperCase();
   };
@@ -318,7 +308,7 @@ const CommentItemComponent: React.FC<{
             </div>
             <div className="date">
               <Calendar size={12} />
-              {formatDate(comment.createdAt)}
+              {formatters.relativeTime(comment.createdAt)}
             </div>
           </CommentMeta>
 

@@ -1,6 +1,7 @@
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import type { Metadata } from 'next'
+import { ThemeProvider } from '@/providers/ThemeProvider';
 
 export const metadata: Metadata = {
   title: {
@@ -44,9 +45,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <AuthGuard>
-          {children}
-        </AuthGuard>
+        <ThemeProvider>
+          <AuthGuard>
+            {children}
+          </AuthGuard>
+        </ThemeProvider>
       </body>
     </html>
   );
