@@ -163,7 +163,7 @@ export const SEOUL_DISTRICTS: District[] = [
   }
 ];
 
-// 한강 경계 (별도 레이어)
+// 한강 경계
 export const HAN_RIVER = {
   id: 'han_river',
   name: '한강',

@@ -1,37 +1,29 @@
 import axios from 'axios';
 import { env } from '@/config/env';
-import { STORAGE_KEYS, ERROR_MESSAGES } from '@/utils/common'; // 🔥 상수 중앙화
+import { STORAGE_KEYS, ERROR_MESSAGES } from '@/utils/common/constants';
 
-// API 응답 기본 타입
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data: T;
-  message?: string;
-  error?: string;
-}
-
-// 토큰 관리 유틸리티 - 상수 중앙화 적용
+// 토큰 관리 유틸리티
 class TokenManager {
   static getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN); // 🔥 상수 사용
+    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN); 
   }
 
   static getRefreshToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN); // 🔥 상수 사용
+    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN); 
   }
 
   static setTokens(accessToken: string, refreshToken: string): void {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken); // 🔥 상수 사용
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken); // 🔥 상수 사용
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken); 
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken); 
   }
 
   static clearTokens(): void {
     if (typeof window === 'undefined') return;
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN); // 🔥 상수 사용
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN); // 🔥 상수 사용
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
   }
 
   static hasValidTokens = (): boolean => {
@@ -41,7 +33,7 @@ class TokenManager {
   };
 }
 
-// 🔥 인증이 필요한 엔드포인트 패턴 정의 (상수로 관리)
+// 인증이 필요한 엔드포인트 패턴 정의
 const AUTH_REQUIRED_PATTERNS = [
   '/auth/logout',
   '/auth/refresh',
@@ -53,7 +45,7 @@ const AUTH_REQUIRED_PATTERNS = [
 
 const AUTH_REQUIRED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'] as const;
 
-// 🔥 요청에 인증이 필요한지 확인하는 함수
+// 요청에 인증이 필요한지 확인
 const requiresAuth = (config: {
   url?: string;
   method?: string;
@@ -81,13 +73,13 @@ const requiresAuth = (config: {
 const createApiClient = (baseURL: string) => {
   const client = axios.create({
     baseURL,
-    timeout: 10000, // 🔥 상수화 가능
+    timeout: 10000,
     headers: {
       'Content-Type': 'application/json',
     },
   });
 
-  // 🔥 수정된 요청 인터셉터
+  // 요청 인터셉터
   client.interceptors.request.use(
     (config) => {
       if (requiresAuth(config)) {
@@ -130,7 +122,7 @@ const createApiClient = (baseURL: string) => {
 
       const originalRequest = axiosError.config;
 
-      // 🔥 401 에러 시 토큰 갱신 시도
+      // 401 에러 시 토큰 갱신 시도
       if (axiosError.response?.status === 401 && 
           originalRequest && 
           !originalRequest._retry &&
@@ -141,7 +133,7 @@ const createApiClient = (baseURL: string) => {
         try {
           const refreshToken = TokenManager.getRefreshToken();
           if (!refreshToken) {
-            throw new Error(ERROR_MESSAGES.AUTH_EXPIRED); // 🔥 상수 사용
+            throw new Error(ERROR_MESSAGES.AUTH_EXPIRED); 
           }
 
           // 토큰 갱신 요청
@@ -220,7 +212,7 @@ export const api = {
   },
 };
 
-// 🔥 퍼블릭 API 함수들
+// 퍼블릭 API 함수들
 export const publicApi = {
   getPosts: async <T>(url: string, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.get<T>(url, config);

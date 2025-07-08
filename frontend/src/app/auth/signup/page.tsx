@@ -20,12 +20,15 @@ import {
   EyeOff,
   Shield
 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
+import { Button } from '@/components/ui/button/Button';
+import { Input } from '@/components/ui/input/Input'
 import { useAuthStore } from '@/store/authStore';
-import { validators, apiErrorHandler, CONFIRM_MESSAGES, SUCCESS_MESSAGES, LOADING_MESSAGES } from '@/utils/common';
+import { CONFIRM_MESSAGES, SUCCESS_MESSAGES, LOADING_MESSAGES } from '@/utils/common/constants';
+import { validators } from '@/utils/common/validation';
+import { apiErrorHandler} from '@/utils/common/api';
 
 // ================================================================
-// Types & Validation (통합된 validators 사용)
+// Types & Validation
 // ================================================================
 
 interface SignupFormData {
@@ -349,7 +352,7 @@ const LoginPrompt = styled.div`
 `;
 
 // ================================================================
-// Helper Functions (통합된 validators 활용)
+// Helper Functions
 // ================================================================
 
 const getPasswordStrengthText = (strength: number): string => {

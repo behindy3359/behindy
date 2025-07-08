@@ -7,12 +7,14 @@ import * as yup from 'yup';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Send, X, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button } from '@/components/ui/button/Button';
 import { useMutation } from '@tanstack/react-query';
-import { api, API_ENDPOINTS } from '@/config';
+import { api,  } from '@/services/api/axiosConfig';
+
 import type { Comment, CreateCommentRequest } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
-import { ERROR_MESSAGES } from '@/utils/common';
+import { ERROR_MESSAGES } from '@/utils/common/constants';
+import { API_ENDPOINTS } from '@/utils/common/api';
 
 // Types & Validation
 const isAxiosError = (error: unknown): error is {

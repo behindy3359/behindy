@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { requiresAuth, isPublicRoute } from '@/utils/navigation/navigationUtils';
-import { LOADING_MESSAGES } from '@/utils/common';
+import { LOADING_MESSAGES } from '@/utils/common/constants';
 
 interface AuthGuardProps {
   children: React.ReactNode;

@@ -13,14 +13,15 @@ import {
   Flag
 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { api, API_ENDPOINTS } from '@/config';
+import { api } from '@/services/api/axiosConfig';
+import { API_ENDPOINTS } from '@/utils/common/api'
 import type { Comment } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { CommentForm } from './CommentForm/CommentForm';
-import { formatters } from '@/utils/common';
+import { formatters } from '@/utils/common/formatting';
 
 // ================================================================
-// Styled Components (theme 색상 시스템 적용)
+// Styled Components
 // ================================================================
 
 const CommentContainer = styled(motion.div)`

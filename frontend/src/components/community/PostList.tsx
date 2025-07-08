@@ -14,13 +14,15 @@ import {
   List,
   SlidersHorizontal
 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
+import { Button } from '@/components/ui/button/Button';
+import { Input } from '@/components/ui/input/Input';
 import { useQuery } from '@tanstack/react-query';
-import { api, buildApiUrl } from '@/config';
+import { api } from '@/services/api/axiosConfig';
 import type { PostListResponse } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { PostCard } from './PostCard';
-import { ERROR_MESSAGES, LOADING_MESSAGES } from '@/utils/common';
+import { ERROR_MESSAGES, LOADING_MESSAGES } from '@/utils/common/constants';
+import { buildApiUrl } from '@/utils/common/api';
 
 // ================================================================
 // Styled Components

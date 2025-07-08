@@ -1,14 +1,9 @@
-// src/utils/common/formatting.ts
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-/**
- * 시간 포맷팅 유틸리티 (기존 프로젝트에서 실제 사용)
- */
+// 시간 포맷팅 유틸리티
 export const formatters = {
-  /**
-   * 상대적 시간 포맷팅 (예: "3분 전", "2시간 전"
-   */
+  // 상대적 시간 포맷팅 (예: "3분 전", "2시간 전"
   relativeTime: (dateString: string | Date): string => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     const now = new Date();
@@ -25,10 +20,7 @@ export const formatters = {
     });
   },
 
-  /**
-   * 절대적 시간 포맷팅 (예: "2024년 3월 15일 오후 2:30")
-   * 기존: formatDate, formatAbsoluteTime 통합
-   */
+  // 절대적 시간 포맷팅 (예: "2024년 3월 15일 오후 2:30")
   absoluteTime: (dateString: string | Date, options?: {
     includeTime?: boolean;
   }): string => {
@@ -46,19 +38,13 @@ export const formatters = {
     });
   },
 
-  /**
-   * 텍스트 길이 제한 및 말줄임표 추가
-   * 기존: truncateText, createPostPreview에서 사용
-   */
+  // 텍스트 길이 제한 및 말줄임표 추가
   truncateText: (text: string, maxLength: number): string => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   },
 
-  /**
-   * HTML 태그 제거 (게시글 미리보기용)
-   * 기존: stripHtml, createPostPreview에서 사용
-   */
+  // HTML 태그 제거 (게시글 미리보기용)
   stripHtml: (html: string): string => {
     if (typeof document !== 'undefined') {
       const div = document.createElement('div');
@@ -69,19 +55,13 @@ export const formatters = {
     }
   },
 
-  /**
-   * 사용자 이니셜 생성
-   * 기존: getUserInitial에서 사용
-   */
+  // 사용자 이니셜 생성
   getUserInitial: (name: string): string => {
     if (!name || !name.trim()) return 'U';
     return name.charAt(0).toUpperCase();
   },
 
-  /**
-   * 게시글 미리보기 생성
-   * 기존: createPostPreview에서 사용
-   */
+  // 게시글 미리보기 생성
   createPostPreview: (content: string, maxLength = 120): string => {
     const plainText = formatters.stripHtml(content);
     return formatters.truncateText(plainText, maxLength);

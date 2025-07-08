@@ -12,177 +12,11 @@ import type { AuthError } from '@/types/auth/authState';
     aud?: string; // 대상
   }
 
-// 폼 검증 유틸리티
-// 이메일 형식 검증 (한국 도메인 포함)
-export const validateEmail = (email: string): { isValid: boolean; message?: string } => {
-  if (!email || email.trim() === '') {
-    return { isValid: false, message: '이메일을 입력해주세요.' };
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
-  const normalizedEmail = email.toLowerCase().trim();
-  
-  if (!emailRegex.test(normalizedEmail)) {
-    return { isValid: false, message: '올바른 이메일 형식이 아닙니다.' };
-  }
-
-  // 일반적이지 않은 문자 체크
-  if (/[가-힣]/.test(normalizedEmail)) {
-    return { isValid: false, message: '이메일에는 한글을 사용할 수 없습니다.' };
-  }
-
-  return { isValid: true };
-};
-
-// 비밀번호 강도 검증
-export const validatePassword = (password: string): {
-  isValid: boolean;
-  score: number;
-  messages: string[];
-  strength: 'very-weak' | 'weak' | 'medium' | 'strong' | 'very-strong';
-} => {
-  const messages: string[] = [];
-  let score = 0;
-
-  if (!password) {
-    return {
-      isValid: false,
-      score: 0,
-      messages: ['비밀번호를 입력해주세요.'],
-      strength: 'very-weak'
-    };
-  }
-
-  // 길이 검사
-  if (password.length >= 8) {
-    score += 1;
-  } else {
-    messages.push('8자 이상이어야 합니다.');
-  }
-
-  if (password.length >= 12) {
-    score += 1;
-  }
-
-  // 소문자 포함
-  if (/[a-z]/.test(password)) {
-    score += 1;
-  } else {
-    messages.push('소문자를 포함해야 합니다.');
-  }
-
-  // 대문자 포함
-  if (/[A-Z]/.test(password)) {
-    score += 1;
-  } else {
-    messages.push('대문자를 포함해야 합니다.');
-  }
-
-  // 숫자 포함
-  if (/\d/.test(password)) {
-    score += 1;
-  } else {
-    messages.push('숫자를 포함해야 합니다.');
-  }
-
-  // 특수문자 포함
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    score += 1;
-  } else {
-    messages.push('특수문자를 포함해야 합니다.');
-  }
-
-  // 연속된 문자 체크
-  if (!/(.)\1{2,}/.test(password)) {
-    score += 1;
-  } else {
-    messages.push('3개 이상 연속된 문자는 사용할 수 없습니다.');
-  }
-
-  // 일반적인 패턴 체크
-  const commonPatterns = [
-    /123456/,
-    /password/i,
-    /qwerty/i,
-    /admin/i,
-    /user/i,
-    /1234/
-  ];
-
-  const hasCommonPattern = commonPatterns.some(pattern => pattern.test(password));
-  if (!hasCommonPattern) {
-    score += 1;
-  } else {
-    messages.push('일반적인 패턴은 사용할 수 없습니다.');
-  }
-
-  // 강도 계산
-  let strength: 'very-weak' | 'weak' | 'medium' | 'strong' | 'very-strong';
-  if (score <= 2) strength = 'very-weak';
-  else if (score <= 4) strength = 'weak';
-  else if (score <= 6) strength = 'medium';
-  else if (score <= 7) strength = 'strong';
-  else strength = 'very-strong';
-
-  return {
-    isValid: score >= 4, // 최소 4점 이상
-    score,
-    messages,
-    strength
-  };
-};
-
-// 이름 검증 (한국어 + 영어)
-export const validateName = (name: string): { isValid: boolean; message?: string } => {
-  if (!name || name.trim() === '') {
-    return { isValid: false, message: '이름을 입력해주세요.' };
-  }
-
-  const trimmedName = name.trim();
-
-  if (trimmedName.length < 2) {
-    return { isValid: false, message: '이름은 2자 이상이어야 합니다.' };
-  }
-
-  if (trimmedName.length > 20) {
-    return { isValid: false, message: '이름은 20자 이하여야 합니다.' };
-  }
-
-  // 한글, 영어, 공백만 허용
-  if (!/^[가-힣a-zA-Z\s]+$/.test(trimmedName)) {
-    return { isValid: false, message: '이름에는 한글, 영문, 공백만 사용 가능합니다.' };
-  }
-
-  // 특수문자나 숫자 체크
-  if (/[0-9!@#$%^&*(),.?":{}|<>]/.test(trimmedName)) {
-    return { isValid: false, message: '이름에는 숫자나 특수문자를 사용할 수 없습니다.' };
-  }
-
-  return { isValid: true };
-};
-
-// 비밀번호 확인
-export const validatePasswordConfirm = (
-  password: string, 
-  confirmPassword: string
-): { isValid: boolean; message?: string } => {
-  if (!confirmPassword) {
-    return { isValid: false, message: '비밀번호 확인을 입력해주세요.' };
-  }
-
-  if (password !== confirmPassword) {
-    return { isValid: false, message: '비밀번호가 일치하지 않습니다.' };
-  }
-
-  return { isValid: true };
-};
-
 // ================================================================
 // JWT 토큰 유틸리티
 // ================================================================
 
-// JWT 토큰 디코딩 (안전한 방식)
+// JWT 토큰 디코딩
 export const safeDecodeJWT = (token: string): JWTPayload | null => {
   try {
     if (!token || token.split('.').length !== 3) {
@@ -238,7 +72,6 @@ export const shouldRefreshToken = (token: string, minutesThreshold = 5): boolean
 // 에러 처리 유틸리티
 // ================================================================
 
-// API 에러를 사용자 친화적 메시지로 변환
 export const parseApiError = (error: unknown): AuthError => {
   // Axios 에러
   if (error && typeof error === 'object' && 'response' in error) {
@@ -319,9 +152,7 @@ export const parseApiError = (error: unknown): AuthError => {
   };
 };
 
-/**
- * 특정 에러 코드에 대한 사용자 액션 제안
- */
+// 특정 에러 코드에 대한 사용자 액션 제안
 export const getErrorAction = (errorCode: string): {
   action: string;
   button?: string;
@@ -358,86 +189,10 @@ export const getErrorAction = (errorCode: string): {
 };
 
 // ================================================================
-// 로컬 스토리지 안전 관리
-// ================================================================
-
-/**
- * 안전한 로컬 스토리지 접근
- */
-export const safeStorage = {
-  // 읽기
-  get: (key: string): string | null => {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-      return localStorage.getItem(key);
-    } catch (error) {
-      console.warn(`localStorage get failed for key: ${key}`, error);
-      return null;
-    }
-  },
-
-  // 쓰기
-  set: (key: string, value: string): boolean => {
-    if (typeof window === 'undefined') return false;
-    
-    try {
-      localStorage.setItem(key, value);
-      return true;
-    } catch (error) {
-      console.warn(`localStorage set failed for key: ${key}`, error);
-      return false;
-    }
-  },
-
-  // 삭제
-  remove: (key: string): boolean => {
-    if (typeof window === 'undefined') return false;
-    
-    try {
-      localStorage.removeItem(key);
-      return true;
-    } catch (error) {
-      console.warn(`localStorage remove failed for key: ${key}`, error);
-      return false;
-    }
-  },
-
-  // 존재 여부 확인
-  has: (key: string): boolean => {
-    return safeStorage.get(key) !== null;
-  },
-
-  // JSON 형태로 저장/읽기
-  setJSON: (key: string, value: unknown): boolean => {
-    try {
-      return safeStorage.set(key, JSON.stringify(value));
-    } catch (error) {
-      console.warn(`localStorage setJSON failed for key: ${key}`, error);
-      return false;
-    }
-  },
-
-  getJSON: <T>(key: string): T | null => {
-    try {
-      const value = safeStorage.get(key);
-      return value ? JSON.parse(value) : null;
-    } catch (error) {
-      console.warn(`localStorage getJSON failed for key: ${key}`, error);
-      return null;
-    }
-  }
-};
-
-// ================================================================
 // 리다이렉트 관리
 // ================================================================
 
-/**
- * 로그인 후 리다이렉트 URL 관리
- */
-
-// authStore.ts 내부의 redirectManager 수정:
+// 로그인 후 리다이렉트 URL 관리
 export const redirectManager = {
   saveCurrentUrl: (): void => {
     if (typeof window === 'undefined') return;
@@ -479,18 +234,12 @@ export const redirectManager = {
       redirectManager.saveCurrentUrl();
     }
 
-    // 🔥 중요: /auth/login으로 리다이렉트 (not /login)
+    // /auth/login으로 리다이렉트
     window.location.href = '/auth/login';
   }
 };
 
 const authHelpers = {
-  // 폼 검증
-  validateEmail,
-  validatePassword,
-  validateName,
-  validatePasswordConfirm,
-  
   // JWT 관련
   safeDecodeJWT,
   getTokenExpiry,
@@ -501,10 +250,7 @@ const authHelpers = {
   // 에러 처리
   parseApiError,
   getErrorAction,
-  
-  // 스토리지
-  safeStorage,
-  
+
   // 리다이렉트
   redirectManager
 };

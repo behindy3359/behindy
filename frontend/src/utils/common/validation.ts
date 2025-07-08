@@ -1,5 +1,3 @@
-// src/utils/common/validation.ts
-
 /**
  * 검증 결과 타입
  */
@@ -17,13 +15,9 @@ export interface PasswordStrengthResult extends ValidationResult {
   strength: 'very-weak' | 'weak' | 'medium' | 'strong' | 'very-strong';
 }
 
-/**
- * 검증 유틸리티 (기존 프로젝트에서 실제 사용되는 것들만)
- */
+// 검증 유틸리티
 export const validators = {
-  /**
-   * 이메일 검증 (기존 validateEmail 개선)
-   */
+  // 이메일 검증
   email: (email: string): ValidationResult => {
     if (!email || email.trim() === '') {
       return { isValid: false, message: '이메일을 입력해주세요.' };
@@ -43,9 +37,7 @@ export const validators = {
     return { isValid: true };
   },
 
-  /**
-   * 비밀번호 강도 검증 (기존 validatePassword 개선)
-   */
+  // 비밀번호 강도 검증
   password: (password: string): PasswordStrengthResult => {
     const messages: string[] = [];
     let score = 0;
@@ -109,9 +101,7 @@ export const validators = {
     };
   },
 
-  /**
-   * 이름 검증 (기존 validateName 개선)
-   */
+  // 이름 검증
   name: (name: string): ValidationResult => {
     if (!name || name.trim() === '') {
       return { isValid: false, message: '이름을 입력해주세요.' };
@@ -134,9 +124,7 @@ export const validators = {
     return { isValid: true };
   },
 
-  /**
-   * 비밀번호 확인 검증 (기존 validatePasswordConfirm 개선)
-   */
+  // 비밀번호 확인 검증
   passwordConfirm: (password: string, confirmPassword: string): ValidationResult => {
     if (!confirmPassword) {
       return { isValid: false, message: '비밀번호 확인을 입력해주세요.' };
@@ -149,9 +137,7 @@ export const validators = {
     return { isValid: true };
   },
 
-  /**
-   * 게시글 제목 검증
-   */
+  // 게시글 제목 검증
   postTitle: (title: string): ValidationResult => {
     if (!title || title.trim() === '') {
       return { isValid: false, message: '제목을 입력해주세요.' };
@@ -170,9 +156,7 @@ export const validators = {
     return { isValid: true };
   },
 
-  /**
-   * 게시글 내용 검증
-   */
+  // 게시글 내용 검증
   postContent: (content: string): ValidationResult => {
     if (!content || content.trim() === '') {
       return { isValid: false, message: '내용을 입력해주세요.' };
@@ -191,9 +175,7 @@ export const validators = {
     return { isValid: true };
   },
 
-  /**
-   * 댓글 내용 검증
-   */
+  // 댓글 내용 검증
   commentContent: (content: string): ValidationResult => {
     if (!content || content.trim() === '') {
       return { isValid: false, message: '댓글 내용을 입력해주세요.' };

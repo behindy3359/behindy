@@ -16,23 +16,25 @@ import {
   Edit3,
   FileText
 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
+import { Button } from '@/components/ui/button/Button';
+import { Input } from '@/components/ui/input/Input';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, API_ENDPOINTS } from '@/config';
+import { api } from '@/services/api/axiosConfig';
 import type { Post, CreatePostRequest } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { 
-  validators, 
-  apiErrorHandler, 
   INPUT_LIMITS,
   SUCCESS_MESSAGES,
   ERROR_MESSAGES,
   LOADING_MESSAGES, 
   ACTION_MESSAGES 
-} from '@/utils/common';
+} from '@/utils/common/constants';
+
+import { validators } from '@/utils/common/validation';
+import { apiErrorHandler, API_ENDPOINTS } from '@/utils/common/api';
 
 // ================================================================
-// Types & Validation (상수 중앙화 적용)
+// Types & Validation
 // ================================================================
 
 interface PostFormData {
@@ -40,7 +42,7 @@ interface PostFormData {
   content: string;
 }
 
-// 🔥 상수를 활용한 검증 스키마
+// 상수를 활용한 검증 스키마
 const postSchema = yup.object({
   title: yup
     .string()
@@ -80,7 +82,7 @@ export interface PostFormProps {
 }
 
 // ================================================================
-// Styled Components (theme 색상 시스템 적용)
+// Styled Components
 // ================================================================
 
 const Container = styled.div`

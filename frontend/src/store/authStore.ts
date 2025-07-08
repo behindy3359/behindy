@@ -8,11 +8,13 @@ import type {
 } from '@/types/auth/authState';
 import type { CurrentUser } from '@/types/auth/authUser';
 import type { LoginRequest, SignupRequest } from '@/types/auth/authRequest';
-import { api, API_ENDPOINTS, TokenManager } from '@/config';
+import { api,TokenManager } from '@/services/api/axiosConfig';
+import { API_ENDPOINTS } from '@/utils/common/api';
 import { env } from '@/config/env';
+import { ApiResponse } from '@/types/common/common';
 
 // ================================================================
-// 백엔드 응답 타입 (AuthController 기준)
+// 백엔드 응답 타입
 // ================================================================
 
 interface JwtAuthResponse {
@@ -22,12 +24,6 @@ interface JwtAuthResponse {
   userId: number;
   name: string;
   email: string;
-}
-
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  message?: string;
-  data?: T;
 }
 
 interface AuthResult {
@@ -92,14 +88,12 @@ export const useAuthStore = create<AuthStore>()(
       (set, get) => ({
         ...initialState,
 
-        /**
-         * 사용자 로그인 (백엔드 AuthController와 연동)
-         */
+        // 사용자 로그인
         login: async (credentials: LoginRequest): Promise<AuthResult> => {
           try {
             set({ isLoading: true, error: null }, false, 'auth/login/start');
 
-            // 백엔드 AuthController의 /api/auth/login 호출
+            //  /api/auth/login 호출
             const response = await api.post<JwtAuthResponse>(
               API_ENDPOINTS.AUTH.LOGIN,
               {
@@ -172,14 +166,12 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        /**
-         * 사용자 회원가입 (백엔드 AuthController와 연동)
-         */
+        // 사용자 회원가입 (백엔드 AuthController와 연동)
         signup: async (userData: SignupRequest): Promise<AuthResult> => {
           try {
             set({ isLoading: true, error: null }, false, 'auth/signup/start');
 
-            // 백엔드 AuthController의 /api/auth/signup 호출
+            // /api/auth/signup 호출
             const response = await api.post<ApiResponse<number>>(
               API_ENDPOINTS.AUTH.SIGNUP,
               {
@@ -236,9 +228,7 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        /**
-         * 사용자 로그아웃 (백엔드 AuthController와 연동)
-         */
+        // 사용자 로그아웃
         logout: async (): Promise<void> => {
           try {
             const { tokens } = get();
@@ -278,9 +268,7 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        /**
-         * 토큰 갱신 (백엔드 AuthController와 연동)
-         */
+        // 토큰 갱신
         refreshToken: async (): Promise<boolean> => {
           try {
             const { tokens } = get();
@@ -289,7 +277,7 @@ export const useAuthStore = create<AuthStore>()(
               throw new Error('No refresh token available');
             }
 
-            // 백엔드 AuthController의 /api/auth/refresh 호출
+            // /api/auth/refresh 호출
             const response = await api.post<JwtAuthResponse>(
               API_ENDPOINTS.AUTH.REFRESH,
               { refreshToken: tokens.refreshToken }
@@ -323,9 +311,7 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        /**
-         * 토큰 정리
-         */
+        // 토큰 정리
         clearTokens: (): void => {
           TokenManager.clearTokens();
           set(
@@ -341,9 +327,7 @@ export const useAuthStore = create<AuthStore>()(
           );
         },
 
-        /**
-         * 인증 상태 확인
-         */
+        // 인증 상태 확인
         checkAuthStatus: async (): Promise<void> => {
           try {
             set({ isLoading: true }, false, 'auth/check/start');
@@ -364,9 +348,8 @@ export const useAuthStore = create<AuthStore>()(
               return;
             }
 
-            // 토큰이 있으면 사용자 정보 복원
-            // 실제로는 사용자 정보를 가져오는 API가 필요하지만,
-            // 현재는 토큰 검증만 수행
+            // 토큰 검증
+            // TODO : 토큰이 있으면 사용자 정보 복원        
             set(
               {
                 status: 'authenticated',
@@ -386,13 +369,11 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        /**
-         * 현재 사용자 정보 가져오기
-         */
+        // 현재 사용자 정보 가져오기
         fetchCurrentUser: async (): Promise<void> => {
           try {
-            // 실제로는 사용자 정보를 가져오는 API 엔드포인트가 필요
-            // 현재는 토큰 검증만 수행
+            // 토큰 검증
+            // TODO : 실제로는 사용자 정보를 가져오는 API 엔드포인트가 필요
             const accessToken = TokenManager.getAccessToken();
             const refreshToken = TokenManager.getRefreshToken();
 
@@ -427,9 +408,7 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        /**
-         * 사용자 정보 업데이트
-         */
+        // 사용자 정보 업데이트
         updateUser: (userUpdate: Partial<CurrentUser>): void => {
           const { user } = get();
           if (user) {

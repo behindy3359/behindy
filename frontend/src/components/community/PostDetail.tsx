@@ -17,13 +17,18 @@ import {
   Flag
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, API_ENDPOINTS } from '@/config';
 import type { Post, CommentListResponse } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
+import { SUCCESS_MESSAGES, LOADING_MESSAGES, ERROR_MESSAGES } from '@/utils/common/constants';
+import { API_ENDPOINTS } from '@/utils/common/api'; 
+
+import { api } from '@/services/api/axiosConfig'
+
+import { domUtils } from '@/utils/common/dom';
+import { useToast } from '@/store/uiStore';
+
 import { CommentList } from './CommentList';
 import { CommentForm } from './CommentForm/CommentForm';
-import { domUtils, SUCCESS_MESSAGES, LOADING_MESSAGES, ERROR_MESSAGES } from '@/utils/common';
-import { useToast } from '@/store/uiStore';
 
 // ================================================================
 // Styled Components

@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui';
-import { LOADING_MESSAGES } from '@/utils/common';
+import { Button } from '@/components/ui/button/Button';
+import { LOADING_MESSAGES } from '@/utils/common/constants';
 
 const ErrorContainer = styled.div`
   text-align: center;

@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
   // 인증된 사용자가 접근하면 안 되는 페이지들 (로그인, 회원가입 등)
   const authOnlyPaths = ['/auth/login', '/auth/signup'];
   
-  // 토큰 확인 (간단한 체크)
+  // 토큰 확인
   const accessToken = request.cookies.get('behindy_access_token')?.value;
   const isAuthenticated = Boolean(accessToken);
   

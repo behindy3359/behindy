@@ -1,6 +1,4 @@
-/**
- * 로컬 스토리지 키
- */
+// 로컬 스토리지 키
 export const STORAGE_KEYS = {
   // 인증 관련
   ACCESS_TOKEN: 'behindy_access_token',
@@ -13,9 +11,7 @@ export const STORAGE_KEYS = {
   AUTH_REDIRECT: 'auth_redirect_url',
 } as const;
 
-/**
- * 지하철 관련 상수
- */
+// 지하철 관련 상수
 export const METRO_CONFIG = {
   // 노선 색상
   LINE_COLORS: {
@@ -29,18 +25,14 @@ export const METRO_CONFIG = {
   REALTIME_UPDATE_INTERVAL: 30000,
 } as const;
 
-/**
- * 애니메이션 지속 시간
- */
+// 애니메이션 지속 시간
 export const ANIMATION_DURATION = {
   FAST: 150,
   NORMAL: 300,
   SLOW: 500,
 } as const;
 
-/**
- * 입력 제한
- */
+// 입력 제한
 export const INPUT_LIMITS = {
   // 사용자 정보
   NAME_MIN_LENGTH: 2,
@@ -56,9 +48,7 @@ export const INPUT_LIMITS = {
   COMMENT_MAX_LENGTH: 1000,
 } as const;
 
-/**
- * 오류 메시지
- */
+// 오류 메시지
 export const ERROR_MESSAGES = {
   // 네트워크
   NETWORK_ERROR: '네트워크 연결을 확인해주세요.',
@@ -97,9 +87,7 @@ export const ERROR_MESSAGES = {
   CONTACT_SUPPORT: '문제가 지속되면 고객지원팀에 문의해주세요.',
 } as const;
 
-/**
- * 성공 메시지
- */
+// 성공 메시지
 export const SUCCESS_MESSAGES = {
   // 인증
   LOGIN_SUCCESS: '로그인되었습니다.',
@@ -119,9 +107,7 @@ export const SUCCESS_MESSAGES = {
   COPIED_TO_CLIPBOARD: '클립보드에 복사되었습니다.',
 } as const;
 
-/**
- * 로딩 메시지
- */
+// 로딩 메시지
 export const LOADING_MESSAGES = {
   // 페이지 로딩
   PAGE_LOADING: '페이지를 불러오는 중...',
@@ -148,9 +134,7 @@ export const LOADING_MESSAGES = {
   PROCESSING: '처리 중...',
 } as const;
 
-/**
- * 버튼/액션 텍스트
- */
+// 버튼/액션 텍스트
 export const ACTION_MESSAGES = {
   // 네비게이션
   GO_BACK: '돌아가기',
@@ -177,9 +161,7 @@ export const ACTION_MESSAGES = {
   SUBMIT: '제출',
 } as const;
 
-/**
- * 확인 메시지
- */
+// 확인 메시지
 export const CONFIRM_MESSAGES = {
   DELETE_POST: '정말로 이 게시글을 삭제하시겠습니까?',
   DELETE_COMMENT: '정말로 이 댓글을 삭제하시겠습니까?',

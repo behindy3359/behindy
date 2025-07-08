@@ -11,17 +11,17 @@ import {
   Train,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { buildApiUrl } from '@/config';
+import { buildApiUrl } from '@/utils/common/api';
 import type { PostListResponse } from '@/types/community/community';
 import { RealtimeMetroMap } from '@/components/metroMap/RealtimeMetroMap';
 import { PostCard } from '@/components/community';
-import { Button } from '@/components/ui';
+import { Button } from '@/components/ui/button/Button';
 import { useAuthStore } from '@/store/authStore';
 import { publicApi } from '@/services/api/axiosConfig';
-import { ERROR_MESSAGES, LOADING_MESSAGES } from '@/utils/common';
+import { ERROR_MESSAGES, LOADING_MESSAGES } from '@/utils/common/constants';
 
 // ================================================================
-// Styled Components - 통일된 너비 적용
+// Styled Components
 // ================================================================
 
 const Container = styled.div`
@@ -89,7 +89,7 @@ const MetroHeader = styled.div`
   }
 `;
 
-// 지하철 노선도 컨테이너 - 레이어 간소화
+// 지하철 노선도 컨테이너
 const MetroMapContainer = styled.div`
   /* 기존의 복잡한 레이어 제거 */
   padding: 0;

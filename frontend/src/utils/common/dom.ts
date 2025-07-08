@@ -1,12 +1,6 @@
-// src/utils/common/dom.ts
-
-/**
- * DOM 조작 및 브라우저 관련 유틸리티 (기존 프로젝트에서 실제 필요한 것들만)
- */
+// DOM 조작 및 브라우저 관련 유틸리티
 export const domUtils = {
-  /**
-   * 안전한 localStorage 접근 (기존 authHelpers.safeStorage와 통합)
-   */
+  // localStorage 접근
   localStorage: {
     get: (key: string): string | null => {
       if (typeof window === 'undefined') return null;
@@ -63,9 +57,7 @@ export const domUtils = {
     },
   },
 
-  /**
-   * 클립보드 관련 기능 (기존 프로젝트에서 공유 기능에 사용)
-   */
+  // 클립보드 관련 기능
   clipboard: {
     writeText: async (text: string): Promise<boolean> => {
       if (typeof window === 'undefined') return false;
@@ -75,7 +67,6 @@ export const domUtils = {
           await navigator.clipboard.writeText(text);
           return true;
         } else {
-          // 폴백: 구형 브라우저 지원
           const textArea = document.createElement('textarea');
           textArea.value = text;
           textArea.style.position = 'fixed';
@@ -93,9 +84,7 @@ export const domUtils = {
     },
   },
 
-  /**
-   * 디바이스/브라우저 감지 (기존 프로젝트에서 반응형 처리에 사용)
-   */
+  // 디바이스/브라우저 감지
   device: {
     isMobile: (): boolean => {
       if (typeof window === 'undefined') return false;

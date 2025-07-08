@@ -1,6 +1,4 @@
-/**
- * 기본 API 응답 타입 (기존 프로젝트에서 사용)
- */
+// 기본 API 응답 타입
 export interface ApiResponse<T = any> {
   success: boolean;
   data: T;
@@ -8,9 +6,14 @@ export interface ApiResponse<T = any> {
   error?: string;
 }
 
-/**
- * 페이지네이션 응답 타입 (기존 커뮤니티 API에서 사용)
- */
+// API 에러 타입
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: any;
+}
+
+// 페이지네이션 응답 타입
 export interface PaginatedResponse<T> {
   content: T[];
   page: number;
@@ -21,26 +24,20 @@ export interface PaginatedResponse<T> {
   hasPrevious?: boolean;
 }
 
-/**
- * 에러 정보 (기존 authStore와 에러 처리에서 사용)
- */
+// 에러 정보
 export interface ErrorInfo {
   code: string;
   message: string;
   details?: any;
 }
 
-/**
- * 검증 결과 (기존 검증 로직에서 사용)
- */
+// 검증 결과
 export interface ValidationResult {
   isValid: boolean;
   message?: string;
 }
 
-/**
- * 모달 상태 (기존 uiStore에서 사용)
- */
+// 모달 상태
 export interface ModalState {
   isOpen: boolean;
   type: 'info' | 'confirm' | 'error' | 'success';
@@ -50,9 +47,7 @@ export interface ModalState {
   onCancel?: () => void;
 }
 
-/**
- * 토스트 알림 (기존 uiStore에서 사용)
- */
+// 토스트 알림
 export interface ToastState {
   id: string;
   type: 'info' | 'success' | 'warning' | 'error';
@@ -61,9 +56,7 @@ export interface ToastState {
   isVisible: boolean;
 }
 
-/**
- * 로딩 상태 (기존 프로젝트 전반에서 사용)
- */
+// 로딩 상태 (기존 프로젝트 전반에서 사용)
 export interface LoadingState {
   isLoading: boolean;
   message?: string;
