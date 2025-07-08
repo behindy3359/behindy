@@ -16,7 +16,7 @@ import type { Post } from '@/types/community/community';
 import { formatters } from '@/utils/common/formatting';
 
 // ================================================================
-// Styled Components (theme 색상 시스템 적용)
+// Styled Components
 // ================================================================
 
 const CardContainer = styled(motion.div)`

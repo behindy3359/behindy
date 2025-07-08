@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostForm } from '@/components/community/PostForm/PostForm';
-import { DashboardLayout } from '@/components/layout';
+import { DashboardLayout } from '@/components/layout/applayout/AppLayout';
 
 const queryClient = new QueryClient();
 

@@ -5,7 +5,7 @@ import styled from 'styled-components';
  * 현재 모든 페이지에서 max-width: 900px를 사용하고 있음
  */
 
-// 메인 페이지 컨테이너 (AboutPage, HomePage, PostList 등에서 사용)
+// 메인 페이지 컨테이너
 export const PageContainer = styled.div`
   max-width: ${({ theme }) => theme.container.lg}; /* 900px */
   margin: 0 auto;
@@ -16,7 +16,7 @@ export const PageContainer = styled.div`
   }
 `;
 
-// 커뮤니티/게시판 컨테이너 (PostDetail, PostForm에서 사용)
+// 커뮤니티/게시판 컨테이너
 export const CommunityContainer = styled.div`
   max-width: ${({ theme }) => theme.container.lg}; /* 900px */
   margin: 0 auto;
@@ -27,7 +27,7 @@ export const CommunityContainer = styled.div`
   }
 `;
 
-// 카드 형태 컨테이너 (PostCard, 각종 모달에서 사용)
+// 카드 형태 컨테이너
 export const CardContainer = styled.div`
   background: ${({ theme }) => theme.colors.background.primary};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
@@ -43,7 +43,7 @@ export const CardContainer = styled.div`
   }
 `;
 
-// 섹션 컨테이너 (HomePage의 MetroSection, CommunitySection에서 사용)
+// 섹션 컨테이너
 export const SectionContainer = styled.div`
   background: ${({ theme }) => theme.colors.background.primary};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
@@ -79,7 +79,7 @@ export const SectionHeader = styled.div`
   }
 `;
 
-// 그리드 레이아웃 (PostGrid, FeatureGrid에서 사용)
+// 그리드 레이아웃
 export const GridContainer = styled.div<{ $columns?: string }>`
   display: grid;
   grid-template-columns: ${({ $columns }) => $columns || 'repeat(auto-fill, minmax(320px, 1fr))'};
@@ -93,7 +93,7 @@ export const GridContainer = styled.div<{ $columns?: string }>`
   }
 `;
 
-// 플렉스 레이아웃 (다양한 컴포넌트에서 사용)
+// 플렉스 레이아웃
 export const FlexContainer = styled.div<{
   $direction?: 'row' | 'column';
   $justify?: 'flex-start' | 'center' | 'space-between' | 'space-around';
@@ -142,7 +142,7 @@ export const StateContainer = styled.div`
   }
 `;
 
-// 폼 컨테이너 (PostForm, 로그인/회원가입에서 사용)
+// 폼 컨테이너
 export const FormContainer = styled.div`
   background: ${({ theme }) => theme.colors.background.primary};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
@@ -159,7 +159,7 @@ export const FormSection = styled.div`
   }
 `;
 
-// 그라데이션 배경 컨테이너 (브랜드 영역에서 사용)
+// 그라데이션 배경 컨테이너
 export const GradientContainer = styled.div`
   background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
   color: ${({ theme }) => theme.colors.text.inverse};

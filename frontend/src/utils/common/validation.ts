@@ -1,14 +1,10 @@
-/**
- * 검증 결과 타입
- */
+// 검증 결과 타입
 export interface ValidationResult {
   isValid: boolean;
   message?: string;
 }
 
-/**
- * 비밀번호 강도 결과 타입
- */
+// 비밀번호 강도 결과 타입
 export interface PasswordStrengthResult extends ValidationResult {
   score: number;
   messages: string[];
