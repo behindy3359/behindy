@@ -9,6 +9,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowLeft, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
+import { LOADING_MESSAGES } from '@/utils/common';
 
 interface ForgotPasswordFormData {
   email: string;
@@ -274,7 +275,9 @@ export default function ForgotPasswordPage() {
   return (
     <Suspense fallback={
       <LoadingFallback>
-        <div>페이지를 불러오는 중...</div>
+        <div>
+          {LOADING_MESSAGES.PAGE_LOADING}  
+        </div>
       </LoadingFallback>
     }>
       <ForgotPasswordContent />

@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { LOADING_MESSAGES } from '@/utils/common';
 
 const ErrorContainer = styled.div`
   text-align: center;
@@ -146,12 +147,13 @@ function AuthErrorContent() {
   );
 }
 
-// 메인 컴포넌트 - Suspense로 감싸기
 export default function AuthErrorPage() {
   return (
     <Suspense fallback={
       <LoadingFallback>
-        <div>오류 정보를 불러오는 중...</div>
+        <div>
+          {LOADING_MESSAGES.ERROR_INFO_LOADING}
+        </div>
       </LoadingFallback>
     }>
       <AuthErrorContent />

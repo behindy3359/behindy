@@ -280,10 +280,6 @@ const CommentItemComponent: React.FC<{
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
   };
 
-  const handleReply = () => {
-    setShowReplyForm(!showReplyForm);
-  };
-
   const handleEditComplete = () => {
     setIsEditing(false);
     onUpdate();

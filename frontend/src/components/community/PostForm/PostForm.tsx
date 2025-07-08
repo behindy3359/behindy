@@ -26,7 +26,9 @@ import {
   apiErrorHandler, 
   INPUT_LIMITS,
   SUCCESS_MESSAGES,
-  ERROR_MESSAGES
+  ERROR_MESSAGES,
+  LOADING_MESSAGES, 
+  ACTION_MESSAGES 
 } from '@/utils/common';
 
 // ================================================================
@@ -397,7 +399,6 @@ export const PostForm: React.FC<PostFormProps> = ({
       router.push(`/community/${newPost.id}`);
     },
     onError: (error: any) => {
-      // 🔥 통합된 에러 처리 사용
       const errorInfo = apiErrorHandler.parseError(error);
       setSubmitError(errorInfo.message);
     },
@@ -425,7 +426,6 @@ export const PostForm: React.FC<PostFormProps> = ({
       router.push(`/community/${updatedPost.id}`);
     },
     onError: (error: any) => {
-      // 🔥 통합된 에러 처리 사용
       const errorInfo = apiErrorHandler.parseError(error);
       setSubmitError(errorInfo.message);
     },
@@ -437,7 +437,7 @@ export const PostForm: React.FC<PostFormProps> = ({
       setSubmitError('');
       
       if (!data.title?.trim() || !data.content?.trim()) {
-        setSubmitError(ERROR_MESSAGES.REQUIRED_FIELD); // 🔥 상수 사용
+        setSubmitError(ERROR_MESSAGES.REQUIRED_FIELD);
         return;
       }
       
@@ -484,7 +484,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           alignItems: 'center', 
           height: '400px' 
         }}>
-          게시글을 불러오는 중...
+          {LOADING_MESSAGES.POST_LOADING}
         </div>
       </Container>
     );
@@ -499,7 +499,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           padding: '40px',
           color: '#ef4444' 
         }}>
-          {ERROR_MESSAGES.UNKNOWN_ERROR} {/* 🔥 상수 사용 */}
+          {ERROR_MESSAGES.UNKNOWN_ERROR}
           <br />
           <button 
             onClick={handleBack}
@@ -513,7 +513,7 @@ export const PostForm: React.FC<PostFormProps> = ({
               cursor: 'pointer'
             }}
           >
-            목록으로 돌아가기
+            {ACTION_MESSAGES.GO_TO_LIST}
           </button>
         </div>
       </Container>
@@ -529,7 +529,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           padding: '40px',
           color: '#ef4444' 
         }}>
-          이 게시글을 수정할 권한이 없습니다.
+          {ERROR_MESSAGES.POST_PERMISSION_ERROR}
           <br />
           <button 
             onClick={() => router.push(`/community/${postId}`)}
@@ -543,7 +543,7 @@ export const PostForm: React.FC<PostFormProps> = ({
               cursor: 'pointer'
             }}
           >
-            게시글로 돌아가기
+            {ACTION_MESSAGES.GO_BACK}
           </button>
         </div>
       </Container>
@@ -560,19 +560,20 @@ export const PostForm: React.FC<PostFormProps> = ({
             whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft size={16} />
-            목록으로
+            {ACTION_MESSAGES.GO_TO_LIST}
           </BackButton>
           
           <Title>
             {mode === 'create' ? (
               <>
                 <Edit3 size={24} />
-                새 게시글 작성
+                {ACTION_MESSAGES.WRITE_POST}
+                {}
               </>
             ) : (
               <>
                 <FileText size={24} />
-                게시글 수정
+                {ACTION_MESSAGES.EDIT_POST}
               </>
             )}
           </Title>
@@ -682,7 +683,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                 disabled={isLoading}
               >
                 <X size={16} />
-                취소
+                {ACTION_MESSAGES.CANCEL}
               </Button>
               
               <Button

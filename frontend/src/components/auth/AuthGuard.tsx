@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { requiresAuth, isPublicRoute } from '@/utils/navigation/navigationUtils';
+import { LOADING_MESSAGES } from '@/utils/common';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -25,7 +26,6 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
       // 1. 퍼블릭 라우트는 항상 허용
       if (isPublicRoute(pathname)) {
-        console.log('✅ 퍼블릭 라우트 접근:', pathname);
         setIsLoading(false);
         return;
       }
@@ -33,12 +33,10 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       // 2. 보호된 라우트만 인증 확인
       if (requiresAuth(pathname)) {
         if (!isAuthenticated()) {
-          console.log('🔒 보호된 라우트 - 로그인 필요:', pathname);
           // 올바른 로그인 경로로 리다이렉트
           router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
           return;
         }
-        console.log('✅ 인증된 사용자 - 접근 허용:', pathname);
       }
 
       setIsLoading(false);
@@ -70,7 +68,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
             animation: 'spin 1s linear infinite',
             margin: '0 auto 16px'
           }} />
-          로딩 중...
+            {LOADING_MESSAGES.LOADING}
           <style jsx>{`
             @keyframes spin {
               0% { transform: rotate(0deg); }

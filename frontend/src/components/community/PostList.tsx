@@ -20,6 +20,7 @@ import { api, buildApiUrl } from '@/config';
 import type { PostListResponse } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { PostCard } from './PostCard';
+import { ERROR_MESSAGES, LOADING_MESSAGES } from '@/utils/common';
 
 // ================================================================
 // Styled Components
@@ -417,9 +418,9 @@ export const PostList: React.FC<PostListProps> = ({
   // Mock stats - 실제로는 API에서 가져와야 함
   const stats = {
     totalPosts: postsData?.totalElements || 0,
-    todayPosts: 12,
-    totalComments: 156,
-    activeUsers: 45
+    todayPosts: 1234,
+    totalComments: 1234,
+    activeUsers: 1234
   };
 
   const handlePostClick = (postId: number) => {
@@ -452,7 +453,7 @@ export const PostList: React.FC<PostListProps> = ({
           padding: '40px', 
           color: '#ef4444' 
         }}>
-          게시글을 불러오는 중 오류가 발생했습니다.
+          {ERROR_MESSAGES.POST_LOAD_ERROR}
         </div>
       </Container>
     );
@@ -467,7 +468,7 @@ export const PostList: React.FC<PostListProps> = ({
             커뮤니티
           </Title>
           <Subtitle>
-            지하철에서 경험한 흥미로운 이야기들을 공유해보세요
+            흥미로운 이야기들을 공유해보세요
           </Subtitle>
         </HeaderLeft>
 
@@ -608,7 +609,9 @@ export const PostList: React.FC<PostListProps> = ({
           <LoadingContainer>
             <div className="loading-content">
               <div className="loading-spinner"></div>
-              <div className="loading-text">게시글을 불러오는 중...</div>
+              <div className="loading-text">
+                {LOADING_MESSAGES.POSTS_LOADING}
+              </div>
             </div>
           </LoadingContainer>
         ) : postsData?.posts && postsData.posts.length > 0 ? (

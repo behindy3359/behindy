@@ -20,9 +20,10 @@ import {
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
+import { gradients } from '@/styles/theme';
 
 // ================================================================
-// Styled Components (Props Forwarding 수정됨)
+// Styled Components
 // ================================================================
 
 const SidebarContainer = styled(motion.aside).withConfig({
@@ -32,7 +33,7 @@ const SidebarContainer = styled(motion.aside).withConfig({
   top: 0;
   left: 0;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: ${gradients.primary};
   color: white;
   z-index: 1000;
   display: flex;
@@ -228,7 +229,7 @@ const AccountSection = styled.div.withConfig({
   }
 `;
 
-// 하단 테마 토글 섹션 (접혀있을 때는 완전히 숨김)
+// 하단 테마 토글 섹션
 const BottomSection = styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`

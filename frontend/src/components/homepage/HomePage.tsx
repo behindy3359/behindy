@@ -18,6 +18,7 @@ import { PostCard } from '@/components/community';
 import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 import { publicApi } from '@/services/api/axiosConfig';
+import { ERROR_MESSAGES, LOADING_MESSAGES } from '@/utils/common';
 
 // ================================================================
 // Styled Components - 통일된 너비 적용
@@ -350,12 +351,14 @@ export const HomePage: React.FC = () => {
         {/* 게시글 목록 */}
         {isLoading ? (
           <LoadingState>
-            최근 게시글을 불러오는 중...
+            {LOADING_MESSAGES.POSTS_LOADING}
           </LoadingState>
         ) : error ? (
           <EmptyState>
             <MessageSquare className="empty-icon" />
-            <div className="empty-title">게시글을 불러올 수 없습니다</div>
+            <div className="empty-title">
+              {ERROR_MESSAGES.POST_LOAD_ERROR}
+            </div>
             <div className="empty-description">
               잠시 후 다시 시도해주세요
             </div>

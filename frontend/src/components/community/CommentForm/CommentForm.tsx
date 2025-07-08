@@ -12,6 +12,7 @@ import { useMutation } from '@tanstack/react-query';
 import { api, API_ENDPOINTS } from '@/config';
 import type { Comment, CreateCommentRequest } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
+import { ERROR_MESSAGES } from '@/utils/common';
 
 // Types & Validation
 const isAxiosError = (error: unknown): error is {
@@ -227,7 +228,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({
       onSuccess?.();
     },
     onError: (error: unknown) => {
-      let errorMessage = '댓글 작성에 실패했습니다.';
+      let errorMessage: string = ERROR_MESSAGES.COMMENT_CREATE_ERROR;
       
       if (isAxiosError(error)) {
         errorMessage = error.response?.data?.message || 
@@ -255,7 +256,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({
       onSuccess?.();
     },
     onError: (error: unknown) => {
-      let errorMessage = '댓글 수정에 실패했습니다.';
+      let errorMessage: string = ERROR_MESSAGES.COMMENT_UPDATE_ERROR;
       
       if (isAxiosError(error)) {
         errorMessage = error.response?.data?.message || 

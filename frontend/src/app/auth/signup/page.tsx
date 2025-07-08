@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
-import { validators, apiErrorHandler, CONFIRM_MESSAGES } from '@/utils/common';
+import { validators, apiErrorHandler, CONFIRM_MESSAGES, SUCCESS_MESSAGES, LOADING_MESSAGES } from '@/utils/common';
 
 // ================================================================
 // Types & Validation (통합된 validators 사용)
@@ -38,7 +38,6 @@ interface SignupFormData {
   marketingOptIn: boolean;
 }
 
-// 🔥 통합된 검증 시스템 사용
 const signupSchema = yup.object().shape({
   name: yup
     .string()
@@ -100,7 +99,7 @@ const signupSchema = yup.object().shape({
 });
 
 // ================================================================
-// Styled Components (theme 시스템 적용)
+// Styled Components
 // ================================================================
 
 const SignupContainer = styled.div`
@@ -404,7 +403,6 @@ export default function SignupPage() {
   const watchedPassword = watch('password', '');
   const watchedConfirmPassword = watch('confirmPassword', '');
 
-  // 🔥 통합된 검증 시스템 사용
   const passwordValidation = validators.password(watchedPassword);
   const passwordRequirements = passwordValidation.messages.map((msg, index) => ({
     text: msg,
@@ -431,18 +429,16 @@ export default function SignupPage() {
       });
 
       if (result.success) {
-        setSignupSuccess('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...');
+        setSignupSuccess(SUCCESS_MESSAGES.SIGNUP_SUCCESS);
         
         setTimeout(() => {
           router.push('/auth/login?message=signup_success');
         }, 2000);
       } else {
-        // 🔥 통합된 에러 처리 사용
         const errorInfo = apiErrorHandler.parseError(result.error);
         setSignupError(errorInfo.message);
       }
     } catch (error: unknown) {
-      // 🔥 통합된 에러 처리 사용
       const errorInfo = apiErrorHandler.parseError(error);
       setSignupError(errorInfo.message);
       console.error('Signup error:', error);
@@ -716,7 +712,7 @@ export default function SignupPage() {
           leftIcon={<UserPlus size={20} />}
           disabled={!isValid || isLoading}
         >
-          {isLoading ? '계정 생성 중...' : '계정 만들기'}
+          {isLoading ? LOADING_MESSAGES.SIGNUP_PROCESSING : '계정 만들기'}
         </Button>
       </SignupForm>
 

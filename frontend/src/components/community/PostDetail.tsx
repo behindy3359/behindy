@@ -22,6 +22,8 @@ import type { Post, CommentListResponse } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { CommentList } from './CommentList';
 import { CommentForm } from './CommentForm/CommentForm';
+import { domUtils, SUCCESS_MESSAGES, LOADING_MESSAGES, ERROR_MESSAGES } from '@/utils/common';
+import { useToast } from '@/store/uiStore';
 
 // ================================================================
 // Styled Components
@@ -276,7 +278,7 @@ const ErrorState = styled.div`
 `;
 
 // ================================================================
-// Component Props (export 추가)
+// Component Props
 // ================================================================
 
 export interface PostDetailProps {
@@ -296,6 +298,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
 }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { show: showToast } = useToast();
   const { user, isAuthenticated } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
   const [isLiked, setIsLiked] = useState(false); // 추후 API 연동
@@ -350,15 +353,31 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (navigator.share) {
-      navigator.share({
-        title: post?.title,
-        url: window.location.href,
-      });
+      try {
+        await navigator.share({
+          title: post?.title,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.log('Share cancelled or failed');
+      }
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert('링크가 복사되었습니다.');
+      // 클립보드 API 사용
+      const success = await domUtils.clipboard.writeText(window.location.href);
+      
+      if (success) {
+        showToast({ 
+          type: 'success', 
+          message: SUCCESS_MESSAGES.COPIED_TO_CLIPBOARD 
+        });
+      } else {
+        showToast({ 
+          type: 'error', 
+          message: '링크 복사에 실패했습니다.' 
+        });
+      }
     }
   };
 
@@ -380,7 +399,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     return (
       <Container>
         <LoadingState>
-          게시글을 불러오는 중...
+          {LOADING_MESSAGES.POST_LOADING}
         </LoadingState>
       </Container>
     );
@@ -390,7 +409,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     return (
       <Container>
         <ErrorState>
-          게시글을 찾을 수 없습니다.
+          {ERROR_MESSAGES.POST_LOAD_ERROR}
         </ErrorState>
       </Container>
     );
@@ -524,8 +543,6 @@ export const PostDetail: React.FC<PostDetailProps> = ({
             댓글 {commentsData?.totalElements || 0}개
           </h3>
         </CommentsSectionHeader>
-
-        {/* 댓글 작성 폼 */}
         {isAuthenticated() && (
           <div style={{ padding: '24px', borderBottom: '1px solid #f3f4f6' }}>
             <CommentForm 
@@ -541,7 +558,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
         <div style={{ padding: '24px' }}>
           {isLoadingComments ? (
             <LoadingState>
-              댓글을 불러오는 중...
+              {LOADING_MESSAGES.COMMENT_LOADING}
             </LoadingState>
           ) : commentsData && commentsData.comments.length > 0 ? (
             <CommentList 

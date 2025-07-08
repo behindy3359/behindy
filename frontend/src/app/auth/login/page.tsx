@@ -10,10 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogIn, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
-
-// ================================================================
-// 🔥 핵심: 간단하고 실용적인 접근
-// ================================================================
+import { ERROR_MESSAGES, LOADING_MESSAGES, SUCCESS_MESSAGES } from '@/utils/common';
 
 interface LoginFormData {
   email: string;
@@ -21,7 +18,6 @@ interface LoginFormData {
   rememberMe: boolean;
 }
 
-// 🔥 기본적인 검증만 (복잡한 커스텀 검증 제거)
 const loginSchema = yup.object().shape({
   email: yup.string().required('이메일을 입력해주세요').email('올바른 이메일 형식이 아닙니다'),
   password: yup.string().required('비밀번호를 입력해주세요').min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
@@ -29,7 +25,7 @@ const loginSchema = yup.object().shape({
 });
 
 // ================================================================
-// 🔥 스타일: 핵심만 theme 적용, 나머지는 인라인
+// 스타일
 // ================================================================
 
 const Container = styled.div`
@@ -57,7 +53,6 @@ const Form = styled.form`
   gap: ${({ theme }) => theme.spacing[6]};
 `;
 
-// 🔥 Alert 재사용 (회원가입과 동일)
 const Alert = styled(motion.div)<{ $type: 'error' | 'success' }>`
   display: flex;
   align-items: center;
@@ -95,7 +90,7 @@ const DemoBox = styled.div`
 `;
 
 // ================================================================
-// 🔥 메인 컴포넌트 - 대폭 단순화
+// 메인 컴포넌트
 // ================================================================
 
 function LoginContent() {
@@ -119,11 +114,11 @@ function LoginContent() {
   // URL 파라미터에서 회원가입 성공 메시지 확인
   useEffect(() => {
     if (searchParams.get('message') === 'signup_success') {
-      setSuccess('회원가입이 완료되었습니다. 로그인해주세요.');
+      setSuccess(SUCCESS_MESSAGES.SIGNUP_COMPLETE);
     }
   }, [searchParams]);
 
-  // 🔥 제출 로직 - 단순화
+  // 제출 로직
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     setError('');
@@ -137,22 +132,22 @@ function LoginContent() {
       });
 
       if (result.success) {
-        setSuccess('로그인 성공! 잠시 후 이동합니다...');
+        setSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
         setTimeout(() => {
           const redirectTo = searchParams.get('redirect') || '/';
           router.push(redirectTo);
         }, 1500);
       } else {
-        setError(result.error || '로그인에 실패했습니다.');
+        setError(ERROR_MESSAGES.LOGIN_FAILED);
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message || '로그인 중 오류가 발생했습니다.');
+      setError(ERROR_MESSAGES.LOGIN_ERROR);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔥 데모 로그인 - 단순화
+  // 데모 로그인
   const handleDemoLogin = async () => {
     setLoading(true);
     setError('');
@@ -165,16 +160,16 @@ function LoginContent() {
       });
 
       if (result.success) {
-        setSuccess('데모 계정 로그인 성공! 잠시 후 이동합니다...');
+        setSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
         setTimeout(() => {
           const redirectTo = searchParams.get('redirect') || '/';
           router.push(redirectTo);
         }, 1500);
       } else {
-        setError(result.error || '데모 계정 로그인에 실패했습니다.');
+        setError(ERROR_MESSAGES.DEMO_LOGIN_FAILED);
       }
     } catch (err: any) {
-      setError('데모 계정 로그인 중 오류가 발생했습니다.');
+      setError(ERROR_MESSAGES.DEMO_LOGIN_ERROR);
     } finally {
       setLoading(false);
     }
@@ -185,7 +180,6 @@ function LoginContent() {
       <Title>다시 오신 것을 환영합니다</Title>
       <Subtitle>계정에 로그인하여 게임을 계속하세요</Subtitle>
 
-      {/* 🔥 데모 계정 - 단순화 */}
       <DemoBox>
         <div className="title">🎮 데모 계정으로 접속하기</div>
         <Button variant="ghost" size="sm" onClick={handleDemoLogin} disabled={loading} style={{ width: '100%' }}>
@@ -193,7 +187,6 @@ function LoginContent() {
         </Button>
       </DemoBox>
 
-      {/* 🔥 Alert 재사용 */}
       <AnimatePresence>
         {error && (
           <Alert $type="error" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
@@ -216,7 +209,6 @@ function LoginContent() {
         <Input {...register('password')} type="password" label="비밀번호" placeholder="비밀번호를 입력하세요"
                leftIcon={<Lock size={20} />} error={errors.password?.message} fullWidth />
 
-        {/* 🔥 체크박스와 링크 - 인라인 스타일로 단순화 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '-8px 0 8px 0' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
             <input {...register('rememberMe')} type="checkbox" />
@@ -235,7 +227,6 @@ function LoginContent() {
         </Button>
       </Form>
 
-      {/* 🔥 구분선과 회원가입 링크 - 단순화 */}
       <div style={{ display: 'flex', alignItems: 'center', margin: '32px 0' }}>
         <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }}></div>
         <span style={{ padding: '0 16px', color: '#9ca3af', fontSize: '14px', fontWeight: '500' }}>또는</span>
@@ -255,7 +246,9 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>로그인 페이지를 불러오는 중...</div>}>
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+        {LOADING_MESSAGES.LOGIN_PAGE_LOADING}
+      </div>}>
       <LoginContent />
     </Suspense>
   );

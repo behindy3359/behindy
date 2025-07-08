@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { PublicLayout } from '@/components/layout';
 import { PageContainer } from '@/styles/commonStyles';
+import { gradients } from '@/styles/theme';
 
 // ================================================================
 // Styled Components
@@ -24,7 +25,7 @@ const HeroSection = styled.div`
     font-weight: 800;
     color: #111827;
     margin-bottom: 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: ${gradients.primary};
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
