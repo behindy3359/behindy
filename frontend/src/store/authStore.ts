@@ -9,7 +9,7 @@ import type {
 import type { CurrentUser } from '@/types/auth/authUser';
 import type { LoginRequest, SignupRequest } from '@/types/auth/authRequest';
 import { api,TokenManager } from '@/services/api/axiosConfig';
-import { API_ENDPOINTS } from '@/utils/common/api';
+import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
 import { env } from '@/config/env';
 import { ApiResponse } from '@/types/common/common';
 import { SECURITY_CONFIG } from '@/utils/common/constants';
@@ -93,8 +93,7 @@ export const useAuthStore = create<AuthStore>()(
         login: async (credentials: LoginRequest): Promise<AuthResult> => {
           try {
             set({ isLoading: true, error: null }, false, 'auth/login/start');
-
-            //  /api/auth/login 호출
+      
             const response = await api.post<JwtAuthResponse>(
               API_ENDPOINTS.AUTH.LOGIN,
               {
@@ -102,11 +101,8 @@ export const useAuthStore = create<AuthStore>()(
                 password: credentials.password,
               }
             );
-
-            // 토큰 저장
-            TokenManager.setTokens(response.accessToken, response.refreshToken);
-
-            // 사용자 정보 업데이트
+      
+            // 성공 처리는 동일...
             const user: CurrentUser = {
               id: response.userId,
               name: response.name,
@@ -114,13 +110,13 @@ export const useAuthStore = create<AuthStore>()(
               isAuthenticated: true,
               permissions: [],
             };
-
+      
             const tokens: TokenInfo = {
               accessToken: response.accessToken,
               refreshToken: response.refreshToken,
               tokenType: response.tokenType || 'Bearer',
             };
-
+      
             set(
               {
                 status: 'authenticated',
@@ -133,24 +129,19 @@ export const useAuthStore = create<AuthStore>()(
               false,
               'auth/login/success'
             );
-
+      
             return { success: true, data: user };
           } catch (error: unknown) {
             console.error('Login error:', error);
             
-            const apiError = error as { 
-              response?: { 
-                status?: number; 
-                data?: { message?: string } 
-              } 
-            };
-
+            const errorInfo = apiErrorHandler.parseError(error);
+            
             const authError: AuthError = {
-              code: apiError.response?.status?.toString() || 'LOGIN_FAILED',
-              message: apiError.response?.data?.message || '로그인에 실패했습니다.',
-              details: apiError.response?.data,
+              code: errorInfo.code,
+              message: errorInfo.message,
+              details: errorInfo.details,
             };
-
+      
             set(
               {
                 status: 'unauthenticated',
@@ -162,17 +153,16 @@ export const useAuthStore = create<AuthStore>()(
               false,
               'auth/login/error'
             );
-
+      
             return { success: false, error: authError.message };
           }
         },
 
-        // 사용자 회원가입 (백엔드 AuthController와 연동)
+        // 사용자 회원가입
         signup: async (userData: SignupRequest): Promise<AuthResult> => {
           try {
             set({ isLoading: true, error: null }, false, 'auth/signup/start');
-
-            // /api/auth/signup 호출
+      
             const response = await api.post<ApiResponse<number>>(
               API_ENDPOINTS.AUTH.SIGNUP,
               {
@@ -181,7 +171,7 @@ export const useAuthStore = create<AuthStore>()(
                 password: userData.password,
               }
             );
-
+      
             set(
               {
                 status: 'unauthenticated',
@@ -191,7 +181,7 @@ export const useAuthStore = create<AuthStore>()(
               false,
               'auth/signup/success'
             );
-
+      
             return { 
               success: true, 
               data: { 
@@ -202,19 +192,14 @@ export const useAuthStore = create<AuthStore>()(
           } catch (error: unknown) {
             console.error('Signup error:', error);
             
-            const apiError = error as { 
-              response?: { 
-                status?: number; 
-                data?: { message?: string } 
-              } 
-            };
-
+            const errorInfo = apiErrorHandler.parseError(error);
+            
             const authError: AuthError = {
-              code: apiError.response?.status?.toString() || 'SIGNUP_FAILED',
-              message: apiError.response?.data?.message || '회원가입에 실패했습니다.',
-              details: apiError.response?.data,
+              code: errorInfo.code,
+              message: errorInfo.message,
+              details: errorInfo.details,
             };
-
+      
             set(
               {
                 status: 'error',
@@ -224,7 +209,7 @@ export const useAuthStore = create<AuthStore>()(
               false,
               'auth/signup/error'
             );
-
+      
             return { success: false, error: authError.message };
           }
         },
@@ -277,22 +262,20 @@ export const useAuthStore = create<AuthStore>()(
             if (!tokens.refreshToken) {
               throw new Error('No refresh token available');
             }
-
-            // /api/auth/refresh 호출
+      
             const response = await api.post<JwtAuthResponse>(
               API_ENDPOINTS.AUTH.REFRESH,
               { refreshToken: tokens.refreshToken }
             );
-
-            // 새 토큰 저장 (TokenManager 사용)
+      
             TokenManager.setTokens(response.accessToken, response.refreshToken);
-
+      
             const newTokens: TokenInfo = {
               accessToken: response.accessToken,
               refreshToken: response.refreshToken,
-              tokenType: response.tokenType || SECURITY_CONFIG.JWT.TOKEN_TYPE, // 🔒 보안 상수 사용
+              tokenType: response.tokenType || SECURITY_CONFIG.JWT.TOKEN_TYPE,
             };
-
+      
             set(
               {
                 tokens: newTokens,
@@ -302,10 +285,14 @@ export const useAuthStore = create<AuthStore>()(
               false,
               'auth/refresh/success'
             );
-
+      
             return true;
           } catch (error: unknown) {
             console.error('Token refresh failed:', error);
+            
+            const errorInfo = apiErrorHandler.parseError(error);
+            console.error('Refresh token error details:', errorInfo);
+            
             // 토큰 갱신 실패 시 로그아웃 처리
             await get().logout();
             return false;

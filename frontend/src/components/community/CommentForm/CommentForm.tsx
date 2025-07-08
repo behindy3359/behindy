@@ -14,25 +14,7 @@ import { api,  } from '@/services/api/axiosConfig';
 import type { Comment, CreateCommentRequest } from '@/types/community/community';
 import { useAuthStore } from '@/store/authStore';
 import { ERROR_MESSAGES } from '@/utils/common/constants';
-import { API_ENDPOINTS } from '@/utils/common/api';
-
-// Types & Validation
-const isAxiosError = (error: unknown): error is {
-  response?: {
-    status?: number;
-    data?: {
-      message?: string;
-      error?: string;
-    };
-  };
-  message?: string;
-} => {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error
-  );
-};
+import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
 
 interface CommentFormData {
   content: string;
@@ -230,18 +212,11 @@ export const CommentForm: React.FC<CommentFormProps> = ({
       onSuccess?.();
     },
     onError: (error: unknown) => {
-      let errorMessage: string = ERROR_MESSAGES.COMMENT_CREATE_ERROR;
+      const errorInfo = apiErrorHandler.parseError(error);
+      setSubmitError(errorInfo.message);
       
-      if (isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || 
-                      error.response?.data?.error || 
-                      error.message || 
-                      errorMessage;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      setSubmitError(errorMessage);
+      const actionInfo = apiErrorHandler.getErrorAction(errorInfo.code);
+      console.log('User action suggestion:', actionInfo);
     },
   });
   
@@ -258,18 +233,8 @@ export const CommentForm: React.FC<CommentFormProps> = ({
       onSuccess?.();
     },
     onError: (error: unknown) => {
-      let errorMessage: string = ERROR_MESSAGES.COMMENT_UPDATE_ERROR;
-      
-      if (isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || 
-                      error.response?.data?.error || 
-                      error.message || 
-                      errorMessage;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      setSubmitError(errorMessage);
+      const errorInfo = apiErrorHandler.parseError(error);
+      setSubmitError(errorInfo.message);
     },
   });
 

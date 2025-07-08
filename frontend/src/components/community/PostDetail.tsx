@@ -14,22 +14,29 @@ import {
   MoreHorizontal,
   Heart,
   Share2,
-  Flag
+  Flag,
+  AlertTriangle,
+  RefreshCw,
+  LogIn
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Post, CommentListResponse } from '@/types/community/community';
+import { CommentList } from './CommentList';
+import { CommentForm } from './CommentForm/CommentForm';
+
 import { useAuthStore } from '@/store/authStore';
-import { SUCCESS_MESSAGES, LOADING_MESSAGES, ERROR_MESSAGES } from '@/utils/common/constants';
+import { useToast } from '@/store/uiStore';
+
+import { SUCCESS_MESSAGES, LOADING_MESSAGES, ERROR_MESSAGES, CONFIRM_MESSAGES } from '@/utils/common/constants';
+
 import { API_ENDPOINTS } from '@/utils/common/api'; 
+import { apiErrorHandler } from '@/utils/common/api';
+import { domUtils } from '@/utils/common/dom';
 
 import { api } from '@/services/api/axiosConfig'
 
-import { domUtils } from '@/utils/common/dom';
-import { useToast } from '@/store/uiStore';
-
-import { CommentList } from './CommentList';
-import { CommentForm } from './CommentForm/CommentForm';
 import { PageContainer } from '@/styles/commonStyles';
+import Button from '../ui/button/Button';
 
 // ================================================================
 // Styled Components
@@ -297,35 +304,83 @@ export const PostDetail: React.FC<PostDetailProps> = ({
   const { show: showToast } = useToast();
   const { user, isAuthenticated } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
-  const [isLiked, setIsLiked] = useState(false); // 추후 API 연동
-  const [likeCount, setLikeCount] = useState(0); // 추후 API 연동
+  const [isLiked, setIsLiked] = useState(false); // TODO : API 연동
+  const [likeCount, setLikeCount] = useState(0); // TODO : API 연동
+
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // 게시글 데이터 가져오기
   const { data: post, isLoading, error } = useQuery({
     queryKey: ['post', postId],
     queryFn: async () => {
-      return await api.get<Post>(API_ENDPOINTS.POSTS.BY_ID(postId));
+      try {
+        return await api.get<Post>(API_ENDPOINTS.POSTS.BY_ID(postId));
+      } catch (error) {
+        const errorInfo = apiErrorHandler.parseError(error);
+        setApiError(errorInfo.message);
+        throw error;
+      }
+    },
+    retry: (failureCount, error) => {
+      const errorInfo = apiErrorHandler.parseError(error);
+      // 에러 종류에 따른 재시도 분기
+      if (errorInfo.code === 'NETWORK_ERROR' && failureCount < 2) {
+        return true;
+      }
+      return false;
     },
   });
 
+
   // 댓글 데이터 가져오기
-  const { data: commentsData, isLoading: isLoadingComments } = useQuery({
+  const { data: commentsData, isLoading: isLoadingComments, error: commentsError } = useQuery({
     queryKey: ['comments', postId],
     queryFn: async () => {
-      return await api.get<CommentListResponse>(
-        API_ENDPOINTS.COMMENTS.BY_POST(postId)
-      );
+      try {
+        return await api.get<CommentListResponse>(
+          API_ENDPOINTS.COMMENTS.BY_POST(postId)
+        );
+      } catch (error) {
+        const errorInfo = apiErrorHandler.parseError(error);
+        console.error('Comments load error:', errorInfo);
+        
+        showToast({
+          type: 'warning',
+          message: `댓글 로드 실패: ${errorInfo.message}`
+        });
+        
+        throw error;
+      }
     },
+    retry: 1,
   });
 
   // 게시글 삭제 뮤테이션
   const deletePostMutation = useMutation({
     mutationFn: async () => {
-      await api.delete(API_ENDPOINTS.POSTS.BY_ID(postId));
+      return await api.delete(API_ENDPOINTS.POSTS.BY_ID(postId));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
+      showToast({
+        type: 'success',
+        message: SUCCESS_MESSAGES.POST_DELETED
+      });
       router.push('/community');
+    },
+    onError: (error: unknown) => {
+      const errorInfo = apiErrorHandler.parseError(error);
+      showToast({
+        type: 'error',
+        message: errorInfo.message
+      });
+      
+      const actionInfo = apiErrorHandler.getErrorAction(errorInfo.code);
+      if (actionInfo.action === 'login') {
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 2000);
+      }
     },
   });
 
@@ -338,8 +393,12 @@ export const PostDetail: React.FC<PostDetailProps> = ({
   };
 
   const handleDelete = async () => {
-    if (window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
-      await deletePostMutation.mutateAsync();
+    if (window.confirm(CONFIRM_MESSAGES.DELETE_POST)) {
+      try {
+        await deletePostMutation.mutateAsync();
+      } catch (error) {
+        console.error('Delete post error:', error);
+      }
     }
   };
 
@@ -401,11 +460,48 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     );
   }
 
-  if (error || !post) {
+  if (error || apiError || !post) {
+    const errorMessage = apiError || ERROR_MESSAGES.POST_LOAD_ERROR;
+    const errorInfo = error ? apiErrorHandler.parseError(error) : null;
+    
     return (
       <PageContainer>
         <ErrorState>
-          {ERROR_MESSAGES.POST_LOAD_ERROR}
+          <div className="error-icon">
+            <AlertTriangle size={48} />
+          </div>
+          <div className="error-title">게시글을 불러올 수 없습니다</div>
+          <div className="error-message">{errorMessage}</div>
+          
+          {errorInfo && (
+            <div className="error-actions">
+              {errorInfo.code === 'NETWORK_ERROR' && (
+                <Button
+                  variant="primary"
+                  onClick={() => window.location.reload()}
+                  leftIcon={<RefreshCw />}
+                >
+                  다시 시도
+                </Button>
+              )}
+              {errorInfo.code === '401' && (
+                <Button
+                  variant="primary"
+                  onClick={() => router.push('/auth/login')}
+                  leftIcon={<LogIn />}
+                >
+                  로그인하기
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                onClick={handleBack}
+                leftIcon={<ArrowLeft />}
+              >
+                목록으로 돌아가기
+              </Button>
+            </div>
+          )}
         </ErrorState>
       </PageContainer>
     );
