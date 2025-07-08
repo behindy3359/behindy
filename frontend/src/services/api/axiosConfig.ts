@@ -1,29 +1,34 @@
 import axios from 'axios';
 import { env } from '@/config/env';
-import { STORAGE_KEYS, ERROR_MESSAGES } from '@/utils/common/constants';
+import { SECURITY_CONFIG, validateSecurityConfig } from '@/utils/common/constants';
 
-// 토큰 관리 유틸리티
+// 🔒 보안 설정 검증 (앱 시작시 한 번 실행)
+if (typeof window !== 'undefined') {
+  validateSecurityConfig();
+}
+
+// 토큰 관리 유틸리티 (보안 상수 사용)
 class TokenManager {
   static getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN); 
+    return localStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS); 
   }
 
   static getRefreshToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN); 
+    return localStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.REFRESH); 
   }
 
   static setTokens(accessToken: string, refreshToken: string): void {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken); 
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken); 
+    localStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS, accessToken); 
+    localStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.REFRESH, refreshToken); 
   }
 
   static clearTokens(): void {
     if (typeof window === 'undefined') return;
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS);
+    localStorage.removeItem(SECURITY_CONFIG.TOKEN_KEYS.REFRESH);
   }
 
   static hasValidTokens = (): boolean => {
@@ -73,7 +78,7 @@ const requiresAuth = (config: {
 const createApiClient = (baseURL: string) => {
   const client = axios.create({
     baseURL,
-    timeout: 10000,
+    timeout: SECURITY_CONFIG.API.TIMEOUT_MS, // 🔒 보안 상수 사용
     headers: {
       'Content-Type': 'application/json',
     },
@@ -85,7 +90,7 @@ const createApiClient = (baseURL: string) => {
       if (requiresAuth(config)) {
         const token = TokenManager.getAccessToken();
         if (token && config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
+          config.headers.Authorization = `${SECURITY_CONFIG.JWT.TOKEN_TYPE} ${token}`; // 🔒 보안 상수 사용
         }
       }
 
@@ -133,7 +138,7 @@ const createApiClient = (baseURL: string) => {
         try {
           const refreshToken = TokenManager.getRefreshToken();
           if (!refreshToken) {
-            throw new Error(ERROR_MESSAGES.AUTH_EXPIRED); 
+            throw new Error('Refresh token not available');
           }
 
           // 토큰 갱신 요청
@@ -153,7 +158,7 @@ const createApiClient = (baseURL: string) => {
             ...originalRequest,
             headers: {
               ...(originalRequest.headers as Record<string, string> || {}),
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `${SECURITY_CONFIG.JWT.TOKEN_TYPE} ${accessToken}`, // 🔒 보안 상수 사용
             },
           };
           

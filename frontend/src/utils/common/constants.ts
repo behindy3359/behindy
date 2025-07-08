@@ -1,16 +1,3 @@
-// 로컬 스토리지 키
-export const STORAGE_KEYS = {
-  // 인증 관련
-  ACCESS_TOKEN: 'behindy_access_token',
-  REFRESH_TOKEN: 'behindy_refresh_token',
-  
-  // UI 상태
-  SIDEBAR_STATE: 'sidebar-state',
-  
-  // 리다이렉트
-  AUTH_REDIRECT: 'auth_redirect_url',
-} as const;
-
 // 지하철 관련 상수
 export const METRO_CONFIG = {
   // 노선 색상
@@ -167,3 +154,45 @@ export const CONFIRM_MESSAGES = {
   DELETE_COMMENT: '정말로 이 댓글을 삭제하시겠습니까?',
   LOGOUT: '로그아웃하시겠습니까?',
 } as const;
+
+// 보안 설정 
+export const SECURITY_CONFIG = {
+  // 토큰 저장 키
+  TOKEN_KEYS: {
+    ACCESS: process.env.NEXT_PUBLIC_TOKEN_KEY || 'behindy_access_token',
+    REFRESH: process.env.NEXT_PUBLIC_REFRESH_TOKEN_KEY || 'behindy_refresh_token',
+  },
+  
+  // JWT 설정
+  JWT: {
+    REFRESH_THRESHOLD_MINUTES: 5,
+    TOKEN_TYPE: 'Bearer',
+    MAX_AGE_HOURS: 24,
+  },
+  
+  // API 보안
+  API: {
+    TIMEOUT_MS: 10000,
+    HTTPS_ONLY: process.env.NODE_ENV === 'production',
+  },
+} as const;
+
+// 보안 검증 함수
+export const validateSecurityConfig = (): void => {
+  const isProd = process.env.NODE_ENV === 'production';
+  
+  if (isProd) {
+    // 프로덕션에서 기본값 사용 경고
+    if (!process.env.NEXT_PUBLIC_TOKEN_KEY) {
+      console.warn('⚠️ 프로덕션에서 NEXT_PUBLIC_TOKEN_KEY 환경변수 설정을 권장합니다.');
+    }
+    
+    // HTTPS 검증
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (apiUrl && !apiUrl.startsWith('https://')) {
+      console.error('🚨 프로덕션에서는 HTTPS API URL이 필요합니다:', apiUrl);
+    }
+  }
+  
+  console.log('🔒 보안 설정 검증 완료');
+};

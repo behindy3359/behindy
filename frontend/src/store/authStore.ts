@@ -12,6 +12,7 @@ import { api,TokenManager } from '@/services/api/axiosConfig';
 import { API_ENDPOINTS } from '@/utils/common/api';
 import { env } from '@/config/env';
 import { ApiResponse } from '@/types/common/common';
+import { SECURITY_CONFIG } from '@/utils/common/constants';
 
 // ================================================================
 // 백엔드 응답 타입
@@ -283,13 +284,13 @@ export const useAuthStore = create<AuthStore>()(
               { refreshToken: tokens.refreshToken }
             );
 
-            // 새 토큰 저장
+            // 새 토큰 저장 (TokenManager 사용)
             TokenManager.setTokens(response.accessToken, response.refreshToken);
 
             const newTokens: TokenInfo = {
               accessToken: response.accessToken,
               refreshToken: response.refreshToken,
-              tokenType: response.tokenType || 'Bearer',
+              tokenType: response.tokenType || SECURITY_CONFIG.JWT.TOKEN_TYPE, // 🔒 보안 상수 사용
             };
 
             set(
@@ -319,7 +320,7 @@ export const useAuthStore = create<AuthStore>()(
               tokens: {
                 accessToken: null,
                 refreshToken: null,
-                tokenType: 'Bearer',
+                tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE,
               },
             },
             false,
@@ -349,14 +350,13 @@ export const useAuthStore = create<AuthStore>()(
             }
 
             // 토큰 검증
-            // TODO : 토큰이 있으면 사용자 정보 복원        
             set(
               {
                 status: 'authenticated',
                 tokens: {
                   accessToken,
                   refreshToken,
-                  tokenType: 'Bearer',
+                  tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE, // 🔒 보안 상수 사용
                 },
                 isLoading: false,
               },
@@ -372,8 +372,6 @@ export const useAuthStore = create<AuthStore>()(
         // 현재 사용자 정보 가져오기
         fetchCurrentUser: async (): Promise<void> => {
           try {
-            // 토큰 검증
-            // TODO : 실제로는 사용자 정보를 가져오는 API 엔드포인트가 필요
             const accessToken = TokenManager.getAccessToken();
             const refreshToken = TokenManager.getRefreshToken();
 
@@ -384,7 +382,7 @@ export const useAuthStore = create<AuthStore>()(
                   tokens: {
                     accessToken,
                     refreshToken,
-                    tokenType: 'Bearer',
+                    tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE, // 🔒 보안 상수 사용
                   },
                   isLoading: false,
                 },
@@ -447,18 +445,17 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         hasValidToken: (): boolean => {
-          const { tokens } = get();
-          return !!tokens.accessToken && !!tokens.refreshToken;
+          return TokenManager.hasValidTokens();
         },
 
         needsRefresh: (): boolean => {
-          const { tokens, lastLoginAttempt } = get();
+          const { lastLoginAttempt } = get();
           
-          if (!tokens.refreshToken) return false;
+          if (!TokenManager.hasValidTokens()) return false;
           
-          const oneHour = 60 * 60 * 1000;
+          const refreshThreshold = SECURITY_CONFIG.JWT.REFRESH_THRESHOLD_MINUTES * 60 * 1000;
           return lastLoginAttempt 
-            ? Date.now() - lastLoginAttempt > oneHour 
+            ? Date.now() - lastLoginAttempt > refreshThreshold 
             : true;
         },
 

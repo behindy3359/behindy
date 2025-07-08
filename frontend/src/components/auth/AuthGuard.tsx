@@ -15,7 +15,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, status } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(true);
+  const [ isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {

@@ -7,10 +7,6 @@ interface EnvConfig {
   DEV_MODE: boolean;
   LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
   
-  // 토큰 관리
-  TOKEN_KEY: string;
-  REFRESH_TOKEN_KEY: string;
-  
   // 앱 정보
   APP_NAME: string;
   APP_VERSION: string;
@@ -55,10 +51,6 @@ export const env: EnvConfig = (() => {
       DEV_MODE: getBooleanEnv('NEXT_PUBLIC_DEV_MODE', false),
       LOG_LEVEL: (getEnvVar('NEXT_PUBLIC_LOG_LEVEL', 'info') as EnvConfig['LOG_LEVEL']),
       
-      // 토큰 관리
-      TOKEN_KEY: getEnvVar('NEXT_PUBLIC_TOKEN_KEY', 'behindy_access_token'),
-      REFRESH_TOKEN_KEY: getEnvVar('NEXT_PUBLIC_REFRESH_TOKEN_KEY', 'behindy_refresh_token'),
-      
       // 앱 정보
       APP_NAME: getEnvVar('NEXT_PUBLIC_APP_NAME', 'Behindy'),
       APP_VERSION: getEnvVar('NEXT_PUBLIC_APP_VERSION', '1.0.0'),
@@ -93,7 +85,7 @@ export const env: EnvConfig = (() => {
   }
 })();
 
-//  런타임 환경변수 체크 함수
+// 런타임 환경변수 체크 함수
 export const debugEnvironment = () => {
   if (typeof window !== 'undefined') {
     console.group('🔍 Client-side Environment Debug');
