@@ -4,6 +4,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { gradients } from '@/styles/theme';
 
 // ================================================================
 // Types
@@ -77,14 +78,14 @@ const StyledButton = styled(motion.button).withConfig({
     switch (variant) {
       case 'primary':
         return `
-          background: linear-gradient(135deg, ${theme.colors.primary[500]} 0%, ${theme.colors.secondary[500]} 100%);
+          background: ${gradients.primary};
           color: ${theme.colors.text.inverse};
           box-shadow: ${theme.shadows.button};
           
           &:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: ${theme.shadows.buttonHover};
-            background: linear-gradient(135deg, ${theme.colors.primary[600]} 0%, ${theme.colors.secondary[600]} 100%);
+            background: ${gradients.primaryHover};
           }
           
           &:active:not(:disabled) {

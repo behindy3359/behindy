@@ -20,20 +20,11 @@ import { useAuthStore } from '@/store/authStore';
 import { publicApi } from '@/services/api/axiosConfig';
 import { ERROR_MESSAGES, LOADING_MESSAGES } from '@/utils/common/constants';
 import { PageContainer } from '@/styles/commonStyles';
+import { SectionContainer } from '@/styles/commonStyles';
 
 // ================================================================
 // Styled Components
 // ================================================================
-
-// 상단 지하철 노선도 섹션
-const MetroSection = styled.div`
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  margin-bottom: 32px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-`;
 
 const MetroHeader = styled.div`
   display: flex;
@@ -303,7 +294,7 @@ export const HomePage: React.FC = () => {
   return (
     <PageContainer>
       {/* 지하철 노선도 섹션 */}
-      <MetroSection>
+      <SectionContainer>
         <MetroHeader>
           <h2>
             <Train size={24} />
@@ -317,7 +308,7 @@ export const HomePage: React.FC = () => {
         <MetroMapContainer>
           <RealtimeMetroMap />
         </MetroMapContainer>
-      </MetroSection>
+      </SectionContainer>
 
       {/* 커뮤니티 섹션 */}
       <CommunitySection>

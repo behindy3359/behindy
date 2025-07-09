@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -416,9 +416,9 @@ export const PostList: React.FC<PostListProps> = ({
     activeUsers: 1234
   };
 
-  const handlePostClick = (postId: number) => {
+  const handlePostClick = useCallback((postId: number) => {
     router.push(`/community/${postId}`);
-  };
+  }, [router]);
 
   const handleWritePost = () => {
     if (!isAuthenticated()) {

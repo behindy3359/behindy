@@ -70,7 +70,7 @@ const AuthCard = styled(motion.div)`
 const BrandSection = styled.div`
   text-align: center;
   padding: 40px 40px 20px 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: ${gradients.primary};
   color: white;
   position: relative;
   

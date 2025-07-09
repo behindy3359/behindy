@@ -237,10 +237,7 @@ const isHotPost = (post: Post): boolean => {
 // ================================================================
 
 export const PostCard = React.memo<PostCardProps>(function PostCard({
-  post,
-  showMetroLine = true,
-  compact = false,
-  onClick
+  post, showMetroLine = true, compact = false, onClick
 }) {
   const router = useRouter();
   const metroLine = showMetroLine ? extractMetroLine(post.content) : null;
