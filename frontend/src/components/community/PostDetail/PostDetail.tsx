@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Post, CommentListResponse } from '@/types/community/community';
-import { CommentList } from './CommentList';
+import { CommentList } from '../CommentList/CommentList';
 import { CommentForm } from '../CommentForm/CommentForm';
 
 import { useAuthStore } from '@/store/authStore';

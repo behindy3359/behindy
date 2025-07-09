@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
 // 공통 컨테이너 스타일 - 프로젝트 전체 일관성 확보
@@ -25,13 +26,17 @@ export const CommunityContainer = styled.div`
 `;
 
 // 카드 형태 컨테이너
-export const CardContainer = styled.div`
+export const CardContainer = styled(motion.div)`
   background: ${({ theme }) => theme.colors.background.primary};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
   border: 1px solid ${({ theme }) => theme.colors.border.light};
-  box-shadow: ${({ theme }) => theme.shadows.card};
   overflow: hidden;
+  cursor: pointer;
   transition: all 0.3s ease;
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: ${({ theme }) => theme.shadows.card};
   
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary[500]};
