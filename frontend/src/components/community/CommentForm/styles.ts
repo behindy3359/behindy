@@ -48,8 +48,28 @@ export const Textarea = styled.textarea<{ $hasError: boolean }>`
   border-radius: 6px;
   font-size: 14px;
   line-height: 1.5;
-  resize: vertical;
   font-family: inherit;
+  
+  resize: none;
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
   
   &:focus {
     outline: none;
@@ -64,6 +84,7 @@ export const Textarea = styled.textarea<{ $hasError: boolean }>`
   }
 `;
 
+
 export const CharCount = styled.div<{ $isOver: boolean }>`
   position: absolute;
   bottom: 8px;
@@ -75,7 +96,7 @@ export const CharCount = styled.div<{ $isOver: boolean }>`
   border-radius: 4px;
 `;
 
-export const ErrorMessage = styled.div`
+export const ErrorMessage = styled(motion.div)`
   display: flex;
   align-items: center;
   gap: 6px;

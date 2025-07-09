@@ -57,6 +57,7 @@ export const FormContainer = styled(motion.div)`
   border: 1px solid ${({ theme }) => theme.colors.border.light};
   overflow: hidden;
   box-shadow: ${({ theme }) => theme.shadows.card};
+  position: relative;
 `;
 
 export const FormSection = styled.div`
@@ -97,18 +98,40 @@ export const TitleSection = styled(FormSection)`
     color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `;
-
 export const ContentSection = styled(FormSection)`
   .content-textarea {
     width: 100%;
     min-height: 400px;
+    max-height: 600px; /* 🔥 최대 높이 제한 */
     border: none;
-    resize: vertical;
     font-size: ${({ theme }) => theme.typography.fontSize.base};
     line-height: 1.6;
     font-family: inherit;
     padding: 0;
     color: ${({ theme }) => theme.colors.text.primary};
+    
+    /* 🔥 크기 고정 - 사용자가 늘릴 수 없도록 */
+    resize: none;
+    overflow-y: auto;
+    
+    /* 스크롤바 스타일링 */
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #dee2e6;
+      border-radius: 4px;
+      
+      &:hover {
+        background: #adb5bd;
+      }
+    }
     
     &:focus {
       outline: none;
@@ -127,17 +150,21 @@ export const ContentSection = styled(FormSection)`
   }
 `;
 
+
 export const PreviewMode = styled.div`
   .preview-content {
     line-height: 1.8;
     color: ${({ theme }) => theme.colors.text.primary};
-    white-space: pre-wrap;
     word-break: break-word;
     
     h1, h2, h3 {
       margin: 1.5em 0 0.5em 0;
       font-weight: 600;
     }
+    
+    h1 { font-size: 1.5em; }
+    h2 { font-size: 1.3em; }
+    h3 { font-size: 1.1em; }
     
     p {
       margin: 0 0 1em 0;
@@ -149,6 +176,10 @@ export const PreviewMode = styled.div`
     
     em {
       font-style: italic;
+    }
+    
+    br {
+      line-height: 1.8;
     }
   }
 `;
@@ -213,4 +244,13 @@ export const LoadingOverlay = styled(motion.div)`
   align-items: center;
   justify-content: center;
   z-index: 10;
+  
+  .loading-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
 `;

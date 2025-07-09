@@ -15,8 +15,7 @@ export const SidebarContainer = styled(motion.aside).withConfig({
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   
   &::-webkit-scrollbar {
     width: 4px;
@@ -36,14 +35,12 @@ export const SidebarContainer = styled(motion.aside).withConfig({
   }
   
   @media (min-width: 768px) {
-    width: ${({ $isOpen }) => ($isOpen ? '280px' : '60px')};
-    transition: width 0.3s ease;
+    /* 애니메이션은 framer-motion에서 처리 */
   }
   
   @media (max-width: 767px) {
-    width: ${({ $isOpen }) => ($isOpen ? '280px' : '0px')};
-    transform: translateX(${({ $isOpen }) => ($isOpen ? '0' : '-100%')});
-    transition: all 0.3s ease;
+    width: 280px;
+    /* 애니메이션은 framer-motion에서 처리 */
   }
 `;
 
@@ -58,6 +55,11 @@ export const SidebarOverlay = styled(motion.div).withConfig({
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
   display: ${({ $visible }) => ($visible ? 'block' : 'none')};
+  
+  @supports (backdrop-filter: blur(4px)) {
+    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.3);
+  }
   
   @media (min-width: 768px) {
     display: none;
@@ -74,6 +76,8 @@ export const HeaderSection = styled.div.withConfig({
   justify-content: ${({ $isOpen }) => ($isOpen ? 'space-between' : 'center')};
   min-height: 80px;
   flex-shrink: 0;
+  
+  background: ${gradients.primary}
 `;
 
 export const BrandLogo = styled.div.withConfig({
@@ -82,6 +86,7 @@ export const BrandLogo = styled.div.withConfig({
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   align-items: center;
   gap: 12px;
+  transition: all 0.3s ease;
   
   .logo {
     width: 40px;
@@ -93,12 +98,25 @@ export const BrandLogo = styled.div.withConfig({
     justify-content: center;
     font-size: 20px;
     font-weight: 800;
+    
+    transition: all 0.2s ease;
+    cursor: pointer;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
   }
   
   .brand-name {
     font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.5px;
+    
+    background: ${gradients.primary}
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   
   @media (max-width: 767px) {
@@ -125,6 +143,15 @@ export const ToggleButton = styled.button`
     transform: scale(1.05);
   }
   
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  }
+  
   @media (max-width: 767px) {
     position: absolute;
     right: 20px;
@@ -143,21 +170,16 @@ export const NavigationSection = styled.nav.withConfig({
   overflow-y: auto;
   overflow-x: hidden;
   
+  mask-image: linear-gradient(to bottom, 
+    transparent 0px,
+    black 20px,
+    black calc(100% - 20px),
+    transparent 100%
+  );
+  
   @media (max-width: 767px) {
     display: flex;
-  }
-  
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
+    mask-image: none;
   }
 `;
 
@@ -194,17 +216,56 @@ export const StyledNavItem = styled.div.withConfig({
         background: white;
         border-radius: 0 2px 2px 0;
       }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+      }
     `}
     
     &:hover {
       background: rgba(255, 255, 255, 0.1);
       transform: translateX(4px);
+      
+      ${({ $isActive }) =>
+        !$isActive &&
+        `
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 2px;
+          height: 16px;
+          background: rgba(255, 255, 255, 0.6);
+          border-radius: 0 1px 1px 0;
+          transition: all 0.2s ease;
+        }
+      `}
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
     }
     
     .nav-icon {
       width: 20px;
       height: 20px;
       flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+    
+    &:hover .nav-icon {
+      transform: scale(1.1);
     }
     
     .nav-label {
@@ -221,7 +282,6 @@ export const StyledNavItem = styled.div.withConfig({
   }
 `;
 
-
 export const AccountSection = styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
@@ -231,6 +291,8 @@ export const AccountSection = styled.div.withConfig({
   flex-direction: column;
   gap: 8px;
   flex-shrink: 0;
+  
+  background: ${gradients.primary}
   
   @media (max-width: 767px) {
     display: flex;
@@ -265,17 +327,64 @@ export const BottomSection = styled.div.withConfig({
     
     &:hover {
       background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
     }
     
     .theme-icon {
       width: 20px;
       height: 20px;
       flex-shrink: 0;
+      transition: transform 0.3s ease;
+    }
+    
+    &:hover .theme-icon {
+      transform: rotate(20deg) scale(1.1);
     }
     
     .theme-label {
       font-size: 14px;
       font-weight: 500;
+      opacity: 0.9;
     }
   }
 `;
+
+export const SidebarContent = styled.div`
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  
+  animation: fadeInUp 0.3s ease-out;
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+export const SIDEBAR_BREAKPOINTS = {
+  mobile: '767px',
+  tablet: '768px',
+  desktop: '1024px',
+} as const;
+
+export const SIDEBAR_Z_INDEX = {
+  overlay: 999,
+  sidebar: 1000,
+  dropdown: 1001,
+} as const;

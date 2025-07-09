@@ -40,6 +40,10 @@ export const Subtitle = styled.p`
   font-size: 16px;
   margin: 0;
   line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    text-align: center;
+  }
 `;
 
 export const HeaderRight = styled.div`
@@ -73,59 +77,6 @@ export const SearchContainer = styled.div`
   @media (max-width: 768px) {
     min-width: 100%;
     flex-direction: column;
-  }
-`;
-
-export const StatsBar = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-`;
-
-export const StatCard = styled(motion.div)`
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  
-  .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f0f4ff;
-    color: #667eea;
-  }
-  
-  .stat-content {
-    flex: 1;
-    
-    .stat-number {
-      font-size: 24px;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 4px;
-    }
-    
-    .stat-label {
-      font-size: 14px;
-      color: #6b7280;
-      font-weight: 500;
-    }
-    
-    .stat-change {
-      font-size: 12px;
-      color: #10b981;
-      font-weight: 500;
-      margin-top: 4px;
-    }
   }
 `;
 
@@ -164,12 +115,20 @@ export const FilterLeft = styled.div`
     color: #6b7280;
     font-size: 14px;
   }
+  
+  @media (max-width: 768px) {
+    justify-content: space-between;
+  }
 `;
 
 export const FilterRight = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  
+  @media (max-width: 768px) {
+    justify-content: space-between;
+  }
 `;
 
 export const ViewToggle = styled.div`
@@ -267,6 +226,7 @@ export const EmptyState = styled.div`
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+    white-space: pre-line;
   }
 `;
 
@@ -312,6 +272,12 @@ export const Pagination = styled.div`
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 16px;
+  }
 `;
 
 export const PageButton = styled(motion.button)<{ $active?: boolean; $disabled?: boolean }>`
@@ -324,9 +290,16 @@ export const PageButton = styled(motion.button)<{ $active?: boolean; $disabled?:
   font-size: 14px;
   font-weight: 500;
   opacity: ${({ $disabled }) => $disabled ? 0.5 : 1};
+  min-width: 44px;
   
   &:hover:not(:disabled) {
     background: ${({ $active }) => $active ? '#5a67d8' : '#f9fafb'};
     border-color: ${({ $active }) => $active ? '#5a67d8' : '#9ca3af'};
+  }
+  
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 36px;
   }
 `;

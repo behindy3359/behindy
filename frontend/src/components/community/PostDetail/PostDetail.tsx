@@ -1,219 +1,58 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AnimatePresence } from 'framer-motion';
-import { 
-  ArrowLeft, 
-  Edit3, 
-  Trash2, 
-  MessageSquare, 
-  User, 
-  Calendar,
-  MoreHorizontal,
-  Heart,
-  Share2,
-  Flag,
-  AlertTriangle,
-  RefreshCw,
-  LogIn
-} from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Post, CommentListResponse } from '@/types/community/community';
+import { MessageSquare } from 'lucide-react';
 import { CommentList } from '../CommentList/CommentList';
 import { CommentForm } from '../CommentForm/CommentForm';
-
-import { useAuthStore } from '@/store/authStore';
-import { useToast } from '@/store/uiStore';
-
-import { SUCCESS_MESSAGES, LOADING_MESSAGES, ERROR_MESSAGES, CONFIRM_MESSAGES } from '@/utils/common/constants';
-
-import { API_ENDPOINTS } from '@/utils/common/api'; 
-import { apiErrorHandler } from '@/utils/common/api';
-import { domUtils } from '@/utils/common/dom';
-
-import { api } from '@/services/api/axiosConfig'
-
+import { LOADING_MESSAGES } from '@/utils/common/constants';
 import { PageContainer } from '@/styles/commonStyles';
-import Button from '../../ui/button/Button';
 import { PostDetailProps } from './types';
-import { 
-  ActionButton, 
-  ActionGroup, 
-  ActionMenu, 
-  BackButton, 
-  CommentsSection, 
-  CommentsSectionHeader, 
-  ErrorState, 
-  Header, 
-  LoadingState, 
-  MenuButton, 
-  MenuDropdown, 
-  MenuItem, 
-  PostActions, 
-  PostContainer, 
-  PostContent, 
-  PostHeader, 
-  PostMeta, 
-  PostTitle 
-} from './styles';
+import { usePostDetail } from './hooks/usePostDetail';
+import { usePostComments } from './hooks/usePostComments';
+import { usePostInteractions } from './hooks/usePostInteractions';
+import { PostHeader } from './inner/PostHeader';
+import { PostContent } from './inner/PostContent';
+import { PostActions } from './inner/PostActions';
+import { PostErrorState } from './inner/PostErrorState';
+import { CommentsSection, CommentsSectionHeader, LoadingState } from './styles';
 
 export const PostDetail: React.FC<PostDetailProps> = ({ 
   postId,
   showComments = true,
   enableInteractions = true 
 }) => {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const { show: showToast } = useToast();
-  const { user, isAuthenticated } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
-  const [isLiked, setIsLiked] = useState(false); // TODO : API 연동
-  const [likeCount, setLikeCount] = useState(0); // TODO : API 연동
 
-  const [apiError, setApiError] = useState<string | null>(null);
+  // 훅들로 로직 분리
+  const {
+    post,
+    user,
+    apiError,
+    isLoading,
+    error,
+    isAuthenticated,
+    canEdit,     // 이제 boolean 타입 보장됨
+    canDelete,   // 이제 boolean 타입 보장됨
+    handleDelete,
+    isDeleting,
+  } = usePostDetail(postId);
 
-  // 게시글 데이터 가져오기
-  const { data: post, isLoading, error } = useQuery({
-    queryKey: ['post', postId],
-    queryFn: async () => {
-      try {
-        return await api.get<Post>(API_ENDPOINTS.POSTS.BY_ID(postId));
-      } catch (error) {
-        const errorInfo = apiErrorHandler.parseError(error);
-        setApiError(errorInfo.message);
-        throw error;
-      }
-    },
-    retry: (failureCount, error) => {
-      const errorInfo = apiErrorHandler.parseError(error);
-      // 에러 종류에 따른 재시도 분기
-      if (errorInfo.code === 'NETWORK_ERROR' && failureCount < 2) {
-        return true;
-      }
-      return false;
-    },
-  });
+  const {
+    commentsData,
+    isLoadingComments,
+    refreshComments,
+  } = usePostComments(postId);
 
+  const {
+    isLiked,
+    likeCount,
+    handleBack,
+    handleEdit,
+    handleLike,
+    handleShare,
+  } = usePostInteractions(post); // post는 Post | undefined
 
-  // 댓글 데이터 가져오기
-  const { data: commentsData, isLoading: isLoadingComments, error: commentsError } = useQuery({
-    queryKey: ['comments', postId],
-    queryFn: async () => {
-      try {
-        return await api.get<CommentListResponse>(
-          API_ENDPOINTS.COMMENTS.BY_POST(postId)
-        );
-      } catch (error) {
-        const errorInfo = apiErrorHandler.parseError(commentsError);
-        console.error('Comments load error:', errorInfo);
-        
-        showToast({
-          type: 'warning',
-          message: `댓글 로드 실패: ${errorInfo.message}`
-        });
-        
-        throw error;
-      }
-    },
-    retry: 1,
-  });
-
-  // 게시글 삭제 뮤테이션
-  const deletePostMutation = useMutation({
-    mutationFn: async () => {
-      return await api.delete(API_ENDPOINTS.POSTS.BY_ID(postId));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      showToast({
-        type: 'success',
-        message: SUCCESS_MESSAGES.POST_DELETED
-      });
-      router.push('/community');
-    },
-    onError: (error: unknown) => {
-      const errorInfo = apiErrorHandler.parseError(error);
-      showToast({
-        type: 'error',
-        message: errorInfo.message
-      });
-      
-      const actionInfo = apiErrorHandler.getErrorAction(errorInfo.code);
-      if (actionInfo.action === 'login') {
-        setTimeout(() => {
-          router.push('/auth/login');
-        }, 2000);
-      }
-    },
-  });
-
-  const handleBack = () => {
-    router.push('/community');
-  };
-
-  const handleEdit = () => {
-    router.push(`/community/${postId}/edit`);
-  };
-
-  const handleDelete = async () => {
-    if (window.confirm(CONFIRM_MESSAGES.DELETE_POST)) {
-      try {
-        await deletePostMutation.mutateAsync();
-      } catch (error) {
-        console.error('Delete post error:', error);
-      }
-    }
-  };
-
-  const handleLike = () => {
-    // 추후 API 연동
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: post?.title,
-          url: window.location.href,
-        });
-      } catch (error) {
-        console.log('Share cancelled or failed');
-      }
-    } else {
-      // 클립보드 API 사용
-      const success = await domUtils.clipboard.writeText(window.location.href);
-      
-      if (success) {
-        showToast({ 
-          type: 'success', 
-          message: SUCCESS_MESSAGES.COPIED_TO_CLIPBOARD 
-        });
-      } else {
-        showToast({ 
-          type: 'error', 
-          message: '링크 복사에 실패했습니다.' 
-        });
-      }
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const canEdit = post && user && (post.authorId === user.id || post.isEditable);
-  const canDelete = post && user && (post.authorId === user.id || post.isDeletable);
-
+  // 로딩 상태
   if (isLoading) {
     return (
       <PageContainer>
@@ -224,219 +63,92 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     );
   }
 
+  // 에러 상태 또는 게시글이 없는 경우
   if (error || apiError || !post) {
-    const errorMessage = apiError || ERROR_MESSAGES.POST_LOAD_ERROR;
-    const errorInfo = error ? apiErrorHandler.parseError(error) : null;
-    
     return (
       <PageContainer>
-        <ErrorState>
-          <div className="error-icon">
-            <AlertTriangle size={48} />
-          </div>
-          <div className="error-title">게시글을 불러올 수 없습니다</div>
-          <div className="error-message">{errorMessage}</div>
-          
-          {errorInfo && (
-            <div className="error-actions">
-              {errorInfo.code === 'NETWORK_ERROR' && (
-                <Button
-                  variant="primary"
-                  onClick={() => window.location.reload()}
-                  leftIcon={<RefreshCw />}
-                >
-                  다시 시도
-                </Button>
-              )}
-              {errorInfo.code === '401' && (
-                <Button
-                  variant="primary"
-                  onClick={() => router.push('/auth/login')}
-                  leftIcon={<LogIn />}
-                >
-                  로그인하기
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                onClick={handleBack}
-                leftIcon={<ArrowLeft />}
-              >
-                목록으로 돌아가기
-              </Button>
-            </div>
-          )}
-        </ErrorState>
+        <PostErrorState
+          error={error}
+          apiError={apiError}
+          onBack={handleBack}
+        />
       </PageContainer>
     );
   }
 
+  // 이 시점에서 post는 존재함이 보장됨
   return (
     <PageContainer>
-      <Header>
-        <BackButton
-          onClick={handleBack}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <ArrowLeft size={16} />
-          목록으로
-        </BackButton>
+      {/* 헤더 */}
+      <PostHeader
+        showMenu={showMenu}
+        canEdit={canEdit}     // boolean 타입
+        canDelete={canDelete} // boolean 타입
+        isDeleting={isDeleting}
+        onBack={handleBack}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onToggleMenu={() => setShowMenu(!showMenu)}
+      />
 
-        {(canEdit || canDelete) && (
-          <ActionMenu>
-            <MenuButton
-              onClick={() => setShowMenu(!showMenu)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <MoreHorizontal size={16} />
-            </MenuButton>
+      {/* 게시글 내용 */}
+      <PostContent post={post} />
 
-            <AnimatePresence>
-              {showMenu && (
-                <MenuDropdown
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {canEdit && (
-                    <MenuItem onClick={handleEdit}>
-                      <Edit3 size={14} />
-                      수정
-                    </MenuItem>
-                  )}
-                  {canDelete && (
-                    <MenuItem $danger onClick={handleDelete}>
-                      <Trash2 size={14} />
-                      삭제
-                    </MenuItem>
-                  )}
-                  <MenuItem>
-                    <Flag size={14} />
-                    신고
-                  </MenuItem>
-                </MenuDropdown>
-              )}
-            </AnimatePresence>
-          </ActionMenu>
-        )}
-      </Header>
-
-      <PostContainer
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <PostHeader>
-          <PostMeta>
-            <div className="meta-item">
-              <User size={16} />
-              <span className="author">{post.authorName}</span>
-            </div>
-            <div className="meta-item">
-              <Calendar size={16} />
-              <span>{formatDate(post.createdAt)}</span>
-            </div>
-            {post.createdAt !== post.updatedAt && (
-              <div className="meta-item">
-                <span style={{ color: '#9ca3af' }}>
-                  (수정됨: {formatDate(post.updatedAt)})
-                </span>
-              </div>
-            )}
-          </PostMeta>
-          
-          <PostTitle>{post.title}</PostTitle>
-        </PostHeader>
-
-        <PostContent>
-          {post.content}
-        </PostContent>
-
-        <PostActions>
-          {enableInteractions && (
-            <ActionGroup>
-            <ActionButton
-              $active={isLiked}
-              onClick={handleLike}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Heart size={16} />
-              <span className="count">{likeCount}</span>
-            </ActionButton>
-            
-            <ActionButton
-              onClick={handleShare}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Share2 size={16} />
-              공유
-            </ActionButton>
-          </ActionGroup>
-          )}
-
-          <ActionGroup>
-            <ActionButton>
-              <MessageSquare size={16} />
-              <span className="count">
-                {commentsData?.totalElements || 0}
-              </span>
-            </ActionButton>
-          </ActionGroup>
-        </PostActions>
-      </PostContainer>
+      {/* 게시글 액션 */}
+      <PostActions
+        enableInteractions={enableInteractions}
+        isLiked={isLiked}
+        likeCount={likeCount}
+        commentsData={commentsData}
+        onLike={handleLike}
+        onShare={handleShare}
+      />
 
       {/* 댓글 섹션 */}
       {showComments && (
         <CommentsSection>
-        <CommentsSectionHeader>
-          <h3>
-            <MessageSquare size={20} />
-            댓글 {commentsData?.totalElements || 0}개
-          </h3>
-        </CommentsSectionHeader>
-        {isAuthenticated() && (
-          <div style={{ padding: '24px', borderBottom: '1px solid #f3f4f6' }}>
-            <CommentForm 
-              postId={postId} 
-              onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-              }}
-            />
-          </div>
-        )}
-
-        {/* 댓글 목록 */}
-        <div style={{ padding: '24px' }}>
-          {isLoadingComments ? (
-            <LoadingState>
-              {LOADING_MESSAGES.COMMENT_LOADING}
-            </LoadingState>
-          ) : commentsData && commentsData.comments.length > 0 ? (
-            <CommentList 
-              comments={commentsData.comments}
-              onUpdate={() => {
-                queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-              }}
-            />
-          ) : (
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '40px', 
-              color: '#6b7280' 
-            }}>
-              아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!
+          <CommentsSectionHeader>
+            <h3>
+              <MessageSquare size={20} />
+              댓글 {commentsData?.totalElements || 0}개
+            </h3>
+          </CommentsSectionHeader>
+          
+          {/* 댓글 작성 폼 */}
+          {isAuthenticated() && (
+            <div style={{ padding: '24px', borderBottom: '1px solid #f3f4f6' }}>
+              <CommentForm 
+                postId={postId} 
+                onSuccess={refreshComments}
+              />
             </div>
           )}
-        </div>
-      </CommentsSection>
+
+          {/* 댓글 목록 */}
+          <div style={{ padding: '24px' }}>
+            {isLoadingComments ? (
+              <LoadingState>
+                {LOADING_MESSAGES.COMMENT_LOADING}
+              </LoadingState>
+            ) : commentsData && commentsData.comments.length > 0 ? (
+              <CommentList 
+                comments={commentsData.comments}
+                onUpdate={refreshComments}
+              />
+            ) : (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '40px', 
+                color: '#6b7280' 
+              }}>
+                아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!
+              </div>
+            )}
+          </div>
+        </CommentsSection>
       )}
 
-      {/* 클릭 외부 영역 처리 */}
+      {/* 메뉴 외부 클릭 처리 */}
       {showMenu && (
         <div
           style={{
