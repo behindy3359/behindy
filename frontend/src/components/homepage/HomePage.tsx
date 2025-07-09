@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -9,6 +9,8 @@ import {
   Plus, 
   ArrowRight,
   Train,
+  TrendingUp,
+  User,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { buildApiUrl } from '@/utils/common/api';
@@ -71,20 +73,16 @@ const MetroHeader = styled.div`
   }
 `;
 
-// 지하철 노선도 컨테이너
 const MetroMapContainer = styled.div`
-  /* 기존의 복잡한 레이어 제거 */
   padding: 0;
   background: none;
   
-  /* RealtimeMetroMap 컴포넌트의 내부 Container 스타일 무력화 */
   & > div {
     padding: 0 !important;
     background: none !important;
     margin: 0 !important;
   }
   
-  /* 지도 래퍼의 불필요한 스타일 제거 */
   & > div > div {
     background: none !important;
     border-radius: 0 !important;
@@ -95,7 +93,6 @@ const MetroMapContainer = styled.div`
   }
 `;
 
-// 하단 커뮤니티 섹션
 const CommunitySection = styled.div`
   background: white;
   border-radius: 16px;
@@ -130,43 +127,6 @@ const CommunityHeader = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 20px;
-  }
-  
-  .stat-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    background: white;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    
-    .stat-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-    
-    .stat-content {
-      .stat-number {
-        font-size: 18px;
-        font-weight: 700;
-        color: #111827;
-        line-height: 1;
-        margin-bottom: 2px;
-      }
-      
-      .stat-label {
-        font-size: 12px;
-        color: #6b7280;
-        font-weight: 500;
-      }
-    }
   }
   
   @media (max-width: 768px) {
@@ -254,6 +214,100 @@ const ViewAllButton = styled(motion.div)`
   }
 `;
 
+const StatItem = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  
+  .stat-content {
+    .stat-number {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    .stat-change {
+      font-size: 11px;
+      color: #10b981;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+  }
+`;
+
+// ================================================================
+// Helper Functions
+// ================================================================
+
+const isToday = (date: Date): boolean => {
+  const today = new Date();
+  return date.toDateString() === today.toDateString();
+};
+
+// ================================================================
+// Optimized Components
+// ================================================================
+interface StatCardProps {
+  stat: {
+    icon: React.ComponentType<{ size?: number }>;
+    title: string;
+    value: string;
+    change: string;
+  };
+  index: number;
+}
+
+const StatCard = React.memo<StatCardProps>(function StatCard({ stat, index }) {
+  const { icon: Icon, title, value, change } = stat;
+
+  return (
+    <StatItem
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      whileHover={{ y: -2 }}
+    >
+      <div className="stat-icon">
+        <Icon size={20} />
+      </div>
+      <div className="stat-content">
+        <div className="stat-number">{value}</div>
+        <div className="stat-label">{title}</div>
+        <div className="stat-change">{change}</div>
+      </div>
+    </StatItem>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.stat.value === nextProps.stat.value &&
+    prevProps.stat.change === nextProps.stat.change &&
+    prevProps.stat.title === nextProps.stat.title
+  );
+});
+
 // ================================================================
 // Hook
 // ================================================================
@@ -265,12 +319,13 @@ const useRecentPosts = (limit: number = 6) => {
       const url = buildApiUrl.posts({ page: 0, size: limit });
       return await publicApi.getPosts<PostListResponse>(url);
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 2 * 60 * 1000, // 2분 캐시
+    retry: 1,
   });
 };
 
 // ================================================================
-// Component
+// Main Component
 // ================================================================
 
 export const HomePage: React.FC = () => {
@@ -279,21 +334,77 @@ export const HomePage: React.FC = () => {
   
   const { data: postsData, isLoading, error } = useRecentPosts(6);
 
-  const handleWritePost = () => {
+  const stats = useMemo(() => {
+    if (!postsData) {
+      return {
+        totalPosts: 0,
+        todayPosts: 0,
+        totalComments: 0,
+        activeUsers: 1234 // API에서 가져올 데이터
+      };
+    }
+
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    const todayPostsCount = postsData.posts?.filter(post => {
+      const postDate = new Date(post.createdAt);
+      return postDate >= todayStart;
+    }).length || 0;
+
+    // const totalCommentsCount = postsData.posts?.reduce((sum, post) => {
+    //   // 실제 commentCount 필드가 있다면 사용, 없으면 0
+    //   return sum + (post.commentCount || 0);
+    // }, 0) || 0;
+
+    return {
+      totalPosts: postsData.totalElements || 0,
+      todayPosts: todayPostsCount,
+      // totalComments: totalCommentsCount,
+      activeUsers: 1234 // TODO: API에서 실제 활성 사용자 수 가져오기
+    };
+  }, [postsData]);
+
+  const recentPosts = useMemo(() => {
+    if (!postsData?.posts) return [];
+    return postsData.posts.slice(0, 6);
+  }, [postsData?.posts]);
+
+  const handleWritePost = useCallback(() => {
     if (!isAuthenticated()) {
       router.push('/auth/login');
       return;
     }
     router.push('/community/write');
-  };
+  }, [isAuthenticated, router]);
 
-  const handleViewAllPosts = () => {
+  const handleViewAllPosts = useCallback(() => {
     router.push('/community');
-  };
-  
+  }, [router]);
+
+  const statItems = useMemo(() => [
+    {
+      icon: MessageSquare,
+      title: '전체 게시글',
+      value: stats.totalPosts.toLocaleString(),
+      change: `+${stats.todayPosts} 오늘`
+    },
+    // {
+    //   icon: TrendingUp,
+    //   title: '총 댓글',
+    //   value: stats.totalComments.toLocaleString(),
+    //   change: '활발한 소통'
+    // },
+    {
+      icon: User,
+      title: '활성 사용자',
+      value: stats.activeUsers.toLocaleString(),
+      change: '온라인'
+    }
+  ], [stats]);
+
   return (
     <PageContainer>
-      {/* 지하철 노선도 섹션 */}
       <SectionContainer>
         <MetroHeader>
           <h2>
@@ -310,7 +421,6 @@ export const HomePage: React.FC = () => {
         </MetroMapContainer>
       </SectionContainer>
 
-      {/* 커뮤니티 섹션 */}
       <CommunitySection>
         <CommunityHeader>
           <div className="header-top">
@@ -328,9 +438,18 @@ export const HomePage: React.FC = () => {
               글쓰기
             </Button>
           </div>
+
+          <div className="stats-grid">
+            {statItems.map((stat, index) => (
+              <StatCard
+                key={stat.title}
+                stat={stat}
+                index={index}
+              />
+            ))}
+          </div>
         </CommunityHeader>
 
-        {/* 게시글 목록 */}
         {isLoading ? (
           <LoadingState>
             {LOADING_MESSAGES.POSTS_LOADING}
@@ -345,10 +464,10 @@ export const HomePage: React.FC = () => {
               잠시 후 다시 시도해주세요
             </div>
           </EmptyState>
-        ) : postsData?.posts && postsData.posts.length > 0 ? (
+        ) : recentPosts.length > 0 ? (
           <>
             <PostGrid>
-              {postsData.posts.map((post, index) => (
+              {recentPosts.map((post, index) => (
                 <motion.div
                   key={post.id}
                   initial={{ opacity: 0, y: 20 }}

@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,19 +30,16 @@ const SidebarContainer = styled(motion.aside).withConfig({
   position: fixed;
   top: 0;
   left: 0;
-  height: 100vh; /* 전체 화면 높이 */
+  height: 100vh;
   background: ${gradients.primary};
   color: white;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-  
-  /* 추가: 스크롤 처리 */
   overflow-y: auto;
   overflow-x: hidden;
   
-  /* 스크롤바 스타일링 */
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -60,13 +57,11 @@ const SidebarContainer = styled(motion.aside).withConfig({
     }
   }
   
-  /* 데스크톱: 280px ↔ 60px */
   @media (min-width: 768px) {
     width: ${({ $isOpen }) => ($isOpen ? '280px' : '60px')};
     transition: width 0.3s ease;
   }
   
-  /* 모바일: 오버레이 */
   @media (max-width: 767px) {
     width: ${({ $isOpen }) => ($isOpen ? '280px' : '0px')};
     transform: translateX(${({ $isOpen }) => ($isOpen ? '0' : '-100%')});
@@ -91,7 +86,6 @@ const SidebarOverlay = styled(motion.div).withConfig({
   }
 `;
 
-// 헤더 섹션
 const HeaderSection = styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
@@ -101,7 +95,7 @@ const HeaderSection = styled.div.withConfig({
   align-items: center;
   justify-content: ${({ $isOpen }) => ($isOpen ? 'space-between' : 'center')};
   min-height: 80px;
-  flex-shrink: 0; /* 추가: 헤더 크기 고정 */
+  flex-shrink: 0;
 `;
 
 const BrandLogo = styled.div.withConfig({
@@ -146,7 +140,7 @@ const ToggleButton = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  flex-shrink: 0; /* 추가: 버튼 크기 고정 */
+  flex-shrink: 0;
   
   &:hover {
     background: rgba(255, 255, 255, 0.2);
@@ -160,23 +154,21 @@ const ToggleButton = styled.button`
   }
 `;
 
-// 메인 네비게이션
 const NavigationSection = styled.nav.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
-  flex: 1; /* 추가: 남은 공간 모두 차지 */
+  flex: 1;
   padding: 20px 0;
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   flex-direction: column;
   gap: 8px;
-  overflow-y: auto; /* 추가: 내비게이션 영역 스크롤 */
+  overflow-y: auto;
   overflow-x: hidden;
   
   @media (max-width: 767px) {
     display: flex;
   }
   
-  /* 내비게이션 영역만의 스크롤바 */
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -191,7 +183,8 @@ const NavigationSection = styled.nav.withConfig({
   }
 `;
 
-const NavItem = React.memo(styled.div.withConfig({
+// 🔥 최적화된 NavItem 컴포넌트
+const StyledNavItem = styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isActive', '$isOpen'].includes(prop),
 })<{ $isActive: boolean; $isOpen: boolean }>`
   margin: 0 12px;
@@ -208,7 +201,6 @@ const NavItem = React.memo(styled.div.withConfig({
     position: relative;
     overflow: hidden;
     
-    /* Active 상태 */
     ${({ $isActive }) =>
       $isActive &&
       `
@@ -250,14 +242,41 @@ const NavItem = React.memo(styled.div.withConfig({
       }
     }
   }
-`,(prevProps, nextProps) => {
+`;
+
+// 🔥 최적화된 NavItem 컴포넌트
+const NavItem = React.memo<{
+  path: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+  isActive: boolean;
+  isOpen: boolean;
+  onClick: (path: string, action?: string) => void;
+  action?: string;
+}>(function NavItem({ path, label, icon: Icon, isActive, isOpen, onClick, action }) {
+  
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    onClick(path, action);
+  }, [path, action, onClick]);
+
   return (
-    prevProps.$isActive === nextProps.$isActive &&
-    prevProps.$isOpen === nextProps.$isOpen
+    <StyledNavItem $isActive={isActive} $isOpen={isOpen}>
+      <a href="#" onClick={handleClick}>
+        <Icon className="nav-icon" size={20} />
+        <span className="nav-label">{label}</span>
+      </a>
+    </StyledNavItem>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.path === nextProps.path &&
+    prevProps.label === nextProps.label &&
+    prevProps.isOpen === nextProps.isOpen
   );
 });
 
-// 계정 섹션
 const AccountSection = styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
@@ -266,21 +285,20 @@ const AccountSection = styled.div.withConfig({
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   flex-direction: column;
   gap: 8px;
-  flex-shrink: 0; /* 추가: 계정 섹션 크기 고정 */
+  flex-shrink: 0;
   
   @media (max-width: 767px) {
     display: flex;
   }
 `;
 
-// 하단 테마 토글 섹션
 const BottomSection = styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
   padding: 20px 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
-  flex-shrink: 0; /* 추가: 하단 섹션 크기 고정 */
+  flex-shrink: 0;
   
   @media (max-width: 767px) {
     display: block;
@@ -330,37 +348,41 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const pathname = usePathname();
   const { sidebar, toggleSidebar } = useUIStore();
   const { isAuthenticated, logout, user } = useAuthStore();
-  const [isDarkTheme, setIsDarkTheme] = React.useState(false);
-  const [isMobile, setIsMobile] = React.useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // 모바일 감지
-  React.useEffect(() => {
+  // 🔥 모바일 감지 최적화
+  useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
     
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const handleResize = () => checkMobile();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 네비게이션 아이템 정의
-  const navItems = [
+  // 🔥 네비게이션 아이템 메모이제이션
+  const navItems = useMemo(() => [
     { path: '/', label: '홈', icon: Home },
     { path: '/about', label: '소개', icon: Info },
     { path: '/community', label: '게시판', icon: MessageSquare },
-  ];
+  ], []);
 
-  // 계정 관련 아이템
-  const accountItems = isAuthenticated() ? [
-    { path: '/profile', label: user?.name || '프로필', icon: User },
-    { action: 'logout', label: '로그아웃', icon: LogIn },
-  ] : [
-    { path: '/auth/login', label: '로그인', icon: LogIn },
-    { path: '/auth/signup', label: '회원가입', icon: UserPlus },
-  ];
+  // 🔥 계정 관련 아이템 메모이제이션
+  const accountItems = useMemo(() => 
+    isAuthenticated() ? [
+      { path: '/profile', label: user?.name || '프로필', icon: User },
+      { action: 'logout', label: '로그아웃', icon: LogIn },
+    ] : [
+      { path: '/auth/login', label: '로그인', icon: LogIn },
+      { path: '/auth/signup', label: '회원가입', icon: UserPlus },
+    ], [isAuthenticated, user?.name]
+  );
 
-  const handleNavigation = (path?: string, action?: string) => {
+  // 🔥 네비게이션 핸들러 메모이제이션
+  const handleNavigation = useCallback((path?: string, action?: string) => {
     if (action === 'logout') {
       logout();
       router.push('/');
@@ -372,22 +394,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     if (isMobile && sidebar.isOpen) {
       toggleSidebar();
     }
-  };
+  }, [logout, router, isMobile, sidebar.isOpen, toggleSidebar]);
 
-  const handleThemeToggle = () => {
+  // 🔥 테마 토글 핸들러
+  const handleThemeToggle = useCallback(() => {
     setIsDarkTheme(!isDarkTheme);
-    // 여기서 실제 테마 변경 로직 구현
-  };
+  }, [isDarkTheme]);
 
-  const handleOverlayClick = () => {
+  // 🔥 오버레이 클릭 핸들러
+  const handleOverlayClick = useCallback(() => {
     if (isMobile) {
       toggleSidebar();
     }
-  };
+  }, [isMobile, toggleSidebar]);
 
   return (
     <>
-      {/* 모바일 오버레이 */}
+      {/* 🔥 모바일 오버레이 */}
       <AnimatePresence>
         {isMobile && sidebar.isOpen && (
           <SidebarOverlay
@@ -400,7 +423,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         )}
       </AnimatePresence>
 
-      {/* 사이드바 메인 */}
+      {/* 🔥 사이드바 메인 */}
       <SidebarContainer
         $isOpen={sidebar.isOpen}
         $isMobile={isMobile}
@@ -411,7 +434,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
       >
-        {/* 헤더 섹션 - 햄버거 버튼만 */}
+        {/* 🔥 헤더 섹션 */}
         <HeaderSection $isOpen={sidebar.isOpen}>
           <BrandLogo $isOpen={sidebar.isOpen}>
             <div className="logo">B</div>
@@ -423,45 +446,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           </ToggleButton>
         </HeaderSection>
 
-        {/* 메인 네비게이션 */}
+        {/* 🔥 최적화된 메인 네비게이션 */}
         <NavigationSection $isOpen={sidebar.isOpen}>
           {navItems.map((item) => (
             <NavItem
               key={item.path}
-              $isActive={pathname === item.path}
-              $isOpen={sidebar.isOpen}
-            >
-              <a href="#" onClick={(e) => {
-                e.preventDefault();
-                handleNavigation(item.path);
-              }}>
-                <item.icon className="nav-icon" />
-                <span className="nav-label">{item.label}</span>
-              </a>
-            </NavItem>
+              path={item.path}
+              label={item.label}
+              icon={item.icon}
+              isActive={pathname === item.path}
+              isOpen={sidebar.isOpen}
+              onClick={handleNavigation}
+            />
           ))}
         </NavigationSection>
 
-        {/* 계정 섹션 */}
+        {/* 🔥 최적화된 계정 섹션 */}
         <AccountSection $isOpen={sidebar.isOpen}>
           {accountItems.map((item, index) => (
             <NavItem
               key={item.path || item.action || index}
-              $isActive={false}
-              $isOpen={sidebar.isOpen}
-            >
-              <a href="#" onClick={(e) => {
-                e.preventDefault();
-                handleNavigation(item.path, item.action);
-              }}>
-                <item.icon className="nav-icon" />
-                <span className="nav-label">{item.label}</span>
-              </a>
-            </NavItem>
+              path={item.path || ''}
+              label={item.label}
+              icon={item.icon}
+              isActive={false}
+              isOpen={sidebar.isOpen}
+              onClick={handleNavigation}
+              action={item.action}
+            />
           ))}
         </AccountSection>
 
-        {/* 하단 테마 토글 */}
+        {/* 🔥 하단 테마 토글 */}
         <BottomSection $isOpen={sidebar.isOpen}>
           <button className="theme-toggle" onClick={handleThemeToggle}>
             {isDarkTheme ? (

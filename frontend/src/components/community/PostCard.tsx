@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -225,11 +225,31 @@ const extractMetroLine = (content: string): string | null => {
   return lineMatch ? lineMatch[1] : null;
 };
 
+const HOT_POST_CACHE = new Map<string, { result: boolean; timestamp: number }>();
+const CACHE_DURATION = 60000;
+
 const isHotPost = (post: Post): boolean => {
+  const cacheKey = `${post.id}-${post.createdAt}`;
+  const cached = HOT_POST_CACHE.get(cacheKey);
+  
+  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+    return cached.result;
+  }
+  
   const postDate = new Date(post.createdAt);
   const now = new Date();
   const hoursDiff = (now.getTime() - postDate.getTime()) / (1000 * 60 * 60);
-  return hoursDiff < 24;
+  const result = hoursDiff < 24;
+  
+  HOT_POST_CACHE.set(cacheKey, { result, timestamp: Date.now() });
+  
+  if (HOT_POST_CACHE.size > 100) {
+    const oldEntries = Array.from(HOT_POST_CACHE.entries())
+      .filter(([, value]) => (Date.now() - value.timestamp) > CACHE_DURATION);
+    oldEntries.forEach(([key]) => HOT_POST_CACHE.delete(key));
+  }
+  
+  return result;
 };
 
 // ================================================================
@@ -240,16 +260,39 @@ export const PostCard = React.memo<PostCardProps>(function PostCard({
   post, showMetroLine = true, compact = false, onClick
 }) {
   const router = useRouter();
-  const metroLine = showMetroLine ? extractMetroLine(post.content) : null;
-  const isHot = isHotPost(post);
 
-  const handleClick = () => {
+  const metroLine = useMemo(() => 
+    showMetroLine ? extractMetroLine(post.content) : null, 
+    [post.content, showMetroLine]
+  );
+  
+  const isHot = useMemo(() => 
+    isHotPost(post), 
+    [post.createdAt]
+  );
+
+  const postPreview = useMemo(() => 
+    formatters.createPostPreview(post.content, compact ? 80 : 120),
+    [post.content, compact]
+  );
+
+  const userInitial = useMemo(() => 
+    formatters.getUserInitial(post.authorName),
+    [post.authorName]
+  );
+
+  const relativeTime = useMemo(() => 
+    formatters.relativeTime(post.createdAt),
+    [post.createdAt]
+  );
+
+  const handleClick = useCallback(() => {
     if (onClick) {
       onClick(post);
     } else {
       router.push(`/community/${post.id}`);
     }
-  };
+  }, [post.id, onClick, router]);
 
   return (
     <CardContainer
@@ -261,14 +304,13 @@ export const PostCard = React.memo<PostCardProps>(function PostCard({
       transition={{ duration: 0.3 }}
       style={{ position: 'relative' }}
     >
+      {/* 🔥 Hot 배지 최적화 */}
       {isHot && <HotBadge>🔥 HOT</HotBadge>}
 
       <CardHeader>
         <AuthorInfo>
           <AuthorLeft>
-            <Avatar>
-              {formatters.getUserInitial(post.authorName)}
-            </Avatar>
+            <Avatar>{userInitial}</Avatar>
             <AuthorName>{post.authorName}</AuthorName>
             {metroLine && (
               <MetroLine $lineNumber={metroLine}>
@@ -280,16 +322,14 @@ export const PostCard = React.memo<PostCardProps>(function PostCard({
           
           <PostTime>
             <Clock size={12} />
-            {formatters.relativeTime(post.createdAt)}
+            {relativeTime}
           </PostTime>
         </AuthorInfo>
       </CardHeader>
 
       <CardContent>
         <PostTitle>{post.title}</PostTitle>
-        <PostPreview>
-          {formatters.createPostPreview(post.content, compact ? 80 : 120)}
-        </PostPreview>
+        <PostPreview>{postPreview}</PostPreview>
       </CardContent>
 
       <CardFooter>
@@ -316,6 +356,15 @@ export const PostCard = React.memo<PostCardProps>(function PostCard({
         </ReadMoreButton>
       </CardFooter>
     </CardContainer>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.post.id === nextProps.post.id &&
+    prevProps.post.updatedAt === nextProps.post.updatedAt &&
+    prevProps.post.title === nextProps.post.title &&
+    prevProps.compact === nextProps.compact &&
+    prevProps.showMetroLine === nextProps.showMetroLine &&
+    prevProps.onClick === nextProps.onClick
   );
 });
 
