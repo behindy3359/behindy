@@ -16,19 +16,16 @@ export interface CommentFormProps {
 }
 
 export interface UseCommentFormReturn {
-  // Form state
   register: UseFormRegister<CommentFormData>;
   handleSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
   watchedContent: string;
   errors: FieldErrors<CommentFormData>;
   
-  // Component state
   submitError: string;
   isLoading: boolean;
   isEditing: boolean;
   isOverLimit: boolean;
   
-  // Actions
   handleCancel: () => void;
   setFocus: (name: keyof CommentFormData) => void;
 }

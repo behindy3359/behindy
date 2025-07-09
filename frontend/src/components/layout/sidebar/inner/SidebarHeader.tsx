@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X } from 'lucide-react';
+import { ArrowLeft, Menu } from 'lucide-react';
 import { HeaderSection, BrandLogo, ToggleButton } from '../styles';
 
 interface SidebarHeaderProps {
@@ -19,7 +19,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
       </BrandLogo>
       
       <ToggleButton onClick={onToggle}>
-        {isOpen ? <X size={20} /> : <Menu size={20} />}
+        {isOpen ? <ArrowLeft size={20} /> : <Menu size={20} />}
       </ToggleButton>
     </HeaderSection>
   );

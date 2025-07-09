@@ -1,61 +1,30 @@
 "use client";
 
-import React, { useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import {
-  Clock, 
-  MessageSquare, 
-  Heart, 
-  Eye,
-  ArrowRight,
-  MapPin
-} from 'lucide-react';
-import type { Post } from '@/types/community/community';
-import { formatters } from '@/utils/common/formatting';
-import { PostCardProps } from './types';
+import React from 'react';
 import { CardContainer } from '@/styles/commonStyles';
-import { AuthorInfo, AuthorLeft, AuthorName, Avatar, CardContent, CardFooter, CardHeader, HotBadge, MetroLine, PostPreview, PostTime, PostTitle, ReadMoreButton, StatItem, StatsGroup } from './styles';
-import { extractMetroLine, isHotPost } from './utils';
+import { PostCardProps } from './types';
+import { usePostCardData } from './hooks/usePostCardData';
+import { usePostCardActions } from './hooks/usePostCardActions';
+import { PostCardHeader } from './inner/PostCardHeader';
+import { PostCardContent } from './inner/PostCardContent';
+import { PostCardFooter } from './inner/PostCardFooter';
+import { PostCardBadge } from './inner/PostCardBadge';
 
 export const PostCard = React.memo<PostCardProps>(function PostCard({
-  post, showMetroLine = true, compact = false, onClick
+  post, 
+  showMetroLine = true, 
+  compact = false, 
+  onClick
 }) {
-  const router = useRouter();
+  const {
+    metroLine,
+    isHot,
+    postPreview,
+    userInitial,
+    relativeTime,
+  } = usePostCardData(post, showMetroLine, compact);
 
-  const metroLine = useMemo(() => 
-    showMetroLine ? extractMetroLine(post.content) : null, 
-    [post.content, showMetroLine]
-  );
-  
-  const isHot = useMemo(() => 
-    isHotPost(post), 
-    [post.createdAt]
-  );
-
-  const postPreview = useMemo(() => 
-    formatters.createPostPreview(post.content, compact ? 80 : 120),
-    [post.content, compact]
-  );
-
-  const userInitial = useMemo(() => 
-    formatters.getUserInitial(post.authorName),
-    [post.authorName]
-  );
-
-  const relativeTime = useMemo(() => 
-    formatters.relativeTime(post.createdAt),
-    [post.createdAt]
-  );
-
-  const handleClick = useCallback(() => {
-    if (onClick) {
-      onClick(post);
-    } else {
-      router.push(`/community/${post.id}`);
-    }
-  }, [post.id, onClick, router]);
+  const { handleClick } = usePostCardActions(post, onClick);
 
   return (
     <CardContainer
@@ -67,56 +36,19 @@ export const PostCard = React.memo<PostCardProps>(function PostCard({
       transition={{ duration: 0.3 }}
       style={{ position: 'relative' }}
     >
-      {isHot && <HotBadge>🔥 HOT</HotBadge>}
+      <PostCardBadge isHot={isHot} />
+      <PostCardHeader
+        authorName={post.authorName}
+        userInitial={userInitial}
+        relativeTime={relativeTime}
+        metroLine={metroLine}
+      />
+      <PostCardContent
+        title={post.title}
+        preview={postPreview}
+      />
 
-      <CardHeader>
-        <AuthorInfo>
-          <AuthorLeft>
-            <Avatar>{userInitial}</Avatar>
-            <AuthorName>{post.authorName}</AuthorName>
-            {metroLine && (
-              <MetroLine $lineNumber={metroLine}>
-                <MapPin size={10} />
-                {metroLine}호선
-              </MetroLine>
-            )}
-          </AuthorLeft>
-          
-          <PostTime>
-            <Clock size={12} />
-            {relativeTime}
-          </PostTime>
-        </AuthorInfo>
-      </CardHeader>
-
-      <CardContent>
-        <PostTitle>{post.title}</PostTitle>
-        <PostPreview>{postPreview}</PostPreview>
-      </CardContent>
-
-      <CardFooter>
-        <StatsGroup>
-          <StatItem>
-            <MessageSquare />
-            <span className="count">0</span>
-          </StatItem>
-          
-          <StatItem>
-            <Heart />
-            <span className="count">0</span>
-          </StatItem>
-          
-          <StatItem>
-            <Eye />
-            <span className="count">0</span>
-          </StatItem>
-        </StatsGroup>
-
-        <ReadMoreButton>
-          자세히 보기
-          <ArrowRight />
-        </ReadMoreButton>
-      </CardFooter>
+      <PostCardFooter />
     </CardContainer>
   );
 }, (prevProps, nextProps) => {

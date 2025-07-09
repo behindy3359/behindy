@@ -35,12 +35,10 @@ export const SidebarContainer = styled(motion.aside).withConfig({
   }
   
   @media (min-width: 768px) {
-    /* 애니메이션은 framer-motion에서 처리 */
   }
   
   @media (max-width: 767px) {
     width: 280px;
-    /* 애니메이션은 framer-motion에서 처리 */
   }
 `;
 
