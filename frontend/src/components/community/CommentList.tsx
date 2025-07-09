@@ -177,13 +177,16 @@ const MenuButton = styled.button`
   color: ${({ theme }) => theme.colors.text.tertiary};
   display: flex;
   align-items: center;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  transition: all 0.2s ease;
 
   &:hover {
     color: ${({ theme }) => theme.colors.text.primary};
+    background: ${({ theme }) => theme.colors.background.secondary};
   }
 `;
 
-const DropdownMenu = styled.div`
+const DropdownMenu = styled(motion.div)`
   position: absolute;
   top: 100%;
   right: 0;
@@ -194,6 +197,7 @@ const DropdownMenu = styled.div`
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 100;
   overflow: hidden;
+  min-width: 120px;
 `;
 
 const MenuItem = styled.button`
@@ -208,9 +212,18 @@ const MenuItem = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: background 0.2s ease;
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.background.secondary};
+  }
+
+  &.danger {
+    color: ${({ theme }) => theme.colors.error};
+    
+    &:hover {
+      background-color: #fef2f2;
+    }
   }
 `;
 
@@ -224,6 +237,10 @@ export interface CommentListProps {
   maxDepth?: number;
   showReplies?: boolean;
 }
+
+// ================================================================
+// Optimized Sub-Components
+// ================================================================
 
 const CommentMeta = React.memo<{
   authorName: string;
@@ -241,6 +258,11 @@ const CommentMeta = React.memo<{
     [createdAt]
   );
 
+  const isEdited = useMemo(() => 
+    createdAt !== updatedAt, 
+    [createdAt, updatedAt]
+  );
+
   return (
     <StyledCommentMeta>
       <div className="user-info">
@@ -250,19 +272,13 @@ const CommentMeta = React.memo<{
       <div className="date">
         <Calendar size={12} />
         {relativeTime}
-        {createdAt !== updatedAt && (
+        {isEdited && (
           <span style={{ color: '#9ca3af', marginLeft: '4px' }}>
             (수정됨)
           </span>
         )}
       </div>
     </StyledCommentMeta>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.authorName === nextProps.authorName &&
-    prevProps.createdAt === nextProps.createdAt &&
-    prevProps.updatedAt === nextProps.updatedAt
   );
 });
 
@@ -280,6 +296,11 @@ const CommentFooter = React.memo<{
     onLike();
   }, [onLike]);
 
+  const isEdited = useMemo(() => 
+    createdAt !== updatedAt, 
+    [createdAt, updatedAt]
+  );
+
   return (
     <StyledCommentFooter>
       <FooterActions>
@@ -295,7 +316,7 @@ const CommentFooter = React.memo<{
       </FooterActions>
 
       <CommentTime>
-        {createdAt !== updatedAt && (
+        {isEdited && (
           <span style={{ color: '#9ca3af' }}>
             (수정됨)
           </span>
@@ -303,55 +324,82 @@ const CommentFooter = React.memo<{
       </CommentTime>
     </StyledCommentFooter>
   );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.isLiked === nextProps.isLiked &&
-    prevProps.likeCount === nextProps.likeCount &&
-    prevProps.createdAt === nextProps.createdAt &&
-    prevProps.updatedAt === nextProps.updatedAt
-  );
 });
-interface CommentActionsProps {
+
+// 🔥 수정된 CommentActions 컴포넌트
+const CommentActions = React.memo<{
   commentId: number;
-  isAuthor: boolean | null;
+  canEdit: boolean;
+  canDelete: boolean;
+  showMenu: boolean;
   onEdit: () => void;
   onDelete: () => Promise<void>;
-  showMenu: boolean;
   onToggleMenu: () => void;
-}
-
-const CommentActions: React.FC<CommentActionsProps> = ({
+}>(function CommentActions({
   commentId,
-  isAuthor,
+  canEdit,
+  canDelete,
+  showMenu,
   onEdit,
   onDelete,
-  showMenu,
   onToggleMenu
-}) => {
+}) {
+
+  const handleDelete = useCallback(async () => {
+    if (window.confirm('정말로 이 댓글을 삭제하시겠습니까?')) {
+      try {
+        await onDelete();
+      } catch (error) {
+        console.error('댓글 삭제 실패:', error);
+      }
+    }
+  }, [onDelete]);
+
+  // 권한이 없으면 렌더링하지 않음
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <StyledCommentActions>
-      <MenuButton onClick={onToggleMenu} aria-label="댓글 메뉴 열기">
+      <MenuButton 
+        onClick={onToggleMenu} 
+        aria-label="댓글 메뉴 열기"
+        type="button"
+      >
         <MoreHorizontal size={18} />
       </MenuButton>
 
-      {showMenu && (
-        <DropdownMenu>
-          {isAuthor && (
-            <MenuItem onClick={onEdit}>
-              <Edit3 size={14} /> 수정
+      <AnimatePresence>
+        {showMenu && (
+          <DropdownMenu
+            initial={{ opacity: 0, scale: 0.95, y: -5 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -5 }}
+            transition={{ duration: 0.15 }}
+          >
+            {canEdit && (
+              <MenuItem onClick={onEdit} type="button">
+                <Edit3 size={14} /> 수정
+              </MenuItem>
+            )}
+            {canDelete && (
+              <MenuItem onClick={handleDelete} className="danger" type="button">
+                <Trash2 size={14} /> 삭제
+              </MenuItem>
+            )}
+            <MenuItem type="button">
+              <Flag size={14} /> 신고
             </MenuItem>
-          )}
-          <MenuItem onClick={onDelete}>
-            <Trash2 size={14} /> 삭제
-          </MenuItem>
-        </DropdownMenu>
-      )}
+          </DropdownMenu>
+        )}
+      </AnimatePresence>
     </StyledCommentActions>
   );
-};
+});
 
 // ================================================================
-// Single Comment Component
+// 🔥 최적화된 CommentItem 컴포넌트
 // ================================================================
 const CommentItemComponent = React.memo<{
   comment: Comment;
@@ -361,14 +409,13 @@ const CommentItemComponent = React.memo<{
   const { user } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [showReplyForm, setShowReplyForm] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
-  // 🔥 권한 확인 메모이제이션
+  // 🔥 권한 확인 메모이제이션 (boolean 타입 보장)
   const permissions = useMemo(() => ({
-    canEdit: user && (comment.authorId === user.id || comment.isEditable),
-    canDelete: user && (comment.authorId === user.id || comment.isDeletable)
+    canEdit: Boolean(user && (comment.authorId === user.id || comment.isEditable)),
+    canDelete: Boolean(user && (comment.authorId === user.id || comment.isDeletable))
   }), [user, comment.authorId, comment.isEditable, comment.isDeletable]);
 
   // 🔥 댓글 삭제 뮤테이션
@@ -377,6 +424,7 @@ const CommentItemComponent = React.memo<{
       await api.delete(API_ENDPOINTS.COMMENTS.BY_ID(comment.id));
     },
     onSuccess: () => {
+      setShowMenu(false); // 메뉴 닫기
       onUpdate();
     },
   });
@@ -384,6 +432,7 @@ const CommentItemComponent = React.memo<{
   // 🔥 핸들러들 메모이제이션
   const handleEdit = useCallback(() => {
     setIsEditing(true);
+    setShowMenu(false);
   }, []);
 
   const handleDelete = useCallback(async () => {
@@ -404,83 +453,82 @@ const CommentItemComponent = React.memo<{
     setShowMenu(prev => !prev);
   }, []);
 
+  // 🔥 메뉴 외부 클릭 처리
+  const handleMenuOutsideClick = useCallback(() => {
+    setShowMenu(false);
+  }, []);
+
   return (
-    <CommentContainer
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <CommentItem $isReply={isReply}>
-        <CommentHeader>
-          <CommentMeta
-            authorName={comment.authorName}
-            createdAt={comment.createdAt}
-            updatedAt={comment.updatedAt}
-          />
-
-          {(permissions.canEdit || permissions.canDelete) && (
-            <CommentActions
-              commentId={comment.id}
-              isAuthor={permissions.canEdit}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              showMenu={showMenu}
-              onToggleMenu={handleToggleMenu}
-            />
-          )}
-        </CommentHeader>
-
-        {isEditing ? (
-          <EditingContainer>
-            <CommentForm
-              postId={comment.postId}
-              editingComment={comment}
-              onSuccess={handleEditComplete}
-              onCancel={() => setIsEditing(false)}
-              placeholder="댓글을 수정하세요..."
-              autoFocus
-            />
-          </EditingContainer>
-        ) : (
-          <>
-            <CommentContent>{comment.content}</CommentContent>
-
-            {/* 🔥 최적화된 푸터 */}
-            <CommentFooter
-              isLiked={isLiked}
-              likeCount={likeCount}
+    <>
+      <CommentContainer
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <CommentItem $isReply={isReply}>
+          <CommentHeader>
+            <CommentMeta
+              authorName={comment.authorName}
               createdAt={comment.createdAt}
               updatedAt={comment.updatedAt}
-              onLike={handleLike}
             />
-          </>
-        )}
 
-        {/* 클릭 외부 영역 처리 */}
-        {showMenu && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 50,
-            }}
-            onClick={() => setShowMenu(false)}
-          />
-        )}
-      </CommentItem>
-    </CommentContainer>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.comment.id === nextProps.comment.id &&
-    prevProps.comment.updatedAt === nextProps.comment.updatedAt &&
-    prevProps.isReply === nextProps.isReply
+            <CommentActions
+              commentId={comment.id}
+              canEdit={permissions.canEdit}
+              canDelete={permissions.canDelete}
+              showMenu={showMenu}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onToggleMenu={handleToggleMenu}
+            />
+          </CommentHeader>
+
+          {isEditing ? (
+            <EditingContainer>
+              <CommentForm
+                postId={comment.postId}
+                editingComment={comment}
+                onSuccess={handleEditComplete}
+                onCancel={() => setIsEditing(false)}
+                placeholder="댓글을 수정하세요..."
+                autoFocus
+              />
+            </EditingContainer>
+          ) : (
+            <>
+              <CommentContent>{comment.content}</CommentContent>
+
+              <CommentFooter
+                isLiked={isLiked}
+                likeCount={likeCount}
+                createdAt={comment.createdAt}
+                updatedAt={comment.updatedAt}
+                onLike={handleLike}
+              />
+            </>
+          )}
+        </CommentItem>
+      </CommentContainer>
+
+      {/* 메뉴 외부 클릭 오버레이 */}
+      {showMenu && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 50,
+            background: 'transparent',
+          }}
+          onClick={handleMenuOutsideClick}
+        />
+      )}
+    </>
   );
 });
-
 
 // ================================================================
 // Main Component
@@ -515,6 +563,5 @@ export const CommentList: React.FC<CommentListProps> = ({
     </div>
   );
 };
-
 
 export default CommentList;
