@@ -22,7 +22,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Post, CommentListResponse } from '@/types/community/community';
 import { CommentList } from './CommentList';
-import { CommentForm } from './CommentForm/CommentForm';
+import { CommentForm } from '../CommentForm/CommentForm';
 
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/store/uiStore';
@@ -36,7 +36,7 @@ import { domUtils } from '@/utils/common/dom';
 import { api } from '@/services/api/axiosConfig'
 
 import { PageContainer } from '@/styles/commonStyles';
-import Button from '../ui/button/Button';
+import Button from '../../ui/button/Button';
 
 // ================================================================
 // Styled Components

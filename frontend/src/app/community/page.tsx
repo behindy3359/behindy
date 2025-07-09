@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { PostList } from '@/components/community/PostList';
+import { PostList } from '@/components/community/PostList/PostList';
 import { PublicLayout } from '@/components/layout/applayout/AppLayout';
 
 const queryClient = new QueryClient({

@@ -16,7 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { buildApiUrl } from '@/utils/common/api';
 import type { PostListResponse } from '@/types/community/community';
 import { RealtimeMetroMap } from '@/components/metroMap/RealtimeMetroMap';
-import { PostCard } from '@/components/community/PostCard';
+import { PostCard } from '@/components/community/PostCard/PostCard';
 import { Button } from '@/components/ui/button/Button';
 import { useAuthStore } from '@/store/authStore';
 import { publicApi } from '@/services/api/axiosConfig';
