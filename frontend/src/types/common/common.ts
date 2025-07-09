@@ -56,7 +56,7 @@ export interface ToastState {
   isVisible: boolean;
 }
 
-// 로딩 상태 (기존 프로젝트 전반에서 사용)
+// 로딩 상태
 export interface LoadingState {
   isLoading: boolean;
   message?: string;

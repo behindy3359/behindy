@@ -29,9 +29,9 @@ export const CommentTextArea = React.memo<CommentTextAreaProps>(
           $hasError={!!errors.content}
           disabled={isLoading}
           style={{ 
-            resize: 'none',  // 크기 조정 비활성화
+            resize: 'none',
             minHeight: '80px',
-            maxHeight: '80px' // 고정 높이
+            maxHeight: '80px'
           }}
         />
         <CharCount $isOver={isOverLimit}>
