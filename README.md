@@ -60,8 +60,3 @@ build:      빌드 관련 작업 / CI 설정 관련 변경
 ex) sb-fix : entity 내용 수정
 
 <hr>
-
-## License
-
-This project is licensed under the MIT License.  
-See the [LICENSE](./LICENSE) file for details.
