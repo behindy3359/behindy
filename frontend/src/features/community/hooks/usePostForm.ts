@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/store/authStore';
-import { api } from '@/shared/services/api/axiosConfig';
+import { api } from '@/config/axiosConfig';
 import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
 import { ERROR_MESSAGES } from '@/shared/utils/common/constants';
 import { postFormSchema } from '../utils/postFormUtils';

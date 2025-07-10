@@ -8,7 +8,7 @@ import {
   GamepadIcon, 
   Users, 
 } from 'lucide-react';
-import { PublicLayout } from '@/shared/components/ui/layout/applayout/AppLayout';
+import { PublicLayout } from '@/shared/components/layout/applayout/AppLayout';
 import { PageContainer } from '@/shared/styles/commonStyles';
 import { gradients } from '@/shared/styles/theme';
 

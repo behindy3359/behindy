@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { PublicLayout } from '@/shared/components/ui/layout/applayout/AppLayout';
-import { HomePage } from '@/components/homepage/HomePage';
+import { PublicLayout } from '@/shared/components/layout/applayout/AppLayout';
+import { HomePage } from '@/features/hompage/components/HomePage';
 
 
 const queryClient = new QueryClient({

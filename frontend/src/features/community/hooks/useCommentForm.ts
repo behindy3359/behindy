@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation } from '@tanstack/react-query';
-import { api } from '@/shared/services/api/axiosConfig';
+import { api } from '@/config/axiosConfig';
 import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
 import { commentSchema } from '../utils/commentFormUtils';
 import type { CommentFormData, UseCommentFormReturn } from '../types/commentFormTypes';

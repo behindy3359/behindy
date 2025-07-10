@@ -9,7 +9,7 @@ import type {
   LoginRequest,
   SignupRequest
 } from '@/shared/types/auth';
-import { api,TokenManager } from '@/shared/services/api/axiosConfig';
+import { api,TokenManager } from '@/config/axiosConfig';
 import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
 import { env } from '@/config/env';
 import { ApiResponse } from '@/shared/types/common';

@@ -1,4 +1,4 @@
-import { publicApi } from "@/shared/services/api/axiosConfig";
+import { publicApi } from "@/config/axiosConfig";
 import { PostListResponse } from "@/shared/types/community/community";
 import { buildApiUrl } from "@/shared/utils/common/api";
 import { useQuery } from "@tanstack/react-query";

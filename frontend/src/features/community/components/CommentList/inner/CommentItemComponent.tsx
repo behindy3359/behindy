@@ -1,4 +1,4 @@
-import api from "@/shared/services/api/axiosConfig";
+import api from "@/config/axiosConfig";
 import useAuthStore from "@/shared/store/authStore";
 import API_ENDPOINTS from "@/shared/utils/common/api";
 import { useMutation } from "@tanstack/react-query";

@@ -2,7 +2,7 @@ import {
   METRO_STATIONS, 
   getStationsByLine,
   LineBitUtils
-} from '@/shared/data/metro/stationsData';
+} from '@/features/metro/data/stationsData';
 
 import type { 
   MetroApiResponse, 

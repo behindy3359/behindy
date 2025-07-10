@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/shared/store/uiStore';
-import { api } from '@/shared/services/api/axiosConfig';
+import { api } from '@/config/axiosConfig';
 import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
 import type { CommentListResponse } from '@/shared/types/community/community';
 

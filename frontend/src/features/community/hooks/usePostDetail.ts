@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/store/authStore';
 import { useToast } from '@/shared/store/uiStore';
-import { api } from '@/shared/services/api/axiosConfig';
+import { api } from '@/config/axiosConfig';
 import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
 import { SUCCESS_MESSAGES, CONFIRM_MESSAGES } from '@/shared/utils/common/constants';
 import type { Post } from '@/shared/types/community/community';
