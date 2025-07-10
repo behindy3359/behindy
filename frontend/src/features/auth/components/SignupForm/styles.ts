@@ -3,25 +3,16 @@ import { motion } from 'framer-motion';
 
 export const SignupContainer = styled.div`
   width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
+  /* 높이 제한 및 스크롤 완전 제거 */
   
-  /* 커스텀 스크롤바 */
-  &::-webkit-scrollbar {
-    width: 6px;
+  /* 간격 조정으로 컴팩트하게 */
+  > * + * {
+    margin-top: 20px;
   }
   
-  &::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-    
-    &:hover {
-      background: #94a3b8;
+  @media (max-height: 600px) {
+    > * + * {
+      margin-top: 16px;
     }
   }
 `;
@@ -29,8 +20,13 @@ export const SignupContainer = styled.div`
 export const ActionsContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-top: 24px;
+  gap: 12px; /* 기존 16px에서 줄임 */
+  padding-top: 20px; /* 기존 24px에서 줄임 */
+  
+  @media (max-height: 600px) {
+    gap: 10px;
+    padding-top: 16px;
+  }
 `;
 
 export const LoginPrompt = styled(motion.div)`
@@ -40,6 +36,10 @@ export const LoginPrompt = styled(motion.div)`
     color: #6b7280;
     font-size: 14px;
     margin: 0;
+    
+    @media (max-height: 600px) {
+      font-size: 13px;
+    }
   }
   
   button {
@@ -87,7 +87,7 @@ export const PasswordToggleButton = styled.button`
 `;
 
 export const PasswordMatchIndicator = styled(motion.div)<{ $isMatch: boolean }>`
-  margin-top: 8px;
+  margin-top: 6px; /* 기존 8px에서 줄임 */
   font-size: 12px;
   display: flex;
   align-items: center;
@@ -101,19 +101,19 @@ export const PasswordMatchIndicator = styled(motion.div)<{ $isMatch: boolean }>`
 `;
 
 export const StrengthMeterContainer = styled.div<{ className?: string }>`
-  margin-top: 16px;
+  margin-top: 12px; /* 기존 16px에서 줄임 */
   ${({ className }) => className || ''}
 `;
 
 export const StrengthBarSection = styled.div`
-  margin-bottom: 12px;
+  margin-bottom: 10px; /* 기존 12px에서 줄임 */
 `;
 
 export const StrengthHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px; /* 기존 8px에서 줄임 */
 `;
 
 export const StrengthLabel = styled.span`
@@ -132,7 +132,7 @@ export const StrengthBarTrack = styled.div`
   width: 100%;
   background: #e5e7eb;
   border-radius: 9999px;
-  height: 8px;
+  height: 6px; /* 기존 8px에서 줄임 */
   overflow: hidden;
 `;
 
@@ -144,7 +144,7 @@ export const StrengthBarFill = styled(motion.div)<{ $color: string }>`
 `;
 
 export const RequirementsContainer = styled.div`
-  padding: 16px;
+  padding: 12px; /* 기존 16px에서 줄임 */
   background: #f8fafc;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -154,7 +154,7 @@ export const RequirementsHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px; /* 기존 12px에서 줄임 */
 `;
 
 export const RequirementsTitle = styled.span`
@@ -166,19 +166,19 @@ export const RequirementsTitle = styled.span`
 export const RequirementsList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px; /* 기존 8px에서 줄임 */
 `;
 
 export const RequirementItem = styled(motion.div)<{ $met: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px; /* 기존 14px에서 줄임 */
   color: ${({ $met }) => $met ? '#10b981' : '#6b7280'};
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 14px; /* 기존 16px에서 줄임 */
+    height: 14px;
     color: ${({ $met }) => $met ? '#10b981' : '#9ca3af'};
   }
   
@@ -188,39 +188,53 @@ export const RequirementItem = styled(motion.div)<{ $met: boolean }>`
 `;
 
 export const HintsContainer = styled.div`
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 10px; /* 기존 12px에서 줄임 */
+  padding-top: 10px;
   border-top: 1px solid #e2e8f0;
 `;
 
 export const HintItem = styled(motion.div)`
-  font-size: 12px;
+  font-size: 11px; /* 기존 12px에서 줄임 */
   color: #6b7280;
-  margin-bottom: 4px;
+  margin-bottom: 3px; /* 기존 4px에서 줄임 */
   
   &:last-child {
     margin-bottom: 0;
   }
 `;
 
+// 🔥 변경: 약관 동의 섹션도 컴팩트하게
 export const AgreementContainer = styled(motion.div)`
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 24px;
+  padding: 20px; /* 기존 24px에서 줄임 */
   background: #fafbfc;
+  
+  @media (max-height: 600px) {
+    padding: 16px;
+  }
 `;
 
 export const AgreementTitle = styled.h3`
-  font-size: 18px;
+  font-size: 16px; /* 기존 18px에서 줄임 */
   font-weight: 600;
   color: #111827;
-  margin: 0 0 16px 0;
+  margin: 0 0 12px 0; /* 기존 16px에서 줄임 */
+  
+  @media (max-height: 600px) {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
 `;
 
 export const AgreementsList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px; /* 기존 16px에서 줄임 */
+  
+  @media (max-height: 600px) {
+    gap: 10px;
+  }
 `;
 
 export const AgreementItem = styled.div`
@@ -230,7 +244,7 @@ export const AgreementItem = styled.div`
 export const AgreementLabel = styled.label`
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px; /* 기존 12px에서 줄임 */
   cursor: pointer;
   
   &:hover {
@@ -243,11 +257,11 @@ export const AgreementLabel = styled.label`
 export const CheckboxWrapper = styled.div<{ $required?: boolean; $checked?: boolean }>`
   display: flex;
   align-items: center;
-  height: 20px;
+  height: 18px; /* 기존 20px에서 줄임 */
   
   input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
+    width: 18px; /* 기존 20px에서 줄임 */
+    height: 18px;
     border-radius: 4px;
     border: 2px solid ${({ $required, $checked }) => 
       $checked ? '#2563eb' : ($required ? '#dc2626' : '#d1d5db')
@@ -277,11 +291,15 @@ export const AgreementContent = styled.div`
 export const AgreementText = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px; /* 기존 8px에서 줄임 */
   flex-wrap: wrap;
   color: #374151;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px; /* 기존 14px에서 줄임 */
+  line-height: 1.4; /* 기존 1.5에서 줄임 */
+  
+  @media (max-height: 600px) {
+    font-size: 12px;
+  }
 `;
 
 export const RequiredMark = styled.span`
@@ -314,15 +332,19 @@ export const ExternalLinkIcon = styled.span`
   color: #9ca3af;
   
   svg {
-    width: 14px;
-    height: 14px;
+    width: 12px; /* 기존 14px에서 줄임 */
+    height: 12px;
   }
 `;
 
 export const AgreementDescription = styled.div`
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: 3px; /* 기존 4px에서 줄임 */
+  font-size: 11px; /* 기존 12px에서 줄임 */
   color: #6b7280;
+  
+  @media (max-height: 600px) {
+    font-size: 10px;
+  }
 `;
 
 export const OptionalText = styled.span`
@@ -332,19 +354,23 @@ export const OptionalText = styled.span`
 
 export const ErrorText = styled(motion.p)`
   color: #ef4444;
-  font-size: 12px;
-  margin: 4px 0 0 32px;
+  font-size: 11px; /* 기존 12px에서 줄임 */
+  margin: 3px 0 0 28px; /* 기존 4px, 32px에서 줄임 */
 `;
 
 export const RequiredNotice = styled.div`
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 12px; /* 기존 16px에서 줄임 */
+  padding-top: 12px;
   border-top: 1px solid #e5e7eb;
   
   p {
-    font-size: 12px;
+    font-size: 11px; /* 기존 12px에서 줄임 */
     color: #6b7280;
     margin: 0;
+    
+    @media (max-height: 600px) {
+      font-size: 10px;
+    }
   }
   
   .required-mark {

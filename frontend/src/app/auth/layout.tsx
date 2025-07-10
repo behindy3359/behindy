@@ -8,9 +8,9 @@ import { gradients } from '@/shared/styles/theme';
 const AuthLayoutContainer = styled.div`
   min-height: 100vh;
   background: ${gradients.primary};
-  display: flex; /* 추가: Flexbox 사용 */
-  align-items: center; /* 추가: 수직 중앙 정렬 */
-  justify-content: center; /* 추가: 수평 중앙 정렬 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 20px;
   position: relative;
   overflow: hidden;
@@ -43,27 +43,18 @@ const AuthCard = styled(motion.div)`
   overflow: hidden;
   position: relative;
   
-  /* 추가: 최대 높이 제한 및 스크롤 처리 */
-  max-height: 90vh;
-  overflow-y: auto;
+  /* 🔥 변경: 높이 제한 제거, 자연스러운 크기 조정 */
+  min-height: auto;
+  max-height: none;
   
-  /* 스크롤바 스타일링 */
-  &::-webkit-scrollbar {
-    width: 6px;
+  /* 🔥 변경: 모바일에서도 적절한 여백 유지 */
+  @media (max-height: 700px) {
+    margin: 10px 0;
   }
   
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 3px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
-    
-    &:hover {
-      background: rgba(0, 0, 0, 0.3);
-    }
+  @media (max-height: 600px) {
+    margin: 5px 0;
+    border-radius: 16px;
   }
 `;
 
@@ -73,6 +64,11 @@ const BrandSection = styled.div`
   background: ${gradients.primary};
   color: white;
   position: relative;
+  
+  /* 🔥 변경: 모바일에서 패딩 조정 */
+  @media (max-height: 600px) {
+    padding: 30px 30px 15px 30px;
+  }
   
   .logo {
     width: 60px;
@@ -86,6 +82,14 @@ const BrandSection = styled.div`
     font-size: 28px;
     font-weight: 800;
     backdrop-filter: blur(10px);
+    
+    /* 🔥 변경: 모바일에서 로고 크기 조정 */
+    @media (max-height: 600px) {
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
   }
   
   .brand-name {
@@ -93,23 +97,41 @@ const BrandSection = styled.div`
     font-weight: 800;
     margin-bottom: 8px;
     letter-spacing: -0.5px;
+    
+    /* 🔥 변경: 모바일에서 폰트 크기 조정 */
+    @media (max-height: 600px) {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
   }
   
   .tagline {
     font-size: 14px;
     opacity: 0.9;
     font-weight: 400;
+    
+    /* 🔥 변경: 모바일에서 폰트 크기 조정 */
+    @media (max-height: 600px) {
+      font-size: 12px;
+    }
   }
 `;
 
 const ContentSection = styled.div`
   padding: 40px;
   
-  /* 추가: 최소 높이 설정으로 내용이 적어도 중앙에 위치 */
-  min-height: 200px;
+  /* 🔥 변경: 높이 제한 제거, 자연스러운 플렉스 설정 */
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  
+  /* 🔥 변경: 모바일에서 패딩 조정 */
+  @media (max-height: 600px) {
+    padding: 30px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 30px 25px;
+  }
 `;
 
 const FloatingElement = styled(motion.div)`
