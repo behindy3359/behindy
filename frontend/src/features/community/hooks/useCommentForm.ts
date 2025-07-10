@@ -4,8 +4,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/services/api/axiosConfig';
 import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
-import { commentSchema } from '../utils';
-import type { CommentFormData, UseCommentFormReturn } from '../types';
+import { commentSchema } from '../utils/commentFormUtils';
+import type { CommentFormData, UseCommentFormReturn } from '../types/commentFormTypes';
 import type { Comment, CreateCommentRequest } from '@/types/community/community';
 
 export const useCommentForm = (

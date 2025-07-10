@@ -2,7 +2,7 @@ import React from 'react';
 import { SVG_CONFIG } from '@/data/metro/stationsData';
 import { SEOUL_DISTRICTS, HAN_RIVER } from '@/data/metro/seoulDistrictData';
 import { SVGContainer } from '../styles';
-import type { MetroSVGProps } from '../types';
+import type { MetroSVGProps } from '../../types/metroMapTypes';
 
 export const MetroSVG: React.FC<MetroSVGProps> = ({
   showDistricts,

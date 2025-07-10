@@ -3,8 +3,8 @@ import {
   toggleStationInSet, 
   toggleArrivalStations, 
   toggleLineInArray 
-} from '../utils';
-import type { UseMetroStateReturn } from '../types';
+} from '../utils/metroMapUtils';
+import type { UseMetroStateReturn } from '../types/metroMapTypes';
 
 // 상태 관리 훅
 export const useMetroState = (): UseMetroStateReturn => {

@@ -10,7 +10,7 @@ import {
   ErrorText,
   RealtimeStatus
 } from '../styles';
-import type { MetroControlsProps } from '../types';
+import type { MetroControlsProps } from '../../types/metroMapTypes';
 
 export const MetroControls: React.FC<MetroControlsProps> = ({
   lineStats,
