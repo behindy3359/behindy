@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { createPageNumbers, shouldShowPagination } from '../utils';
 import { Pagination, PageButton } from '../styles';
 import type { PostListPaginationProps } from '../types';

@@ -4,7 +4,7 @@ import { HeaderLeft, Title, Subtitle } from '../styles';
 import type { PostListHeaderProps } from '../types';
 
 export const PostListHeader = React.memo<PostListHeaderProps>(
-  function PostListHeader({ onWritePost }) {
+  function PostListHeader() {
     return (
       <HeaderLeft>
         <Title>

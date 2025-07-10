@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/store/uiStore';
 import { SUCCESS_MESSAGES } from '@/utils/common/constants';
-import { domUtils } from '@/utils/common/dom';
+import { domUtils } from '@/utils/common';
 import type { Post } from '@/types/community/community';
 
 export const usePostInteractions = (post: Post | undefined) => {

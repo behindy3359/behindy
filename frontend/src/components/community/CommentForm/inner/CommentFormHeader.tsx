@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserInfo } from '../styles';
-import { getUserInitial } from '../utils';
+import { userUtils } from '@/utils/common';
 
 interface CommentFormHeaderProps {
   userName?: string;
@@ -14,7 +14,7 @@ export const CommentFormHeader = React.memo<CommentFormHeaderProps>(
     return (
       <UserInfo>
         <div className="avatar">
-          {getUserInitial(userName)}
+          {userUtils.getInitial(userName)}
         </div>
         <span className="name">{userName}</span>
       </UserInfo>

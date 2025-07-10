@@ -32,22 +32,6 @@ export const isHotPost = (post: Post): boolean => {
   return result;
 };
 
-export const createPostPreview = (content: string, maxLength: number): string => {
-  const plainText = content.replace(/<[^>]*>/g, '');
-  const cleanText = plainText.replace(/\s+/g, ' ').trim();
-
-  if (cleanText.length <= maxLength) return cleanText;
-
-  const truncated = cleanText.substring(0, maxLength);
-  const lastSpaceIndex = truncated.lastIndexOf(' ');
-  
-  if (lastSpaceIndex > maxLength * 0.8) {
-    return truncated.substring(0, lastSpaceIndex) + '...';
-  }
-  
-  return truncated + '...';
-};
-
 export const calculatePostStats = (post: Post) => {
   return {
     commentCount: 0, // TODO: 실제 댓글 수 연동

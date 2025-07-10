@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { formatters } from '@/utils/common/formatting';
+import { formatters } from '@/utils/common';
 import { extractMetroLine, isHotPost } from '../utils';
 import type { Post } from '@/types/community/community';
 

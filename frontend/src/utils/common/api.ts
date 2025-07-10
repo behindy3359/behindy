@@ -1,4 +1,4 @@
-import { ApiError } from "@/types/common/common";
+import { ApiError } from "@/types/common";
 
 // API 에러 처리 유틸리티
 export const apiErrorHandler = {

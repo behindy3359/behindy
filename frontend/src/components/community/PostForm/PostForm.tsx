@@ -1,4 +1,3 @@
-// frontend/src/components/community/PostForm/PostForm.tsx
 "use client";
 
 import React from 'react';
@@ -33,7 +32,6 @@ export const PostForm: React.FC<PostFormProps> = ({
     errors,
     submitError,
     isLoading,
-    isEditing,
     handleCancel,
   } = usePostForm({ mode, postId, onSuccess, onCancel });
 

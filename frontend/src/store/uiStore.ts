@@ -1,7 +1,6 @@
-// frontend/src/store/uiStore.ts
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { ModalState, ToastState, LoadingState } from '@/types/ui/ui';
+import type { ModalState, ToastState, LoadingState } from '@/types/common';
 
 interface UIState {
   modal: ModalState;
@@ -30,7 +29,7 @@ interface UIActions {
   // 로딩 관리
   setGlobalLoading: (loading: boolean, message?: string) => void;
   
-  // 사이드바 관리 (수정됨)
+  // 사이드바 관리
   toggleSidebar: () => void;
   setSidebarOpen: (isOpen: boolean) => void;
   setSidebarTab: (tab: string | null) => void;
@@ -44,7 +43,7 @@ type UIStore = UIState & UIActions;
 
 // 초기 사이드바 상태 결정 함수
 const getInitialSidebarState = (): boolean => {
-  if (typeof window === 'undefined') return true; // SSR 기본값
+  if (typeof window === 'undefined') return true;
   
   // 저장된 사용자 설정 확인
   const savedState = localStorage.getItem('sidebar-state');
@@ -54,7 +53,7 @@ const getInitialSidebarState = (): boolean => {
   
   // 화면 크기에 따른 기본값
   const isDesktop = window.innerWidth >= 768;
-  return isDesktop; // 데스크톱: 열림, 모바일: 닫힘
+  return isDesktop;
 };
 
 const initialUIState: UIState = {
@@ -141,7 +140,7 @@ export const useUIStore = create<UIStore>()(
           });
         },
 
-        // 사이드바 관리 (수정됨)
+        // 사이드바 관리
         toggleSidebar: () => {
           set((state) => {
             const newIsOpen = !state.sidebar.isOpen;

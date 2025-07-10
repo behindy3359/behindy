@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button/Button';
 import { Input } from '@/components/ui/input/Input';
 import { getSearchPlaceholder } from '../utils';

@@ -11,7 +11,7 @@ import type { LoginRequest, SignupRequest } from '@/types/auth/authRequest';
 import { api,TokenManager } from '@/services/api/axiosConfig';
 import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
 import { env } from '@/config/env';
-import { ApiResponse } from '@/types/common/common';
+import { ApiResponse } from '@/types/common';
 import { SECURITY_CONFIG } from '@/utils/common/constants';
 
 // ================================================================

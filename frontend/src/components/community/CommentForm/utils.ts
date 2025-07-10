@@ -8,10 +8,6 @@ export const commentSchema = yup.object({
     .max(1000, '댓글은 최대 1000자까지 입력 가능합니다'),
 });
 
-export const getUserInitial = (name?: string): string => {
-  return name ? name.charAt(0).toUpperCase() : 'U';
-};
-
 export const getTextareaPlaceholder = (isEditing: boolean, customPlaceholder?: string): string => {
   if (customPlaceholder) return customPlaceholder;
   return isEditing ? '댓글을 수정하세요...' : '댓글을 입력하세요...';

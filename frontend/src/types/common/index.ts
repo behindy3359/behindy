@@ -24,20 +24,24 @@ export interface PaginatedResponse<T> {
   hasPrevious?: boolean;
 }
 
-// 에러 정보
+// 공통 상태 타입들
+export interface LoadingState {
+  isLoading: boolean;
+  message?: string;
+}
+
 export interface ErrorInfo {
   code: string;
   message: string;
   details?: any;
 }
 
-// 검증 결과
 export interface ValidationResult {
   isValid: boolean;
   message?: string;
 }
 
-// 모달 상태
+// UI 상태 타입들
 export interface ModalState {
   isOpen: boolean;
   type: 'info' | 'confirm' | 'error' | 'success';
@@ -47,7 +51,6 @@ export interface ModalState {
   onCancel?: () => void;
 }
 
-// 토스트 알림
 export interface ToastState {
   id: string;
   type: 'info' | 'success' | 'warning' | 'error';
@@ -56,8 +59,10 @@ export interface ToastState {
   isVisible: boolean;
 }
 
-// 로딩 상태
-export interface LoadingState {
-  isLoading: boolean;
-  message?: string;
+// 폼 상태
+export interface FormState<T> {
+  data: T;
+  errors: Partial<Record<keyof T, string>>;
+  isValid: boolean;
+  isSubmitting: boolean;
 }

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
 import { ArrowLeft, MoreHorizontal, Edit3, Trash2, Flag } from 'lucide-react';
 import { BackButton, Header, ActionMenu, MenuButton, MenuDropdown, MenuItem } from '../styles';
