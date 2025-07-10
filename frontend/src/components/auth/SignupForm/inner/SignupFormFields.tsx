@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { User, Mail, Lock, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input/Input';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { AgreementSection } from './AgreementSection';
+import {
+  FieldsContainer,
+  FieldWrapper,
+  PasswordToggleButton,
+  PasswordMatchIndicator
+} from '../styles';
 import type { SignupFormFieldsProps } from '../../types';
 
 export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
@@ -21,9 +26,9 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
                          formData.password === formData.confirmPassword;
 
   return (
-    <div className="space-y-6">
+    <FieldsContainer>
       {/* 이름 필드 */}
-      <motion.div
+      <FieldWrapper
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -42,10 +47,10 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           autoComplete="name"
           autoFocus
         />
-      </motion.div>
+      </FieldWrapper>
 
       {/* 이메일 필드 */}
-      <motion.div
+      <FieldWrapper
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
@@ -63,10 +68,10 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           fullWidth
           autoComplete="email"
         />
-      </motion.div>
+      </FieldWrapper>
 
       {/* 비밀번호 필드 */}
-      <motion.div
+      <FieldWrapper
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
@@ -80,14 +85,13 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           onBlur={() => onBlur('password')}
           leftIcon={<Lock size={20} />}
           rightIcon={
-            <button
+            <PasswordToggleButton
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
               disabled={disabled}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
+            </PasswordToggleButton>
           }
           error={errors.password}
           disabled={disabled}
@@ -102,10 +106,10 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             className="mt-2"
           />
         )}
-      </motion.div>
+      </FieldWrapper>
 
       {/* 비밀번호 확인 필드 */}
-      <motion.div
+      <FieldWrapper
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.3 }}
@@ -119,14 +123,13 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           onBlur={() => onBlur('confirmPassword')}
           leftIcon={<Lock size={20} />}
           rightIcon={
-            <button
+            <PasswordToggleButton
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
               disabled={disabled}
             >
               {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
+            </PasswordToggleButton>
           }
           error={errors.confirmPassword}
           disabled={disabled}
@@ -136,12 +139,10 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
         
         {/* 비밀번호 일치 표시 */}
         {formData.confirmPassword && (
-          <motion.div
+          <PasswordMatchIndicator
+            $isMatch={!!isPasswordMatch}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`flex items-center gap-2 mt-2 text-sm ${
-              isPasswordMatch ? 'text-green-600' : 'text-red-500'
-            }`}
           >
             {isPasswordMatch ? (
               <CheckCircle2 size={16} />
@@ -151,12 +152,12 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             <span>
               {isPasswordMatch ? '비밀번호가 일치합니다' : '비밀번호가 일치하지 않습니다'}
             </span>
-          </motion.div>
+          </PasswordMatchIndicator>
         )}
-      </motion.div>
+      </FieldWrapper>
 
       {/* 약관 동의 섹션 */}
-      <motion.div
+      <FieldWrapper
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
@@ -180,7 +181,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           }}
           disabled={disabled}
         />
-      </motion.div>
-    </div>
+      </FieldWrapper>
+    </FieldsContainer>
   );
 };

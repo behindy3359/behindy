@@ -1,7 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { GamepadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button/Button';
+import { DemoContainer, DemoContent } from '../styles';
 import type { DemoLoginSectionProps } from '../../types';
 
 export const DemoLoginSection: React.FC<DemoLoginSectionProps> = ({
@@ -9,24 +9,28 @@ export const DemoLoginSection: React.FC<DemoLoginSectionProps> = ({
   disabled = false,
 }) => {
   return (
-    <motion.div
-      className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg"
+    <DemoContainer
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="text-center">
-          <GamepadIcon size={20} className="text-blue-600" />
+      <DemoContent>
         <Button
           variant="ghost"
           size="sm"
           onClick={onDemoLogin}
           disabled={disabled}
-          className="w-full text-blue-700 border-blue-300 hover:bg-blue-100"
+          leftIcon={<GamepadIcon size={20} />}
+          style={{
+            width: '100%',
+            color: '#1e3a8a',
+            borderColor: '#3b82f6',
+            backgroundColor: 'transparent'
+          }}
         >
           🎮 데모 계정으로 접속하기
         </Button>
-      </div>
-    </motion.div>
+      </DemoContent>
+    </DemoContainer>
   );
 };

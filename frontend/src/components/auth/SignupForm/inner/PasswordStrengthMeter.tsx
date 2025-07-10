@@ -1,7 +1,22 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { Check, X, Shield } from 'lucide-react';
 import { passwordUtils } from '../../utils/passwordUtils';
+import {
+  StrengthMeterContainer,
+  StrengthBarSection,
+  StrengthHeader,
+  StrengthLabel,
+  StrengthText,
+  StrengthBarTrack,
+  StrengthBarFill,
+  RequirementsContainer,
+  RequirementsHeader,
+  RequirementsTitle,
+  RequirementsList,
+  RequirementItem,
+  HintsContainer,
+  HintItem
+} from '../styles';
 import type { PasswordStrengthMeterProps } from '../../types';
 
 export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
@@ -27,42 +42,38 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
   const percentage = passwordUtils.getStrengthPercentage(strength.score);
 
   return (
-    <div className={`mt-4 ${className}`}>
+    <StrengthMeterContainer className={className}>
       {/* 강도 바 */}
-      <div className="mb-3">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700">
+      <StrengthBarSection>
+        <StrengthHeader>
+          <StrengthLabel>
             비밀번호 강도
-          </span>
-          <span 
-            className="text-sm font-semibold"
-            style={{ color: strengthColor }}
-          >
+          </StrengthLabel>
+          <StrengthText $color={strengthColor}>
             {strengthText}
-          </span>
-        </div>
+          </StrengthText>
+        </StrengthHeader>
         
-        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-          <motion.div
-            className="h-full rounded-full transition-all duration-300"
-            style={{ backgroundColor: strengthColor }}
+        <StrengthBarTrack>
+          <StrengthBarFill
+            $color={strengthColor}
             initial={{ width: 0 }}
             animate={{ width: `${percentage}%` }}
             transition={{ duration: 0.3 }}
           />
-        </div>
-      </div>
+        </StrengthBarTrack>
+      </StrengthBarSection>
 
       {/* 요구사항 체크리스트 */}
-      <div className="p-4 bg-gray-50 rounded-lg border">
-        <div className="flex items-center gap-2 mb-3">
-          <Shield size={16} className="text-gray-600" />
-          <span className="text-sm font-medium text-gray-700">
+      <RequirementsContainer>
+        <RequirementsHeader>
+          <Shield size={16} />
+          <RequirementsTitle>
             비밀번호 요구사항
-          </span>
-        </div>
+          </RequirementsTitle>
+        </RequirementsHeader>
         
-        <div className="space-y-2">
+        <RequirementsList>
           {Object.entries(strength.requirements).map(([key, met]) => {
             const labels = {
               length: '8자 이상',
@@ -73,45 +84,42 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
             };
 
             return (
-              <motion.div
+              <RequirementItem
                 key={key}
-                className={`flex items-center gap-2 text-sm ${
-                  met ? 'text-green-600' : 'text-gray-500'
-                }`}
+                $met={met}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.2 }}
               >
                 {met ? (
-                  <Check size={14} className="text-green-600" />
+                  <Check size={14} />
                 ) : (
-                  <X size={14} className="text-gray-400" />
+                  <X size={14} />
                 )}
-                <span className={met ? 'line-through' : ''}>
+                <span>
                   {labels[key as keyof typeof labels]}
                 </span>
-              </motion.div>
+              </RequirementItem>
             );
           })}
-        </div>
+        </RequirementsList>
 
         {/* 힌트 메시지 */}
         {hints.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
+          <HintsContainer>
             {hints.map((hint, index) => (
-              <motion.div
+              <HintItem
                 key={index}
-                className="text-xs text-gray-600 mb-1"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
                 {hint}
-              </motion.div>
+              </HintItem>
             ))}
-          </div>
+          </HintsContainer>
         )}
-      </div>
-    </div>
+      </RequirementsContainer>
+    </StrengthMeterContainer>
   );
 };
