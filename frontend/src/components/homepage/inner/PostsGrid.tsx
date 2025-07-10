@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { PostCard } from '@/components/community/PostCard/PostCard';
+import { PostCard } from '@/features/community/components/PostCard/PostCard';
 import { PostGrid } from '../styles';
 import type { Post } from '@/types/community/community';
 

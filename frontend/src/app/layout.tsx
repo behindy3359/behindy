@@ -1,5 +1,5 @@
 
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { AuthGuard } from '@/shared/components/AuthGuard';
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/providers/ThemeProvider';
 

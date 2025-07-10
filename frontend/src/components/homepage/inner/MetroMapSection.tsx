@@ -1,6 +1,6 @@
 import React from 'react';
 import { Train } from 'lucide-react';
-import { RealtimeMetroMap } from '@/components/metroMap/RealtimeMetroMap';
+import { MetroMap } from '@/features/metro/components/MetroMap';
 import { SectionContainer } from '@/styles/commonStyles';
 import { MetroHeader, MetroMapContainer } from '../styles';
 
@@ -18,7 +18,7 @@ export const MetroMapSection: React.FC = () => {
       </MetroHeader>
       
       <MetroMapContainer>
-        <RealtimeMetroMap />
+        <MetroMap />
       </MetroMapContainer>
     </SectionContainer>
   );

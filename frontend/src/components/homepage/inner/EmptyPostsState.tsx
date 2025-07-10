@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, MessageSquare } from 'lucide-react';
-import { Button } from '@/components/ui/button/Button';
+import { Button } from '@/shared/components/ui/button/Button';
 import { EmptyState } from '../styles';
 
 interface EmptyPostsStateProps {

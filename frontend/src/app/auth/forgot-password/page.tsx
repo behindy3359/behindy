@@ -8,8 +8,8 @@ import * as yup from 'yup';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowLeft, Send, CheckCircle, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button/Button';
-import { Input } from '@/components/ui/input/Input'
+import { Button } from '@/shared/components/ui/button/Button';
+import { Input } from '@/shared/components/ui/input/Input'
 import { LOADING_MESSAGES } from '@/utils/common/constants';
 
 interface ForgotPasswordFormData {

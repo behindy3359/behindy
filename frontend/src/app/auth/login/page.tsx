@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { LoginForm } from '@/components/auth/LoginForm/LoginForm';
+import { LoginForm } from '@/features/auth/components/LoginForm/LoginForm';
 import { LOADING_MESSAGES } from '@/utils/common/constants';
 
 // 로딩 폴백 컴포넌트

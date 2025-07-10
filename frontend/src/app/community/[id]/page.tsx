@@ -3,8 +3,8 @@
 import React from 'react';
 import { useParams } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { PostDetail } from '@/components/community/PostDetail/PostDetail';
-import { DashboardLayout, PublicLayout } from '@/components/layout/applayout/AppLayout';
+import { PostDetail } from '@/features/community/components/PostDetail/PostDetail';
+import { DashboardLayout, PublicLayout } from '@/shared/components/ui/layout/applayout/AppLayout';
 
 const queryClient = new QueryClient();
 
