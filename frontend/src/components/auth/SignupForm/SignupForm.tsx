@@ -33,14 +33,6 @@ export const SignupForm: React.FC = () => {
         >
           Behindy에 어서오세요!
         </motion.h1>
-        <motion.p
-          className="text-gray-600"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          지하철 텍스트 어드벤처의 세계로 떠나보세요
-        </motion.p>
       </div>
 
       {/* 에러/성공 메시지 */}

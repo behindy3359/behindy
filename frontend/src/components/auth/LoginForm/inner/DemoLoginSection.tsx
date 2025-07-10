@@ -16,15 +16,7 @@ export const DemoLoginSection: React.FC<DemoLoginSectionProps> = ({
       transition={{ duration: 0.3 }}
     >
       <div className="text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
           <GamepadIcon size={20} className="text-blue-600" />
-          <h3 className="text-sm font-semibold text-blue-800">
-            빠른 체험하기
-          </h3>
-        </div>
-        <p className="text-xs text-blue-600 mb-3">
-          회원가입 없이 데모 계정으로 바로 시작해보세요
-        </p>
         <Button
           variant="ghost"
           size="sm"

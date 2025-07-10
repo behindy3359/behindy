@@ -184,7 +184,6 @@ export default function AuthLayout({
             B
           </motion.div>
           <div className="brand-name">Behindy</div>
-          <div className="tagline">지하철 노선도 기반 텍스트 어드벤처</div>
         </BrandSection>
 
         <ContentSection>
