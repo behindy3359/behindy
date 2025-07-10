@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { gradients } from '@/shared/styles/theme';
@@ -14,6 +15,13 @@ const AuthLayoutContainer = styled.div`
   padding: 20px;
   position: relative;
   overflow: hidden;
+  
+  /* 🔥 추가: 매우 낮은 화면에서는 상하 중앙 정렬 대신 상단 정렬 */
+  @media (max-height: 500px) {
+    align-items: flex-start;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
   
   /* 배경 패턴 */
   &::before {
@@ -43,18 +51,20 @@ const AuthCard = styled(motion.div)`
   overflow: hidden;
   position: relative;
   
-  /* 🔥 변경: 높이 제한 제거, 자연스러운 크기 조정 */
+  /* 🔥 완전 자유로운 높이 */
   min-height: auto;
   max-height: none;
   
-  /* 🔥 변경: 모바일에서도 적절한 여백 유지 */
-  @media (max-height: 700px) {
-    margin: 10px 0;
+  /* 🔥 극도로 낮은 화면에서의 추가 조정 */
+  @media (max-height: 500px) {
+    margin: 5px 0;
+    border-radius: 12px;
+    max-width: 420px;
   }
   
-  @media (max-height: 600px) {
-    margin: 5px 0;
-    border-radius: 16px;
+  @media (max-height: 400px) {
+    border-radius: 8px;
+    max-width: 400px;
   }
 `;
 
@@ -64,10 +74,30 @@ const BrandSection = styled.div`
   background: ${gradients.primary};
   color: white;
   position: relative;
+  cursor: pointer; /* 🔥 추가: 클릭 가능하다는 시각적 피드백 */
+  transition: all 0.2s ease; /* 🔥 추가: 호버 효과를 위한 전환 */
   
-  /* 🔥 변경: 모바일에서 패딩 조정 */
+  /* 🔥 추가: 호버 효과 */
+  &:hover {
+    background: ${gradients.primaryHover};
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
   @media (max-height: 600px) {
     padding: 30px 30px 15px 30px;
+  }
+  
+  /* 🔥 극도로 낮은 화면에서 더 컴팩트하게 */
+  @media (max-height: 500px) {
+    padding: 20px 25px 10px 25px;
+  }
+  
+  @media (max-height: 400px) {
+    padding: 15px 20px 8px 20px;
   }
   
   .logo {
@@ -83,12 +113,27 @@ const BrandSection = styled.div`
     font-weight: 800;
     backdrop-filter: blur(10px);
     
-    /* 🔥 변경: 모바일에서 로고 크기 조정 */
     @media (max-height: 600px) {
       width: 50px;
       height: 50px;
       font-size: 24px;
       margin-bottom: 12px;
+    }
+    
+    @media (max-height: 500px) {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+    }
+    
+    @media (max-height: 400px) {
+      width: 35px;
+      height: 35px;
+      font-size: 18px;
+      margin-bottom: 6px;
+      border-radius: 10px;
     }
   }
   
@@ -98,10 +143,19 @@ const BrandSection = styled.div`
     margin-bottom: 8px;
     letter-spacing: -0.5px;
     
-    /* 🔥 변경: 모바일에서 폰트 크기 조정 */
     @media (max-height: 600px) {
       font-size: 20px;
       margin-bottom: 6px;
+    }
+    
+    @media (max-height: 500px) {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+    
+    @media (max-height: 400px) {
+      font-size: 16px;
+      margin-bottom: 3px;
     }
   }
   
@@ -110,27 +164,44 @@ const BrandSection = styled.div`
     opacity: 0.9;
     font-weight: 400;
     
-    /* 🔥 변경: 모바일에서 폰트 크기 조정 */
     @media (max-height: 600px) {
       font-size: 12px;
+    }
+    
+    @media (max-height: 500px) {
+      font-size: 11px;
+    }
+    
+    /* 🔥 극도로 낮은 화면에서는 tagline 숨김 */
+    @media (max-height: 400px) {
+      display: none;
     }
   }
 `;
 
 const ContentSection = styled.div`
   padding: 40px;
-  
-  /* 🔥 변경: 높이 제한 제거, 자연스러운 플렉스 설정 */
   display: flex;
   flex-direction: column;
   
-  /* 🔥 변경: 모바일에서 패딩 조정 */
   @media (max-height: 600px) {
     padding: 30px;
   }
   
+  @media (max-height: 500px) {
+    padding: 25px 20px;
+  }
+  
+  @media (max-height: 400px) {
+    padding: 20px 15px;
+  }
+  
   @media (max-width: 480px) {
     padding: 30px 25px;
+    
+    @media (max-height: 500px) {
+      padding: 20px 15px;
+    }
   }
 `;
 
@@ -141,6 +212,11 @@ const FloatingElement = styled(motion.div)`
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
   pointer-events: none;
+  
+  /* 🔥 낮은 화면에서는 floating 요소들 숨김 */
+  @media (max-height: 500px) {
+    display: none;
+  }
 `;
 
 export default function AuthLayout({
@@ -148,6 +224,13 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  
+  // 🔥 추가: 헤더 클릭 시 홈으로 이동
+  const handleHeaderClick = () => {
+    router.push('/');
+  };
+
   return (
     <AuthLayoutContainer>
       <FloatingElement
@@ -197,15 +280,17 @@ export default function AuthLayout({
           ease: "easeOut"
         }}
       >
-        <BrandSection>
+        <BrandSection onClick={handleHeaderClick}>
           <motion.div 
             className="logo"
             whileHover={{ scale: 1.05, rotate: 5 }}
+            whileTap={{ scale: 0.95 }} // 🔥 추가: 클릭 피드백
             transition={{ duration: 0.2 }}
           >
             B
           </motion.div>
           <div className="brand-name">Behindy</div>
+          <div className="tagline">지하철 텍스트 어드벤처</div>
         </BrandSection>
 
         <ContentSection>
