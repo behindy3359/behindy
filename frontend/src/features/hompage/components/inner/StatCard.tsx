@@ -1,5 +1,5 @@
 import React from "react";
-import { StatCardProps } from "../../../../components/homepage/types";
+import { StatCardProps } from "../types";
 import { StatItem } from "../styles";
 
 export const StatCard = React.memo<
