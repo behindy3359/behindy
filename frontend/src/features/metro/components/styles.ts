@@ -14,7 +14,7 @@ export const CheckboxItem = styled.label<{ $color?: string }>`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
   cursor: pointer;
   padding: 6px 10px;
   border-radius: 6px;
@@ -37,6 +37,9 @@ export const CheckboxItem = styled.label<{ $color?: string }>`
     border-radius: 50%;
     background: ${({ $color }) => $color || '#666'};
     border: 1px solid rgba(255,255,255,0.8);
+  }
+  @media (max-width: 800px) {
+    display : none;
   }
 `;
 

@@ -284,13 +284,12 @@ export default function AuthLayout({
           <motion.div 
             className="logo"
             whileHover={{ scale: 1.05, rotate: 5 }}
-            whileTap={{ scale: 0.95 }} // 🔥 추가: 클릭 피드백
+            whileTap={{ scale: 0.95 }}
             transition={{ duration: 0.2 }}
           >
             B
           </motion.div>
           <div className="brand-name">Behindy</div>
-          <div className="tagline">지하철 텍스트 어드벤처</div>
         </BrandSection>
 
         <ContentSection>

@@ -257,7 +257,7 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            지하철 노선도 기반 텍스트 어드벤처 게임
+            behindy 의 포트폴리오 페이지
           </motion.h2>
           
           <motion.p 
@@ -267,7 +267,7 @@ export default function AboutPage() {
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             일상적인 지하철 공간을 특별한 모험의 무대로 바꾸는 새로운 경험을 제공합니다.
-            실시간 데이터와 창의적인 스토리텔링이 만나 탄생한 혁신적인 게임입니다.
+            오늘 점심은 볶음밥을 먹었으니까 저녁에는 뭘 먹을지 고민을 조금 해봅시다.
           </motion.p>
         </HeroSection>
 
