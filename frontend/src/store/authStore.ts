@@ -343,7 +343,7 @@ export const useAuthStore = create<AuthStore>()(
                 tokens: {
                   accessToken,
                   refreshToken,
-                  tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE, // 🔒 보안 상수 사용
+                  tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE,
                 },
                 isLoading: false,
               },
@@ -369,7 +369,7 @@ export const useAuthStore = create<AuthStore>()(
                   tokens: {
                     accessToken,
                     refreshToken,
-                    tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE, // 🔒 보안 상수 사용
+                    tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE,
                   },
                   isLoading: false,
                 },
@@ -483,4 +483,3 @@ export const useAuth = () => {
 };
 
 export default useAuthStore;
-

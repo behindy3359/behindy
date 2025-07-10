@@ -128,7 +128,6 @@ export default function AuthLayout({
 }) {
   return (
     <AuthLayoutContainer>
-      {/* 떠다니는 배경 요소들 */}
       <FloatingElement
         style={{ top: '10%', left: '10%' }}
         animate={{ 
