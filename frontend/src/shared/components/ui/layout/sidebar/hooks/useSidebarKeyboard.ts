@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@/shared/store/uiStore';
 
 export const useSidebarKeyboard = () => {
   const { toggleSidebar } = useUIStore();
