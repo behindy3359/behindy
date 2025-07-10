@@ -9,8 +9,8 @@ import {
   Users, 
 } from 'lucide-react';
 import { PublicLayout } from '@/shared/components/ui/layout/applayout/AppLayout';
-import { PageContainer } from '@/styles/commonStyles';
-import { gradients } from '@/styles/theme';
+import { PageContainer } from '@/shared/styles/commonStyles';
+import { gradients } from '@/shared/styles/theme';
 
 // ================================================================
 // Styled Components

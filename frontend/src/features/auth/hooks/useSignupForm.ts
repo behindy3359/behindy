@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
-import { apiErrorHandler } from '@/utils/common/api';
+import { useAuthStore } from '@/shared/store/authStore';
+import { apiErrorHandler } from '@/shared/utils/common/api';
 import { validateSignupForm } from '../utils/formValidation';
 import type { 
   SignupFormData, 

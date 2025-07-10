@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { ModalState, ToastState, LoadingState } from '@/types/common';
+import type { ModalState, ToastState, LoadingState } from '@/shared/types/common';
 
 interface UIState {
   modal: ModalState;

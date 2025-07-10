@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useRecentPosts } from './useRecentPosts';
-import type { PostListResponse } from '@/types/community/community';
+import type { PostListResponse } from '@/shared/types/community/community';
 
 export const useHomePageData = (postLimit: number = 6) => {
   const { data: postsData, isLoading, error } = useRecentPosts(postLimit);

@@ -1,6 +1,6 @@
 import React from 'react';
-import { SVG_CONFIG } from '@/data/metro/stationsData';
-import { SEOUL_DISTRICTS, HAN_RIVER } from '@/data/metro/seoulDistrictData';
+import { SVG_CONFIG } from '@/shared/data/metro/stationsData';
+import { SEOUL_DISTRICTS, HAN_RIVER } from '@/shared/data/metro/seoulDistrictData';
 import { SVGContainer } from '../styles';
 import type { MetroSVGProps } from '../../types/metroMapTypes';
 

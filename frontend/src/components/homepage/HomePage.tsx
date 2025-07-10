@@ -1,8 +1,8 @@
 "use client";
 
 import React from 'react';
-import { LOADING_MESSAGES } from '@/utils/common/constants';
-import { PageContainer } from '@/styles/commonStyles';
+import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
+import { PageContainer } from '@/shared/styles/commonStyles';
 import { CommunitySection, LoadingState } from './styles';
 import { useHomePageData } from './hooks/useHomePageData';
 import { useHomePageActions } from './hooks/useHomePageActions';

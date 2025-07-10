@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiErrorHandler } from '@/utils/common/api';
+import { apiErrorHandler } from '@/shared/utils/common/api';
 import type { MetroApiResponse, UseMetroRealtimeReturn } from '../types/metroMapTypes';
 
 export const useMetroRealtime = (intervalMs: number = 30000): UseMetroRealtimeReturn => {

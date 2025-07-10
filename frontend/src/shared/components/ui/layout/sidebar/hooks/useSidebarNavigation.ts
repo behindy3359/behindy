@@ -1,7 +1,7 @@
 import { useMemo, useCallback, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
-import { useUIStore } from '@/store/uiStore';
+import { useAuthStore } from '@/shared/store/authStore';
+import { useUIStore } from '@/shared/store/uiStore';
 import { 
   Home, 
   Info,

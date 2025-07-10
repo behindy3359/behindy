@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Sidebar } from '../sidebar/Sidebar';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@/shared/store/uiStore';
 import { AppLayoutProps } from './types';
 import { ContentArea, LayoutContainer, MainContent, MobileToggleButton } from './styled';
 

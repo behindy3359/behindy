@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/store/uiStore';
-import { api } from '@/services/api/axiosConfig';
-import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
-import type { CommentListResponse } from '@/types/community/community';
+import { useToast } from '@/shared/store/uiStore';
+import { api } from '@/shared/services/api/axiosConfig';
+import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
+import type { CommentListResponse } from '@/shared/types/community/community';
 
 export const usePostComments = (postId: number) => {
   const queryClient = useQueryClient();

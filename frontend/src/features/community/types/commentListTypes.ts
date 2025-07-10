@@ -1,4 +1,4 @@
-import { Comment } from "@/types/community/community";
+import { Comment } from "@/shared/types/community/community";
 
 export interface CommentListProps {
   comments: Comment[];

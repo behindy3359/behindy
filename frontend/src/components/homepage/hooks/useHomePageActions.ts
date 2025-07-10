@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/shared/store/authStore';
 
 export const useHomePageActions = () => {
   const router = useRouter();

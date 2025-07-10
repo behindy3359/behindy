@@ -1,4 +1,4 @@
-import { CardContainer } from "@/styles/commonStyles";
+import { CardContainer } from "@/shared/styles/commonStyles";
 import styled from "styled-components";
 
 export const CardHeader = styled.div`

@@ -4,7 +4,7 @@ import { MessageSquare, Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
 import { PostCard } from '../../PostCard/PostCard';
 import { getEmptyStateMessage } from '../../../utils/postListUtils';
-import { LOADING_MESSAGES } from '@/utils/common/constants';
+import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
 import { PostsContainer, PostGrid, EmptyState, LoadingContainer } from '../styles';
 import type { PostListContentProps } from '../../../types/postListTypes';
 

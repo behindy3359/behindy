@@ -1,7 +1,7 @@
 import React from 'react';
 import { MessageSquare } from 'lucide-react';
 import { EmptyState } from '../styles';
-import { ERROR_MESSAGES } from '@/utils/common/constants';
+import { ERROR_MESSAGES } from '@/shared/utils/common/constants';
 
 export const ErrorState: React.FC = () => {
   return (

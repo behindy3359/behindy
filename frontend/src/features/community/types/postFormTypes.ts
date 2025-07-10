@@ -1,4 +1,4 @@
-import { Post } from "@/types/community/community";
+import { Post } from "@/shared/types/community/community";
 import { UseFormRegister, FieldErrors } from 'react-hook-form';
 
 export interface PostFormData {

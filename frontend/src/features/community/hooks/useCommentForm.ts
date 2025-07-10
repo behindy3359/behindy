@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation } from '@tanstack/react-query';
-import { api } from '@/services/api/axiosConfig';
-import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
+import { api } from '@/shared/services/api/axiosConfig';
+import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
 import { commentSchema } from '../utils/commentFormUtils';
 import type { CommentFormData, UseCommentFormReturn } from '../types/commentFormTypes';
-import type { Comment, CreateCommentRequest } from '@/types/community/community';
+import type { Comment, CreateCommentRequest } from '@/shared/types/community/community';
 
 export const useCommentForm = (
   postId: number,

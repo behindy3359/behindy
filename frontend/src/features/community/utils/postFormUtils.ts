@@ -1,6 +1,6 @@
 import * as yup from 'yup';
-import { INPUT_LIMITS } from '@/utils/common/constants';
-import { validators } from '@/utils/common/validation';
+import { INPUT_LIMITS } from '@/shared/utils/common/constants';
+import { validators } from '@/shared/utils/common/validation';
 
 export const postFormSchema = yup.object({
   title: yup

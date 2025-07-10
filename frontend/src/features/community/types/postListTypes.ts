@@ -1,4 +1,4 @@
-import { Post } from '@/types/community/community';
+import { Post } from '@/shared/types/community/community';
 
 export interface PostListProps {
   initialPage?: number;

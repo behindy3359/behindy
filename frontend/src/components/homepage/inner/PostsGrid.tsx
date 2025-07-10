@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { PostCard } from '@/features/community/components/PostCard/PostCard';
 import { PostGrid } from '../styles';
-import type { Post } from '@/types/community/community';
+import type { Post } from '@/shared/types/community/community';
 
 interface PostsGridProps {
   posts: Post[];

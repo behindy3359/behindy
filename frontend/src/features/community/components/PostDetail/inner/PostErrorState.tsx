@@ -2,8 +2,8 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, RefreshCw, LogIn, ArrowLeft } from 'lucide-react';
 import { ErrorState } from '../styles';
-import { ERROR_MESSAGES } from '@/utils/common/constants';
-import { apiErrorHandler } from '@/utils/common/api';
+import { ERROR_MESSAGES } from '@/shared/utils/common/constants';
+import { apiErrorHandler } from '@/shared/utils/common/api';
 import Button from '@/shared/components/ui/button/Button';
 
 interface PostErrorStateProps {

@@ -1,4 +1,4 @@
-import { validators } from '@/utils/common/validation';
+import { validators } from '@/shared/utils/common/validation';
 import type { LoginFormData, LoginFormErrors } from '../types/types';
 
 interface FieldValidationResult {

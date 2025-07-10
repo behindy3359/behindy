@@ -3,7 +3,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { gradients } from '@/styles/theme';
+import { gradients } from '@/shared/styles/theme';
 
 const AuthLayoutContainer = styled.div`
   min-height: 100vh;

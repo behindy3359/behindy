@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@/shared/store/uiStore';
 
 export const useSidebarState = () => {
   const { sidebar, toggleSidebar } = useUIStore();

@@ -8,12 +8,12 @@ import type {
   CurrentUser,
   LoginRequest,
   SignupRequest
-} from '@/types/auth';
-import { api,TokenManager } from '@/services/api/axiosConfig';
-import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
+} from '@/shared/types/auth';
+import { api,TokenManager } from '@/shared/services/api/axiosConfig';
+import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
 import { env } from '@/config/env';
-import { ApiResponse } from '@/types/common';
-import { SECURITY_CONFIG } from '@/utils/common/constants';
+import { ApiResponse } from '@/shared/types/common';
+import { SECURITY_CONFIG } from '@/shared/utils/common/constants';
 
 // ================================================================
 // 백엔드 응답 타입

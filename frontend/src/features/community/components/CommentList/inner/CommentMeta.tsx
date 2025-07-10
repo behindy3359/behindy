@@ -1,4 +1,4 @@
-import { formatters } from "@/utils/common";
+import { formatters } from "@/shared/utils/common";
 import React, { useMemo } from "react";
 import { StyledCommentMeta } from "../styles";
 import { Calendar } from "lucide-react";

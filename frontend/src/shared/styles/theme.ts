@@ -1,4 +1,4 @@
-import { METRO_CONFIG } from "@/utils/common/constants";
+import { METRO_CONFIG } from "@/shared/utils/common/constants";
 
 export const theme = {
   // 색상 시스템

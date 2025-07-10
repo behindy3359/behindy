@@ -3,14 +3,14 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/store/authStore';
-import { api } from '@/services/api/axiosConfig';
-import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
-import { ERROR_MESSAGES } from '@/utils/common/constants';
+import { useAuthStore } from '@/shared/store/authStore';
+import { api } from '@/shared/services/api/axiosConfig';
+import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
+import { ERROR_MESSAGES } from '@/shared/utils/common/constants';
 import { postFormSchema } from '../utils/postFormUtils';
 import { validateFormContent } from '../utils/postFormUtils';
 import type { PostFormData, UsePostFormReturn, PostFormProps } from '../types/postFormTypes';
-import type { Post, CreatePostRequest } from '@/types/community/community';
+import type { Post, CreatePostRequest } from '@/shared/types/community/community';
 
 export const usePostForm = ({ 
   mode, 

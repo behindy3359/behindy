@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { LoginForm } from '@/features/auth/components/LoginForm/LoginForm';
-import { LOADING_MESSAGES } from '@/utils/common/constants';
+import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
 
 // 로딩 폴백 컴포넌트
 function LoginLoadingFallback() {

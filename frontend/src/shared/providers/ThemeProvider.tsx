@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ThemeProvider as StyledThemeProvider, createGlobalStyle } from 'styled-components';
-import { theme } from '@/styles/theme';
+import { theme } from '@/shared/styles/theme';
 
 // 글로벌 스타일 정의
 const GlobalStyle = createGlobalStyle`

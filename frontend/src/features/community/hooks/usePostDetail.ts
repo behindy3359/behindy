@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/store/authStore';
-import { useToast } from '@/store/uiStore';
-import { api } from '@/services/api/axiosConfig';
-import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
-import { SUCCESS_MESSAGES, CONFIRM_MESSAGES } from '@/utils/common/constants';
-import type { Post } from '@/types/community/community';
+import { useAuthStore } from '@/shared/store/authStore';
+import { useToast } from '@/shared/store/uiStore';
+import { api } from '@/shared/services/api/axiosConfig';
+import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
+import { SUCCESS_MESSAGES, CONFIRM_MESSAGES } from '@/shared/utils/common/constants';
+import type { Post } from '@/shared/types/community/community';
 
 export const usePostDetail = (postId: number) => {
   const router = useRouter();

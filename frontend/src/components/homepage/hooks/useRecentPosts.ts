@@ -1,6 +1,6 @@
-import { publicApi } from "@/services/api/axiosConfig";
-import { PostListResponse } from "@/types/community/community";
-import { buildApiUrl } from "@/utils/common/api";
+import { publicApi } from "@/shared/services/api/axiosConfig";
+import { PostListResponse } from "@/shared/types/community/community";
+import { buildApiUrl } from "@/shared/utils/common/api";
 import { useQuery } from "@tanstack/react-query";
 
 export const useRecentPosts = (limit: number = 6) => {

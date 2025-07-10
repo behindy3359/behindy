@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { getVisibleLineConnections } from '@/data/metro/metroLineConnections';
+import { getVisibleLineConnections } from '@/shared/data/metro/metroLineConnections';
 import { MapContainer } from './styles';
 import { MetroControls } from './inner/MetroControls';
 import { MetroSVG } from './inner/MetroSVG';

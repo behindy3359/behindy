@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart, Share2, MessageSquare } from 'lucide-react';
 import { PostActions as StyledPostActions, ActionGroup, ActionButton } from '../styles';
-import type { CommentListResponse } from '@/types/community/community';
+import type { CommentListResponse } from '@/shared/types/community/community';
 
 interface PostActionsProps {
   enableInteractions: boolean;

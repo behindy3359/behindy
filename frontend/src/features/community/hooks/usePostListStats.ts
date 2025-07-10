@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PostListResponse } from '@/types/community/community';
+import { PostListResponse } from '@/shared/types/community/community';
 
 export interface PostListStats {
   totalPosts: number;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Calendar } from 'lucide-react';
 import { PostContainer, PostHeader, PostMeta, PostTitle, PostContent as StyledPostContent } from '../styles';
-import type { Post } from '@/types/community/community';
+import type { Post } from '@/shared/types/community/community';
 
 interface PostContentProps {
   post: Post;

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { CardContainer } from '@/styles/commonStyles';
+import { CardContainer } from '@/shared/styles/commonStyles';
 import { PostCardProps } from '../../types/postCardTypes';
 import { usePostCardData } from '../../hooks/usePostCardData';
 import { usePostCardActions } from '../../hooks/usePostCardActions';

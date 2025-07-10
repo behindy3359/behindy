@@ -1,4 +1,4 @@
-import { type Station } from '@/data/metro/stationsData';
+import { type Station } from '@/shared/data/metro/stationsData';
 
 // 백엔드 API 타입
 export interface MetroApiResponse {

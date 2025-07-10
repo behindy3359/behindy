@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { env } from '@/config/env';
-import { SECURITY_CONFIG, validateSecurityConfig } from '@/utils/common/constants';
+import { SECURITY_CONFIG, validateSecurityConfig } from '@/shared/utils/common/constants';
 
 // 보안 설정 검증
 if (typeof window !== 'undefined') {

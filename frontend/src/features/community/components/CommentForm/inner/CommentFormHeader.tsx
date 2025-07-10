@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserInfo } from '../styles';
-import { userUtils } from '@/utils/common';
+import { userUtils } from '@/shared/utils/common';
 
 interface CommentFormHeaderProps {
   userName?: string;

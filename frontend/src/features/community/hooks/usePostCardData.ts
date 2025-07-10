@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { formatters } from '@/utils/common';
+import { formatters } from '@/shared/utils/common';
 import { extractMetroLine, isHotPost } from '../utils/postCardUtils';
-import type { Post } from '@/types/community/community';
+import type { Post } from '@/shared/types/community/community';
 
 export const usePostCardData = (post: Post, showMetroLine: boolean, compact: boolean) => {
   const metroLine = useMemo(() => 

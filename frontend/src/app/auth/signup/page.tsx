@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { SignupForm } from '@/features/auth/components/SignupForm/SignupForm';
-import { LOADING_MESSAGES } from '@/utils/common/constants';
+import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
 
 function SignupLoadingFallback() {
   return (

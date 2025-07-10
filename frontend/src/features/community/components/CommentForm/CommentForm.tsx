@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/shared/store/authStore';
 import { useCommentForm } from '../../hooks/useCommentForm';
 import { getTextareaPlaceholder } from '../../utils/commentFormUtils';
 import { CommentFormHeader } from './inner/CommentFormHeader';

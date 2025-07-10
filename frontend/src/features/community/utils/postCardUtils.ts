@@ -1,4 +1,4 @@
-import { Post } from "@/types/community/community";
+import { Post } from "@/shared/types/community/community";
 
 export const extractMetroLine = (content: string): string | null => {
   const lineMatch = content.match(/([1-4])호선/);

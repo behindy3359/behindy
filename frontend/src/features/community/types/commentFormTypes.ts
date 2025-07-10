@@ -1,4 +1,4 @@
-import { Comment } from "@/types/community/community";
+import { Comment } from "@/shared/types/community/community";
 import { UseFormRegister, FieldErrors } from 'react-hook-form';
 
 export interface CommentFormData {

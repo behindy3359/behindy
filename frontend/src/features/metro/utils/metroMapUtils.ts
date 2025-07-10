@@ -2,14 +2,14 @@ import {
   METRO_STATIONS, 
   getStationsByLine,
   LineBitUtils
-} from '@/data/metro/stationsData';
+} from '@/shared/data/metro/stationsData';
 
 import type { 
   MetroApiResponse, 
   ProcessedTrainData, 
   LineStats 
 } from '../types/metroMapTypes';
-import { METRO_CONFIG } from '@/utils/common/constants';
+import { METRO_CONFIG } from '@/shared/utils/common/constants';
 
 // 실시간 데이터 처리
 export const processRealtimeData = (realtimeData: MetroApiResponse['data'] | null): ProcessedTrainData[] => {

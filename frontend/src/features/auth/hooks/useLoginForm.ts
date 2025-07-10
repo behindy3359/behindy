@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
-import { apiErrorHandler } from '@/utils/common/api';
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/utils/common/constants';
+import { useAuthStore } from '@/shared/store/authStore';
+import { apiErrorHandler } from '@/shared/utils/common/api';
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/shared/utils/common/constants';
 import { validateLoginForm } from '../utils/loginValidation';
 import type { LoginFormData, LoginFormErrors } from '../types/types';
 

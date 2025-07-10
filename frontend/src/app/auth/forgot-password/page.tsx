@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowLeft, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
 import { Input } from '@/shared/components/ui/input/Input'
-import { LOADING_MESSAGES } from '@/utils/common/constants';
+import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
 
 interface ForgotPasswordFormData {
   email: string;

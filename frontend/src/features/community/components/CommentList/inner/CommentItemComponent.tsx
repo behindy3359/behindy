@@ -1,6 +1,6 @@
-import api from "@/services/api/axiosConfig";
-import useAuthStore from "@/store/authStore";
-import API_ENDPOINTS from "@/utils/common/api";
+import api from "@/shared/services/api/axiosConfig";
+import useAuthStore from "@/shared/store/authStore";
+import API_ENDPOINTS from "@/shared/utils/common/api";
 import { useMutation } from "@tanstack/react-query";
 import React, { useCallback, useMemo, useState } from "react";
 import { CommentContainer, CommentContent, CommentHeader, CommentItem, EditingContainer } from "../styles";
@@ -8,7 +8,7 @@ import { CommentMeta } from "./CommentMeta";
 import { CommentActions } from "./CommentActions";
 import CommentForm from "../../CommentForm/CommentForm";
 import { CommentFooter } from "./CommentFooter";
-import { Comment } from "@/types/community/community";
+import { Comment } from "@/shared/types/community/community";
 
 export const CommentItemComponent = React.memo<{
   comment: Comment;

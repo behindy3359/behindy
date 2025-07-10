@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
-import { LOADING_MESSAGES } from '@/utils/common/constants';
+import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
 
 const ErrorContainer = styled.div`
   text-align: center;

@@ -1,4 +1,4 @@
-import { getLineColor, METRO_CONFIG } from '@/utils/common/constants';
+import { getLineColor, METRO_CONFIG } from '@/shared/utils/common/constants';
 import { METRO_STATIONS } from './stationsData';
 export interface LineSegment {
   lineNumber: number;

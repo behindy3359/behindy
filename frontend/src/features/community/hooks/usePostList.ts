@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/shared/store/authStore';
 import { usePosts } from './usePosts';
 import type { PostListProps, PostListState, UsePostListReturn } from '../types/postListTypes';
 

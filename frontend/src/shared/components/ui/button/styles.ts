@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import styled from "styled-components";
 import { ButtonProps } from "./types";
-import { gradients } from '@/styles/theme';
+import { gradients } from '@/shared/styles/theme';
 
 export const StyledButton = styled(motion.button).withConfig({
   shouldForwardProp: (prop) => 
