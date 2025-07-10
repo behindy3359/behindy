@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LogIn, AlertCircle, CheckCircle } from 'lucide-react';
@@ -7,8 +9,7 @@ import { LoginFormFields } from './inner/LoginFormFields';
 import type { LoginFormProps } from '../types';
 
 export const LoginForm: React.FC<LoginFormProps> = ({
-  onSuccess,
-  redirectTo,
+  onSuccess
 }) => {
   const {
     formData,

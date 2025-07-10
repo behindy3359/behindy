@@ -1,5 +1,5 @@
-import { METRO_STATIONS, LINE_COLORS } from './stationsData';
-
+import { getLineColor, METRO_CONFIG } from '@/utils/common/constants';
+import { METRO_STATIONS } from './stationsData';
 export interface LineSegment {
   lineNumber: number;
   fromStationId: number;
@@ -95,7 +95,7 @@ export const generateLineConnections = (): LineConnection[] => {
 
   Object.entries(LINE_STATION_ORDERS).forEach(([lineNumStr, stationIds]) => {
     const lineNumber = parseInt(lineNumStr);
-    const color = LINE_COLORS[lineNumber as keyof typeof LINE_COLORS];
+    const color = getLineColor(lineNumber);
     const segments: LineSegment[] = [];
     const pathParts: string[] = [];
 

@@ -1,15 +1,15 @@
-// utils.ts
 import { 
   METRO_STATIONS, 
-  LINE_COLORS, 
   getStationsByLine,
   LineBitUtils
 } from '@/data/metro/stationsData';
+
 import type { 
   MetroApiResponse, 
   ProcessedTrainData, 
   LineStats 
 } from './types';
+import { METRO_CONFIG } from '@/utils/common/constants';
 
 // 실시간 데이터 처리
 export const processRealtimeData = (realtimeData: MetroApiResponse['data'] | null): ProcessedTrainData[] => {
@@ -66,7 +66,7 @@ export const calculateLineStats = (
   visibleLines: number[], 
   processedRealtimeData: ProcessedTrainData[]
 ): LineStats[] => {
-  return Object.entries(LINE_COLORS).map(([lineNum, color]) => {
+  return Object.entries(METRO_CONFIG.LINE_COLORS).map(([lineNum, color]) => {
     const line = parseInt(lineNum);
     const stations = getStationsByLine(line);
     const trainCount = processedRealtimeData

@@ -12,6 +12,16 @@ export const METRO_CONFIG = {
   REALTIME_UPDATE_INTERVAL: 30000,
 } as const;
 
+export const getLineColor = (lineNumber: number): string => {
+  const colors: Record<number, string> = {
+    1: METRO_CONFIG.LINE_COLORS[1],
+    2: METRO_CONFIG.LINE_COLORS[2], 
+    3: METRO_CONFIG.LINE_COLORS[3],
+    4: METRO_CONFIG.LINE_COLORS[4],
+  };
+  return colors[lineNumber] || '#666666'; // fallback
+};
+
 // 애니메이션 지속 시간
 export const ANIMATION_DURATION = {
   FAST: 150,

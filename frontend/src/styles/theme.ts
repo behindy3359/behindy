@@ -1,3 +1,5 @@
+import { METRO_CONFIG } from "@/utils/common/constants";
+
 export const theme = {
   // 색상 시스템
   colors: {
@@ -15,10 +17,10 @@ export const theme = {
 
     // 지하철 노선 색상
     metro: {
-      line1: '#0052A4',
-      line2: '#00A84D', 
-      line3: '#EF7C1C',
-      line4: '#00A5DE',
+      line1: METRO_CONFIG.LINE_COLORS[1],
+      line2: METRO_CONFIG.LINE_COLORS[2], 
+      line3: METRO_CONFIG.LINE_COLORS[3],
+      line4: METRO_CONFIG.LINE_COLORS[4],
     },
 
     // 그레이 스케일

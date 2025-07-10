@@ -5,9 +5,10 @@ import type {
   AuthState,
   TokenInfo, 
   AuthError,
-} from '@/types/auth/authState';
-import type { CurrentUser } from '@/types/auth/authUser';
-import type { LoginRequest, SignupRequest } from '@/types/auth/authRequest';
+  CurrentUser,
+  LoginRequest,
+  SignupRequest
+} from '@/types/auth';
 import { api,TokenManager } from '@/services/api/axiosConfig';
 import { API_ENDPOINTS, apiErrorHandler } from '@/utils/common/api';
 import { env } from '@/config/env';

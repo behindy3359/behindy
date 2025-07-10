@@ -421,18 +421,6 @@ export const METRO_STATIONS: Station[] = [
     apiLineId: "1004" },
 ];
 
-// 노선별 색상 정의
-export const LINE_COLORS = {
-  1: '#0052A4',  // 1호선 - 블루
-  2: '#00A84D',  // 2호선 - 그린  
-  3: '#EF7C1C',  // 3호선 - 오렌지
-  4: '#00A5DE',  // 4호선 - 라이트블루
-} as const;
-
-
-/**
- * 실시간 데이터를 프론트엔드 형식으로 변환
- */
 export interface RealtimeStationData {
   frontendStationId: number;
   stationName: string;
@@ -443,18 +431,10 @@ export interface RealtimeStationData {
 }
 
 export const LineBitUtils = {
-  /**
-   * 노선 배열을 비트로 변환
-   * 예: [1, 4] -> 9 (1001 in binary)
-   */
   linesToBits: (lines: number[]): number => {
     return lines.reduce((bits, line) => bits | (1 << (line - 1)), 0);
   },
 
-  /**
-   * 비트를 노선 배열로 변환
-   * 예: 9 -> [1, 4]
-   */
   bitsToLines: (bits: number): number[] => {
     const lines: number[] = [];
     for (let i = 0; i < 32; i++) {
@@ -465,16 +445,10 @@ export const LineBitUtils = {
     return lines;
   },
 
-  /**
-   * 특정 노선이 비트에 포함되어 있는지 확인
-   */
   hasLine: (bits: number, line: number): boolean => {
     return (bits & (1 << (line - 1))) !== 0;
   },
 
-  /**
-   * 필터 조건과 매치되는지 확인
-   */
   matchesFilter: (stationBits: number, filterLines: number[]): boolean => {
     if (filterLines.length === 0) return true;
     
@@ -494,9 +468,7 @@ export const getStationsByLine = (lineNumber: number): Station[] => {
   );
 };
 
-/**
- * 역명으로 검색
- */
+// 역명으로 검색
 export const searchStations = (query: string): Station[] => {
   if (!query || query.length < 1) return [];
   
@@ -524,9 +496,6 @@ export const searchStations = (query: string): Station[] => {
   });
 };
 
-/**
- * ID로 역 찾기
- */
 export const getStationById = (id: number): Station | undefined => {
   return METRO_STATIONS.find(station => station.id === id);
 };
@@ -538,42 +507,24 @@ export const SVG_CONFIG = {
   width: 132.29166,
   height: 119.0625,
   
-  /**
-   * SVG 좌표를 정규화된 좌표 (0-1)로 변환
-   */
   normalizeCoordinate: (x: number, y: number) => ({
     x: x / 132.29166,
     y: y / 119.0625
   }),
   
-  /**
-   * 정규화된 좌표를 SVG 좌표로 변환
-   */
   denormalizeCoordinate: (normalizedX: number, normalizedY: number) => ({
     x: normalizedX * 132.29166,
     y: normalizedY * 119.0625
   })
 };
 
-export const STORY_STATIONS = [
-  { id: 1, name: "도봉산", lines: [1] },
-  { id: 18, name: "종각", lines: [1] },
-  { id: 20, name: "서울역", lines: [1, 4] },
-  { id: 54, name: "강남", lines: [2] },
-  { id: 71, name: "홍대입구", lines: [2] },
-  { id: 72, name: "신촌", lines: [2] },
-  { id: 119, name: "명동", lines: [4] },
-] as const;
-
 const stationsData = {
   METRO_STATIONS,
-  LINE_COLORS,
   LineBitUtils,
   getStationsByLine,
   searchStations,
   getStationById,
   SVG_CONFIG,
-  STORY_STATIONS
 };
 
 export default stationsData;
