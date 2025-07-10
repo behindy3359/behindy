@@ -1,7 +1,8 @@
 import React from 'react';
 import { Heart, Share2, MessageSquare } from 'lucide-react';
-import { PostActions as StyledPostActions, ActionGroup, ActionButton } from '../styles';
+import { PostActions as StyledPostActions, ActionButton } from '../styles';
 import type { CommentListResponse } from '@/shared/types/community/community';
+import { CommonWrapper } from '@/shared/styles/commonStyles';
 
 interface PostActionsProps {
   enableInteractions: boolean;
@@ -23,7 +24,7 @@ export const PostActions: React.FC<PostActionsProps> = ({
   return (
     <StyledPostActions>
       {enableInteractions && (
-        <ActionGroup>
+        <CommonWrapper>
           <ActionButton
             $active={isLiked}
             onClick={onLike}
@@ -42,17 +43,17 @@ export const PostActions: React.FC<PostActionsProps> = ({
             <Share2 size={16} />
             공유
           </ActionButton>
-        </ActionGroup>
+        </CommonWrapper>
       )}
 
-      <ActionGroup>
+      <CommonWrapper>
         <ActionButton>
           <MessageSquare size={16} />
           <span className="count">
             {commentsData?.totalElements || 0}
           </span>
         </ActionButton>
-      </ActionGroup>
+      </CommonWrapper>
     </StyledPostActions>
   );
 };

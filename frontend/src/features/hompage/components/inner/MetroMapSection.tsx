@@ -1,7 +1,7 @@
 import React from 'react';
 import { Train } from 'lucide-react';
 import { MetroMap } from '@/features/metro/components/MetroMap';
-import { SectionContainer } from '@/shared/styles/commonStyles';
+import { SectionContainer } from '@/shared/styles/commonContainers';
 import { MetroHeader, MetroMapContainer } from '../styles';
 
 export const MetroMapSection: React.FC = () => {

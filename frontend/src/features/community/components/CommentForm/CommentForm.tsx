@@ -9,8 +9,9 @@ import { getTextareaPlaceholder } from '../../utils/commentFormUtils';
 import { CommentFormHeader } from './inner/CommentFormHeader';
 import { CommentTextArea } from './inner/CommentTextArea';
 import { CommentFormActions } from './inner/CommentFormActions';
-import { ErrorMessage, FormContainer } from './styles';
+import { FormContainer } from '@/shared/styles/commonContainers';
 import type { CommentFormProps } from '../../types/commentFormTypes';
+import { ErrorMessage } from './styles';
 
 export const CommentForm: React.FC<CommentFormProps> = ({
   postId,

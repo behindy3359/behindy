@@ -31,13 +31,6 @@ export const CommentItem = styled.div<{ $isReply?: boolean }>`
   `}
 `;
 
-export const CommentHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: ${({ theme }) => theme.spacing[2]};
-`;
-
 export const StyledCommentMeta = styled.div`
   display: flex;
   align-items: center;
@@ -138,13 +131,6 @@ export const EditingContainer = styled.div`
   background: #f0f4ff;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   border: 1px solid #c7d2fe;
-`;
-
-export const LoadingState = styled.div`
-  text-align: center;
-  padding: ${({ theme }) => theme.spacing[6]};
-  color: ${({ theme }) => theme.colors.text.tertiary};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
 export const MenuButton = styled.button`

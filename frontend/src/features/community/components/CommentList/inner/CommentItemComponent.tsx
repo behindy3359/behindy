@@ -3,12 +3,13 @@ import useAuthStore from "@/shared/store/authStore";
 import API_ENDPOINTS from "@/shared/utils/common/api";
 import { useMutation } from "@tanstack/react-query";
 import React, { useCallback, useMemo, useState } from "react";
-import { CommentContainer, CommentContent, CommentHeader, CommentItem, EditingContainer } from "../styles";
+import { CommentContainer, CommentContent, CommentItem, EditingContainer } from "../styles";
 import { CommentMeta } from "./CommentMeta";
 import { CommentActions } from "./CommentActions";
 import CommentForm from "../../CommentForm/CommentForm";
 import { CommentFooter } from "./CommentFooter";
 import { Comment } from "@/shared/types/community/community";
+import { CommonCommentHeader } from "@/shared/styles/commonStyles";
 
 export const CommentItemComponent = React.memo<{
   comment: Comment;
@@ -71,7 +72,7 @@ export const CommentItemComponent = React.memo<{
         transition={{ duration: 0.3 }}
       >
         <CommentItem $isReply={isReply}>
-          <CommentHeader>
+          <CommonCommentHeader>
             <CommentMeta
               authorName={comment.authorName}
               createdAt={comment.createdAt}
@@ -87,7 +88,7 @@ export const CommentItemComponent = React.memo<{
               onDelete={handleDelete}
               onToggleMenu={handleToggleMenu}
             />
-          </CommentHeader>
+          </CommonCommentHeader>
 
           {isEditing ? (
             <EditingContainer>

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { getVisibleLineConnections } from '@/features/metro/data/metroLineConnections';
-import { MapContainer } from './styles';
 import { MetroControls } from './inner/MetroControls';
 import { MetroSVG } from './inner/MetroSVG';
 import { useMetroRealtime } from '../hooks/useMetroRealtime';
@@ -12,6 +11,7 @@ import {
   getVisibleStations,
   calculateLineStats,
 } from '../utils/metroMapUtils';
+import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
 
 export const MetroMap: React.FC = () => {
   // 상태 관리 훅들
@@ -63,7 +63,7 @@ export const MetroMap: React.FC = () => {
   };
 
   return (
-    <MapContainer>
+    <BasicFullWidthContainer>
       <MetroControls
         lineStats={lineStats}
         visibleLines={visibleLines}
@@ -86,6 +86,6 @@ export const MetroMap: React.FC = () => {
         processedRealtimeData={processedRealtimeData}
         onStationClick={handleStationClick}
       />
-    </MapContainer>
+    </BasicFullWidthContainer>
   );
 };

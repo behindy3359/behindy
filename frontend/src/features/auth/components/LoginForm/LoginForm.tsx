@@ -7,18 +7,21 @@ import { Button } from '@/shared/components/ui/button/Button';
 import { useLoginForm } from '../../hooks/useLoginForm';
 import { LoginFormFields } from './inner/LoginFormFields';
 import {
-  LoginContainer,
-  HeaderSection,
-  PageTitle,
-  PageSubtitle,
-  LoginFormContainer,
-  ErrorAlert,
-  SuccessAlert,
-  ButtonContainer,
-  Divider,
   SignupPrompt
 } from './styles';
 import type { LoginFormProps } from '../../types/types';
+import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
+import { 
+  CommonAuthHeaderSection,
+  CommonAuthPageTitle,
+  CommonAuthPageSubtitle,
+  CommonAuthDivider,
+  CommonAuthErrorAlert, 
+  CommonAuthSuccessAlert 
+} from '@/shared/styles/commonAuthStyles';
+import { 
+  CommonWrapper, 
+} from '@/shared/styles/commonStyles';
 
 export const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess
@@ -57,29 +60,29 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   }, [success, onSuccess]);
 
   return (
-    <LoginContainer>
+    <BasicFullWidthContainer>
       {/* 헤더 */}
-      <HeaderSection>
-        <PageTitle
+      <CommonAuthHeaderSection>
+        <CommonAuthPageTitle
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           다시 오신 것을 환영합니다
-        </PageTitle>
-        <PageSubtitle
+        </CommonAuthPageTitle>
+        <CommonAuthPageSubtitle
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           계정에 로그인하여 게임을 계속하세요
-        </PageSubtitle>
-      </HeaderSection>
+        </CommonAuthPageSubtitle>
+      </CommonAuthHeaderSection>
 
       {/* 에러/성공 메시지 */}
       <AnimatePresence>
         {errors.submit && (
-          <ErrorAlert
+          <CommonAuthErrorAlert
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -90,11 +93,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               <div className="title">로그인 실패</div>
               <div className="message">{errors.submit}</div>
             </div>
-          </ErrorAlert>
+          </CommonAuthErrorAlert>
         )}
 
         {success && (
-          <SuccessAlert
+          <CommonAuthSuccessAlert
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -105,12 +108,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               <div className="title">로그인 성공!</div>
               <div className="message">{success}</div>
             </div>
-          </SuccessAlert>
+          </CommonAuthSuccessAlert>
         )}
       </AnimatePresence>
 
       {/* 로그인 폼 */}
-      <LoginFormContainer
+      <CommonWrapper
         onSubmit={handleSubmit}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -127,7 +130,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         />
 
         {/* 로그인 버튼 */}
-        <ButtonContainer
+        <BasicFullWidthContainer
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.3 }}
@@ -143,17 +146,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           >
             {isLoading ? '로그인 중...' : '로그인'}
           </Button>
-        </ButtonContainer>
-      </LoginFormContainer>
+        </BasicFullWidthContainer>
+      </CommonWrapper>
 
       {/* 구분선 */}
-      <Divider
+      <CommonAuthDivider
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.4 }}
       >
         <span>또는</span>
-      </Divider>
+      </CommonAuthDivider>
 
       {/* 회원가입 링크 */}
       <SignupPrompt
@@ -172,6 +175,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </button>
         </p>
       </SignupPrompt>
-    </LoginContainer>
+    </BasicFullWidthContainer>
   );
 };

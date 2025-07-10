@@ -155,13 +155,6 @@ export const EmptyState = styled.div`
   }
 `;
 
-export const LoadingState = styled.div`
-  text-align: center;
-  padding: 60px 20px;
-  color: #6b7280;
-  font-size: 16px;
-`;
-
 export const ViewAllButton = styled(motion.div)`
   margin: 0 24px 24px 24px;
   padding: 16px 24px;

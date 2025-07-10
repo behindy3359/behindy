@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
-import { PageContainer } from '@/shared/styles/commonStyles';
-import { CommunitySection, LoadingState } from './styles';
+import { PageContainer } from '@/shared/styles/commonContainers';
+import { CommunitySection } from './styles';
 import { useHomePageData } from '../hooks/useHomePageData';
 import { useHomePageActions } from '../hooks/useHomePageActions';
 import { useHomePageStats } from '../hooks/useHomePageStats';
@@ -13,6 +13,7 @@ import { PostsGrid } from './inner/PostsGrid';
 import { EmptyPostsState } from './inner/EmptyPostsState';
 import { ViewAllButton } from './inner/ViewAllButton';
 import { ErrorState } from './inner/ErrorState';
+import { CommonLoadingState } from '@/shared/styles/commonStyles';
 
 export const HomePage: React.FC = () => {
   // 훅들로 로직 분리
@@ -45,9 +46,9 @@ export const HomePage: React.FC = () => {
 
         {/* 게시글 내용 */}
         {isLoading ? (
-          <LoadingState>
+          <CommonLoadingState>
             {LOADING_MESSAGES.POSTS_LOADING}
-          </LoadingState>
+          </CommonLoadingState>
         ) : error ? (
           <ErrorState />
         ) : recentPosts.length > 0 ? (

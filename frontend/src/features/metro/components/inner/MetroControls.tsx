@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
-  Controls, 
-  CheckboxGroup, 
+  Controls,
   CheckboxItem, 
   StatusIndicator,
   TrainCountBadge,
@@ -11,6 +10,7 @@ import {
   RealtimeStatus
 } from '../styles';
 import type { MetroControlsProps } from '../../types/metroMapTypes';
+import {CommonGroup} from '@/shared/styles/commonStyles';
 
 export const MetroControls: React.FC<MetroControlsProps> = ({
   lineStats,
@@ -25,7 +25,7 @@ export const MetroControls: React.FC<MetroControlsProps> = ({
 }) => {
   return (
     <Controls>
-      <CheckboxGroup>
+      <CommonGroup>
         {lineStats.map(({ line, color, trainCount }) => (
           <CheckboxItem key={line} $color={color}>
             <input
@@ -62,7 +62,7 @@ export const MetroControls: React.FC<MetroControlsProps> = ({
             </ArrivalStationInfo>
           )}
         </CheckboxItem>
-      </CheckboxGroup>
+      </CommonGroup>
 
       <StatusIndicator>
         {isLoading && <div className="status-dot" />}

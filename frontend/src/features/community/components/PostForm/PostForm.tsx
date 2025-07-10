@@ -5,14 +5,15 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/shared/store/authStore';
-import { PageContainer } from '@/shared/styles/commonStyles';
+import { PageContainer } from '@/shared/styles/commonContainers';
 import { usePostForm } from '../../hooks/usePostForm';
 import { usePostFormPreview } from '../../hooks/usePostFormPreview';
 import { validateFormContent } from '../../utils/postFormUtils';
 import { PostFormHeader } from './inner/PostFormHeader';
 import { PostFormContent } from './inner/PostFormContent';
 import { PostFormActions } from './inner/PostFormActions';
-import { FormContainer, ErrorMessage, LoadingOverlay } from './styles';
+import { ErrorMessage, LoadingOverlay } from './styles';
+import { FormContainer } from '@/shared/styles/commonContainers';
 import type { PostFormProps } from '../../types/postFormTypes';
 
 export const PostForm: React.FC<PostFormProps> = ({ 

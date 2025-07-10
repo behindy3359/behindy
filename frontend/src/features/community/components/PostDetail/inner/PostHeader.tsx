@@ -1,7 +1,8 @@
 import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { ArrowLeft, MoreHorizontal, Edit3, Trash2, Flag } from 'lucide-react';
-import { BackButton, Header, ActionMenu, MenuButton, MenuDropdown, MenuItem } from '../styles';
+import { BackButton, ActionMenu, MenuButton, MenuDropdown, MenuItem } from '../styles';
+import { CommonCommentHeader } from '@/shared/styles/commonStyles';
 
 interface PostHeaderProps {
   showMenu: boolean;
@@ -25,7 +26,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
   onToggleMenu,
 }) => {
   return (
-    <Header>
+    <CommonCommentHeader>
       <BackButton
         onClick={onBack}
         whileHover={{ scale: 1.02 }}
@@ -75,6 +76,6 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
           </AnimatePresence>
         </ActionMenu>
       )}
-    </Header>
+    </CommonCommentHeader>
   );
 };

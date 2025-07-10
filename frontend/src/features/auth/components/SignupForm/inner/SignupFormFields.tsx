@@ -4,12 +4,12 @@ import { Input } from '@/shared/components/ui/input/Input';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { AgreementSection } from './AgreementSection';
 import {
-  FieldsContainer,
-  FieldWrapper,
   PasswordToggleButton,
   PasswordMatchIndicator
 } from '../styles';
 import type { SignupFormFieldsProps } from '../../../types/types';
+import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
+import { CommonWrapper } from '@/shared/styles/commonStyles';
 
 export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
   formData,
@@ -26,9 +26,9 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
                          formData.password === formData.confirmPassword;
 
   return (
-    <FieldsContainer>
+    <CommonWrapper>
       {/* 이름 필드 */}
-      <FieldWrapper
+      <BasicFullWidthContainer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -47,10 +47,10 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           autoComplete="name"
           autoFocus
         />
-      </FieldWrapper>
+      </BasicFullWidthContainer>
 
       {/* 이메일 필드 */}
-      <FieldWrapper
+      <BasicFullWidthContainer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
@@ -68,10 +68,10 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           fullWidth
           autoComplete="email"
         />
-      </FieldWrapper>
+      </BasicFullWidthContainer>
 
       {/* 비밀번호 필드 */}
-      <FieldWrapper
+      <BasicFullWidthContainer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
@@ -106,10 +106,10 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             className="mt-2"
           />
         )}
-      </FieldWrapper>
+      </BasicFullWidthContainer>
 
       {/* 비밀번호 확인 필드 */}
-      <FieldWrapper
+      <BasicFullWidthContainer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.3 }}
@@ -154,10 +154,10 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             </span>
           </PasswordMatchIndicator>
         )}
-      </FieldWrapper>
+      </BasicFullWidthContainer>
 
       {/* 약관 동의 섹션 */}
-      <FieldWrapper
+      <BasicFullWidthContainer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
@@ -181,7 +181,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           }}
           disabled={disabled}
         />
-      </FieldWrapper>
-    </FieldsContainer>
+      </BasicFullWidthContainer>
+    </CommonWrapper>
   );
 };

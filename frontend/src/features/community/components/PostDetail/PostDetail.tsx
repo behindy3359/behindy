@@ -5,7 +5,7 @@ import { MessageSquare } from 'lucide-react';
 import { CommentList } from '../CommentList/CommentList';
 import { CommentForm } from '../CommentForm/CommentForm';
 import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
-import { PageContainer } from '@/shared/styles/commonStyles';
+import { PageContainer } from '@/shared/styles/commonContainers';
 import { PostDetailProps } from '../../types/postDetailTypes';
 import { usePostDetail } from '../../hooks/usePostDetail';
 import { usePostComments } from '../../hooks/usePostComments';
@@ -14,7 +14,8 @@ import { PostHeader } from './inner/PostHeader';
 import { PostContent } from './inner/PostContent';
 import { PostActions } from './inner/PostActions';
 import { PostErrorState } from './inner/PostErrorState';
-import { CommentsSection, CommentsSectionHeader, LoadingState } from './styles';
+import { CommentsSection, CommentsSectionHeader } from './styles';
+import { CommonLoadingState } from '@/shared/styles/commonStyles';
 
 export const PostDetail: React.FC<PostDetailProps> = ({ 
   postId,
@@ -56,9 +57,9 @@ export const PostDetail: React.FC<PostDetailProps> = ({
   if (isLoading) {
     return (
       <PageContainer>
-        <LoadingState>
+        <CommonLoadingState>
           {LOADING_MESSAGES.POST_LOADING}
-        </LoadingState>
+        </CommonLoadingState>
       </PageContainer>
     );
   }
@@ -127,9 +128,9 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           {/* 댓글 목록 */}
           <div style={{ padding: '24px' }}>
             {isLoadingComments ? (
-              <LoadingState>
+              <CommonLoadingState>
                 {LOADING_MESSAGES.COMMENT_LOADING}
-              </LoadingState>
+              </CommonLoadingState>
             ) : commentsData && commentsData.comments.length > 0 ? (
               <CommentList 
                 comments={commentsData.comments}

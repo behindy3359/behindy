@@ -1,8 +1,9 @@
 import React from 'react';
 import { Send, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
-import { ActionGroup, Actions, CancelButton, Tips } from '../styles';
+import { Actions, CancelButton, Tips } from '../styles';
 import { getCancelButtonText, getSubmitButtonText } from '../../../utils/commentFormUtils';
+import { CommonGroup } from '@/shared/styles/commonStyles';
 
 interface CommentFormActionsProps {
   isEditing: boolean;
@@ -27,7 +28,7 @@ export const CommentFormActions = React.memo<CommentFormActionsProps>(
           <div className="tip-item">• 스팸이나 광고성 댓글은 삭제될 수 있습니다</div>
         </Tips>
 
-        <ActionGroup>
+        <CommonGroup>
           {(isEditing || hasContent) && (
             <CancelButton 
               type="button" 
@@ -49,7 +50,7 @@ export const CommentFormActions = React.memo<CommentFormActionsProps>(
           >
             {getSubmitButtonText(isEditing, isLoading)}
           </Button>
-        </ActionGroup>
+        </CommonGroup>
       </Actions>
     );
   }

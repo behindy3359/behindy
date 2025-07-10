@@ -2,9 +2,9 @@
 
 import React, { useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { LoadingState } from './styles';
 import { CommentListProps } from '../../types/commentListTypes';
 import { CommentItemComponent } from './inner/CommentItemComponent';
+import { CommonLoadingState } from '@/shared/styles/commonStyles';
 
 export const CommentList: React.FC<CommentListProps> = ({ 
   comments, 
@@ -14,9 +14,9 @@ export const CommentList: React.FC<CommentListProps> = ({
 
   if (memoizedComments.length === 0) {
     return (
-      <LoadingState>
+      <CommonLoadingState>
         아직 작성된 댓글이 없습니다.
-      </LoadingState>
+      </CommonLoadingState>
     );
   }
 

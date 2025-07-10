@@ -26,108 +26,11 @@ export const SignupContainer = styled.div`
   }
 `;
 
-export const HeaderSection = styled.div`
-  text-align: center;
-  margin-bottom: 32px;
-`;
-
-export const PageTitle = styled(motion.h1)`
-  font-size: 32px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 8px 0;
-`;
-
-export const SignupFormContainer = styled(motion.form)`
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-`;
-
-export const AlertContainer = styled(motion.div)`
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 24px;
-  
-  svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-  
-  .content {
-    flex: 1;
-    
-    .title {
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    
-    .message {
-      margin: 0;
-    }
-  }
-`;
-
-export const ErrorAlert = styled(AlertContainer)`
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-  
-  .title {
-    color: #dc2626;
-  }
-  
-  .message {
-    color: #b91c1c;
-  }
-`;
-
-export const SuccessAlert = styled(AlertContainer)`
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #16a34a;
-  
-  .title {
-    color: #16a34a;
-  }
-  
-  .message {
-    color: #15803d;
-  }
-`;
-
 export const ActionsContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding-top: 24px;
-`;
-
-export const Divider = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  margin: 32px 0;
-  
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #d1d5db;
-  }
-  
-  span {
-    padding: 0 16px;
-    color: #6b7280;
-    font-size: 14px;
-    font-weight: 500;
-  }
 `;
 
 export const LoginPrompt = styled(motion.div)`
@@ -160,16 +63,6 @@ export const LoginPrompt = styled(motion.div)`
       cursor: not-allowed;
     }
   }
-`;
-
-export const FieldsContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-`;
-
-export const FieldWrapper = styled(motion.div)`
-  width: 100%;
 `;
 
 export const PasswordToggleButton = styled.button`

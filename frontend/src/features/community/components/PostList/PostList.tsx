@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { PageContainer } from '@/shared/styles/commonStyles';
+import { PageContainer } from '@/shared/styles/commonContainers';
 import { usePostList } from '../../hooks/usePostList';
 import { PostListHeader } from './inner/PostListHeader';
 import { PostListActionBar } from './inner/PostListActionBar';

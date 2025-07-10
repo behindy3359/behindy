@@ -8,15 +8,19 @@ import { useSignupForm } from '../../hooks/useSignupForm';
 import { SignupFormFields } from './inner/SignupFormFields';
 import {
   SignupContainer,
-  HeaderSection,
-  PageTitle,
-  SignupFormContainer,
-  ErrorAlert,
-  SuccessAlert,
   ActionsContainer,
-  Divider,
   LoginPrompt
 } from './styles';
+import { 
+  CommonAuthHeaderSection,
+  CommonAuthPageTitle,
+  CommonAuthDivider,
+  CommonAuthErrorAlert, 
+  CommonAuthSuccessAlert 
+} from '@/shared/styles/commonAuthStyles';
+import { 
+  CommonWrapper, 
+} from '@/shared/styles/commonStyles';
 
 export const SignupForm: React.FC = () => {
   const {
@@ -35,20 +39,20 @@ export const SignupForm: React.FC = () => {
   return (
     <SignupContainer>
       {/* 헤더 */}
-      <HeaderSection>
-        <PageTitle
+      <CommonAuthHeaderSection>
+        <CommonAuthPageTitle
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           Behindy에 어서오세요!
-        </PageTitle>
-      </HeaderSection>
+        </CommonAuthPageTitle>
+      </CommonAuthHeaderSection>
 
       {/* 에러/성공 메시지 */}
       <AnimatePresence>
         {submitError && (
-          <ErrorAlert
+          <CommonAuthErrorAlert
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -59,11 +63,11 @@ export const SignupForm: React.FC = () => {
               <div className="title">회원가입 실패</div>
               <div className="message">{submitError}</div>
             </div>
-          </ErrorAlert>
+          </CommonAuthErrorAlert>
         )}
 
         {submitSuccess && (
-          <SuccessAlert
+          <CommonAuthSuccessAlert
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -74,12 +78,12 @@ export const SignupForm: React.FC = () => {
               <div className="title">회원가입 성공!</div>
               <div className="message">{submitSuccess}</div>
             </div>
-          </SuccessAlert>
+          </CommonAuthSuccessAlert>
         )}
       </AnimatePresence>
 
       {/* 회원가입 폼 */}
-      <SignupFormContainer
+      <CommonWrapper
         onSubmit={handleSubmit}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -123,16 +127,16 @@ export const SignupForm: React.FC = () => {
             취소
           </Button>
         </ActionsContainer>
-      </SignupFormContainer>
+      </CommonWrapper>
 
       {/* 구분선 */}
-      <Divider
+      <CommonAuthDivider
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.6 }}
       >
         <span>또는</span>
-      </Divider>
+      </CommonAuthDivider>
 
       {/* 로그인 링크 */}
       <LoginPrompt

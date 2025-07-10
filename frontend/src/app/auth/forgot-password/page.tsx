@@ -11,6 +11,8 @@ import { Mail, ArrowLeft, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
 import { Input } from '@/shared/components/ui/input/Input'
 import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
+import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
+import { CommonWrapper } from '@/shared/styles/commonStyles';
 
 interface ForgotPasswordFormData {
   email: string;
@@ -23,9 +25,6 @@ const forgotPasswordSchema = yup.object({
     .email('올바른 이메일 형식이 아닙니다'),
 });
 
-const ForgotPasswordContainer = styled.div`
-  width: 100%;
-`;
 
 const BackButton = styled(motion.button)`
   display: flex;
@@ -61,12 +60,6 @@ const PageSubtitle = styled.p`
   margin: 0 0 32px 0;
   font-size: 16px;
   line-height: 1.5;
-`;
-
-const ForgotPasswordForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
 `;
 
 const SuccessState = styled(motion.div)`
@@ -153,8 +146,8 @@ function ForgotPasswordContent() {
       setIsLoading(true);
       setError('');
 
-      // const response = await api.post('/auth/forgot-password', data);
-      // 임시로 동작하게...      
+      // TODO : const response = await api.post('/auth/forgot-password', data);
+      // TODO : 임시로 동작하게...      
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       setSubmittedEmail(data.email);
@@ -172,7 +165,7 @@ function ForgotPasswordContent() {
 
   if (isSuccess) {
     return (
-      <ForgotPasswordContainer>
+      <BasicFullWidthContainer>
         <SuccessState
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -208,12 +201,12 @@ function ForgotPasswordContent() {
             로그인으로 돌아가기
           </Button>
         </SuccessState>
-      </ForgotPasswordContainer>
+      </BasicFullWidthContainer>
     );
   }
 
   return (
-    <ForgotPasswordContainer>
+    <BasicFullWidthContainer>
       <BackButton
         onClick={handleBackToLogin}
         whileHover={{ x: -2 }}
@@ -243,7 +236,7 @@ function ForgotPasswordContent() {
         )}
       </AnimatePresence>
 
-      <ForgotPasswordForm onSubmit={handleSubmit(onSubmit)}>
+      <CommonWrapper onSubmit={handleSubmit(onSubmit)}>
         <Input
           {...register('email')}
           type="email"
@@ -267,8 +260,8 @@ function ForgotPasswordContent() {
         >
           {isLoading ? '전송 중...' : '재설정 링크 보내기'}
         </Button>
-      </ForgotPasswordForm>
-    </ForgotPasswordContainer>
+      </CommonWrapper>
+    </BasicFullWidthContainer>
   );
 }
 

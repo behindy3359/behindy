@@ -116,12 +116,6 @@ export const Actions = styled.div`
   align-items: center;
 `;
 
-export const ActionGroup = styled.div`
-  display: flex;
-  gap: 8px;
-  align-items: center;
-`;
-
 export const CancelButton = styled.button`
   padding: 6px 12px;
   background: none;

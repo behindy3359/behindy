@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import styled from "styled-components";
+import { FormSection } from "@/shared/styles/commonContainers";
 
 export const Header = styled.div`
   display: flex;
@@ -49,23 +50,6 @@ export const Actions = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing[4]};
   align-items: center;
-`;
-
-export const FormContainer = styled(motion.div)`
-  background: ${({ theme }) => theme.colors.background.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.xl};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  overflow: hidden;
-  box-shadow: ${({ theme }) => theme.shadows.card};
-  position: relative;
-`;
-
-export const FormSection = styled.div`
-  padding: ${({ theme }) => theme.spacing[6]};
-  
-  &:not(:last-child) {
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
-  }
 `;
 
 export const TitleSection = styled(FormSection)`

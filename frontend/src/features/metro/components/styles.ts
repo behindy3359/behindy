@@ -1,10 +1,5 @@
 import styled from 'styled-components';
 
-// 메인 컨테이너
-export const MapContainer = styled.div`
-  width: 100%;
-`;
-
 // 컨트롤 패널
 export const Controls = styled.div`
   display: flex;
@@ -13,12 +8,6 @@ export const Controls = styled.div`
   flex-wrap: wrap;
   align-items: center;
   padding: 16px 0;
-`;
-
-export const CheckboxGroup = styled.div`
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
 `;
 
 export const CheckboxItem = styled.label<{ $color?: string }>`

@@ -1,13 +1,6 @@
 import { motion } from "framer-motion";
 import styled from "styled-components";
 
-export const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-`;
-
 export const BackButton = styled(motion.button)`
   display: flex;
   align-items: center;
@@ -173,12 +166,6 @@ export const PostActions = styled.div`
   border-top: 1px solid #e5e7eb;
 `;
 
-export const ActionGroup = styled.div`
-  display: flex;
-  gap: 12px;
-  align-items: center;
-`;
-
 export const ActionButton = styled(motion.button)<{ $active?: boolean }>`
   display: flex;
   align-items: center;
@@ -223,14 +210,6 @@ export const CommentsSectionHeader = styled.div`
     align-items: center;
     gap: 8px;
   }
-`;
-
-export const LoadingState = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px;
-  color: #6b7280;
 `;
 
 export const ErrorState = styled.div`

@@ -9,7 +9,7 @@ import {
   Users, 
 } from 'lucide-react';
 import { PublicLayout } from '@/shared/components/layout/applayout/AppLayout';
-import { PageContainer } from '@/shared/styles/commonStyles';
+import { PageContainer } from '@/shared/styles/commonContainers';
 import { gradients } from '@/shared/styles/theme';
 
 // ================================================================

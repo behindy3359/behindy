@@ -3,14 +3,14 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/shared/components/ui/input/Input';
 import { DemoLoginSection } from './DemoLoginSection';
 import {
-  FieldsContainer,
-  FieldWrapper,
   OptionsContainer,
   RememberMeWrapper,
   ForgotPasswordLink,
   PasswordToggleButton
 } from '../styles';
 import type { LoginFormFieldsProps } from '../../../types/types';
+import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
+import { CommonWrapper } from '@/shared/styles/commonStyles';
 
 export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
   formData,
@@ -24,8 +24,7 @@ export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <FieldsContainer>
-      {/* 데모 로그인 섹션 */}
+    <CommonWrapper>
       {showDemoLogin && onDemoLogin && (
         <DemoLoginSection 
           onDemoLogin={onDemoLogin}
@@ -33,8 +32,7 @@ export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
         />
       )}
 
-      {/* 이메일 필드 */}
-      <FieldWrapper
+      <BasicFullWidthContainer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -53,10 +51,9 @@ export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
           autoComplete="email"
           autoFocus
         />
-      </FieldWrapper>
+      </BasicFullWidthContainer>
 
-      {/* 비밀번호 필드 */}
-      <FieldWrapper
+      <BasicFullWidthContainer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
@@ -83,15 +80,13 @@ export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
           fullWidth
           autoComplete="current-password"
         />
-      </FieldWrapper>
+      </BasicFullWidthContainer>
 
-      {/* 옵션들 */}
       <OptionsContainer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        {/* 로그인 상태 유지 */}
         <RememberMeWrapper>
           <input
             type="checkbox"
@@ -102,11 +97,9 @@ export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
           <span>로그인 상태 유지</span>
         </RememberMeWrapper>
 
-        {/* 비밀번호 찾기 링크 */}
         <ForgotPasswordLink
           type="button"
           onClick={() => {
-            // 부모 컴포넌트에서 처리하도록 이벤트 전달
             const event = new CustomEvent('navigate-to-forgot-password');
             window.dispatchEvent(event);
           }}
@@ -115,6 +108,6 @@ export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
           비밀번호를 잊으셨나요?
         </ForgotPasswordLink>
       </OptionsContainer>
-    </FieldsContainer>
+    </CommonWrapper>
   );
 };
