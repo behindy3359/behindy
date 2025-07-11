@@ -25,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-// ✅ CORS 관련 필수 Import 추가
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -58,17 +57,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // ✅ CORS 설정을 명시적으로 정의
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ✅ allowedOriginPatterns 사용 (allowCredentials=true 호환)
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://behindy.me",
                 "https://behindy.me",
-                "http://localhost:3000",
-                "http://localhost:3001"
+                "http://localhost:3000"
         ));
 
         configuration.setAllowedMethods(Arrays.asList(
@@ -83,8 +79,6 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
-// SecurityConfig.java 수정
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -103,10 +97,13 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/").permitAll()
 
-                        // 🎯 추가: 게시판 및 댓글 조회 공개
-                        .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()           // 게시글 목록
-                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()        // 개별 게시글
-                        .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()     // 댓글 조회
+                        // 🎯 게시판 및 댓글 조회 공개
+                        .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
+
+                        // 🚀 개발용: AI API 전체 공개 (운영시 제거 예정)
+                        .requestMatchers("/api/ai-stories/**").permitAll()
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
