@@ -101,6 +101,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ai-stories/**").permitAll()
 
                         // 🚀 개발용: AI API 전체 공개 (운영시 제거 예정)
                         .requestMatchers("/api/ai-stories/**").permitAll()
