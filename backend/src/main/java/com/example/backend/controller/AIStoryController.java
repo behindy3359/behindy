@@ -105,4 +105,37 @@ public class AIStoryController {
                 ))
                 .build());
     }
+    
+    /**
+     * AI 서버에서 동적 스토리 생성 (GET 방식)
+     */
+    @GetMapping("/generate")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse> generateDynamicStoryGet(
+            @RequestParam String stationName,
+            @RequestParam Integer lineNumber,
+            @RequestParam(defaultValue = "80") Integer characterHealth,
+            @RequestParam(defaultValue = "80") Integer characterSanity) {
+
+        try {
+            log.info("동적 스토리 생성 요청 (GET): {}, {}호선", stationName, lineNumber);
+
+            StoryResponse story = aiStoryService.generateStory(
+                    stationName, lineNumber, characterHealth, characterSanity
+            );
+
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("AI 스토리 생성 완료")
+                    .data(story)
+                    .build());
+
+        } catch (Exception e) {
+            log.error("동적 스토리 생성 실패: {}", e.getMessage(), e);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(false)
+                    .message("스토리 생성 중 오류가 발생했습니다.")
+                    .build());
+        }
+    }
 }
