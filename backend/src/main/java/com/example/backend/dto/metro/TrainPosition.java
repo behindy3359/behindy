@@ -23,14 +23,20 @@ public class TrainPosition {
     private Integer lineNumber;
 
     /**
-     * 현재 위치한 역 ID
+     * 현재 위치한 역 ID (API 내부 식별번호)
      */
     private String stationId;
 
     /**
-     * 현재 위치한 역명
+     * 현재 위치한 역명 (백엔드 원본)
      */
     private String stationName;
+
+    /**
+     * 프론트엔드 역 ID (환승역 통합된 역명)
+     * 예: "시청", "서울역" 등
+     */
+    private String frontendStationId;
 
     /**
      * 운행 방향 ("up": 상행, "down": 하행)
@@ -121,8 +127,8 @@ public class TrainPosition {
      */
     @Override
     public String toString() {
-        return String.format("Train[%s] %s %s역 (%s) [%.2f,%.2f] %s",
-                trainId, getDisplayLineName(), stationName, getDisplayDirection(),
+        return String.format("Train[%s] %s %s역(%s) (%s) [%.2f,%.2f] %s",
+                trainId, getDisplayLineName(), stationName, frontendStationId, getDisplayDirection(),
                 x != null ? x : 0.0, y != null ? y : 0.0, dataSource);
     }
 }

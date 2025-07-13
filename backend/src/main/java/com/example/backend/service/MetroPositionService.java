@@ -248,6 +248,7 @@ public class MetroPositionService {
                     .lineNumber(lineNumber)
                     .stationId(station.getId())
                     .stationName(station.getName())
+                    .frontendStationId(station.getName())
                     .direction(direction)
                     .lastUpdated(LocalDateTime.now().minusSeconds(random.nextInt(120)))
                     .dataSource("CLEAN_MOCK")

@@ -46,53 +46,145 @@ public class MetroApiService {
     private List<String> enabledLines;
 
     private static final List<CleanStationInfo> STATION_DATA = Arrays.asList(
-            // 1호선
-            new CleanStationInfo("1", "도봉산", "1001000117"),
+            // 1호선 (프론트엔드 데이터와 동기화)
+            new CleanStationInfo("1", "도봉산", "1001000113"),
+            new CleanStationInfo("1", "도봉", "1001000114"),
+            new CleanStationInfo("1", "방학", "1001000115"),
             new CleanStationInfo("1", "창동", "1001000116"),
+            new CleanStationInfo("1", "녹천", "1001000117"),
+            new CleanStationInfo("1", "월계", "1001000118"),
+            new CleanStationInfo("1", "광운대", "1001000119"),
+            new CleanStationInfo("1", "석계", "1001000120"),
+            new CleanStationInfo("1", "신이문", "1001000121"),
+            new CleanStationInfo("1", "외대앞", "1001000122"),
+            new CleanStationInfo("1", "회기", "1001000123"),
+            new CleanStationInfo("1", "청량리", "1001000124"),
+            new CleanStationInfo("1", "제기동", "1001000125"),
+            new CleanStationInfo("1", "신설동", "1001000126"),
+            new CleanStationInfo("1", "동묘앞", "1001000127"),
             new CleanStationInfo("1", "종로5가", "1001000129"),
+            new CleanStationInfo("1", "종로3가", "1001000130"),
             new CleanStationInfo("1", "종각", "1001000131"),
             new CleanStationInfo("1", "시청", "1001000132"),
             new CleanStationInfo("1", "서울역", "1001000133"),
+            new CleanStationInfo("1", "남영", "1001000134"),
             new CleanStationInfo("1", "용산", "1001000135"),
+            new CleanStationInfo("1", "노량진", "1001000136"),
+            new CleanStationInfo("1", "대방", "1001000137"),
+            new CleanStationInfo("1", "신길", "1001000138"),
             new CleanStationInfo("1", "영등포", "1001000139"),
             new CleanStationInfo("1", "구로", "1001000141"),
+            new CleanStationInfo("1", "구일", "1001000142"),
+            new CleanStationInfo("1", "개봉", "1001000143"),
+            new CleanStationInfo("1", "오류동", "1001000144"),
             new CleanStationInfo("1", "온수", "1001000145"),
 
             // 2호선
+            new CleanStationInfo("2", "시청", "1002000201"),
             new CleanStationInfo("2", "을지로입구", "1002000202"),
+            new CleanStationInfo("2", "을지로3가", "1002000203"),
+            new CleanStationInfo("2", "을지로4가", "1002000204"),
             new CleanStationInfo("2", "동대문역사문화공원", "1002000205"),
+            new CleanStationInfo("2", "신당", "1002000206"),
+            new CleanStationInfo("2", "상왕십리", "1002000207"),
+            new CleanStationInfo("2", "왕십리", "1002000208"),
+            new CleanStationInfo("2", "한양대", "1002000209"),
+            new CleanStationInfo("2", "뚝섬", "1002000210"),
+            new CleanStationInfo("2", "성수", "1002000211"),
             new CleanStationInfo("2", "건대입구", "1002000212"),
+            new CleanStationInfo("2", "구의", "1002000213"),
+            new CleanStationInfo("2", "강변", "1002000214"),
+            new CleanStationInfo("2", "잠실나루", "1002000215"),
             new CleanStationInfo("2", "잠실", "1002000216"),
+            new CleanStationInfo("2", "잠실새내", "1002000217"),
+            new CleanStationInfo("2", "종합운동장", "1002000218"),
             new CleanStationInfo("2", "삼성", "1002000219"),
+            new CleanStationInfo("2", "선릉", "1002000220"),
+            new CleanStationInfo("2", "역삼", "1002000221"),
             new CleanStationInfo("2", "강남", "1002000222"),
+            new CleanStationInfo("2", "교대", "1002000223"),
+            new CleanStationInfo("2", "서초", "1002000224"),
+            new CleanStationInfo("2", "방배", "1002000225"),
             new CleanStationInfo("2", "사당", "1002000226"),
+            new CleanStationInfo("2", "낙성대", "1002000227"),
+            new CleanStationInfo("2", "서울대입구", "1002000228"),
+            new CleanStationInfo("2", "봉천", "1002000229"),
             new CleanStationInfo("2", "신림", "1002000230"),
+            new CleanStationInfo("2", "신대방", "1002000231"),
             new CleanStationInfo("2", "구로디지털단지", "1002000232"),
+            new CleanStationInfo("2", "대림", "1002000233"),
+            new CleanStationInfo("2", "신도림", "1002000234"),
+            new CleanStationInfo("2", "문래", "1002000235"),
+            new CleanStationInfo("2", "영등포구청", "1002000236"),
+            new CleanStationInfo("2", "당산", "1002000237"),
+            new CleanStationInfo("2", "합정", "1002000238"),
             new CleanStationInfo("2", "홍대입구", "1002000239"),
             new CleanStationInfo("2", "신촌", "1002000240"),
+            new CleanStationInfo("2", "이대", "1002000241"),
+            new CleanStationInfo("2", "아현", "1002000242"),
 
             // 3호선
-            new CleanStationInfo("3", "구파발", "1003000301"),
-            new CleanStationInfo("3", "불광", "1003000303"),
-            new CleanStationInfo("3", "독립문", "1003000307"),
-            new CleanStationInfo("3", "종로3가", "1003000310"),
-            new CleanStationInfo("3", "충무로", "1003000328"),
-            new CleanStationInfo("3", "압구정", "1003000323"),
-            new CleanStationInfo("3", "교대", "1003000319"),
-            new CleanStationInfo("3", "양재", "1003000344"),
-            new CleanStationInfo("3", "수서", "1003000351"),
+            new CleanStationInfo("3", "구파발", "1003000320"),
+            new CleanStationInfo("3", "연신내", "1003000321"),
+            new CleanStationInfo("3", "불광", "1003000322"),
+            new CleanStationInfo("3", "녹번", "1003000323"),
+            new CleanStationInfo("3", "홍제", "1003000324"),
+            new CleanStationInfo("3", "무악재", "1003000325"),
+            new CleanStationInfo("3", "독립문", "1003000326"),
+            new CleanStationInfo("3", "경복궁", "1003000327"),
+            new CleanStationInfo("3", "안국", "1003000328"),
+            new CleanStationInfo("3", "종로3가", "1003000329"),
+            new CleanStationInfo("3", "을지로3가", "1003000330"),
+            new CleanStationInfo("3", "충무로", "1003000331"),
+            new CleanStationInfo("3", "동대입구", "1003000332"),
+            new CleanStationInfo("3", "약수", "1003000333"),
+            new CleanStationInfo("3", "금고", "1003000334"),
+            new CleanStationInfo("3", "옥수", "1003000335"),
+            new CleanStationInfo("3", "압구정", "1003000336"),
+            new CleanStationInfo("3", "신사", "1003000337"),
+            new CleanStationInfo("3", "잠원", "1003000338"),
+            new CleanStationInfo("3", "고속터미널", "1003000339"),
+            new CleanStationInfo("3", "교대", "1003000340"),
+            new CleanStationInfo("3", "남부터미널", "1003000341"),
+            new CleanStationInfo("3", "양재", "1003000342"),
+            new CleanStationInfo("3", "매봉", "1003000343"),
+            new CleanStationInfo("3", "도곡", "1003000344"),
+            new CleanStationInfo("3", "대치", "1003000345"),
+            new CleanStationInfo("3", "학여울", "1003000346"),
+            new CleanStationInfo("3", "대청", "1003000347"),
+            new CleanStationInfo("3", "일원", "1003000348"),
+            new CleanStationInfo("3", "수서", "1003000349"),
+            new CleanStationInfo("3", "가락시장", "1003000350"),
+            new CleanStationInfo("3", "경찰병원", "1003000351"),
             new CleanStationInfo("3", "오금", "1003000352"),
 
             // 4호선
-            new CleanStationInfo("4", "당고개", "1004000401"),
-            new CleanStationInfo("4", "상계", "1004000402"),
+            new CleanStationInfo("4", "불암산", "1004000409"),
+            new CleanStationInfo("4", "상계", "1004000410"),
+            new CleanStationInfo("4", "노원", "1004000411"),
             new CleanStationInfo("4", "창동", "1004000412"),
+            new CleanStationInfo("4", "쌍문", "1004000413"),
+            new CleanStationInfo("4", "수유", "1004000414"),
+            new CleanStationInfo("4", "미아", "1004000415"),
+            new CleanStationInfo("4", "미아사거리", "1004000416"),
+            new CleanStationInfo("4", "길음", "1004000417"),
+            new CleanStationInfo("4", "성신여대입구", "1004000418"),
             new CleanStationInfo("4", "한성대입구", "1004000419"),
+            new CleanStationInfo("4", "혜화", "1004000420"),
             new CleanStationInfo("4", "동대문", "1004000421"),
+            new CleanStationInfo("4", "동대문역사문화공원", "1004000422"),
             new CleanStationInfo("4", "충무로", "1004000423"),
             new CleanStationInfo("4", "명동", "1004000424"),
+            new CleanStationInfo("4", "회현", "1004000425"),
             new CleanStationInfo("4", "서울역", "1004000426"),
-            new CleanStationInfo("4", "사당", "1004000433")
+            new CleanStationInfo("4", "숙대입구", "1004000427"),
+            new CleanStationInfo("4", "삼각지", "1004000428"),
+            new CleanStationInfo("4", "신용산", "1004000429"),
+            new CleanStationInfo("4", "이촌", "1004000430"),
+            new CleanStationInfo("4", "동작", "1004000431"),
+            new CleanStationInfo("4", "이수", "1004000432"),
+            new CleanStationInfo("4", "사당", "1004000433"),
+            new CleanStationInfo("4", "남태령", "1004000434")
     );
 
     public MetroApiService() {
@@ -248,9 +340,8 @@ public class MetroApiService {
                     .lineNumber(Integer.valueOf(extractLineNumber(position.getSubwayId())))
                     .stationId(position.getStatnId())
                     .stationName(position.getStatnNm())
+                    .frontendStationId(position.getStatnNm()) // 🎯 프론트엔드 역명 추가
                     .direction(convertDirection(position.getUpdnLine()))
-                    .x(null)
-                    .y(null)
                     .lastUpdated(LocalDateTime.now())
                     .dataSource("API")
                     .isRealtime(true)
@@ -259,8 +350,7 @@ public class MetroApiService {
             return result;
 
         } catch (Exception e) {
-            log.error(" 변환 실패: TrainNo={}, Error={}",
-                    position.getTrainNo(), e.getMessage());
+            log.error("변환 실패: TrainNo={}, Error={}", position.getTrainNo(), e.getMessage());
             return null;
         }
     }
@@ -512,9 +602,8 @@ public class MetroApiService {
                 .lineNumber(Integer.valueOf(extractLineNumber(position.getSubwayId())))
                 .stationId(position.getStatnId())
                 .stationName(position.getStatnNm())
+                .frontendStationId(position.getStatnNm())
                 .direction(convertDirection(position.getUpdnLine()))
-                .x(null)
-                .y(null)
                 .lastUpdated(LocalDateTime.now())
                 .dataSource("API")
                 .isRealtime(true)

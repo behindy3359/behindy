@@ -28,12 +28,6 @@ public class Station {
     @Column(name = "sta_line_name")
     private String staLineName;
 
-    @Column(name = "coordinates_x")
-    private Double coordinatesX;
-
-    @Column(name = "coordinates_y")
-    private Double coordinatesY;
-
     @OneToMany(mappedBy = "station", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Story> stories = new ArrayList<>();
