@@ -25,9 +25,9 @@ export interface MetroApiResponse {
   };
 }
 
-// 처리된 실시간 데이터 타입
+// 처리된 실시간 데이터 타입 (🔥 frontendStationId만 string으로 변경)
 export interface ProcessedTrainData {
-  frontendStationId: number;
+  frontendStationId: string;       // 🔥 number → string (역명)
   stationName: string;
   lineNumber: number;
   direction: 'up' | 'down';
@@ -62,25 +62,25 @@ export interface UseMetroRealtimeReturn {
   refreshData: () => void;
 }
 
-// 상태 관리 훅 반환 타입
+// 상태 관리 훅 반환 타입 (🔥 Set<number> → Set<string>으로만 변경)
 export interface UseMetroStateReturn {
   visibleLines: number[];
   showDistricts: boolean;
-  clickedStations: Set<number>;
+  clickedStations: Set<string>;                    // 🔥 Set<number> → Set<string>
   setVisibleLines: React.Dispatch<React.SetStateAction<number[]>>;
   setShowDistricts: React.Dispatch<React.SetStateAction<boolean>>;
-  setClickedStations: React.Dispatch<React.SetStateAction<Set<number>>>;
+  setClickedStations: React.Dispatch<React.SetStateAction<Set<string>>>; // 🔥 Set<number> → Set<string>
   handleLineToggle: (line: number) => void;
-  handleStationClick: (stationId: number) => void;
-  handleArrivalStationsToggle: (arrivalStationIds: number[], areAllShown: boolean) => void;
+  handleStationClick: (stationName: string) => void;  // 🔥 (stationId: number) → (stationName: string)
+  handleArrivalStationsToggle: (arrivalStationNames: string[], areAllShown: boolean) => void; // 🔥 매개변수명 변경
 }
 
-// 컴포넌트 Props 타입들
+// 컴포넌트 Props 타입들 (🔥 필수 타입 변경만)
 export interface MetroControlsProps {
   lineStats: LineStats[];
   visibleLines: number[];
-  clickedStations: Set<number>;
-  arrivalStationIds: number[];
+  clickedStations: Set<string>;                    // 🔥 Set<number> → Set<string>
+  arrivalStationIds: string[];                     // 🔥 number[] → string[]
   areAllArrivalStationsShown: boolean;
   isLoading: boolean;
   error: string | null;
@@ -94,17 +94,17 @@ export interface MetroSVGProps {
   visibleLines: number[];
   lineConnections: LineConnection[];
   visibleStations: Station[];
-  clickedStations: Set<number>;
+  clickedStations: Set<string>;                    // 🔥 Set<number> → Set<string>
   processedRealtimeData: ProcessedTrainData[];
-  onStationClick: (stationId: number) => void;
+  onStationClick: (stationName: string) => void;  // 🔥 (stationId: number) → (stationName: string)
 }
 
 export interface MetroStationsProps {
   visibleStations: Station[];
-  clickedStations: Set<number>;
+  clickedStations: Set<string>;                    // 🔥 Set<number> → Set<string>
   processedRealtimeData: ProcessedTrainData[];
   visibleLines: number[];
-  onStationClick: (stationId: number) => void;
+  onStationClick: (stationName: string) => void;  // 🔥 (stationId: number) → (stationName: string)
 }
 
 export interface MetroLinesProps {

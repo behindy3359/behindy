@@ -1,17 +1,18 @@
-import { getLineColor, METRO_CONFIG } from '@/shared/utils/common/constants';
+import { getLineColor } from '@/shared/utils/common/constants';
 import { METRO_STATIONS } from './stationsData';
+
 export interface LineSegment {
   lineNumber: number;
-  fromStationId: number;
-  toStationId: number;
-  path: string; // SVG path 데이터
+  fromStationName: string;
+  toStationName: string;
+  path: string;
   color: string;
 }
 
 export interface LineConnection {
   lineNumber: number;
   segments: LineSegment[];
-  fullPath: string; // 전체 노선 path
+  fullPath: string;
   color: string;
 }
 
@@ -35,7 +36,6 @@ const createCurvedPath = (
   const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
   const controlOffset = distance * curvature;
   
-  // 수직 방향으로 제어점 오프셋
   const perpX = -(y2 - y1) / distance * controlOffset;
   const perpY = (x2 - x1) / distance * controlOffset;
   
@@ -45,46 +45,46 @@ const createCurvedPath = (
   return `M ${x1} ${y1} Q ${controlX} ${controlY} ${x2} ${y2}`;
 };
 
-/**
- * 노선별 역 연결 순서 정의
- */
+
+// 노선별 역 연결 순서 정의
 const LINE_STATION_ORDERS = {
   1: [
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 124, 16, 17, 18, 19, 20, 
-    21, 22, 23, 24, 25, 26, 66, 27, 28, 29, 30, 31
+    "도봉산", "도봉", "방학", "창동", "녹천", "월계", "광운대", "석계", "신이문", "외대앞", "회기", "청량리", "제기동", "신설동", "동묘앞", "동대문", "종로5가", "종로3가", "종각", "시청", "서울역", "남영", "용산", "노량진", "대방", "신길", "영등포", "신도림", "구로", "구일", "개봉", "오류동", "온수"
   ],
   2: [
-    19, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 
-    49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 
-    67, 68, 69, 70, 71, 72, 73, 74
+    "시청", "을지로입구", "을지로3가", "을지로4가", "동대문역사문화공원", "신당", "상왕십리", "왕십리", "한양대", "뚝섬", "성수", "건대입구", "구의", "강변", "잠실나루", "잠실", "잠실새내", "종합운동장", "삼성", "선릉", "역삼", "강남", "교대", "서초", "방배", "사당", "낙성대", "서울대입구", "봉천", "신림", "신대방", "구로디지털단지", "대림", "신도림", "문래", "영등포구청", "당산", "합정", "홍대입구", "신촌", "이대", "아현", "충정로"
   ],
   3: [
-    83, 84, 85, 86, 87, 88, 89, 90, 91, 17, 35, 92, 93, 94, 95, 96, 97,
-    98, 99, 100, 55, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112
+    "구파발", "연신내", "불광", "녹번", "홍제", "무악재", "독립문", "경복궁", "안국", "종로3가", "을지로3가", "충무로", "동대입구", "약수", "금호", "옥수", "압구정","신사", "잠원", "고속터미널", "교대", "남부터미널", "양재", "매봉", "도곡", "대치", "학여울", "대청", "일원", "수서", "가락시장", "경찰병원", "오금"
   ],
   4: [
-    113, 114, 115, 4, 116, 117, 118, 119, 120, 121, 122, 123, 124, 37, 92, 125, 126, 20, 127,
-    128, 129, 130, 131, 132, 58, 133
+    "불암산", "상계", "노원", "창동", "쌍문", "수유", "미아", "미아사거리", "길음", "성신여대입구", "한성대입구", "혜화", "동대문", "동대문역사문화공원", "충무로", "명동", "회현", "서울역", "숙대입구","삼각지", "신용산", "이촌", "동작", "이수", "사당", "남태령"
   ]
 };
 
 const SPECIAL_CONNECTIONS = {
   1:[
-    {from: 27, to: 32, type: 'branch' },
-    {from: 32, to: 33, type: 'branch' }
+    {from: "구로", to: "가산디지털단지", type: 'branch' },
+    {from: "가산디지털단지", to: "독산", type: 'branch' }
   ],
   2: [
-    { from: 43, to: 75, type: 'branch' }, 
-    { from: 75, to: 76, type: 'branch' }, 
-    { from: 76, to: 77, type: 'branch' }, 
-    { from: 77, to: 78, type: 'branch' }, 
-    { from: 78, to: 14, type: 'branch' },
-    { from: 66, to: 79, type: 'branch' },
-    { from: 79, to: 80, type: 'branch' },
-    { from: 80, to: 81, type: 'branch' },
-    { from: 81, to: 82, type: 'branch' },
-    { from: 19, to: 74, type: 'branch' },
+    { from: "성수", to: "용답", type: 'branch' }, 
+    { from: "용답", to: "신답", type: 'branch' }, 
+    { from: "신답", to: "용두", type: 'branch' }, 
+    { from: "용두", to: "신설동", type: 'branch' },
+    { from: "신도림", to: "도림천", type: 'branch' },
+    { from: "도림천", to: "양천구청", type: 'branch' },
+    { from: "양천구청", to: "신정네거리", type: 'branch' },
+    { from: "신정네거리", to: "까치산", type: 'branch' },
+    { from: "시청", to: "충정로", type: 'branch' },
   ]
+};
+
+/**
+ * 역명으로 Station 객체 찾기
+ */
+const getStationByName = (stationName: string) => {
+  return METRO_STATIONS.find(s => s.id === stationName);
 };
 
 /**
@@ -93,31 +93,31 @@ const SPECIAL_CONNECTIONS = {
 export const generateLineConnections = (): LineConnection[] => {
   const connections: LineConnection[] = [];
 
-  Object.entries(LINE_STATION_ORDERS).forEach(([lineNumStr, stationIds]) => {
+  Object.entries(LINE_STATION_ORDERS).forEach(([lineNumStr, stationNames]) => {
     const lineNumber = parseInt(lineNumStr);
     const color = getLineColor(lineNumber);
     const segments: LineSegment[] = [];
     const pathParts: string[] = [];
 
     // 기본 순차 연결
-    for (let i = 0; i < stationIds.length - 1; i++) {
-      const fromStationId = stationIds[i];
-      const toStationId = stationIds[i + 1];
+    for (let i = 0; i < stationNames.length - 1; i++) {
+      const fromStationName = stationNames[i];
+      const toStationName = stationNames[i + 1];
       
-      const fromStation = METRO_STATIONS.find(s => s.id === fromStationId);
-      const toStation = METRO_STATIONS.find(s => s.id === toStationId);
+      const fromStation = getStationByName(fromStationName);
+      const toStation = getStationByName(toStationName);
 
       if (fromStation && toStation) {
-        // 환승역이나 특수 연결의 경우 곡선 사용
-        const isSpecialConnection = fromStation.isTransfer || toStation.isTransfer;
+        // 환승역의 경우 곡선 사용
+        const isSpecialConnection = fromStation.lines.length > 1 || toStation.lines.length > 1;
         const path = isSpecialConnection 
           ? createCurvedPath(fromStation.x, fromStation.y, toStation.x, toStation.y, 0.1)
           : createStraightPath(fromStation.x, fromStation.y, toStation.x, toStation.y);
 
         segments.push({
           lineNumber,
-          fromStationId,
-          toStationId,
+          fromStationName,
+          toStationName,
           path,
           color
         });
@@ -130,20 +130,20 @@ export const generateLineConnections = (): LineConnection[] => {
     const specialConnections = SPECIAL_CONNECTIONS[lineNumber as keyof typeof SPECIAL_CONNECTIONS];
     if (specialConnections) {
       specialConnections.forEach(conn => {
-        const fromStation = METRO_STATIONS.find(s => s.id === conn.from);
-        const toStation = METRO_STATIONS.find(s => s.id === conn.to);
+        const fromStation = getStationByName(conn.from);
+        const toStation = getStationByName(conn.to);
 
         if (fromStation && toStation) {
           const path = createCurvedPath(
             fromStation.x, fromStation.y, 
             toStation.x, toStation.y, 
-            0.1 // 분기선은 더 큰 곡률
+            0.15
           );
 
           segments.push({
             lineNumber,
-            fromStationId: conn.from,
-            toStationId: conn.to,
+            fromStationName: conn.from,
+            toStationName: conn.to,
             path,
             color
           });

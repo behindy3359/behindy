@@ -19,7 +19,6 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
         viewBox={SVG_CONFIG.viewBox}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* 구 경계 */}
         {showDistricts && (
           <g id="districts" opacity="0.4">
             {SEOUL_DISTRICTS.map(district => (
@@ -34,14 +33,12 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
           </g>
         )}
 
-        {/* 한강 */}
         <path
           d={HAN_RIVER.path}
           fill={HAN_RIVER.fill}
           opacity={HAN_RIVER.opacity}
         />
 
-        {/* 지하철 노선 */}
         <g id="metro-lines">
           {lineConnections.map(connection => (
             <g key={`line-${connection.lineNumber}`}>
@@ -61,18 +58,16 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
           ))}
         </g>
 
-        {/* 지하철역들 */}
         <g id="stations">
           {visibleStations.map(station => {
             const realtimeInfo = processedRealtimeData.filter(
-              data => data.frontendStationId === station.id
+              data => data.stationName === station.id
             );
             const hasRealtimeData = realtimeInfo.length > 0;
             const isClicked = clickedStations.has(station.id);
             
             return (
               <g key={`station-${station.id}`}>
-                {/* 열차 도착시 애니메이션 */}
                 {hasRealtimeData && (
                   <circle
                     cx={station.x}
@@ -134,20 +129,18 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
           })}
         </g>
 
-        {/* 역명 라벨 */}
         <g id="station-labels">
           {visibleStations.map(station => {
             if (!clickedStations.has(station.id)) return null;
             if (!visibleLines.some(line => station.lines.includes(line))) return null;
             
             const realtimeInfo = processedRealtimeData.filter(
-              data => data.frontendStationId === station.id
+              data => data.stationName === station.id
             );
             const hasRealtimeData = realtimeInfo.length > 0;
             
             return (
               <g key={`label-${station.id}`}>
-                {/* 역명 라벨 */}
                 <text
                   x={station.x}
                   y={station.y - 4}
@@ -164,7 +157,7 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
                     pointerEvents: 'none'
                   }}
                 >
-                  {station.name}
+                  {station.id}
                 </text>
               </g>
             );

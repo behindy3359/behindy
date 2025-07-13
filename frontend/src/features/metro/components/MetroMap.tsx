@@ -14,7 +14,6 @@ import {
 import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
 
 export const MetroMap: React.FC = () => {
-  // 상태 관리 훅들
   const {
     visibleLines,
     showDistricts,
@@ -24,42 +23,34 @@ export const MetroMap: React.FC = () => {
     handleArrivalStationsToggle,
   } = useMetroState();
 
-  // 실시간 데이터 훅
   const { data: realtimeData, isLoading, error } = useMetroRealtime(30000);
 
-  // 실시간 데이터 처리
   const processedRealtimeData = useMemo(() => {
     return processRealtimeData(realtimeData);
   }, [realtimeData]);
 
-  // 현재 도착 역들의 ID 목록
-  const arrivalStationIds = useMemo(() => {
+  const arrivalStationNames = useMemo(() => {
     return getArrivalStationIds(processedRealtimeData);
   }, [processedRealtimeData]);
 
-  // 도착 역들이 모두 표시되어 있는지 확인
   const areAllArrivalStationsShownn = useMemo(() => {
-    return areAllArrivalStationsShown(arrivalStationIds, clickedStations);
-  }, [arrivalStationIds, clickedStations]);
+    return areAllArrivalStationsShown(arrivalStationNames, clickedStations);
+  }, [arrivalStationNames, clickedStations]);
 
-  // 노선 연결 데이터
   const lineConnections = useMemo(() => {
     return getVisibleLineConnections(visibleLines);
   }, [visibleLines]);
 
-  // 표시할 역들
   const visibleStations = useMemo(() => {
     return getVisibleStations(visibleLines);
   }, [visibleLines]);
 
-  // 노선별 통계
   const lineStats = useMemo(() => {
     return calculateLineStats(visibleLines, processedRealtimeData);
   }, [visibleLines, processedRealtimeData]);
 
-  // 도착 역 일괄 토글 핸들러
   const handleArrivalStationsToggleWrapper = () => {
-    handleArrivalStationsToggle(arrivalStationIds, areAllArrivalStationsShownn);
+    handleArrivalStationsToggle(arrivalStationNames, areAllArrivalStationsShownn);
   };
 
   return (
@@ -68,7 +59,7 @@ export const MetroMap: React.FC = () => {
         lineStats={lineStats}
         visibleLines={visibleLines}
         clickedStations={clickedStations}
-        arrivalStationIds={arrivalStationIds}
+        arrivalStationIds={arrivalStationNames}
         areAllArrivalStationsShown={areAllArrivalStationsShownn}
         isLoading={isLoading}
         error={error}
