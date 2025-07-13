@@ -27,3 +27,11 @@ backend/behindy/
 **/.gradle/
 **/build/
 **/out/
+backend/.idea/              
+backend/.idea/.gitignore
+backend/.idea/compiler.xml
+backend/.idea/gradle.xml
+backend/.idea/misc.xml
+backend/.idea/modules.xml
+backend/.idea/modules/backend.main.iml
+backend/.idea/vcs.xml
