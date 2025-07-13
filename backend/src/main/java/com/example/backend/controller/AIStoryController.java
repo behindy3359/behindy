@@ -105,7 +105,7 @@ public class AIStoryController {
                 ))
                 .build());
     }
-    
+
     /**
      * AI 서버에서 동적 스토리 생성 (GET 방식)
      */
