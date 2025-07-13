@@ -7,6 +7,7 @@ import com.example.backend.entity.*;
 import com.example.backend.entity.Character;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.*;
+import com.example.backend.service.mapper.EntityDtoMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,40 +29,35 @@ public class GameService {
     private final CharacterRepository characterRepository;
     private final CharacterService characterService;
     private final AuthService authService;
+    private final EntityDtoMapper entityDtoMapper;
 
     /**
      * 게임 시작
      */
     @Transactional
     public GameStartResponse startGame(Long storyId) {
-        // 1. 현재 사용자의 살아있는 캐릭터 확인
         User currentUser = authService.getCurrentUser();
         Character character = getAliveCharacter(currentUser);
 
-        // 2. 스토리 존재 확인
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story", "id", storyId));
 
-        // 3. 이미 진행 중인 게임이 있는지 확인
         Optional<Now> existingGame = nowRepository.findByCharacter(character);
         if (existingGame.isPresent()) {
-            throw new IllegalStateException("이미 진행 중인 게임이 있습니다. 기존 게임을 종료하거나 이어서 플레이하세요.");
+            throw new IllegalStateException("이미 진행 중인 게임이 있습니다.");
         }
 
-        // 4. 첫 번째 페이지 조회
         Page firstPage = pageRepository.findFirstPageByStoryId(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("First Page", "storyId", storyId));
 
-        // 5. 게임 시작 위치 저장
         Now gameSession = Now.builder()
                 .character(character)
                 .page(firstPage)
                 .build();
         nowRepository.save(gameSession);
 
-        // 6. 응답 생성
-        PageResponse pageResponse = createPageResponse(firstPage);
-        CharacterResponse characterResponse = characterService.getCurrentCharacter();
+        PageResponse pageResponse = entityDtoMapper.toPageResponse(firstPage);
+        CharacterResponse characterResponse = entityDtoMapper.toCharacterResponse(character);
 
         log.info("게임 시작: userId={}, charId={}, storyId={}",
                 currentUser.getUserId(), character.getCharId(), storyId);
@@ -83,7 +79,6 @@ public class GameService {
         User currentUser = authService.getCurrentUser();
         Character character = getAliveCharacter(currentUser);
 
-        // 진행 중인 게임 확인
         Now gameSession = nowRepository.findByCharacterIdWithPage(character.getCharId())
                 .orElseThrow(() -> new ResourceNotFoundException("Active Game", "characterId", character.getCharId()));
 
@@ -91,8 +86,8 @@ public class GameService {
         Story story = storyRepository.findById(currentPage.getStoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Story", "id", currentPage.getStoId()));
 
-        PageResponse pageResponse = createPageResponse(currentPage);
-        CharacterResponse characterResponse = characterService.getCurrentCharacter();
+        PageResponse pageResponse = entityDtoMapper.toPageResponse(currentPage);
+        CharacterResponse characterResponse = entityDtoMapper.toCharacterResponse(character);
 
         return GameResumeResponse.builder()
                 .storyId(story.getStoId())
@@ -117,7 +112,7 @@ public class GameService {
         if (gameSession.isEmpty()) {
             return GameStateResponse.builder()
                     .hasActiveGame(false)
-                    .character(characterService.getCurrentCharacter())
+                    .character(entityDtoMapper.toCharacterResponse(character)) // 🔄
                     .message("진행 중인 게임이 없습니다.")
                     .build();
         }
@@ -126,8 +121,9 @@ public class GameService {
         Story story = storyRepository.findById(currentPage.getStoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Story", "id", currentPage.getStoId()));
 
-        PageResponse pageResponse = createPageResponse(currentPage);
-        CharacterResponse characterResponse = characterService.getCurrentCharacter();
+        // 🔄 공통 Mapper 사용
+        PageResponse pageResponse = entityDtoMapper.toPageResponse(currentPage);
+        CharacterResponse characterResponse = entityDtoMapper.toCharacterResponse(character);
 
         return GameStateResponse.builder()
                 .hasActiveGame(true)
@@ -139,6 +135,7 @@ public class GameService {
                 .message("게임이 진행 중입니다.")
                 .build();
     }
+
     /**
      * 선택지 선택 및 처리
      */
@@ -147,46 +144,41 @@ public class GameService {
         User currentUser = authService.getCurrentUser();
         Character character = getAliveCharacter(currentUser);
 
-        // 1. 진행 중인 게임 확인
         Now gameSession = nowRepository.findByCharacterIdWithPage(character.getCharId())
                 .orElseThrow(() -> new ResourceNotFoundException("Active Game", "characterId", character.getCharId()));
 
-        // 2. 선택지 확인
         Options selectedOption = optionsRepository.findById(optionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Option", "id", optionId));
 
-        // 3. 선택지가 현재 페이지의 것인지 확인
         Page currentPage = gameSession.getPage();
         if (selectedOption.getPageId() != currentPage.getPageId()) {
             throw new IllegalArgumentException("잘못된 선택지입니다.");
         }
 
-        // 4. 선택지 효과 적용 및 캐릭터 저장
+        // 선택지 효과 적용
         ChoiceEffect effect = applyChoiceEffect(character, selectedOption);
         characterRepository.save(character);
 
-        // 5. 게임 종료 조건 확인
+        // 게임 종료 조건 확인
         if (character.getCharHealth() <= 0 || character.getCharSanity() <= 0) {
             return handleGameOver(character, gameSession, selectedOption, effect, "캐릭터 사망");
         }
 
-        // 6. 다음 페이지 결정
+        // 다음 페이지 결정
         Optional<Page> nextPage = determineNextPage(currentPage, selectedOption);
 
         if (nextPage.isEmpty()) {
             return handleStoryComplete(character, gameSession, selectedOption, effect);
         }
 
-        // 7. 다음 페이지로 이동
+        // 다음 페이지로 이동
         gameSession.setPage(nextPage.get());
         nowRepository.save(gameSession);
 
-        // 8. 로그 기록
         recordChoice(character, selectedOption);
 
-        // 9. 응답 생성
-        PageResponse nextPageResponse = createPageResponse(nextPage.get());
-        CharacterResponse updatedCharacter = characterService.getCurrentCharacter();
+        PageResponse nextPageResponse = entityDtoMapper.toPageResponse(nextPage.get());
+        CharacterResponse updatedCharacter = entityDtoMapper.toCharacterResponse(character);
 
         log.info("선택지 처리: charId={}, optionId={}, effect={}, currentPage={}, nextPage={}",
                 character.getCharId(), optionId, effect.getEffectDescription(),
@@ -201,6 +193,7 @@ public class GameService {
                 .message("선택이 적용되었습니다.")
                 .build();
     }
+
 
     /**
      * 다음 페이지 결정 로직
@@ -329,66 +322,6 @@ public class GameService {
                 .message("축하합니다! 스토리를 완료했습니다.")
                 .build();
     }
-
-
-    /**
-     * 페이지 응답 생성 (타입 수정)
-     */
-    private PageResponse createPageResponse(Page page) {
-        List<Options> options = optionsRepository.findByPageId(page.getPageId());
-
-        List<OptionResponse> optionResponses = options.stream()
-                .map(option -> OptionResponse.builder()
-                        .optionId(option.getOptId())
-                        .content(option.getOptContents())
-                        .effect(option.getOptEffect())
-                        .amount(option.getOptAmount())
-                        .effectPreview(createEffectPreview(option))
-                        .build())
-                .collect(Collectors.toList());
-
-        // 전체 페이지 수 조회
-        Long totalPages = pageRepository.countPagesByStoryId(page.getStoId());
-
-        // 마지막 페이지 여부 확인 (long 타입 사용)
-        long nextPageNumber = page.getPageNumber() + 1;
-        boolean isLastPage = !pageRepository.existsNextPage(page.getStoId(), nextPageNumber);
-
-        return PageResponse.builder()
-                .pageId(page.getPageId())
-                .pageNumber(page.getPageNumber())
-                .content(page.getPageContents())
-                .options(optionResponses)
-                .isLastPage(isLastPage)
-                .totalPages(totalPages.intValue())
-                .build();
-    }
-
-    /**
-     * 선택지 효과 미리보기 생성 (Integer null 체크 수정)
-     */
-    private String createEffectPreview(Options option) {
-        if (option.getOptEffect() == null || option.getOptAmount() == 0) {
-            return null;
-        }
-
-        String effectType = option.getOptEffect().toLowerCase();
-        int amount = option.getOptAmount(); // primitive int 사용
-
-        switch (effectType) {
-            case "health":
-                return amount > 0 ?
-                        String.format("체력 +%d", amount) :
-                        String.format("체력 %d", amount);
-            case "sanity":
-                return amount > 0 ?
-                        String.format("정신력 +%d", amount) :
-                        String.format("정신력 %d", amount);
-            default:
-                return null;
-        }
-    }
-
 
     /**
      * 살아있는 캐릭터 조회

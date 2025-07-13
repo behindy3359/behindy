@@ -6,7 +6,7 @@ import com.example.backend.entity.Character;
 import com.example.backend.entity.User;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.CharacterRepository;
-//import com.example.backend.repository.NowRepository;
+import com.example.backend.service.mapper.EntityDtoMapper;
 import com.example.backend.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 public class CharacterService {
 
     private final CharacterRepository characterRepository;
-//    private final NowRepository nowRepository; // 게임 진행 상태 확인용 (필요시 생성)
     private final AuthService authService;
     private final HtmlSanitizer htmlSanitizer;
+    private final EntityDtoMapper entityDtoMapper;
 
     /**
      * 캐릭터 생성
@@ -40,7 +40,7 @@ public class CharacterService {
             throw new IllegalStateException("이미 살아있는 캐릭터가 있습니다. 기존 캐릭터가 사망해야 새 캐릭터를 생성할 수 있습니다.");
         }
 
-        // 2. 캐릭터 이름 중복 확인 (전체 유저 대상)
+        // 2. 캐릭터 이름 중복 확인
         String sanitizedName = htmlSanitizer.sanitize(request.getCharName());
         if (characterRepository.existsByCharNameAndDeletedAtIsNull(sanitizedName)) {
             throw new IllegalArgumentException("이미 사용 중인 캐릭터 이름입니다.");
@@ -50,15 +50,15 @@ public class CharacterService {
         Character character = Character.builder()
                 .user(currentUser)
                 .charName(sanitizedName)
-                .charHealth(100) // 기본 체력
-                .charSanity(100) // 기본 정신력
+                .charHealth(100)
+                .charSanity(100)
                 .build();
 
         Character savedCharacter = characterRepository.save(character);
         log.info("새 캐릭터 생성됨: userId={}, charId={}, charName={}",
                 currentUser.getUserId(), savedCharacter.getCharId(), sanitizedName);
 
-        return mapToCharacterResponse(savedCharacter);
+        return entityDtoMapper.toCharacterResponse(savedCharacter);
     }
 
     /**
@@ -71,7 +71,7 @@ public class CharacterService {
         Character character = characterRepository.findByUserAndDeletedAtIsNull(currentUser)
                 .orElseThrow(() -> new ResourceNotFoundException("Character", "user", currentUser.getUserId()));
 
-        return mapToCharacterResponse(character);
+        return entityDtoMapper.toCharacterResponse(character);
     }
 
     /**
@@ -82,7 +82,7 @@ public class CharacterService {
         User currentUser = authService.getCurrentUser();
 
         return characterRepository.findByUserAndDeletedAtIsNull(currentUser)
-                .map(this::mapToCharacterResponse);
+                .map(entityDtoMapper::toCharacterResponse); // 🔄 공통 Mapper 사용
     }
 
     /**
@@ -95,7 +95,7 @@ public class CharacterService {
         List<Character> characters = characterRepository.findByUserOrderByCreatedAtDesc(currentUser);
 
         return characters.stream()
-                .map(this::mapToCharacterResponse)
+                .map(entityDtoMapper::toCharacterResponse)
                 .collect(Collectors.toList());
     }
 
@@ -106,7 +106,6 @@ public class CharacterService {
     public void killCharacter(Long charId) {
         User currentUser = authService.getCurrentUser();
 
-        // 캐릭터 조회 및 소유권 확인
         Character character = characterRepository.findAliveCharacterById(charId)
                 .orElseThrow(() -> new ResourceNotFoundException("Character", "id", charId));
 
@@ -148,7 +147,8 @@ public class CharacterService {
         checkAndProcessDeath(character);
 
         Character savedCharacter = characterRepository.save(character);
-        return mapToCharacterResponse(savedCharacter);
+
+        return entityDtoMapper.toCharacterResponse(savedCharacter);
     }
 
     /**
@@ -171,60 +171,6 @@ public class CharacterService {
      */
     private void cleanupGameProgress(Character character) {
         // Now 테이블의 현재 위치 정보 정리
-        // 실제 구현에서는 NowRepository를 사용하여 해당 캐릭터의 진행 상태를 정리
         log.info("캐릭터 {}의 게임 진행 데이터 정리 완료", character.getCharId());
-    }
-
-    /**
-     * Character 엔티티를 CharacterResponse DTO로 변환
-     */
-    private CharacterResponse mapToCharacterResponse(Character character) {
-        boolean isAlive = !character.isDeleted();
-        boolean isDying = isAlive && (character.getCharHealth() <= 20 || character.getCharSanity() <= 20);
-        String statusMessage = getStatusMessage(character);
-
-        // 게임 진행 상태 확인 (실제 구현에서는 Now 테이블 조회)
-        boolean hasGameProgress = false;
-        Long currentStoryId = null;
-
-        return CharacterResponse.builder()
-                .charId(character.getCharId())
-                .charName(character.getCharName())
-                .charHealth(character.getCharHealth())
-                .charSanity(character.getCharSanity())
-                .userId(character.getUser().getUserId())
-                .userName(character.getUser().getUserName())
-                .isAlive(isAlive)
-                .isDying(isDying)
-                .statusMessage(statusMessage)
-                .hasGameProgress(hasGameProgress)
-                .currentStoryId(currentStoryId)
-                .createdAt(character.getCreatedAt())
-                .updatedAt(character.getUpdatedAt())
-                .deletedAt(character.getDeletedAt())
-                .build();
-    }
-
-    /**
-     * 캐릭터 상태 메시지 생성
-     */
-    private String getStatusMessage(Character character) {
-        if (character.isDeleted()) {
-            return "사망";
-        }
-
-        if (character.getCharHealth() <= 0 || character.getCharSanity() <= 0) {
-            return "위험 - 즉시 치료 필요";
-        }
-
-        if (character.getCharHealth() <= 20 || character.getCharSanity() <= 20) {
-            return "주의 - 상태가 좋지 않음";
-        }
-
-        if (character.getCharHealth() >= 80 && character.getCharSanity() >= 80) {
-            return "건강";
-        }
-
-        return "보통";
     }
 }

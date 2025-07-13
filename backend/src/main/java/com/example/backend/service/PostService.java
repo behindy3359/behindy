@@ -8,6 +8,7 @@ import com.example.backend.entity.Post;
 import com.example.backend.entity.User;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.PostRepository;
+import com.example.backend.service.mapper.EntityDtoMapper;
 import com.example.backend.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final AuthService authService;
     private final HtmlSanitizer htmlSanitizer;
+    private final EntityDtoMapper entityDtoMapper;
 
     /**
      * 게시글 생성
@@ -46,7 +48,8 @@ public class PostService {
 
         Post savedPost = postRepository.save(post);
 
-        return mapToPostResponse(savedPost);
+        // 🔄 공통 Mapper 사용
+        return entityDtoMapper.toPostResponse(savedPost);
     }
 
     /**
@@ -55,25 +58,11 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostResponse getPostById(Long postId) {
         Post post = postRepository.findById(postId)
-                .filter(p -> !p.isDeleted())  // 삭제된 게시글 필터링
+                .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
-        return mapToPostResponse(post);
-    }
-
-    /**
-     * Post 엔티티를 PostResponse DTO로 변환
-     */
-    private PostResponse mapToPostResponse(Post post) {
-        return PostResponse.builder()
-                .id(post.getPostId())
-                .title(post.getPostTitle())
-                .content(post.getPostContents())
-                .authorName(post.getUser().getUserName())
-                .authorId(post.getUser().getUserId())
-                .createdAt(post.getCreatedAt())
-                .updatedAt(post.getUpdatedAt())
-                .build();
+        // 🔄 공통 Mapper 사용
+        return entityDtoMapper.toPostResponse(post);
     }
 
     /**
@@ -83,8 +72,9 @@ public class PostService {
     public PostListResponse getAllPosts(Pageable pageable) {
         Page<Post> postsPage = postRepository.findAllActive(pageable);
 
+        // 🔄 공통 Mapper 사용 (Stream 변환)
         List<PostResponse> posts = postsPage.getContent().stream()
-                .map(this::mapToPostResponse)
+                .map(entityDtoMapper::toPostResponse)
                 .collect(Collectors.toList());
 
         return PostListResponse.builder()
@@ -95,6 +85,7 @@ public class PostService {
                 .totalPages(postsPage.getTotalPages())
                 .build();
     }
+
     /**
      * 게시글 수정
      */
@@ -102,7 +93,7 @@ public class PostService {
     public PostResponse updatePost(Long postId, PostUpdateRequest request) {
         // 게시글 조회
         Post post = postRepository.findById(postId)
-                .filter(p -> !p.isDeleted())  // 삭제된 게시글 필터링
+                .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         // 현재 인증된 사용자 정보 가져오기
@@ -117,24 +108,25 @@ public class PostService {
         String sanitizedTitle = htmlSanitizer.sanitize(request.getTitle());
         String sanitizedContent = htmlSanitizer.sanitize(request.getContent());
 
-        // 게시글 정보 업데이트 (필터링된 값 사용)
+        // 게시글 정보 업데이트
         post.setPostTitle(sanitizedTitle);
         post.setPostContents(sanitizedContent);
 
         // 수정된 게시글 저장
         Post updatedPost = postRepository.save(post);
 
-        // 응답 DTO로 변환하여 반환
-        return mapToPostResponse(updatedPost);
+        // 🔄 공통 Mapper 사용
+        return entityDtoMapper.toPostResponse(updatedPost);
     }
+
     /**
      * 게시글 삭제
      */
     @Transactional
-    public void deletePost(Long postId){
+    public void deletePost(Long postId) {
         // 게시글 조회
         Post post = postRepository.findById(postId)
-                .filter(p -> !p.isDeleted())  // 삭제된 게시글 필터링
+                .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         // 현재 인증된 사용자 정보 가져오기
