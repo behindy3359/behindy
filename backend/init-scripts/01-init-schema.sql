@@ -22,11 +22,17 @@ BEGIN
     -- 이미 초기화되었는지 확인
     IF NOT EXISTS (SELECT 1 FROM init_status WHERE script_name = 'station_data_v1.0') THEN
 
-        -- 역 테이블이 존재할 때까지 대기 (JPA가 생성할 때까지)
-        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sta') THEN
+        -- STA 테이블이 존재할 때까지 대기 (JPA가 생성할 때까지)
+        -- 대소문자 구분 없이 테이블 존재 확인
+        IF EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND UPPER(table_name) = 'STA'
+        ) THEN
 
+            -- 🔧 수정: 테이블명을 대문자 STA로 변경
             -- 1호선 역 데이터
-            INSERT INTO sta (api_station_id, sta_name, sta_line) VALUES
+            INSERT INTO STA (api_station_id, sta_name, sta_line) VALUES
             ('1001000113', '도봉산', 1),
             ('1001000114', '도봉', 1),
             ('1001000115', '방학', 1),
@@ -108,9 +114,9 @@ BEGIN
             INSERT INTO init_status (script_name, description)
             VALUES ('station_data_v1.0', '기본 역 데이터 초기화 완료');
 
-            RAISE NOTICE '기본 역 데이터 초기화 완료: % 개 역', (SELECT COUNT(*) FROM sta);
+            RAISE NOTICE '기본 역 데이터 초기화 완료: % 개 역', (SELECT COUNT(*) FROM STA);
         ELSE
-            RAISE NOTICE 'STA 테이블이 아직 생성되지 않았습니다. JPA가 생성할 때까지 대기...';
+            RAISE NOTICE 'STA 테이블이 아직 생성되지 않았습니다. JPA가 생성할 때까지 대기 중...';
         END IF;
     ELSE
         RAISE NOTICE '기본 역 데이터는 이미 초기화되었습니다';
