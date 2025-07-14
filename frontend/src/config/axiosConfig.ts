@@ -7,41 +7,40 @@ if (typeof window !== 'undefined') {
   validateSecurityConfig();
 }
 
-// 토큰 관리 유틸리티
+// 토큰 관리 유틸리티 - sessionStorage 사용으로 변경
 class TokenManager {
   static getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS); 
+    return sessionStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS); 
   }
 
-  static getRefreshToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.REFRESH); 
-  }
-
-  static setTokens(accessToken: string, refreshToken: string): void {
+  static setAccessToken(accessToken: string): void {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS, accessToken); 
-    localStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.REFRESH, refreshToken); 
+    sessionStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS, accessToken); 
   }
 
-  static clearTokens(): void {
+  static clearAccessToken(): void {
     if (typeof window === 'undefined') return;
-    localStorage.removeItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS);
-    localStorage.removeItem(SECURITY_CONFIG.TOKEN_KEYS.REFRESH);
+    sessionStorage.removeItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS);
   }
 
+  // Refresh Token은 HttpOnly Cookie로 관리되므로 JS에서 접근 불가
   static hasValidTokens = (): boolean => {
     const accessToken = TokenManager.getAccessToken();
-    const refreshToken = TokenManager.getRefreshToken();
-    return Boolean(accessToken && refreshToken);
+    return Boolean(accessToken);
   };
+
+  // 모든 토큰 정리
+  static clearAllTokens(): void {
+    TokenManager.clearAccessToken();
+    // Refresh Token은 서버에서 Cookie 삭제 API를 통해 처리
+  }
 }
 
 // 인증이 필요한 엔드포인트 패턴 정의
 const AUTH_REQUIRED_PATTERNS = [
   '/auth/logout',
-  '/auth/refresh',
+  '/auth/me',
   '/characters',
   '/game',
   '/posts',
@@ -66,7 +65,7 @@ const requiresAuth = (config: {
   
   const needsAuthForMethod = AUTH_REQUIRED_METHODS.includes(method as any);
   
-  // 게시글/댓글 조회는 예외
+  // 게시글/댓글 조회는 예외 (GET 요청)
   if (method === 'GET' && (url.includes('/posts') || url.includes('/comments'))) {
     return false;
   }
@@ -78,10 +77,11 @@ const requiresAuth = (config: {
 const createApiClient = (baseURL: string) => {
   const client = axios.create({
     baseURL,
-    timeout: SECURITY_CONFIG.API.TIMEOUT_MS, // 🔒 보안 상수 사용
+    timeout: SECURITY_CONFIG.API.TIMEOUT_MS,
     headers: {
       'Content-Type': 'application/json',
     },
+    withCredentials: true, // 🔥 HttpOnly Cookie 전송을 위해 필수
   });
 
   // 요청 인터셉터
@@ -90,7 +90,7 @@ const createApiClient = (baseURL: string) => {
       if (requiresAuth(config)) {
         const token = TokenManager.getAccessToken();
         if (token && config.headers) {
-          config.headers.Authorization = `${SECURITY_CONFIG.JWT.TOKEN_TYPE} ${token}`; // 🔒 보안 상수 사용
+          config.headers.Authorization = `${SECURITY_CONFIG.JWT.TOKEN_TYPE} ${token}`;
         }
       }
 
@@ -107,7 +107,7 @@ const createApiClient = (baseURL: string) => {
     }
   );
 
-  // 응답 인터셉터 - 토큰 갱신 및 에러 처리
+  // 응답 인터셉터 - 자동 토큰 갱신
   client.interceptors.response.use(
     (response) => {
       if (env.DEV_MODE) {
@@ -127,7 +127,7 @@ const createApiClient = (baseURL: string) => {
 
       const originalRequest = axiosError.config;
 
-      // 401 에러 시 토큰 갱신 시도
+      // 401 에러 시 자동 토큰 갱신 시도
       if (axiosError.response?.status === 401 && 
           originalRequest && 
           !originalRequest._retry &&
@@ -136,36 +136,51 @@ const createApiClient = (baseURL: string) => {
         originalRequest._retry = true;
 
         try {
-          const refreshToken = TokenManager.getRefreshToken();
-          if (!refreshToken) {
-            throw new Error('Refresh token not available');
-          }
+          console.log('🔄 Access Token 만료, 자동 갱신 시도...');
 
-          // 토큰 갱신 요청
-          const refreshResponse = await axios.post(`${env.API_URL}/auth/refresh`, {
-            refreshToken,
-          });
+          // 🔥 Refresh Token이 Cookie에 있으므로 요청 body 없이 호출
+          const refreshResponse = await axios.post(
+            `${env.API_URL}/auth/refresh`, 
+            {}, // 빈 body
+            { 
+              withCredentials: true, // Cookie 전송
+              timeout: SECURITY_CONFIG.API.TIMEOUT_MS
+            }
+          );
 
           const responseData = refreshResponse.data as { 
             accessToken: string; 
-            refreshToken: string; 
           };
-          const { accessToken, refreshToken: newRefreshToken } = responseData;
-          TokenManager.setTokens(accessToken, newRefreshToken);
+          
+          // 새로운 Access Token만 저장 (Refresh Token은 Cookie에서 자동 갱신됨)
+          TokenManager.setAccessToken(responseData.accessToken);
 
           // 원래 요청 재시도
           const retryConfig = {
             ...originalRequest,
             headers: {
               ...(originalRequest.headers as Record<string, string> || {}),
-              Authorization: `${SECURITY_CONFIG.JWT.TOKEN_TYPE} ${accessToken}`, // 🔒 보안 상수 사용
+              Authorization: `${SECURITY_CONFIG.JWT.TOKEN_TYPE} ${responseData.accessToken}`,
             },
           };
           
+          console.log('✅ 토큰 갱신 성공, 원래 요청 재시도');
           return client(retryConfig as unknown as Parameters<typeof client>[0]);
+          
         } catch (refreshError) {
+          console.error('❌ 토큰 갱신 실패:', refreshError);
+          
           // 토큰 갱신 실패 시 로그아웃 처리
-          TokenManager.clearTokens();
+          TokenManager.clearAllTokens();
+          
+          // 로그아웃 API 호출 (Cookie 정리)
+          try {
+            await axios.post(`${env.API_URL}/auth/logout`, {}, { 
+              withCredentials: true 
+            });
+          } catch (logoutError) {
+            console.warn('로그아웃 API 호출 실패:', logoutError);
+          }
           
           if (typeof window !== 'undefined') {
             window.location.href = '/auth/login';
@@ -217,7 +232,7 @@ export const api = {
   },
 };
 
-// 퍼블릭 API 함수들
+// 퍼블릭 API 함수들 (인증 불필요)
 export const publicApi = {
   getPosts: async <T>(url: string, config?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.get<T>(url, config);

@@ -1,79 +1,174 @@
 package com.example.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RedisService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
-    private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
+    private final RedisTemplate<String, String> redisTemplate;
 
     /**
-     * 리프레시 토큰을 Redis에 저장
-     *
-     * @param userId 사용자 ID
-     * @param token 리프레시 토큰
-     * @param ttlMillis 토큰 유효시간(밀리초)
+     * 만료 시간과 함께 값 저장
      */
-    public void saveRefreshToken(Long userId, String token, long ttlMillis) {
-        String key = REFRESH_TOKEN_KEY_PREFIX + userId;
-        redisTemplate.opsForValue().set(key, token);
-        redisTemplate.expire(key, ttlMillis, TimeUnit.MILLISECONDS);
+    public void setWithExpiration(String key, String value, long expirationMs) {
+        try {
+            redisTemplate.opsForValue().set(key, value, expirationMs, TimeUnit.MILLISECONDS);
+            log.debug("Redis 저장 성공: key={}, ttl={}ms", key, expirationMs);
+        } catch (Exception e) {
+            log.error("Redis 저장 실패: key={}, error={}", key, e.getMessage());
+            throw new RuntimeException("Redis 저장 중 오류가 발생했습니다.", e);
+        }
     }
 
     /**
-     * 사용자 ID로 리프레시 토큰 조회
-     *
-     * @param userId 사용자 ID
-     * @return 리프레시 토큰 (없는 경우 null)
+     * 값 조회
      */
-    public String getRefreshToken(Long userId) {
-        String key = REFRESH_TOKEN_KEY_PREFIX + userId;
-        Object value = redisTemplate.opsForValue().get(key);
-        return value != null ? value.toString() : null;
+    public String get(String key) {
+        try {
+            return redisTemplate.opsForValue().get(key);
+        } catch (Exception e) {
+            log.error("Redis 조회 실패: key={}, error={}", key, e.getMessage());
+            return null;
+        }
     }
 
     /**
-     * 사용자의 리프레시 토큰 삭제
-     *
-     * @param userId 사용자 ID
+     * 키 삭제
      */
-    public void deleteRefreshToken(Long userId) {
-        String key = REFRESH_TOKEN_KEY_PREFIX + userId;
-        redisTemplate.delete(key);
+    public void delete(String key) {
+        try {
+            redisTemplate.delete(key);
+            log.debug("Redis 삭제 성공: key={}", key);
+        } catch (Exception e) {
+            log.error("Redis 삭제 실패: key={}, error={}", key, e.getMessage());
+        }
     }
 
     /**
-     * 특정 리프레시 토큰이 특정 사용자의 것인지 확인
-     *
-     * @param userId 사용자 ID
-     * @param token 리프레시 토큰
-     * @return 검증 결과
+     * 키 존재 여부 확인
+     */
+    public boolean hasKey(String key) {
+        try {
+            return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        } catch (Exception e) {
+            log.error("Redis 키 존재 확인 실패: key={}, error={}", key, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * TTL 조회 (초 단위)
+     */
+    public long getExpire(String key) {
+        try {
+            return redisTemplate.getExpire(key, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Redis TTL 조회 실패: key={}, error={}", key, e.getMessage());
+            return -1;
+        }
+    }
+
+    // ============= Refresh Token 관련 메서드 =============
+
+    /**
+     * Refresh Token 저장 (Legacy 호환용)
+     */
+    public void saveRefreshToken(Long userId, String token, long expirationMs) {
+        String key = "RT:" + userId;
+        setWithExpiration(key, token, expirationMs);
+    }
+
+    /**
+     * Refresh Token 검증 (Legacy 호환용)
      */
     public boolean validateRefreshToken(Long userId, String token) {
-        String savedToken = getRefreshToken(userId);
-        return savedToken != null && savedToken.equals(token);
+        String key = "RT:" + userId;
+        String stored = get(key);
+        return token.equals(stored);
     }
 
-    public void saveDeviceRefreshToken(Long userId, String deviceId, String token, long ttlMillis) {
-        String key = REFRESH_TOKEN_KEY_PREFIX + userId + ":" + deviceId;
-        redisTemplate.opsForValue().set(key, token);
-        redisTemplate.expire(key, ttlMillis, TimeUnit.MILLISECONDS);
+    /**
+     * Refresh Token 삭제 (Legacy 호환용)
+     */
+    public void deleteRefreshToken(Long userId) {
+        String key = "RT:" + userId;
+        delete(key);
     }
 
-    public String getDeviceRefreshToken(Long userId, String deviceId) {
-        String key = REFRESH_TOKEN_KEY_PREFIX + userId + ":" + deviceId;
-        Object value = redisTemplate.opsForValue().get(key);
-        return value != null ? value.toString() : null;
+    /**
+     * JTI 기반 Refresh Token 검증 (신규)
+     */
+    public boolean isRefreshTokenValid(String userId, String jti) {
+        String key = "RT:" + userId + ":" + jti;
+        return hasKey(key);
     }
 
-    public void deleteDeviceRefreshToken(Long userId, String deviceId) {
-        String key = REFRESH_TOKEN_KEY_PREFIX + userId + ":" + deviceId;
-        redisTemplate.delete(key);
+    /**
+     * JTI 기반 Refresh Token 삭제 (신규)
+     */
+    public void deleteRefreshToken(String userId, String jti) {
+        String key = "RT:" + userId + ":" + jti;
+        delete(key);
+    }
+
+    /**
+     * 사용자의 모든 Refresh Token 삭제 (보안 강화)
+     */
+    public void deleteAllRefreshTokensForUser(String userId) {
+        try {
+            String pattern = "RT:" + userId + ":*";
+            var keys = redisTemplate.keys(pattern);
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+                log.info("사용자 {}의 모든 Refresh Token 삭제: {} 개", userId, keys.size());
+            }
+        } catch (Exception e) {
+            log.error("사용자 {}의 Refresh Token 일괄 삭제 실패: {}", userId, e.getMessage());
+        }
+    }
+
+    /**
+     * 만료된 토큰 정리 (스케줄러에서 사용)
+     */
+    public void cleanupExpiredTokens() {
+        try {
+            String pattern = "RT:*";
+            var keys = redisTemplate.keys(pattern);
+            if (keys != null) {
+                int cleanedCount = 0;
+                for (String key : keys) {
+                    if (getExpire(key) <= 0) {
+                        delete(key);
+                        cleanedCount++;
+                    }
+                }
+                log.info("만료된 Refresh Token 정리 완료: {} 개", cleanedCount);
+            }
+        } catch (Exception e) {
+            log.error("만료된 토큰 정리 실패: {}", e.getMessage());
+        }
+    }
+
+    // ============= 캐시 관련 메서드 =============
+
+    /**
+     * 지하철 데이터 캐싱
+     */
+    public void cacheMetroData(String key, String data, long ttlMinutes) {
+        setWithExpiration("METRO:" + key, data, ttlMinutes * 60 * 1000);
+    }
+
+    /**
+     * 지하철 데이터 조회
+     */
+    public String getMetroData(String key) {
+        return get("METRO:" + key);
     }
 }

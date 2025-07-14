@@ -1,70 +1,170 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://${DB_URL:localhost:5432/behindy}
-    username: ${DB_USER:postgres}
-    password: ${DB_PASS:password}
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    open-in-view: false
-    properties:
-      hibernate:
-        format_sql: true
-        highlight_sql: true
-        use_sql_comments: true
-  data:
-    redis:
-      repositories:
-        enabled: false
-      host: ${SPRING_DATA_REDIS_HOST:redis}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
-      password: ${SPRING_DATA_REDIS_PASSWORD:}
-      database: 0
-      timeout: 2000ms
-      jedis:
-        pool:
-          max-active: 10
-          max-wait: -1ms
-          max-idle: 8
-          min-idle: 0
-  profiles:
-    active: default
+version: '3.8'
 
-crypto:
-  field-secret-key: ${FIELD_KEY}
-  table-secret-key: ${TABLE_KEY}
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:15-alpine
+    container_name: behindy-postgres
+    environment:
+      POSTGRES_DB: behindy_db
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - behindy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d behindy_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
-jwt:
-  secret: ${JWT_SECRET}
-  access-token-validity: 3600000
-  refresh-token-validity: 2592000000
-ai:
-  server:
-    url: ${AI_SERVER_URL:http://aiserver:8000}
-    enabled: ${AI_SERVER_ENABLED:true}
-    timeout: ${AI_SERVER_TIMEOUT:10000}
+  # Redis 캐시
+  redis:
+    image: redis:7-alpine
+    container_name: behindy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - behindy-network
+    # 🔒 HTTPS 환경에서는 Redis 비밀번호 설정 권장
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "redis-cli", ${REDIS_PASSWORD:+"-a"}, "${REDIS_PASSWORD:-}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
-seoul:
-  metro:
-    api:
-      key: ${SEOUL_METRO_API_KEY:TEMP_KEY}
-      base-url: ${SEOUL_METRO_API_BASE_URL:http://swopenAPI.seoul.go.kr/api/subway}
-      enabled: ${SEOUL_METRO_API_ENABLED:true}
-      timeout: ${SEOUL_METRO_API_TIMEOUT:10000}
-      retry-count: ${SEOUL_METRO_API_RETRY_COUNT:3}
-      enabled-lines: ${SEOUL_METRO_ENABLED_LINES:1,2,3,4}
-      update-interval: ${SEOUL_METRO_API_UPDATE_INTERVAL:600000}
-    cache:
-      ttl: ${SEOUL_METRO_CACHE_TTL:600}
-    monitoring:
-      daily-limit: ${SEOUL_METRO_MONITORING_DAILY_LIMIT:950}
+  # Spring Boot 백엔드
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: behindy-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # 🔐 HTTPS 운영환경 설정
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
+      
+      # 데이터베이스 설정
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/behindy_db
+      
+      # Redis 설정
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      
+      # 🔑 JWT 보안 설정 (필수)
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_VALIDITY: ${JWT_ACCESS_VALIDITY:-900000}
+      JWT_REFRESH_VALIDITY: ${JWT_REFRESH_VALIDITY:-604800000}
+      
+      # 🍪 HTTPS 쿠키 보안 설정 (필수)
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-strict}
+      
+      # 외부 API
+      SEOUL_API_KEY: ${SEOUL_API_KEY}
+      
+      # 로깅 (운영환경)
+      LOG_LEVEL: ${LOG_LEVEL:-WARN}
+      SECURITY_LOG_LEVEL: ${SECURITY_LOG_LEVEL:-ERROR}
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - behindy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
-logging:
-  level:
-    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
-    org.springframework.data.redis: INFO
-    org.springframework.boot.context.config: INFO
-    com.example.backend.service.AIStoryService: INFO
-    com.example.backend.controller.AIStoryController: INFO
+  # Next.js 프론트엔드
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_AI_URL: ${NEXT_PUBLIC_AI_URL}
+        
+        NEXT_PUBLIC_DEV_MODE: ${NEXT_PUBLIC_DEV_MODE:-false}
+        NEXT_PUBLIC_LOG_LEVEL: ${NEXT_PUBLIC_LOG_LEVEL:-WARN}
+        
+        NEXT_PUBLIC_TOKEN_KEY: ${NEXT_PUBLIC_TOKEN_KEY:-behindy_access_token}
+        
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Behindy}
+        NEXT_PUBLIC_APP_VERSION: ${NEXT_PUBLIC_APP_VERSION:-1.0.0}
+        
+    container_name: behindy-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      
+    depends_on:
+      - backend
+    networks:
+      - behindy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    container_name: behindy-nginx
+    ports:
+      - "80:80"     
+      - "443:443"   
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/certbot:/var/www/certbot:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - behindy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-k", "https://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 🔐 Certbot (Let's Encrypt SSL 인증서 자동 갱신)
+  certbot:
+    image: certbot/certbot
+    container_name: behindy-certbot
+    volumes:
+      - ./nginx/ssl:/etc/letsencrypt
+      - ./nginx/certbot:/var/www/certbot
+    networks:
+      - behindy-network
+    # 인증서 갱신 명령어 (초기 설정시에만 실행)
+    # command: certonly --webroot --webroot-path=/var/www/certbot --email your-email@example.com --agree-tos --no-eff-email -d behindy.me -d www.behindy.me
+    profiles:
+      - certbot  # docker-compose --profile certbot up certbot
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  behindy-network:
+    driver: bridge

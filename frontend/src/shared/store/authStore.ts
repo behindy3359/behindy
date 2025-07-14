@@ -9,19 +9,16 @@ import type {
   LoginRequest,
   SignupRequest
 } from '@/shared/types/auth';
-import { api,TokenManager } from '@/config/axiosConfig';
+import { api, TokenManager } from '@/config/axiosConfig';
 import { API_ENDPOINTS, apiErrorHandler } from '@/shared/utils/common/api';
 import { env } from '@/config/env';
 import { ApiResponse } from '@/shared/types/common';
 import { SECURITY_CONFIG } from '@/shared/utils/common/constants';
 
-// ================================================================
 // 백엔드 응답 타입
-// ================================================================
-
 interface JwtAuthResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string; // HttpOnly Cookie 사용으로 null이 될 수 있음
   tokenType: string;
   userId: number;
   name: string;
@@ -34,10 +31,7 @@ interface AuthResult {
   data?: unknown;
 }
 
-// ================================================================
 // 인증 스토어 액션 타입 정의
-// ================================================================
-
 interface AuthActions {
   // 로그인/로그아웃
   login: (credentials: LoginRequest) => Promise<AuthResult>;
@@ -80,10 +74,7 @@ const initialState: AuthState = {
   isLoading: false,
 };
 
-// ================================================================
 // Zustand 스토어 생성
-// ================================================================
-
 export const useAuthStore = create<AuthStore>()(
   devtools(
     persist(
@@ -103,7 +94,9 @@ export const useAuthStore = create<AuthStore>()(
               }
             );
       
-            // 성공 처리는 동일...
+            // Access Token만 sessionStorage에 저장
+            TokenManager.setAccessToken(response.accessToken);
+
             const user: CurrentUser = {
               id: response.userId,
               name: response.name,
@@ -111,10 +104,10 @@ export const useAuthStore = create<AuthStore>()(
               isAuthenticated: true,
               permissions: [],
             };
-      
+
             const tokens: TokenInfo = {
               accessToken: response.accessToken,
-              refreshToken: response.refreshToken,
+              refreshToken: null, // HttpOnly Cookie로 관리
               tokenType: response.tokenType || 'Bearer',
             };
       
@@ -218,23 +211,13 @@ export const useAuthStore = create<AuthStore>()(
         // 사용자 로그아웃
         logout: async (): Promise<void> => {
           try {
-            const { tokens } = get();
-            
-            // 백엔드에 로그아웃 요청
-            if (tokens.refreshToken) {
-              try {
-                await api.post<ApiResponse>(API_ENDPOINTS.AUTH.LOGOUT, {
-                  refreshToken: tokens.refreshToken,
-                });
-              } catch (error) {
-                console.warn('Logout API failed:', error);
-              }
-            }
+            // 백엔드에 로그아웃 요청 (Cookie 정리)
+            await api.post<ApiResponse>(API_ENDPOINTS.AUTH.LOGOUT, {});
           } catch (error) {
-            console.warn('Logout process error:', error);
+            console.warn('Logout API failed:', error);
           } finally {
             // 토큰 정리
-            TokenManager.clearTokens();
+            TokenManager.clearAllTokens();
 
             // 상태 초기화
             set(
@@ -255,25 +238,20 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        // 토큰 갱신
+        // 토큰 갱신 (자동으로 처리됨)
         refreshToken: async (): Promise<boolean> => {
           try {
-            const { tokens } = get();
-            
-            if (!tokens.refreshToken) {
-              throw new Error('No refresh token available');
-            }
-      
+            // axios interceptor에서 자동으로 처리되므로 여기서는 상태만 확인
             const response = await api.post<JwtAuthResponse>(
               API_ENDPOINTS.AUTH.REFRESH,
-              { refreshToken: tokens.refreshToken }
+              {} // 빈 body (Cookie에서 Refresh Token 자동 전송)
             );
       
-            TokenManager.setTokens(response.accessToken, response.refreshToken);
+            TokenManager.setAccessToken(response.accessToken);
       
             const newTokens: TokenInfo = {
               accessToken: response.accessToken,
-              refreshToken: response.refreshToken,
+              refreshToken: null, // HttpOnly Cookie로 관리
               tokenType: response.tokenType || SECURITY_CONFIG.JWT.TOKEN_TYPE,
             };
       
@@ -291,9 +269,6 @@ export const useAuthStore = create<AuthStore>()(
           } catch (error: unknown) {
             console.error('Token refresh failed:', error);
             
-            const errorInfo = apiErrorHandler.parseError(error);
-            console.error('Refresh token error details:', errorInfo);
-            
             // 토큰 갱신 실패 시 로그아웃 처리
             await get().logout();
             return false;
@@ -302,7 +277,7 @@ export const useAuthStore = create<AuthStore>()(
 
         // 토큰 정리
         clearTokens: (): void => {
-          TokenManager.clearTokens();
+          TokenManager.clearAllTokens();
           set(
             {
               tokens: {
@@ -322,9 +297,8 @@ export const useAuthStore = create<AuthStore>()(
             set({ isLoading: true }, false, 'auth/check/start');
 
             const accessToken = TokenManager.getAccessToken();
-            const refreshToken = TokenManager.getRefreshToken();
 
-            if (!accessToken || !refreshToken) {
+            if (!accessToken) {
               set(
                 {
                   status: 'unauthenticated',
@@ -337,20 +311,45 @@ export const useAuthStore = create<AuthStore>()(
               return;
             }
 
-            // 토큰 검증
-            set(
-              {
-                status: 'authenticated',
-                tokens: {
-                  accessToken,
-                  refreshToken,
-                  tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE,
+            // 서버에서 현재 사용자 정보 확인 (토큰 유효성 검증)
+            try {
+              const userResponse = await api.get<ApiResponse<CurrentUser>>(API_ENDPOINTS.AUTH.ME);
+              
+              const user: CurrentUser = {
+                id: userResponse.data.id,
+                name: userResponse.data.name,
+                email: userResponse.data.email,
+                isAuthenticated: true,
+                permissions: userResponse.data.permissions || [],
+              };
+
+              set(
+                {
+                  status: 'authenticated',
+                  user,
+                  tokens: {
+                    accessToken,
+                    refreshToken: null,
+                    tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE,
+                  },
+                  isLoading: false,
                 },
-                isLoading: false,
-              },
-              false,
-              'auth/check/success'
-            );
+                false,
+                'auth/check/success'
+              );
+            } catch (error) {
+              // 토큰이 무효하면 정리
+              TokenManager.clearAllTokens();
+              set(
+                {
+                  status: 'unauthenticated',
+                  user: null,
+                  isLoading: false,
+                },
+                false,
+                'auth/check/invalid'
+              );
+            }
           } catch (error) {
             console.error('Auth status check failed:', error);
             await get().logout();
@@ -361,15 +360,14 @@ export const useAuthStore = create<AuthStore>()(
         fetchCurrentUser: async (): Promise<void> => {
           try {
             const accessToken = TokenManager.getAccessToken();
-            const refreshToken = TokenManager.getRefreshToken();
 
-            if (accessToken && refreshToken) {
+            if (accessToken) {
               set(
                 {
                   status: 'authenticated',
                   tokens: {
                     accessToken,
-                    refreshToken,
+                    refreshToken: null,
                     tokenType: SECURITY_CONFIG.JWT.TOKEN_TYPE,
                   },
                   isLoading: false,
@@ -422,7 +420,7 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         reset: (): void => {
-          TokenManager.clearTokens();
+          TokenManager.clearAllTokens();
           set(initialState, false, 'auth/reset');
         },
 
@@ -468,10 +466,7 @@ export const useAuthStore = create<AuthStore>()(
   )
 );
 
-// ================================================================
 // 헬퍼 훅들
-// ================================================================
-
 export const useAuth = () => {
   const store = useAuthStore();
   return {

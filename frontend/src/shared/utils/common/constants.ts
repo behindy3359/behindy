@@ -59,6 +59,7 @@ export const ERROR_MESSAGES = {
   LOGIN_ERROR: '로그인 중 오류가 발생했습니다.',
   DEMO_LOGIN_FAILED: '데모 계정 로그인에 실패했습니다.',
   DEMO_LOGIN_ERROR: '데모 계정 로그인 중 오류가 발생했습니다.',
+  TOKEN_REFRESH_FAILED: '토큰 갱신에 실패했습니다. 다시 로그인해주세요.',
   
   // 입력 검증
   REQUIRED_FIELD: '필수 입력 항목입니다.',
@@ -91,6 +92,7 @@ export const SUCCESS_MESSAGES = {
   LOGOUT_SUCCESS: '로그아웃되었습니다.',
   SIGNUP_SUCCESS: '회원가입이 완료되었습니다.',
   SIGNUP_COMPLETE: '회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...',
+  TOKEN_REFRESHED: '인증 정보가 갱신되었습니다.',
   
   // 게시글/댓글
   POST_CREATED: '게시글이 작성되었습니다.',
@@ -125,6 +127,7 @@ export const LOADING_MESSAGES = {
   // 인증 관련
   LOGIN_PROCESSING: '로그인 중...',
   SIGNUP_PROCESSING: '계정 생성 중...',
+  TOKEN_REFRESHING: '인증 정보 갱신 중...',
   
   // 일반
   LOADING: '불러오는 중...',
@@ -165,25 +168,40 @@ export const CONFIRM_MESSAGES = {
   LOGOUT: '로그아웃하시겠습니까?',
 } as const;
 
-// 보안 설정 
+// 🔥 보안 설정 - HttpOnly Cookie 지원
 export const SECURITY_CONFIG = {
-  // 토큰 저장 키
+  // 토큰 저장 키 (Access Token만 sessionStorage에 저장)
   TOKEN_KEYS: {
     ACCESS: process.env.NEXT_PUBLIC_TOKEN_KEY || 'behindy_access_token',
-    REFRESH: process.env.NEXT_PUBLIC_REFRESH_TOKEN_KEY || 'behindy_refresh_token',
+    // Refresh Token은 HttpOnly Cookie로 관리되므로 JS에서 접근 불가
   },
   
   // JWT 설정
   JWT: {
-    REFRESH_THRESHOLD_MINUTES: 5,
+    REFRESH_THRESHOLD_MINUTES: 5, // 5분 전에 갱신 시도
     TOKEN_TYPE: 'Bearer',
     MAX_AGE_HOURS: 24,
+    
+    // 토큰 만료 시간 (밀리초)
+    ACCESS_TOKEN_LIFETIME: 15 * 60 * 1000,  // 15분
+    REFRESH_TOKEN_LIFETIME: 7 * 24 * 60 * 60 * 1000, // 7일
   },
   
   // API 보안
   API: {
     TIMEOUT_MS: 10000,
     HTTPS_ONLY: process.env.NODE_ENV === 'production',
+    WITH_CREDENTIALS: true, // HttpOnly Cookie 전송을 위해 필수
+  },
+  
+  // Cookie 설정 (참고용 - 실제 설정은 서버에서)
+  COOKIE: {
+    REFRESH_TOKEN_NAME: 'refreshToken',
+    HTTP_ONLY: true,
+    SECURE: process.env.NODE_ENV === 'production',
+    SAME_SITE: 'strict',
+    PATH: '/',
+    MAX_AGE: 7 * 24 * 60 * 60, // 7일 (초 단위)
   },
 } as const;
 
@@ -202,7 +220,62 @@ export const validateSecurityConfig = (): void => {
     if (apiUrl && !apiUrl.startsWith('https://')) {
       console.error('🚨 프로덕션에서는 HTTPS API URL이 필요합니다:', apiUrl);
     }
+    
+    // withCredentials 확인
+    if (!SECURITY_CONFIG.API.WITH_CREDENTIALS) {
+      console.error('🚨 HttpOnly Cookie 사용을 위해 withCredentials가 필요합니다.');
+    }
+  }
+  
+  // 개발 환경에서 보안 설정 안내
+  if (!isProd) {
+    console.log('🔒 보안 설정 정보:');
+    console.log('  - Access Token: sessionStorage (15분)');
+    console.log('  - Refresh Token: HttpOnly Cookie (7일)');
+    console.log('  - withCredentials: enabled');
+    console.log('  - CORS: 사전 승인된 origin만 허용');
   }
   
   console.log('🔒 보안 설정 검증 완료');
 };
+
+// 토큰 상태 확인 유틸리티
+export const TOKEN_UTILS = {
+  // Access Token 만료 임박 확인 (5분 이내)
+  isAccessTokenExpiringSoon: (): boolean => {
+    if (typeof window === 'undefined') return false;
+    
+    const tokenTime = sessionStorage.getItem('behindy_token_time');
+    if (!tokenTime) return true;
+    
+    const tokenTimestamp = parseInt(tokenTime, 10);
+    const now = Date.now();
+    const timeLeft = (tokenTimestamp + SECURITY_CONFIG.JWT.ACCESS_TOKEN_LIFETIME) - now;
+    
+    return timeLeft < (5 * 60 * 1000); // 5분 미만
+  },
+  
+  // Access Token 저장 시 시간 기록
+  setAccessTokenTime: (): void => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem('behindy_token_time', Date.now().toString());
+  },
+  
+  // 토큰 시간 정리
+  clearAccessTokenTime: (): void => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.removeItem('behindy_token_time');
+  },
+} as const;
+
+// 환경별 설정
+export const ENV_CONFIG = {
+  isDevelopment: process.env.NODE_ENV === 'development',
+  isProduction: process.env.NODE_ENV === 'production',
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
+  aiUrl: process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:8000',
+  devMode: process.env.NEXT_PUBLIC_DEV_MODE === 'true',
+  logLevel: process.env.NEXT_PUBLIC_LOG_LEVEL || 'INFO',
+  appName: process.env.NEXT_PUBLIC_APP_NAME || 'Behindy',
+  appVersion: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+} as const;

@@ -112,6 +112,7 @@ export const API_ENDPOINTS = {
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
+    ME: '/auth/me', // 🔥 추가된 엔드포인트
   },
 
   // 캐릭터 관련

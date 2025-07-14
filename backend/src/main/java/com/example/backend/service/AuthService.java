@@ -12,6 +12,7 @@ import com.example.backend.security.jwt.JwtTokenProvider;
 import com.example.backend.security.user.CustomUserDetails;
 import com.example.backend.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,8 +21,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.Date;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -30,8 +36,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
-    private final RedisService redisService; // Redis 서비스 추가
+    private final RedisService redisService;
     private final HtmlSanitizer htmlSanitizer;
+
+    // Cookie 설정 상수
+    private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+    private static final int REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7일 (초 단위)
+    private static final String COOKIE_PATH = "/";
 
     @Transactional
     public User register(SignupRequest request) {
@@ -39,11 +50,8 @@ public class AuthService {
             throw new RuntimeException("이미 사용 중인 이메일입니다.");
         }
 
-        // XSS 방지를 위한 입력값 필터링
         String sanitizedName = htmlSanitizer.sanitize(request.getName());
         String sanitizedEmail = htmlSanitizer.sanitize(request.getEmail());
-
-        // 비밀번호는 암호화되므로 XSS 필터링이 덜 중요하지만, 예방 차원에서 수행
         String sanitizedPassword = htmlSanitizer.sanitize(request.getPassword());
 
         User user = User.builder()
@@ -64,59 +72,71 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userDetails.getId()));
     }
 
+    /**
+     * 로그인 - HttpOnly Cookie에 Refresh Token 저장
+     */
     @Transactional
-    public JwtAuthResponse authenticate(LoginRequest request) {
+    public JwtAuthResponse authenticate(LoginRequest request, HttpServletResponse response) {
+        log.info("로그인 시도: {}", request.getEmail());
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        String accessToken = tokenProvider.generateAccessToken(authentication);
-        String refreshToken = tokenProvider.generateRefreshToken(authentication);
-
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        // Redis에 리프레시 토큰 저장
-        saveRefreshToken(userDetails.getId(), refreshToken);
+        // Access Token 생성 (짧은 수명)
+        String accessToken = tokenProvider.generateAccessToken(authentication);
+
+        // Refresh Token 생성 (긴 수명, 고유 ID 포함)
+        String refreshToken = tokenProvider.generateRefreshToken(userDetails.getId());
+        String jti = tokenProvider.getJtiFromToken(refreshToken);
+
+        // Redis에 Refresh Token 저장
+        saveRefreshTokenToRedis(userDetails.getId(), jti, refreshToken);
+
+        // HttpOnly Cookie에 Refresh Token 설정
+        setRefreshTokenCookie(response, refreshToken);
+
+        log.info("로그인 성공: userId={}, jti={}", userDetails.getId(), jti);
 
         return JwtAuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .refreshToken(null) // 프론트엔드에는 Refresh Token 전달하지 않음
                 .userId(userDetails.getId())
                 .name(userDetails.getName())
                 .email(userDetails.getEmail())
                 .build();
     }
 
+    /**
+     * Refresh Token으로 Access Token 갱신
+     */
     @Transactional
-    public JwtAuthResponse refreshToken(TokenRefreshRequest request) {
-        String requestRefreshToken = request.getRefreshToken();
+    public JwtAuthResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        // Cookie에서 Refresh Token 추출
+        String refreshToken = getRefreshTokenFromCookie(request);
 
-        // 🎯 리프레시 토큰 전용 검증 사용
-        if (!tokenProvider.validateRefreshToken(requestRefreshToken)) {
-            throw new TokenRefreshException(requestRefreshToken, "Invalid refresh token type or expired");
+        if (refreshToken == null) {
+            throw new TokenRefreshException("", "Refresh token not found in cookie");
         }
 
-        Long userId = tokenProvider.getUserIdFromJWT(requestRefreshToken);
-
-        // Redis에서 저장된 토큰 확인
-        if (!redisService.validateRefreshToken(userId, requestRefreshToken)) {
-            throw new TokenRefreshException(requestRefreshToken, "Refresh token not found in database");
+        // Refresh Token 검증
+        if (!tokenProvider.validateRefreshToken(refreshToken)) {
+            throw new TokenRefreshException(refreshToken, "Invalid or expired refresh token");
         }
 
-        // Redis에서 저장된 토큰 확인
-        if (!redisService.validateRefreshToken(userId, requestRefreshToken)) {
-            throw new TokenRefreshException(requestRefreshToken, "Refresh token not found in database or not valid");
+        Long userId = tokenProvider.getUserIdFromJWT(refreshToken);
+        String jti = tokenProvider.getJtiFromToken(refreshToken);
+
+        // Redis에서 토큰 검증
+        if (!redisService.isRefreshTokenValid(userId.toString(), jti)) {
+            throw new TokenRefreshException(refreshToken, "Refresh token not found in cache");
         }
 
-        // 토큰 유효성 검증
-        if (!tokenProvider.validateToken(requestRefreshToken)) {
-            redisService.deleteRefreshToken(userId);
-            throw new TokenRefreshException(requestRefreshToken, "Refresh token expired. Please login again");
-        }
-
+        // 사용자 정보 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         CustomUserDetails userDetails = CustomUserDetails.build(user);
 
@@ -124,45 +144,119 @@ public class AuthService {
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-        // 새 액세스 토큰 생성
+        // 새 Access Token 생성
         String newAccessToken = tokenProvider.generateAccessToken(authentication);
+
+        // 새로운 Refresh Token 생성 (Refresh Token Rotation)
+        String newRefreshToken = tokenProvider.generateRefreshToken(userId);
+        String newJti = tokenProvider.getJtiFromToken(newRefreshToken);
+
+        // 기존 Refresh Token 삭제하고 새 토큰 저장
+        redisService.deleteRefreshToken(userId.toString(), jti);
+        saveRefreshTokenToRedis(userId, newJti, newRefreshToken);
+
+        // 새 Refresh Token을 Cookie에 설정
+        setRefreshTokenCookie(response, newRefreshToken);
+
+        log.info("토큰 갱신 성공: userId={}, oldJti={}, newJti={}", userId, jti, newJti);
 
         return JwtAuthResponse.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(requestRefreshToken) // 같은 리프레시 토큰 유지
+                .refreshToken(null) // 프론트엔드에는 전달하지 않음
                 .userId(user.getUserId())
                 .name(user.getUserName())
                 .email(user.getUserEmail())
                 .build();
     }
 
+    /**
+     * 로그아웃 - Cookie 및 Redis에서 Refresh Token 제거
+     */
     @Transactional
-    public void logout(String refreshToken) {
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
         try {
-            // 토큰에서 사용자 ID 추출
-            Long userId = tokenProvider.getUserIdFromJWT(refreshToken);
-            // Redis에서 리프레시 토큰 삭제
-            redisService.deleteRefreshToken(userId);
+            String refreshToken = getRefreshTokenFromCookie(request);
+
+            if (refreshToken != null) {
+                Long userId = tokenProvider.getUserIdFromJWT(refreshToken);
+                String jti = tokenProvider.getJtiFromToken(refreshToken);
+
+                // Redis에서 토큰 삭제
+                redisService.deleteRefreshToken(userId.toString(), jti);
+
+                log.info("로그아웃 성공: userId={}, jti={}", userId, jti);
+            }
+
+            // Cookie 삭제
+            clearRefreshTokenCookie(response);
+
         } catch (Exception e) {
-            // 잘못된 토큰이어도 로그아웃 처리는 진행
+            log.warn("로그아웃 처리 중 오류 발생: {}", e.getMessage());
+            // 에러가 발생해도 Cookie는 삭제
+            clearRefreshTokenCookie(response);
         }
+
         SecurityContextHolder.clearContext();
     }
 
     /**
-     * Redis에 리프레시 토큰 저장
+     * Redis에 Refresh Token 저장
      */
-    private void saveRefreshToken(Long userId, String token) {
+    private void saveRefreshTokenToRedis(Long userId, String jti, String token) {
         try {
-            // 토큰 만료 시간 계산
             Date expiryDate = tokenProvider.getExpirationDateFromToken(token);
             long ttlMillis = expiryDate.getTime() - System.currentTimeMillis();
 
-            // Redis에 토큰 저장
-            redisService.saveRefreshToken(userId, token, ttlMillis);
+            // Redis Key: RT:userId:jti
+            String redisKey = "RT:" + userId + ":" + jti;
+            redisService.setWithExpiration(redisKey, token, ttlMillis);
 
+            log.debug("Redis에 Refresh Token 저장: key={}, ttl={}ms", redisKey, ttlMillis);
         } catch (Exception e) {
+            log.error("Refresh Token Redis 저장 실패: {}", e.getMessage());
             throw new RuntimeException("리프레시 토큰 저장 중 오류가 발생했습니다.", e);
         }
+    }
+
+    /**
+     * Cookie에서 Refresh Token 추출
+     */
+    private String getRefreshTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() == null) {
+            return null;
+        }
+
+        return Arrays.stream(request.getCookies())
+                .filter(cookie -> REFRESH_TOKEN_COOKIE_NAME.equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * HttpOnly Cookie에 Refresh Token 설정
+     */
+    private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true); // HTTPS에서만 전송
+        cookie.setPath(COOKIE_PATH);
+        cookie.setMaxAge(REFRESH_TOKEN_COOKIE_MAX_AGE);
+        cookie.setAttribute("SameSite", "Strict"); // CSRF 방지
+
+        response.addCookie(cookie);
+    }
+
+    /**
+     * Refresh Token Cookie 삭제
+     */
+    private void clearRefreshTokenCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, "");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath(COOKIE_PATH);
+        cookie.setMaxAge(0); // 즉시 만료
+
+        response.addCookie(cookie);
     }
 }
