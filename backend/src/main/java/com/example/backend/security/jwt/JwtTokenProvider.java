@@ -27,7 +27,7 @@ public class JwtTokenProvider {
 
     @Value("${JWT_ACCESS_VALIDITY:900000}")
     private long accessTokenValidity;
-    
+
     @Value("${JWT_REFRESH_VALIDITY:604800000}")
     private long refreshTokenValidity;
 
