@@ -92,8 +92,17 @@ public class AuthService {
     public JwtAuthResponse refreshToken(TokenRefreshRequest request) {
         String requestRefreshToken = request.getRefreshToken();
 
-        // 토큰에서 사용자 ID 추출
+        // 🎯 리프레시 토큰 전용 검증 사용
+        if (!tokenProvider.validateRefreshToken(requestRefreshToken)) {
+            throw new TokenRefreshException(requestRefreshToken, "Invalid refresh token type or expired");
+        }
+
         Long userId = tokenProvider.getUserIdFromJWT(requestRefreshToken);
+
+        // Redis에서 저장된 토큰 확인
+        if (!redisService.validateRefreshToken(userId, requestRefreshToken)) {
+            throw new TokenRefreshException(requestRefreshToken, "Refresh token not found in database");
+        }
 
         // Redis에서 저장된 토큰 확인
         if (!redisService.validateRefreshToken(userId, requestRefreshToken)) {
