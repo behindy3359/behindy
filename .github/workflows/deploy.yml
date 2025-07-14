@@ -10,177 +10,128 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Free up disk space
+      - name: Cleanup and checkout
         run: |
-          echo "=== 배포 전 디스크 정리 ==="
-          df -h
-          
-          docker system prune -f --volumes
-          docker image prune -a -f
-          
-          sudo apt autoremove -y
-          sudo apt autoclean
-          
-          echo "=== 정리 후 디스크 상태 ==="
-          df -h
-
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Force sync latest code
-        run: |
+          echo "🧹 정리 및 코드 동기화..."
+          docker system prune -f
           cd ~/behindy
           git fetch origin
           git reset --hard origin/main
-          echo "[+] Force sync complete"
 
-      - name: Stop existing containers
+      - name: Smart rebuild
         run: |
           cd ~/behindy
-          echo "🛑 기존 컨테이너 중지 중..."
+          echo "🔍 변경사항 분석 중..."
           
-          # 컨테이너 graceful 중지 (30초 타임아웃)
-          docker-compose down --timeout 30 || true
+          # 변경된 서비스만 리빌드
+          CHANGED_FILES=$(git diff HEAD~1 --name-only)
           
-          echo "✅ 컨테이너 중지 완료"
-
-      - name: Clean up old images
-        run: |
-          cd ~/behindy
-          echo "🧹 오래된 이미지 정리 중..."
+          docker-compose down --timeout 10
           
-          # 사용하지 않는 이미지들 정리
-          docker image prune -f
-          
-          # behindy 관련 이미지들 정리
-          docker images | grep behindy | awk '{print $3}' | xargs -r docker rmi -f || true
-          
-          echo "✅ 이미지 정리 완료"
-
-      - name: Build and start services
-        run: |
-          cd ~/behindy
-          echo "🏗️ 컨테이너 빌드 및 시작 중..."
-          
-          # 환경변수 파일이 있으면 로드
-          if [ -f .env ]; then
-            echo "📋 환경변수 파일 로드 중..."
-            set -a
-            source .env
-            set +a
-          else
-            echo "⚠️ .env 파일이 없습니다. Docker Compose 기본 설정을 사용합니다."
+          if echo "$CHANGED_FILES" | grep -q "backend/"; then
+            echo "📦 백엔드 리빌드..."
+            docker-compose build backend
           fi
           
-          # 모든 서비스 캐시 없이 새로 빌드
-          echo "📦 모든 서비스 빌드 중..."
-          docker-compose build --no-cache
+          if echo "$CHANGED_FILES" | grep -q "frontend/"; then
+            echo "📦 프론트엔드 리빌드..."
+            docker-compose build frontend
+          fi
           
-          # 단계별 시작: 먼저 DB와 Redis
-          echo "🗄️ 데이터베이스 및 Redis 시작..."
+          if echo "$CHANGED_FILES" | grep -q "aiserver/"; then
+            echo "📦 AI서버 리빌드..."
+            docker-compose build aiserver
+          fi
+          
+          # 인프라 변경시에만 전체 리빌드
+          if echo "$CHANGED_FILES" | grep -qE "(docker-compose|Dockerfile|nginx)"; then
+            echo "📦 전체 리빌드..."
+            docker-compose build
+          fi
+
+      - name: Start services with health checks
+        run: |
+          cd ~/behindy
+          echo "🚀 서비스 시작..."
+          
+          # DB와 Redis 병렬 시작
           docker-compose up -d db redis
           
-          # PostgreSQL 준비 대기 (SpringBoot DataInitializer가 처리)
-          echo "⏳ PostgreSQL 준비 대기..."
-          sleep 20
+          # PostgreSQL 준비 대기 (스마트 체크)
+          wait_for_db() {
+            for i in {1..30}; do
+              if docker-compose exec -T db pg_isready -U behindy_user >/dev/null 2>&1; then
+                echo "✅ DB 준비 완료! ($i초)"
+                return 0
+              fi
+              echo "⏳ DB 대기 중... ($i/30)"
+              sleep 1
+            done
+            return 1
+          }
           
-          # 백엔드 시작 (JPA 테이블 생성 + 초기 데이터 자동 로드)
-          echo "🚀 백엔드 서비스 시작..."
-          docker-compose up -d backend
-          
-          # 백엔드 안정화 대기 (초기 데이터 로딩 포함)
-          echo "⏳ 백엔드 안정화 및 초기 데이터 로딩 대기..."
-          sleep 30
-          
-          # 나머지 서비스 시작
-          echo "🚀 나머지 서비스 시작..."
-          docker-compose up -d
-          
-          echo "✅ 컨테이너 시작 완료"
-
-      - name: Wait for services
-        run: |
-          echo "⏳ 서비스 시작 대기 중..."
-          sleep 30
-          
-          echo "🔍 컨테이너 상태 확인..."
-          cd ~/behindy
-          docker-compose ps
-
-      - name: Health check
-        run: |
-          echo "=== 헬스체크 대기 ==="
-          sleep 30
-          
-          if curl -f http://localhost/; then
-            echo "✅ 배포 성공!"
+          if wait_for_db; then
+            # 백엔드 시작
+            docker-compose up -d backend
+            
+            # 백엔드 API 준비 대기
+            wait_for_backend() {
+              for i in {1..60}; do
+                if curl -f http://localhost:8080/actuator/health >/dev/null 2>&1; then
+                  echo "✅ 백엔드 준비 완료! ($i초)"
+                  return 0
+                fi
+                echo "⏳ 백엔드 대기 중... ($i/60)"
+                sleep 1
+              done
+              return 1
+            }
+            
+            if wait_for_backend; then
+              # 나머지 서비스 병렬 시작
+              docker-compose up -d
+              echo "✅ 모든 서비스 시작 완료"
+            else
+              echo "❌ 백엔드 시작 실패"
+              exit 1
+            fi
           else
-            echo "❌ 배포 실패!"
-            cd ~/behindy
-            docker-compose logs
+            echo "❌ DB 시작 실패"
             exit 1
           fi
 
-      - name: Display service status
+      - name: Final health check
+        run: |
+          echo "🔍 최종 헬스체크..."
+          
+          # 프론트엔드 준비 대기
+          for i in {1..30}; do
+            if curl -f http://localhost/ >/dev/null 2>&1; then
+              echo "✅ 배포 성공! ($i초)"
+              break
+            fi
+            echo "⏳ 프론트엔드 대기 중... ($i/30)"
+            sleep 1
+          done
+
+      - name: Status report
         run: |
           cd ~/behindy
-          echo "=== 최종 서비스 상태 ==="
-          
-          echo "📊 컨테이너 상태:"
+          echo "📊 서비스 상태:"
           docker-compose ps
           
-          echo ""
-          echo "💾 디스크 사용량:"
-          df -h
-          
-          echo ""
-          echo "🐳 Docker 이미지 목록:"
-          docker images | head -10
-          
-          echo ""
-          echo "🔗 서비스 접속 정보:"
-          # IP 주소 가져오기 (여러 방법 시도)
-          PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || curl -s icanhazip.com 2>/dev/null || echo "서버IP")
-          echo "  - 프론트엔드: http://$PUBLIC_IP/"
-          echo "  - 백엔드 API: http://$PUBLIC_IP:8080/"
-          echo "  - AI 서비스: http://$PUBLIC_IP:8000/"
+          PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || echo "서버IP")
+          echo "🔗 접속: http://$PUBLIC_IP/"
 
-      - name: Final cleanup
+      - name: Cleanup
         run: |
-          cd ~/behindy
-          echo "🧹 최종 정리 작업..."
-          
-          # 빌드 캐시 정리
-          docker builder prune -f
-          
-          # 사용하지 않는 볼륨 정리
+          docker image prune -f
           docker volume prune -f
-          
-          # 사용하지 않는 네트워크 정리  
-          docker network prune -f
-          
-          echo "=== 최종 디스크 상태 ==="
-          df -h
-          
-          echo "✅ 배포 완료!"
 
-      - name: Notify on failure
+      - name: Error logs
         if: failure()
         run: |
-          echo "💥 배포 실패 - 로그 정보:"
-          echo ""
-          echo "=== 컨테이너 상태 ==="
           cd ~/behindy
-          docker-compose ps || true
-          echo ""
-          echo "=== 최근 로그 (frontend) ==="
-          docker-compose logs --tail=50 frontend || true
-          echo ""
-          echo "=== 최근 로그 (backend) ==="  
-          docker-compose logs --tail=50 backend || true
-          echo ""
-          echo "=== 최근 로그 (nginx) ==="
-          docker-compose logs --tail=50 nginx || true
-          echo ""
-          echo "=== 최근 로그 (aiserver) ==="
-          docker-compose logs --tail=50 aiserver || true
+          echo "💥 배포 실패 로그:"
+          docker-compose logs --tail=20 backend
+          docker-compose logs --tail=20 frontend
