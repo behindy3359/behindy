@@ -11,7 +11,7 @@ import java.util.List;
 @Table(name="STO")
 public class Story {
 
-    @Id@GeneratedValue(strategy = GenerationType.AUTO)
+    @Id @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="sto_id")
     private Long stoId;
 
@@ -25,7 +25,12 @@ public class Story {
     @Column(name="sto_length")
     private int stoLength;
 
-    @OneToMany(mappedBy = "story", orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<LogE> logES = new ArrayList<>();
+    @Column(name="sto_description", columnDefinition = "TEXT")
+    private String stoDescription;
+
+    @Column(name="sto_theme")
+    private String stoTheme;
+
+    @Column(name="sto_keywords", columnDefinition = "TEXT")
+    private String stoKeywords;
 }

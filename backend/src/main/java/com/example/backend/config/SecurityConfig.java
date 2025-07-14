@@ -7,6 +7,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.example.backend.security.jwt.JwtAuthenticationEntryPoint;
 import com.example.backend.security.jwt.JwtAuthenticationFilter;
+import com.example.backend.security.filter.InternalApiKeyFilter;
 import com.example.backend.security.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +39,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationEntryPoint unauthorizedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final InternalApiKeyFilter internalApiKeyFilter;
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -97,6 +99,9 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/").permitAll()
 
+                        // 🆕 내부 API 경로 - 별도 필터에서 처리하므로 permitAll
+                        .requestMatchers("/api/ai-stories/internal/**").permitAll()
+
                         // 🎯 게시판 및 댓글 조회 공개
                         .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
@@ -114,8 +119,10 @@ public class SecurityConfig {
                 );
 
         http.authenticationProvider(authenticationProvider());
+
+        // 🆕 내부 API 필터를 JWT 필터 전에 추가
+        http.addFilterBefore(internalApiKeyFilter, JwtAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-}
