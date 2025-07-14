@@ -115,6 +115,7 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - ./pgdata:/var/lib/postgresql/data
+      - ./backend/init-scripts:/docker-entrypoint-initdb.d
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
