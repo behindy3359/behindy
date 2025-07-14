@@ -16,17 +16,11 @@ public class Station {
     @Column(name = "api_station_id", unique = true)
     private String apiStationId;
 
-    @Column(name = "api_subway_id")
-    private String apiSubwayId;
-
     @Column(name = "sta_name", nullable = false)
     private String staName;
 
     @Column(name = "sta_line", nullable = false)
     private Integer staLine;
-
-    @Column(name = "sta_line_name")
-    private String staLineName;
 
     @OneToMany(mappedBy = "station", fetch = FetchType.LAZY)
     @Builder.Default
