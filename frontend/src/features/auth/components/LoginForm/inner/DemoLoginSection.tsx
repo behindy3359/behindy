@@ -1,5 +1,5 @@
 import React from 'react';
-import { GamepadIcon, UserCog } from 'lucide-react';
+import { UserCog } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
 import { DemoContainer, DemoContent } from '../styles';
 import type { DemoLoginSectionProps } from '../../../types/types';

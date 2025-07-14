@@ -30,22 +30,38 @@ export function useSignupForm() {
   const [submitError, setSubmitError] = useState<string>('');
   const [submitSuccess, setSubmitSuccess] = useState<string>('');
 
-  // 개별 필드 변경 처리
+  // 개별 필드 변경 처리 (수정됨)
   const handleInputChange = useCallback((
     field: keyof SignupFormData, 
     value: string | boolean
   ) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // 🔥 수정: 먼저 formData 업데이트
+    const updatedFormData = { ...formData, [field]: value };
+    setFormData(updatedFormData);
     
-    // 기존 에러가 있으면 실시간 검증
+    // 🔥 수정: 기존 에러가 있으면 업데이트된 데이터로 실시간 검증
     if (errors[field]) {
-      const validation = validateSignupForm.field(field, value, formData);
+      const validation = validateSignupForm.field(field, value, updatedFormData);
       setErrors(prev => ({
         ...prev,
         [field]: validation.isValid ? undefined : validation.message,
       }));
     }
-  }, [errors, formData]);
+
+    // 🔥 추가: confirmPassword 특별 처리
+    // password가 변경되면 confirmPassword도 재검증
+    if (field === 'password' && updatedFormData.confirmPassword && errors.confirmPassword) {
+      const confirmValidation = validateSignupForm.field(
+        'confirmPassword', 
+        updatedFormData.confirmPassword, 
+        updatedFormData
+      );
+      setErrors(prev => ({
+        ...prev,
+        confirmPassword: confirmValidation.isValid ? undefined : confirmValidation.message,
+      }));
+    }
+  }, [formData, errors]);
 
   // 필드 블러 시 검증
   const handleFieldBlur = useCallback((field: keyof SignupFormData) => {
@@ -123,14 +139,20 @@ export function useSignupForm() {
     router.push('/auth/login');
   }, [router]);
 
-  // 폼 유효성 검사
-  const isFormValid = Object.keys(errors).length === 0 && 
-                     formData.name.trim() && 
-                     formData.email.trim() && 
-                     formData.password && 
-                     formData.confirmPassword &&
-                     formData.agreeToTerms && 
-                     formData.agreeToPrivacy;
+  // 🔥 수정: 폼 유효성 검사 - 더 엄격한 검증
+  const isFormValid = 
+    // 1. 에러가 없어야 함
+    Object.keys(errors).length === 0 && 
+    // 2. 모든 필수 필드가 채워져야 함
+    formData.name.trim().length > 0 && 
+    formData.email.trim().length > 0 && 
+    formData.password.length > 0 && 
+    formData.confirmPassword.length > 0 &&
+    // 3. 비밀번호가 일치해야 함
+    formData.password === formData.confirmPassword &&
+    // 4. 필수 약관에 동의해야 함
+    formData.agreeToTerms === true && 
+    formData.agreeToPrivacy === true;
 
   return {
     // 상태
