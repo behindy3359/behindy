@@ -57,7 +57,8 @@ jobs:
           
           echo "✅ 이미지 정리 완료"
 
-      - name: Build and start containers
+      # 🔧 핵심 개선: 단계별 서비스 시작
+      - name: Build and start services
         run: |
           cd ~/behindy
           echo "🏗️ 컨테이너 빌드 및 시작 중..."
@@ -80,8 +81,24 @@ jobs:
           echo "📦 다른 서비스들 빌드 중..."
           docker-compose build backend aiserver
           
-          # 모든 컨테이너 시작
-          echo "🚀 모든 서비스 시작 중..."
+          # 🔧 단계별 시작: 먼저 DB와 Redis
+          echo "🗄️ 데이터베이스 및 Redis 시작..."
+          docker-compose up -d db redis
+          
+          # PostgreSQL 준비 대기
+          echo "⏳ PostgreSQL 준비 대기..."
+          sleep 20
+          
+          # 백엔드 시작 (JPA 테이블 생성)
+          echo "🚀 백엔드 서비스 시작..."
+          docker-compose up -d backend
+          
+          # 백엔드 안정화 대기
+          echo "⏳ 백엔드 안정화 대기..."
+          sleep 30
+          
+          # 나머지 서비스 시작
+          echo "🚀 나머지 서비스 시작..."
           docker-compose up -d
           
           echo "✅ 컨테이너 시작 완료"
