@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/shared/store/authStore';
 import { apiErrorHandler } from '@/shared/utils/common/api';
@@ -30,27 +30,56 @@ export function useSignupForm() {
   const [submitError, setSubmitError] = useState<string>('');
   const [submitSuccess, setSubmitSuccess] = useState<string>('');
 
-  // 개별 필드 변경 처리 (수정됨)
+  // 🔥 디버깅: 상태 변화 로깅
+  useEffect(() => {
+    console.log('=== SIGNUP FORM DEBUG ===');
+    console.log('formData:', formData);
+    console.log('errors:', errors);
+    
+    // 각 조건 체크
+    const conditions = {
+      'errors가 비어있음': Object.keys(errors).length === 0,
+      'name 있음': formData.name.trim().length > 0,
+      'email 있음': formData.email.trim().length > 0,
+      'password 있음': formData.password.length > 0,
+      'confirmPassword 있음': formData.confirmPassword.length > 0,
+      'password 일치': formData.password === formData.confirmPassword,
+      'terms 동의': formData.agreeToTerms === true,
+      'privacy 동의': formData.agreeToPrivacy === true,
+    };
+    
+    console.log('조건 체크:', conditions);
+    
+    const isValid = Object.values(conditions).every(Boolean);
+    console.log('최종 isFormValid:', isValid);
+    console.log('========================');
+  }, [formData, errors]);
+
+  // 개별 필드 변경 처리
   const handleInputChange = useCallback((
     field: keyof SignupFormData, 
     value: string | boolean
   ) => {
-    // 🔥 수정: 먼저 formData 업데이트
+    console.log(`🔄 handleInputChange: ${field} = ${value}`);
+    
     const updatedFormData = { ...formData, [field]: value };
     setFormData(updatedFormData);
     
-    // 🔥 수정: 기존 에러가 있으면 업데이트된 데이터로 실시간 검증
+    // 기존 에러가 있으면 실시간 검증
     if (errors[field]) {
+      console.log(`🔍 실시간 검증: ${field}`);
       const validation = validateSignupForm.field(field, value, updatedFormData);
+      console.log(`검증 결과:`, validation);
+      
       setErrors(prev => ({
         ...prev,
         [field]: validation.isValid ? undefined : validation.message,
       }));
     }
 
-    // 🔥 추가: confirmPassword 특별 처리
-    // password가 변경되면 confirmPassword도 재검증
+    // password 변경 시 confirmPassword도 재검증
     if (field === 'password' && updatedFormData.confirmPassword && errors.confirmPassword) {
+      console.log('🔍 confirmPassword 재검증');
       const confirmValidation = validateSignupForm.field(
         'confirmPassword', 
         updatedFormData.confirmPassword, 
@@ -65,7 +94,10 @@ export function useSignupForm() {
 
   // 필드 블러 시 검증
   const handleFieldBlur = useCallback((field: keyof SignupFormData) => {
+    console.log(`🔍 handleFieldBlur: ${field}`);
     const validation = validateSignupForm.field(field, formData[field], formData);
+    console.log(`블러 검증 결과:`, validation);
+    
     setErrors(prev => ({
       ...prev,
       [field]: validation.isValid ? undefined : validation.message,
@@ -74,7 +106,9 @@ export function useSignupForm() {
 
   // 전체 폼 검증
   const validateForm = useCallback((): FormValidationResult => {
+    console.log('🔍 전체 폼 검증');
     const validation = validateSignupForm.all(formData);
+    console.log('전체 검증 결과:', validation);
     setErrors(validation.errors);
     return validation;
   }, [formData]);
@@ -82,10 +116,12 @@ export function useSignupForm() {
   // 폼 제출 처리
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🚀 폼 제출 시도');
     
     // 클라이언트 검증
     const validation = validateForm();
     if (!validation.isValid) {
+      console.log('❌ 클라이언트 검증 실패');
       return;
     }
 
@@ -103,7 +139,6 @@ export function useSignupForm() {
       if (result.success) {
         setSubmitSuccess('회원가입이 완료되었습니다!');
         
-        // 2초 후 로그인 페이지로 이동
         setTimeout(() => {
           router.push('/auth/login?message=signup_success');
         }, 2000);
@@ -114,7 +149,6 @@ export function useSignupForm() {
       const errorInfo = apiErrorHandler.parseError(error);
       setSubmitError(errorInfo.message);
       
-      // 특정 에러 코드에 따른 필드 에러 설정
       if (errorInfo.code === '409' && errorInfo.details?.field === 'email') {
         setErrors(prev => ({
           ...prev,
@@ -139,18 +173,14 @@ export function useSignupForm() {
     router.push('/auth/login');
   }, [router]);
 
-  // 🔥 수정: 폼 유효성 검사 - 더 엄격한 검증
+  // 폼 유효성 검사
   const isFormValid = 
-    // 1. 에러가 없어야 함
     Object.keys(errors).length === 0 && 
-    // 2. 모든 필수 필드가 채워져야 함
     formData.name.trim().length > 0 && 
     formData.email.trim().length > 0 && 
     formData.password.length > 0 && 
     formData.confirmPassword.length > 0 &&
-    // 3. 비밀번호가 일치해야 함
     formData.password === formData.confirmPassword &&
-    // 4. 필수 약관에 동의해야 함
     formData.agreeToTerms === true && 
     formData.agreeToPrivacy === true;
 
