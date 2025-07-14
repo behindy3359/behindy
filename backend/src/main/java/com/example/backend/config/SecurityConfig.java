@@ -39,7 +39,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationEntryPoint unauthorizedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final InternalApiKeyFilter internalApiKeyFilter;
+    private final InternalApiKeyFilter internalApiKeyFilter; // 🆕 추가
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -120,8 +120,8 @@ public class SecurityConfig {
 
         http.authenticationProvider(authenticationProvider());
 
-        // 🆕 내부 API 필터를 JWT 필터 전에 추가
-        http.addFilterBefore(internalApiKeyFilter, JwtAuthenticationFilter.class);
+        // 🆕 필터 순서 수정: UsernamePasswordAuthenticationFilter 기준으로 추가
+        http.addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
