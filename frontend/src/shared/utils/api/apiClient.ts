@@ -1,5 +1,3 @@
-// frontend/src/shared/utils/api/apiClient.ts 또는 해당 파일에 임시 추가
-
 import { apiClient } from "@/config/axiosConfig";
 
 // 🔥 임시 디버깅용 - API 요청 전후 로깅

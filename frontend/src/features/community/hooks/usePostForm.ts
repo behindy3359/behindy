@@ -26,9 +26,9 @@ export const usePostForm = ({
 
   // 인증 확인
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push('/auth/login');
-    }
+    // if (!isAuthenticated()) {
+    //   router.push('/auth/login');
+    // }
   }, [isAuthenticated, router]);
 
   // 편집 모드일 때 기존 게시글 데이터 가져오기
