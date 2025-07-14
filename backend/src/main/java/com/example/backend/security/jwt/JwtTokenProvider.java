@@ -22,14 +22,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret}")
+    @Value("${JWT_SECRET}")
     private String secretKey;
 
-    @Value("${jwt.access-token-validity}")
-    private long accessTokenValidity; // 15분 (900000ms)
-
-    @Value("${jwt.refresh-token-validity}")
-    private long refreshTokenValidity; // 7일 (604800000ms)
+    @Value("${JWT_ACCESS_VALIDITY:900000}")
+    private long accessTokenValidity;
+    
+    @Value("${JWT_REFRESH_VALIDITY:604800000}")
+    private long refreshTokenValidity;
 
     private Key key;
     private final SecureRandom secureRandom = new SecureRandom();
