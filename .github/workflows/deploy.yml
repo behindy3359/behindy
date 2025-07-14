@@ -23,7 +23,6 @@ jobs:
           cd ~/behindy
           echo "🔍 변경사항 분석 중..."
           
-          # 변경된 서비스만 리빌드
           CHANGED_FILES=$(git diff HEAD~1 --name-only)
           
           docker-compose down --timeout 10
@@ -43,7 +42,6 @@ jobs:
             docker-compose build aiserver
           fi
           
-          # 인프라 변경시에만 전체 리빌드
           if echo "$CHANGED_FILES" | grep -qE "(docker-compose|Dockerfile|nginx)"; then
             echo "📦 전체 리빌드..."
             docker-compose build
@@ -54,42 +52,54 @@ jobs:
           cd ~/behindy
           echo "🚀 서비스 시작..."
           
-          # DB와 Redis 병렬 시작
-          docker-compose up -d db redis
+          docker-compose up -d postgres redis
           
-          # PostgreSQL 준비 대기 (스마트 체크)
           wait_for_db() {
             for i in {1..30}; do
-              if docker-compose exec -T db pg_isready -U behindy_user >/dev/null 2>&1; then
+              if docker-compose exec -T postgres pg_isready -U ${DB_USER:-behindy} -d ${DB_NAME:-behindy} >/dev/null 2>&1; then
                 echo "✅ DB 준비 완료! ($i초)"
                 return 0
               fi
               echo "⏳ DB 대기 중... ($i/30)"
-              sleep 1
+              sleep 2
             done
+            echo "❌ DB 연결 실패 - 로그 확인:"
+            docker-compose logs --tail=5 postgres
             return 1
           }
           
           if wait_for_db; then
-            # 백엔드 시작
             docker-compose up -d backend
             
-            # 백엔드 API 준비 대기
             wait_for_backend() {
               for i in {1..60}; do
                 if curl -f http://localhost:8080/actuator/health >/dev/null 2>&1; then
                   echo "✅ 백엔드 준비 완료! ($i초)"
                   return 0
                 fi
+                if [ $i -eq 30 ]; then
+                  echo "⚠️  백엔드 응답이 느립니다. 로그 확인:"
+                  docker-compose logs --tail=10 backend
+                fi
                 echo "⏳ 백엔드 대기 중... ($i/60)"
-                sleep 1
+                sleep 2
               done
+              echo "❌ 백엔드 시작 실패 - 상세 로그:"
+              docker-compose logs --tail=20 backend
               return 1
             }
             
             if wait_for_backend; then
-              # 나머지 서비스 병렬 시작
               docker-compose up -d
+              
+              echo "🤖 AI서버 상태 확인 중..."
+              sleep 5
+              if curl -f http://localhost:8000/health >/dev/null 2>&1; then
+                echo "✅ AI서버 정상 동작"
+              else
+                echo "⚠️  AI서버 응답 없음 (정상 - 백엔드는 Mock으로 동작)"
+              fi
+              
               echo "✅ 모든 서비스 시작 완료"
             else
               echo "❌ 백엔드 시작 실패"
@@ -104,14 +114,30 @@ jobs:
         run: |
           echo "🔍 최종 헬스체크..."
           
-          # 프론트엔드 준비 대기
           for i in {1..30}; do
+            if curl -f http://localhost:3000/ >/dev/null 2>&1; then
+              echo "✅ 프론트엔드 준비 완료! ($i초)"
+              break
+            fi
+            if [ $i -eq 15 ]; then
+              echo "⚠️  프론트엔드 응답이 느립니다. 로그 확인:"
+              docker-compose logs --tail=10 frontend
+            fi
+            echo "⏳ 프론트엔드 대기 중... ($i/30)"
+            sleep 2
+          done
+          
+          for i in {1..15}; do
             if curl -f http://localhost/ >/dev/null 2>&1; then
               echo "✅ 배포 성공! ($i초)"
               break
             fi
-            echo "⏳ 프론트엔드 대기 중... ($i/30)"
-            sleep 1
+            if [ $i -eq 10 ]; then
+              echo "⚠️  Nginx 응답이 느립니다. 상태 확인:"
+              docker-compose ps nginx
+            fi
+            echo "⏳ Nginx 대기 중... ($i/15)"
+            sleep 2
           done
 
       - name: Status report
@@ -120,8 +146,21 @@ jobs:
           echo "📊 서비스 상태:"
           docker-compose ps
           
+          echo ""
+          echo "🔍 백엔드 상태 확인:"
+          curl -s http://localhost:8080/actuator/health | head -c 200 || echo "백엔드 응답 없음"
+          
+          echo ""
+          echo "🔍 지하철 API 상태 확인:"
+          curl -s http://localhost:8080/api/metro/status | head -c 300 || echo "지하철 API 응답 없음"
+          
+          echo ""
+          echo "🤖 AI서버 상태 확인:"
+          curl -s http://localhost:8000/health | head -c 300 || echo "AI서버 응답 없음 (정상 - Mock 모드)"
+          
           PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || echo "서버IP")
-          echo "🔗 접속: http://$PUBLIC_IP/"
+          echo ""
+          echo "🔗 접속 URL: http://$PUBLIC_IP/"
 
       - name: Cleanup
         run: |
@@ -133,5 +172,11 @@ jobs:
         run: |
           cd ~/behindy
           echo "💥 배포 실패 로그:"
-          docker-compose logs --tail=20 backend
+          echo "=== 백엔드 로그 ==="
+          docker-compose logs --tail=30 backend
+          echo ""
+          echo "=== 프론트엔드 로그 ==="
           docker-compose logs --tail=20 frontend
+          echo ""
+          echo "=== AI서버 로그 ==="
+          docker-compose logs --tail=10 aiserver
