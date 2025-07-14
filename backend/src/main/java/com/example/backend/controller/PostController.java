@@ -8,16 +8,18 @@ import com.example.backend.dto.post.PostUpdateRequest;
 import com.example.backend.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j; // 🔥 추가
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication; // 🔥 추가
+import org.springframework.security.core.context.SecurityContextHolder; // 🔥 추가
 import org.springframework.web.bind.annotation.*;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
+@Slf4j // 🔥 추가
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -28,14 +30,6 @@ public class PostController {
     /**
      * 게시글 생성
      */
-//    @PostMapping
-//    @PreAuthorize("isAuthenticated()")
-//    public ResponseEntity<PostResponse> createPost(
-//            @Valid @RequestBody PostCreateRequest request) {
-//        PostResponse response = postService.createPost(request);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-//    }
-
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostResponse> createPost(

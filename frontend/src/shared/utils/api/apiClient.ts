@@ -29,7 +29,7 @@ apiClient.interceptors.response.use(
     console.log('✅ API 응답:', {
       status: response.status,
       url: response.config?.url,
-      success: response.data?.success,
+      success: response.data && typeof response.data === 'object' && 'success' in response.data ? response.data.success : undefined,
       hasData: !!response.data
     });
     return response;
