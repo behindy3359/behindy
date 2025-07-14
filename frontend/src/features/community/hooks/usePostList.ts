@@ -33,10 +33,10 @@ export const usePostList = ({
   }, [router]);
 
   const handleWritePost = useCallback(() => {
-    if (!isAuthenticated()) {
-      router.push('/auth/login?redirect=/community/write');
-      return;
-    }
+    // if (!isAuthenticated()) {
+    //   router.push('/auth/login?redirect=/community/write');
+    //   return;
+    // }
     router.push('/community/write');
   }, [isAuthenticated, router]);
 

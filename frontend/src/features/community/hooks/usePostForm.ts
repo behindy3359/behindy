@@ -25,11 +25,11 @@ export const usePostForm = ({
   const isEditing = mode === 'edit';
 
   // 인증 확인
-  useEffect(() => {
-    // if (!isAuthenticated()) {
-    //   router.push('/auth/login');
-    // }
-  }, [isAuthenticated, router]);
+  // useEffect(() => {
+  //   if (!isAuthenticated()) {
+  //     router.push('/auth/login');
+  //   }
+  // }, [isAuthenticated, router]);
 
   // 편집 모드일 때 기존 게시글 데이터 가져오기
   const { data: existingPost, isLoading: isLoadingPost, error: fetchError } = useQuery({
@@ -79,29 +79,40 @@ export const usePostForm = ({
   const createPostMutation = useMutation({
     mutationFn: async (data: CreatePostRequest) => {
       try {
-        console.group('📝 게시글 생성 시작');
-        console.log('요청 데이터:', data);
+        console.group('🚀 API 호출 시작');
+        console.log('📍 URL:', API_ENDPOINTS.POSTS.BASE);
+        console.log('📤 요청 데이터:', data);
+
         
         const response = await api.post<Post>(API_ENDPOINTS.POSTS.BASE, data);
-        console.log('✅ 게시글 생성 성공:', response);
+        
+        console.log('✅ API 응답 성공:', response);
         console.groupEnd();
         return response;
       } catch (error) {
-        console.group('❌ 게시글 생성 실패');
-        console.error('에러:', error);
+        console.group('❌ API 호출 실패');
+        console.error('API 에러:', error);
+        console.log('에러 상태:', (error as any)?.response?.status);
+        console.log('에러 데이터:', (error as any)?.response?.data);
         console.groupEnd();
         throw error;
       }
     },
     onSuccess: (newPost) => {
-      console.log('🎉 게시글 생성 완료:', newPost);
+      console.log('🎉 생성 성공 콜백:', newPost);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       onSuccess?.(newPost);
+      
+      console.log('🔄 라우터 이동 시도...');
       router.push(`/community/${newPost.id}`);
     },
     onError: (error) => {
+      console.group('💥 생성 실패 콜백');
+      console.error('뮤테이션 에러:', error);
       const errorInfo = apiErrorHandler.parseError(error);
+      console.log('파싱된 에러:', errorInfo);
       setSubmitError(errorInfo.message);
+      console.groupEnd();
     },
   });
 
@@ -134,11 +145,21 @@ export const usePostForm = ({
 
   const handleFormSubmit = async (data: PostFormData) => {
     try {
-      console.log('폼 제출 시작:', { mode, data });
+      console.group('📝 게시글 제출 프로세스 시작');
+      console.log('1️⃣ 제출 데이터:', data);
+      console.log('2️⃣ 현재 사용자:', user);
+      console.log('3️⃣ 인증 상태:', isAuthenticated());
+      console.log('4️⃣ 토큰 상태:', {
+        accessToken: !!localStorage.getItem('behindy_access_token'),
+        refreshToken: !!localStorage.getItem('behindy_refresh_token')
+      });
+      
       setSubmitError('');
       
       if (!validateFormContent(data.title, data.content)) {
+        console.error('❌ 폼 검증 실패');
         setSubmitError(ERROR_MESSAGES.REQUIRED_FIELD);
+        console.groupEnd();
         return;
       }
       
@@ -146,14 +167,26 @@ export const usePostForm = ({
         title: data.title.trim(),
         content: data.content.trim(),
       };
-
+      
+      console.log('5️⃣ API 요청 직전');
+  
       if (mode === 'create') {
+        console.log('📤 게시글 생성 요청 시작...');
         await createPostMutation.mutateAsync(postData);
       } else {
+        console.log('📤 게시글 수정 요청 시작...');
         await updatePostMutation.mutateAsync(postData);
       }
+      
+      console.log('✅ 제출 완료!');
+      console.groupEnd();
     } catch (error) {
-      console.error('폼 제출 에러:', error);
+      console.group('❌ 게시글 제출 실패');
+      console.error('에러 상세:', error);
+      console.log('에러 타입:', typeof error);
+      console.log('에러 메시지:', (error as any)?.message);
+      console.log('에러 응답:', (error as any)?.response);
+      console.groupEnd();
     }
   };
 

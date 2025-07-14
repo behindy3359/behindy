@@ -52,8 +52,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         });
         
         if (!authResult) {
-          console.warn('❌ 인증 실패 - 로그인 페이지로 리다이렉트');
-          router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
+          // console.warn('❌ 인증 실패 - 로그인 페이지로 리다이렉트');
+          // router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
           return;
         } else {
           console.log('✅ 인증 성공 - 접근 허용');
