@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/shared/store/authStore';
 import { apiErrorHandler } from '@/shared/utils/common/api';
@@ -30,85 +30,30 @@ export function useSignupForm() {
   const [submitError, setSubmitError] = useState<string>('');
   const [submitSuccess, setSubmitSuccess] = useState<string>('');
 
-  // 🔥 디버깅: 상태 변화 로깅
-  useEffect(() => {
-    console.log('=== SIGNUP FORM DEBUG ===');
-    console.log('formData:', formData);
-    console.log('errors:', errors);
-    
-    // 각 조건 체크
-    const conditions = {
-      'errors가 비어있음': Object.keys(errors).length === 0,
-      'name 있음': formData.name.trim().length > 0,
-      'email 있음': formData.email.trim().length > 0,
-      'password 있음': formData.password.length > 0,
-      'confirmPassword 있음': formData.confirmPassword.length > 0,
-      'password 일치': formData.password === formData.confirmPassword,
-      'terms 동의': formData.agreeToTerms === true,
-      'privacy 동의': formData.agreeToPrivacy === true,
-    };
-    
-    console.log('조건 체크:', conditions);
-    
-    const isValid = Object.values(conditions).every(Boolean);
-    console.log('최종 isFormValid:', isValid);
-    console.log('========================');
-  }, [formData, errors]);
-
   // 개별 필드 변경 처리
   const handleInputChange = useCallback((
     field: keyof SignupFormData, 
     value: string | boolean
   ) => {
-    console.log(`🔄 handleInputChange: ${field} = ${value}`);
+    setFormData(prev => ({ ...prev, [field]: value }));
     
-    const updatedFormData = { ...formData, [field]: value };
-    setFormData(updatedFormData);
-    
-    // 기존 에러가 있으면 실시간 검증
+    // 해당 필드의 에러만 클리어
     if (errors[field]) {
-      console.log(`🔍 실시간 검증: ${field}`);
-      const validation = validateSignupForm.field(field, value, updatedFormData);
-      console.log(`검증 결과:`, validation);
-      
-      setErrors(prev => ({
-        ...prev,
-        [field]: validation.isValid ? undefined : validation.message,
-      }));
+      setErrors(prev => ({ ...prev, [field]: undefined }));
     }
-
-    // password 변경 시 confirmPassword도 재검증
-    if (field === 'password' && updatedFormData.confirmPassword && errors.confirmPassword) {
-      console.log('🔍 confirmPassword 재검증');
-      const confirmValidation = validateSignupForm.field(
-        'confirmPassword', 
-        updatedFormData.confirmPassword, 
-        updatedFormData
-      );
-      setErrors(prev => ({
-        ...prev,
-        confirmPassword: confirmValidation.isValid ? undefined : confirmValidation.message,
-      }));
-    }
-  }, [formData, errors]);
+  }, [errors]);
 
   // 필드 블러 시 검증
   const handleFieldBlur = useCallback((field: keyof SignupFormData) => {
-    console.log(`🔍 handleFieldBlur: ${field}`);
     const validation = validateSignupForm.field(field, formData[field], formData);
-    console.log(`블러 검증 결과:`, validation);
-    
-    setErrors(prev => ({
-      ...prev,
-      [field]: validation.isValid ? undefined : validation.message,
-    }));
+    if (!validation.isValid) {
+      setErrors(prev => ({ ...prev, [field]: validation.message }));
+    }
   }, [formData]);
 
   // 전체 폼 검증
   const validateForm = useCallback((): FormValidationResult => {
-    console.log('🔍 전체 폼 검증');
     const validation = validateSignupForm.all(formData);
-    console.log('전체 검증 결과:', validation);
     setErrors(validation.errors);
     return validation;
   }, [formData]);
@@ -116,12 +61,10 @@ export function useSignupForm() {
   // 폼 제출 처리
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🚀 폼 제출 시도');
     
     // 클라이언트 검증
     const validation = validateForm();
     if (!validation.isValid) {
-      console.log('❌ 클라이언트 검증 실패');
       return;
     }
 
@@ -173,9 +116,8 @@ export function useSignupForm() {
     router.push('/auth/login');
   }, [router]);
 
-  // 폼 유효성 검사
+  // 🔥 간단한 폼 유효성 검사 - errors 체크 제거
   const isFormValid = 
-    Object.keys(errors).length === 0 && 
     formData.name.trim().length > 0 && 
     formData.email.trim().length > 0 && 
     formData.password.length > 0 && 
