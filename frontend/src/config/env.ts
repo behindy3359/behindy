@@ -39,8 +39,6 @@ function getBooleanEnv(key: string, defaultValue: boolean = false): boolean {
 // 환경변수 설정 객체
 export const env: EnvConfig = (() => {
   try {
-    console.log('🔧 Loading environment variables...');
-    
     // Docker 환경에서 사용할 기본값들
     const config = {
       // API URLs
@@ -55,15 +53,6 @@ export const env: EnvConfig = (() => {
       APP_NAME: getEnvVar('NEXT_PUBLIC_APP_NAME', 'Behindy'),
       APP_VERSION: getEnvVar('NEXT_PUBLIC_APP_VERSION', '1.0.0'),
     };
-    
-    console.log('✅ Environment configuration loaded successfully');
-    console.log('🔧 Config summary:', {
-      API_URL: config.API_URL,
-      AI_URL: config.AI_URL,
-      DEV_MODE: config.DEV_MODE,
-      APP_NAME: config.APP_NAME,
-      APP_VERSION: config.APP_VERSION,
-    });
     
     return config;
   } catch (error) {

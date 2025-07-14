@@ -18,9 +18,6 @@ import {
   CommonAuthErrorAlert, 
   CommonAuthSuccessAlert 
 } from '@/shared/styles/commonAuthStyles';
-import { 
-  CommonWrapper, 
-} from '@/shared/styles/commonStyles';
 
 export const SignupForm: React.FC = () => {
   const {
@@ -82,12 +79,17 @@ export const SignupForm: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* 회원가입 폼 */}
-      <CommonWrapper
-        onSubmit={handleSubmit}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+      {/* 🔥 수정: 명시적으로 form 태그 사용 */}
+      <form 
+        onSubmit={(e) => {
+          console.log('🔥 Form submit 이벤트 발생!');
+          handleSubmit(e);
+        }}
+        style={{
+          width: '100%',
+          opacity: 0,
+          animation: 'fadeIn 0.5s ease forwards 0.2s'
+        }}
       >
         <SignupFormFields
           formData={formData}
@@ -111,6 +113,12 @@ export const SignupForm: React.FC = () => {
             isLoading={isLoading}
             disabled={!isFormValid || isLoading}
             leftIcon={<UserPlus size={20} />}
+            onClick={(e) => {
+              console.log('🔥 Button onClick 호출!');
+              console.log('isFormValid:', isFormValid);
+              console.log('isLoading:', isLoading);
+              // type="submit"이므로 onClick에서 특별한 처리는 안함
+            }}
           >
             {isLoading ? '계정 생성 중...' : '계정 만들기'}
           </Button>
@@ -127,7 +135,7 @@ export const SignupForm: React.FC = () => {
             취소
           </Button>
         </ActionsContainer>
-      </CommonWrapper>
+      </form>
 
       {/* 구분선 */}
       <CommonAuthDivider
