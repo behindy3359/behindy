@@ -57,7 +57,6 @@ jobs:
           
           echo "✅ 이미지 정리 완료"
 
-      # 🔧 핵심 개선: 단계별 서비스 시작
       - name: Build and start services
         run: |
           cd ~/behindy
@@ -73,28 +72,24 @@ jobs:
             echo "⚠️ .env 파일이 없습니다. Docker Compose 기본 설정을 사용합니다."
           fi
           
-          # 빌드 캐시 없이 새로 빌드 (frontend만)
-          echo "📦 프론트엔드 이미지 새로 빌드 중..."
-          docker-compose build --no-cache frontend
+          # 모든 서비스 캐시 없이 새로 빌드
+          echo "📦 모든 서비스 빌드 중..."
+          docker-compose build --no-cache
           
-          # 다른 서비스들은 캐시 사용하여 빌드
-          echo "📦 다른 서비스들 빌드 중..."
-          docker-compose build backend aiserver
-          
-          # 🔧 단계별 시작: 먼저 DB와 Redis
+          # 단계별 시작: 먼저 DB와 Redis
           echo "🗄️ 데이터베이스 및 Redis 시작..."
           docker-compose up -d db redis
           
-          # PostgreSQL 준비 대기
+          # PostgreSQL 준비 대기 (SpringBoot DataInitializer가 처리)
           echo "⏳ PostgreSQL 준비 대기..."
           sleep 20
           
-          # 백엔드 시작 (JPA 테이블 생성)
+          # 백엔드 시작 (JPA 테이블 생성 + 초기 데이터 자동 로드)
           echo "🚀 백엔드 서비스 시작..."
           docker-compose up -d backend
           
-          # 백엔드 안정화 대기
-          echo "⏳ 백엔드 안정화 대기..."
+          # 백엔드 안정화 대기 (초기 데이터 로딩 포함)
+          echo "⏳ 백엔드 안정화 및 초기 데이터 로딩 대기..."
           sleep 30
           
           # 나머지 서비스 시작
