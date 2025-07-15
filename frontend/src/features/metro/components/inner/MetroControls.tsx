@@ -63,22 +63,6 @@ export const MetroControls: React.FC<MetroControlsProps> = ({
           )}
         </CheckboxItem>
       </CommonGroup>
-
-      <StatusIndicator>
-        {isLoading && <div className="status-dot" />}
-        {error ? (
-          <ErrorText>❌ 연결 오류</ErrorText>
-        ) : (
-          <span>
-            🔴 실시간 업데이트 
-            {processedRealtimeData.length > 0 && (
-              <RealtimeStatus>
-                (총 {processedRealtimeData.length}대 운행중)
-              </RealtimeStatus>
-            )}
-          </span>
-        )}
-      </StatusIndicator>
     </Controls>
   );
 };

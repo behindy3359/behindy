@@ -19,30 +19,157 @@ export const MetroHeader = styled.div`
     gap: 10px;
   }
   
-  .live-indicator {
+  /* 기본 인디케이터 스타일 */
+  .live-indicator,
+  .test-indicator,
+  .loading-indicator,
+  .error-indicator,
+  .closed-indicator,
+  .limited-indicator,
+  .no-data-indicator {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: #ef4444;
     font-size: 14px;
     font-weight: 600;
-    background: rgba(239, 68, 68, 0.1);
     padding: 4px 8px;
     border-radius: 12px;
+    transition: all 0.3s ease;
     
     &::before {
       content: '';
       width: 8px;
       height: 8px;
-      background: #ef4444;
       border-radius: 50%;
+    }
+  }
+  
+  /* LIVE - 실제 실시간 데이터 */
+  .live-indicator {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    
+    &::before {
+      background: #ef4444;
       animation: pulse 2s infinite;
     }
   }
   
+  /* TEST - 목업/테스트 데이터 */
+  .test-indicator {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    
+    &::before {
+      background: #f59e0b;
+      animation: blink 3s infinite;
+    }
+  }
+  
+  /* LOADING - 로딩 중 */
+  .loading-indicator {
+    color: #6b7280;
+    background: rgba(107, 114, 128, 0.1);
+    
+    &::before {
+      background: #6b7280;
+      animation: spin 1s linear infinite;
+    }
+  }
+  
+  /* ERROR - 에러 상태 */
+  .error-indicator {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    
+    &::before {
+      background: #ef4444;
+      animation: none;
+    }
+  }
+  
+  /* CLOSED - 운행 종료 */
+  .closed-indicator {
+    color: #6b7280;
+    background: rgba(107, 114, 128, 0.1);
+    
+    &::before {
+      background: #6b7280;
+      animation: none;
+    }
+  }
+  
+  /* LIMITED - 제한된 데이터 */
+  .limited-indicator {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    
+    &::before {
+      background: #f59e0b;
+      animation: slow-pulse 4s infinite;
+    }
+  }
+  
+  /* NO DATA - 데이터 없음 */
+  .no-data-indicator {
+    color: #6b7280;
+    background: rgba(107, 114, 128, 0.1);
+    
+    &::before {
+      background: #6b7280;
+      animation: none;
+    }
+  }
+  
+  /* 애니메이션 정의 */
   @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.1); }
+    0%, 100% { 
+      opacity: 1; 
+      transform: scale(1); 
+    }
+    50% { 
+      opacity: 0.7; 
+      transform: scale(1.1); 
+    }
+  }
+  
+  @keyframes blink {
+    0%, 70%, 100% { opacity: 1; }
+    35% { opacity: 0.3; }
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes slow-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px 20px 12px 20px;
+    
+    h2 {
+      font-size: 18px;
+    }
+    
+    .live-indicator,
+    .test-indicator,
+    .loading-indicator,
+    .error-indicator,
+    .closed-indicator,
+    .limited-indicator,
+    .no-data-indicator {
+      font-size: 12px;
+      padding: 3px 6px;
+      
+      &::before {
+        width: 6px;
+        height: 6px;
+      }
+    }
   }
 `;
 
@@ -66,6 +193,7 @@ export const MetroMapContainer = styled.div`
   }
 `;
 
+// 나머지 스타일들은 기존과 동일
 export const CommunitySection = styled.div`
   background: white;
   border-radius: 16px;
