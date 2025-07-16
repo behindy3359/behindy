@@ -1,18 +1,22 @@
 """
-압축된 AI 서버 메인 파일
-핵심 기능만 포함 - Mock 데이터 + Spring Boot 호환
+향상된 AI 서버 메인 파일
+실제 LLM Provider 지원 + Spring Boot 호환
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import os
 import logging
 from datetime import datetime
 
-# Mock 템플릿 import
-from templates.mock_templates import MockStoryGenerator
+# 향상된 Provider와 서비스
+from providers.llm_provider import LLMProviderFactory
+from services.story_service import StoryService
+from models.request_models import StoryGenerationRequest, StoryContinueRequest
+from models.response_models import StoryGenerationResponse, StoryContinueResponse, OptionData
+from utils.rate_limiter import RateLimiter
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -21,8 +25,8 @@ logger = logging.getLogger(__name__)
 # FastAPI 앱
 app = FastAPI(
     title="Behindy AI Server",
-    description="지하철 스토리 생성 서버 (간단 버전)",
-    version="1.0.0"
+    description="지하철 스토리 생성 서버 (실제 LLM 지원)",
+    version="2.0.0"
 )
 
 # CORS 설정
@@ -34,138 +38,211 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mock 생성기
-story_service = MockStoryGenerator()
+# 서비스 초기화
+story_service = StoryService()
+rate_limiter = RateLimiter()
 
-# ===== Request/Response 모델 =====
-
-class StoryGenerationRequest(BaseModel):
-    station_name: str
-    line_number: int
-    character_health: int
-    character_sanity: int
-    theme_preference: Optional[str] = None
-
-class StoryContinueRequest(BaseModel):
-    station_name: str
-    line_number: int
-    character_health: int
-    character_sanity: int
-    previous_choice: str
-    story_context: Optional[str] = None
-
-class OptionData(BaseModel):
-    content: str
-    effect: str
-    amount: int
-    effect_preview: str
-
-class StoryGenerationResponse(BaseModel):
-    story_title: str
-    page_content: str
-    options: List[OptionData]
-    estimated_length: int
-    difficulty: str
-    theme: str
-    station_name: str
-    line_number: int
-
-class StoryContinueResponse(BaseModel):
-    page_content: str
-    options: List[OptionData]
-    is_last_page: bool
-
-# ===== API 엔드포인트 =====
+# ===== 헬스체크 및 상태 =====
 
 @app.get("/")
 async def root():
-    """헬스 체크"""
+    """기본 헬스 체크"""
+    provider = LLMProviderFactory.get_provider()
+    
     return {
-        "message": "Behindy AI Server (Simple)",
+        "message": "Behindy AI Server (Enhanced)",
         "status": "healthy",
-        "provider": "mock",
-        "timestamp": datetime.now().isoformat()
+        "provider": provider.get_provider_name(),
+        "timestamp": datetime.now().isoformat(),
+        "version": "2.0.0"
     }
 
 @app.get("/health")
 async def health_check():
     """상세 헬스 체크"""
+    provider = LLMProviderFactory.get_provider()
+    available_providers = LLMProviderFactory.get_available_providers()
+    
     return {
         "status": "healthy",
-        "provider": "Mock Provider",
-        "timestamp": datetime.now().isoformat(),
-        "available_stations": len(story_service.STATION_CONFIG) if hasattr(story_service, 'STATION_CONFIG') else 12
+        "current_provider": provider.get_provider_name(),
+        "available_providers": available_providers,
+        "supported_stations": len(story_service.get_supported_stations()),
+        "total_requests": rate_limiter.get_total_requests(),
+        "timestamp": datetime.now().isoformat()
     }
 
+@app.get("/providers")
+async def get_providers_status():
+    """Provider 상태 확인"""
+    available_providers = LLMProviderFactory.get_available_providers()
+    current_provider = LLMProviderFactory.get_provider()
+    
+    return {
+        "current": current_provider.get_provider_name(),
+        "available": available_providers,
+        "settings": {
+            "ai_provider": os.getenv("AI_PROVIDER", "mock"),
+            "openai_model": os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+            "claude_model": os.getenv("CLAUDE_MODEL", "claude-3-haiku"),
+            "local_model": os.getenv("LOCAL_LLM_MODEL", "llama2:7b")
+        }
+    }
+
+# ===== 스토리 생성 API =====
+
 @app.post("/generate-story", response_model=StoryGenerationResponse)
-async def generate_story(request: StoryGenerationRequest):
-    """새로운 스토리 생성"""
+async def generate_story(request: StoryGenerationRequest, http_request: Request):
+    """새로운 스토리 생성 (실제 LLM 사용)"""
     try:
-        logger.info(f"스토리 생성 요청: {request.station_name} ({request.line_number}호선)")
+        # Rate Limiting
+        client_ip = http_request.client.host
+        rate_limiter.check_rate_limit(client_ip)
         
-        # Mock 스토리 생성
-        story_data = story_service.generate_story(
-            request.station_name, 
-            request.character_health, 
-            request.character_sanity
-        )
+        logger.info(f"스토리 생성 요청: {request.station_name} ({request.line_number}호선) - Provider: {LLMProviderFactory.get_provider().get_provider_name()}")
         
-        # 응답 형식 변환
-        return StoryGenerationResponse(
-            story_title=story_data["story_title"],
-            page_content=story_data["page_content"],
-            options=[OptionData(**opt) for opt in story_data["options"]],
-            estimated_length=story_data["estimated_length"],
-            difficulty=story_data["difficulty"],
-            theme=story_data["theme"],
-            station_name=story_data["station_name"],
-            line_number=story_data["line_number"]
-        )
+        # 스토리 생성 (실제 LLM 또는 Mock)
+        response = await story_service.generate_story(request)
         
+        logger.info(f"스토리 생성 완료: {response.story_title}")
+        return response
+        
+    except HTTPException:
+        raise  # Rate limit 오류는 그대로 전달
     except Exception as e:
         logger.error(f"스토리 생성 실패: {str(e)}")
         raise HTTPException(status_code=500, detail=f"스토리 생성 중 오류: {str(e)}")
 
 @app.post("/continue-story", response_model=StoryContinueResponse)
-async def continue_story(request: StoryContinueRequest):
-    """스토리 진행"""
+async def continue_story(request: StoryContinueRequest, http_request: Request):
+    """스토리 진행 (실제 LLM 사용)"""
     try:
+        # Rate Limiting
+        client_ip = http_request.client.host
+        rate_limiter.check_rate_limit(client_ip)
+        
         logger.info(f"스토리 진행 요청: {request.station_name}, 선택: {request.previous_choice}")
         
-        # Mock 스토리 진행
-        continuation_data = story_service.continue_story(
-            request.previous_choice,
-            request.station_name,
-            request.character_health,
-            request.character_sanity
-        )
+        # 스토리 진행
+        response = await story_service.continue_story(request)
         
-        return StoryContinueResponse(
-            page_content=continuation_data["page_content"],
-            options=[OptionData(**opt) for opt in continuation_data["options"]],
-            is_last_page=continuation_data["is_last_page"]
-        )
+        logger.info(f"스토리 진행 완료: {len(response.options)}개 선택지")
+        return response
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"스토리 진행 실패: {str(e)}")
         raise HTTPException(status_code=500, detail=f"스토리 진행 중 오류: {str(e)}")
 
+# ===== 메타데이터 API =====
+
 @app.get("/stations")
 async def get_supported_stations():
     """지원되는 역 목록"""
-    from templates.mock_templates import STATION_CONFIG
-    
-    return [
-        {
-            "station_name": station,
-            "line_number": config["line"],
-            "theme": config["theme"].value
+    stations = story_service.get_supported_stations()
+    return {
+        "stations": stations,
+        "total_count": len(stations),
+        "supported_lines": [1, 2, 3, 4]
+    }
+
+@app.get("/popular-stations")
+async def get_popular_stations():
+    """인기 역 통계"""
+    popular = story_service.get_popular_stations()
+    return {
+        "popular_stations": popular,
+        "total_requests": rate_limiter.get_total_requests()
+    }
+
+# ===== 테스트 API =====
+
+@app.post("/test-provider")
+async def test_provider(test_request: Dict[str, Any]):
+    """Provider 테스트용 엔드포인트"""
+    try:
+        provider = LLMProviderFactory.get_provider()
+        
+        # 간단한 테스트 요청
+        test_story = await provider.generate_story(
+            "테스트 스토리를 생성해주세요.",
+            station_name="강남",
+            line_number=2,
+            character_health=80,
+            character_sanity=80
+        )
+        
+        return {
+            "provider": provider.get_provider_name(),
+            "status": "success",
+            "test_result": test_story,
+            "timestamp": datetime.now().isoformat()
         }
-        for station, config in STATION_CONFIG.items()
-    ]
+        
+    except Exception as e:
+        logger.error(f"Provider 테스트 실패: {str(e)}")
+        return {
+            "provider": "unknown",
+            "status": "failed",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+# ===== 환경 설정 API =====
+
+@app.get("/config")
+async def get_config():
+    """현재 환경 설정 확인"""
+    return {
+        "ai_provider": os.getenv("AI_PROVIDER", "mock"),
+        "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
+        "claude_configured": bool(os.getenv("CLAUDE_API_KEY")),
+        "local_llm_url": os.getenv("LOCAL_LLM_URL", "http://localhost:11434"),
+        "request_limits": {
+            "per_hour": os.getenv("REQUEST_LIMIT_PER_HOUR", "100"),
+            "per_day": os.getenv("REQUEST_LIMIT_PER_DAY", "1000")
+        }
+    }
+
+# ===== 에러 핸들러 =====
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    logger.warning(f"HTTP 오류: {exc.status_code} - {exc.detail}")
+    return {
+        "error": exc.detail,
+        "status_code": exc.status_code,
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    logger.error(f"일반 오류: {str(exc)}")
+    return {
+        "error": "내부 서버 오류가 발생했습니다.",
+        "status_code": 500,
+        "timestamp": datetime.now().isoformat()
+    }
 
 # ===== 서버 실행 =====
 
 if __name__ == "__main__":
     import uvicorn
+    
+    # 시작시 Provider 상태 로깅
+    try:
+        provider = LLMProviderFactory.get_provider()
+        available = LLMProviderFactory.get_available_providers()
+        
+        logger.info("=" * 50)
+        logger.info("🚀 Behindy AI Server 시작")
+        logger.info(f"📡 현재 Provider: {provider.get_provider_name()}")
+        logger.info(f"🔧 사용 가능한 Providers: {available}")
+        logger.info(f"🎯 지원 역 개수: {len(story_service.get_supported_stations())}")
+        logger.info("=" * 50)
+        
+    except Exception as e:
+        logger.error(f"초기화 중 오류: {str(e)}")
+    
     uvicorn.run(app, host="0.0.0.0", port=8000)
