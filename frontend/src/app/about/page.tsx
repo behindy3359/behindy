@@ -266,8 +266,7 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            일상적인 지하철 공간을 특별한 모험의 무대로 바꾸는 새로운 경험을 제공합니다.
-            오늘 점심은 볶음밥을 먹었으니까 저녁에는 뭘 먹을지 고민을 조금 해봅시다.
+            프로젝트 소개 섹션
           </motion.p>
         </HeroSection>
 
@@ -308,20 +307,15 @@ export default function AboutPage() {
             transition={{ duration: 0.6, delay: 1.4 }}
           >
             <p>
-              <span className="highlight">Behindy</span>는 &quot;behind&quot;와 &quot;discovery&quot;의 합성어로,
-              일상적인 지하철 공간 뒤에 숨겨진 특별한 이야기들을 발견한다는 의미를 담고 있습니다.
+              프로젝트 소개 섹션2
             </p>
             
             <p>
-              많은 사람들이 매일 이용하는 지하철이지만, 각 역마다 고유한 역사와 문화, 
-              그리고 수많은 사람들의 이야기가 숨어있습니다. 이런 평범한 공간을 
-              <span className="highlight">게임의 무대</span>로 만들어 새로운 재미를 제공하고자 했습니다.
+              프로젝트 소개 섹션3
             </p>
             
             <p>
-              실시간 지하철 데이터를 활용하여 현실과 게임이 연결되는 경험을 만들고, 
-              각 노선마다 다른 테마의 스토리를 통해 플레이어들에게 
-              <span className="highlight">몰입감 있는 어드벤처</span>를 선사합니다.
+              프로젝트 소개 섹션4
             </p>
           </motion.div>
         </StorySection>
@@ -335,7 +329,7 @@ export default function AboutPage() {
           <TechSection>
             <h2 className="tech-title">기술 스택</h2>
             <p className="tech-description">
-              현대적인 웹 기술과 안정적인 백엔드 아키텍처를 바탕으로 구축되었습니다.
+              프로젝트 소개 섹션5
             </p>
             
             <div className="tech-stack">

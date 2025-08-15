@@ -5,10 +5,10 @@ import { ThemeProvider } from '@/shared/providers/ThemeProvider';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Behindy - 지하철 텍스트 어드벤처',
+    default: 'Behindy.me',
     template: '%s | Behindy'
   },
-  description: '지하철 노선도 기반 텍스트 어드벤처 게임. 실시간 지하철 정보와 창의적인 스토리텔링이 만나는 특별한 경험.',
+  description: '포트폴리오용 페이지',
   keywords: ['지하철', '게임', '텍스트 어드벤처', '서울', '노선도', 'behindy'],
   authors: [{ name: 'Behindy Team' }],
   creator: 'Behindy',
@@ -22,13 +22,13 @@ export const metadata: Metadata = {
     locale: 'ko_KR',
     url: 'https://behindy.me',
     siteName: 'Behindy',
-    title: 'Behindy - 지하철 텍스트 어드벤처',
-    description: '지하철 노선도 기반 텍스트 어드벤처 게임',
+    title: 'Behindy',
+    description: '포트폴리오용 페이지',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Behindy - 지하철 텍스트 어드벤처',
-    description: '지하철 노선도 기반 텍스트 어드벤처 게임',
+    title: 'Behindy',
+    description: '포트폴리오용 페이지',
   },
   viewport: {
     width: 'device-width',
