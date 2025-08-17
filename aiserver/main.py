@@ -11,6 +11,10 @@ import os
 import logging
 from datetime import datetime
 
+# 기존 imports에 추가
+from models.batch_models import BatchStoryRequest, BatchStoryResponse, BatchPageData, BatchOptionData
+from services.batch_story_service import BatchStoryService
+
 # 향상된 Provider와 서비스
 from providers.llm_provider import LLMProviderFactory
 from services.story_service import StoryService

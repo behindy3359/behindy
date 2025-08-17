@@ -76,11 +76,22 @@ ai:
     url: ${AI_SERVER_URL:http://localhost:8000}
     enabled: ${AI_SERVER_ENABLED:true}
     timeout: ${AI_SERVER_TIMEOUT:10000}
+  # 🆕 AI 스토리 배치 생성 설정
+  story:
+    generation:
+      enabled: ${AI_STORY_GENERATION_ENABLED:true}
+      daily-limit: ${AI_STORY_DAILY_LIMIT:50}
+      batch-size: ${AI_STORY_BATCH_SIZE:5}
+      test-interval: ${AI_STORY_TEST_INTERVAL:1800000} # 30분 (개발용)
+      min-stories-per-station: ${AI_STORY_MIN_PER_STATION:2}
+      retry-count: ${AI_STORY_RETRY_COUNT:3}
+      generation-delay: ${AI_STORY_GENERATION_DELAY:2000} # 생성 간격 (ms)
 
 # 로깅 설정
 logging:
   level:
     com.example.backend: INFO
+    com.example.backend.service.AIStoryScheduler: INFO # AI 스토리 스케줄러 로그
     org.springframework.security: WARN
     org.hibernate.SQL: ERROR
     org.hibernate.type.descriptor.sql.BasicBinder: ERROR
@@ -92,7 +103,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
   endpoint:
     health:
       show-details: when-authorized
