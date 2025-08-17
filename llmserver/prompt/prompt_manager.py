@@ -1,6 +1,6 @@
 """
 프롬프트 관리자 - 외부 파일 분리
-aiserver/prompts/prompt_manager.py
+llmserver/prompts/prompt_manager.py
 """
 
 from typing import Dict, Any

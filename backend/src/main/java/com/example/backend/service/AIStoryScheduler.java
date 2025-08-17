@@ -40,7 +40,7 @@ public class AIStoryScheduler {
     private final PageRepository pageRepository;
     private final OptionsRepository optionsRepository;
 
-    @Value("${ai.server.url:http://aiserver:8000}")
+    @Value("${ai.server.url:http://llmserver:8000}")
     private String aiServerUrl;
 
     @Value("${ai.server.enabled:true}")

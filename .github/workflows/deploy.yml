@@ -72,7 +72,7 @@ jobs:
           docker-compose build --no-cache frontend
           
           echo "📦 다른 서비스들 빌드 중..."
-          docker-compose build backend aiserver
+          docker-compose build backend llmserver
           
           echo "🚀 모든 서비스 시작 중..."
           docker-compose up -d
@@ -209,5 +209,5 @@ jobs:
           echo "=== 최근 로그 (nginx) ==="
           docker-compose logs --tail=15 nginx || true
           echo ""
-          echo "=== 최근 로그 (aiserver) ==="
-          docker-compose logs --tail=15 aiserver || true
+          echo "=== 최근 로그 (llmserver) ==="
+          docker-compose logs --tail=15 llmserver || true

@@ -30,7 +30,7 @@ services:
       - internal
     depends_on:
       - backend
-      - aiserver
+      - llmserver
     logging:
       driver: "json-file"
       options:
@@ -73,7 +73,7 @@ services:
       - SEOUL_METRO_MONITORING_DAILY_LIMIT=${METRO_DAILY_LIMIT}
       
       # AI 서버 연동 설정
-      - AI_SERVICE_URL=http://aiserver:8000
+      - AI_SERVICE_URL=http://llmserver:8000
       - AI_SERVICE_TIMEOUT=30000
       - AI_SERVICE_RETRY_COUNT=3
       
@@ -86,16 +86,16 @@ services:
     depends_on:
       - db
       - redis
-      - aiserver
+      - llmserver
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
-  aiserver:
-    build: ./aiserver
-    container_name: aiserver
+  llmserver:
+    build: ./llmserver
+    container_name: llmserver
     restart: always
     expose:
       - 8000

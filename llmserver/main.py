@@ -1,8 +1,3 @@
-"""
-향상된 AI 서버 메인 파일
-실제 LLM Provider 지원 + Spring Boot 호환
-"""
-
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -29,7 +24,7 @@ logger = logging.getLogger(__name__)
 # FastAPI 앱
 app = FastAPI(
     title="Behindy AI Server",
-    description="지하철 스토리 생성 서버 (실제 LLM 지원)",
+    description="지하철 스토리 생성용 게이트웨이",
     version="2.0.0"
 )
 

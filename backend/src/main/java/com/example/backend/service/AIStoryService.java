@@ -23,7 +23,7 @@ public class AIStoryService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${ai.server.url:http://aiserver:8000}")
+    @Value("${ai.server.url:http://llmserver:8000}")
     private String aiServerUrl;
 
     @Value("${ai.server.enabled:true}")
