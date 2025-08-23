@@ -100,7 +100,7 @@ public class AIStoryScheduler {
     /**
      * 주기적 생성
      */
-    @Scheduled(fixedRateString = "${ai.story.generation.test-interval:10800000}") // 🔧 30분(1800000) → 3시간(10800000)
+    @Scheduled(fixedRateString = "${ai.story.generation.test-interval:43200000}")
     public void testStoryGeneration() {
         if (!storyGenerationEnabled || !aiServerEnabled) {
             return;
