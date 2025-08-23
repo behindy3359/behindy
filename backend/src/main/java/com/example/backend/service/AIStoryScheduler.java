@@ -55,6 +55,12 @@ public class AIStoryScheduler {
     @Value("${ai.story.generation.batch-size:5}")
     private Integer batchSize;
 
+    @Value("${ai.story.generation.min-stories-per-station:2}")
+    private Integer minStoriesPerStation;
+
+    @Value("${behindy.internal.api-key:behindy-internal-2024-secret-key}")
+    private String internalApiKey;
+
     // 상태 관리
     private final AtomicBoolean isGenerating = new AtomicBoolean(false);
     private final AtomicInteger dailyGeneratedCount = new AtomicInteger(0);
@@ -67,17 +73,23 @@ public class AIStoryScheduler {
         log.info("=== AI 스토리 배치 생성 시스템 시작 ===");
         log.info("스토리 생성 활성화: {}", storyGenerationEnabled);
         log.info("AI 서버 활성화: {}", aiServerEnabled);
+        log.info("AI 서버 URL: {}", aiServerUrl);
         log.info("일일 생성 한도: {}개", dailyGenerationLimit);
         log.info("배치 크기: {}개", batchSize);
+        log.info("역당 최소 스토리: {}개", minStoriesPerStation);
 
         // 10초 후 첫 번째 생성 실행 (개발 테스트용)
         if (storyGenerationEnabled && aiServerEnabled) {
             new Thread(() -> {
                 try {
                     Thread.sleep(10000);
+                    log.info("=== 서버 시작 후 첫 배치 생성 실행 ===");
                     generateStoriesBatch();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    log.warn("초기 배치 생성 스레드 중단됨");
+                } catch (Exception e) {
+                    log.error("초기 배치 생성 실패: {}", e.getMessage(), e);
                 }
             }).start();
         }
@@ -126,7 +138,13 @@ public class AIStoryScheduler {
                 return;
             }
 
-            // 1. 스토리가 부족한 역들 조회
+            // 1. AI 서버 상태 확인
+            if (!checkAIServerHealth()) {
+                log.warn("AI 서버 상태 불량으로 배치 생성 중단");
+                return;
+            }
+
+            // 2. 스토리가 부족한 역들 조회
             List<Station> targetStations = findStationsNeedingStories();
 
             if (targetStations.isEmpty()) {
@@ -134,35 +152,47 @@ public class AIStoryScheduler {
                 return;
             }
 
-            // 2. 배치 크기만큼 생성
+            // 3. 배치 크기만큼 생성
             int actualBatchSize = Math.min(batchSize, targetStations.size());
             actualBatchSize = Math.min(actualBatchSize, dailyGenerationLimit - dailyGeneratedCount.get());
 
             log.info("배치 생성 대상: {}개 역, 생성 예정: {}개", targetStations.size(), actualBatchSize);
 
-            // 3. 랜덤하게 역 선택
+            // 4. 랜덤하게 역 선택
             Collections.shuffle(targetStations);
             List<Station> selectedStations = targetStations.subList(0, actualBatchSize);
 
-            // 4. 각 역에 대해 스토리 생성
+            // 5. 각 역에 대해 스토리 생성
             int successCount = 0;
-            for (Station station : selectedStations) {
+            for (int i = 0; i < selectedStations.size(); i++) {
+                Station station = selectedStations.get(i);
+
                 try {
+                    log.info("🎯 [{}/{}] {}역({}호선) 스토리 생성 시작",
+                            i + 1, selectedStations.size(), station.getStaName(), station.getStaLine());
+
                     boolean success = generateStoryForStation(station);
                     if (success) {
                         successCount++;
                         dailyGeneratedCount.incrementAndGet();
+                        log.info("✅ [{}/{}] {}역 스토리 생성 성공",
+                                i + 1, selectedStations.size(), station.getStaName());
+                    } else {
+                        log.warn("❌ [{}/{}] {}역 스토리 생성 실패",
+                                i + 1, selectedStations.size(), station.getStaName());
                     }
 
                     // 생성 간격 조절 (AI 서버 부하 방지)
-                    Thread.sleep(2000);
+                    if (i < selectedStations.size() - 1) {
+                        Thread.sleep(3000); // 3초 대기
+                    }
 
                 } catch (Exception e) {
-                    log.error("{}역 스토리 생성 실패: {}", station.getStaName(), e.getMessage());
+                    log.error("{}역 스토리 생성 중 예외 발생: {}", station.getStaName(), e.getMessage(), e);
                 }
             }
 
-            // 5. 결과 기록
+            // 6. 결과 기록
             handleBatchResult(successCount, actualBatchSize);
 
         } catch (Exception e) {
@@ -178,77 +208,31 @@ public class AIStoryScheduler {
     @Transactional
     public boolean generateStoryForStation(Station station) {
         try {
-            log.info("{}역({}호선) 스토리 생성 시작", station.getStaName(), station.getStaLine());
+            log.debug("🎯 {}역({}호선) 스토리 생성 시작", station.getStaName(), station.getStaLine());
 
-            // 1. AI 서버에 스토리 생성 요청
+            // 1. AI 서버에 완전한 스토리 생성 요청
             AIStoryRequest request = AIStoryRequest.builder()
                     .stationName(station.getStaName())
                     .lineNumber(station.getStaLine())
-                    .characterHealth(80) // 기본값
-                    .characterSanity(80)  // 기본값
+                    .characterHealth(80)
+                    .characterSanity(80)
                     .storyType("BATCH_GENERATION")
                     .build();
 
-            AIStoryResponse aiResponse = callAIServer(request);
+            AIStoryResponse aiResponse = callAIServerForCompleteStory(request);
             if (aiResponse == null) {
                 log.warn("{}역 AI 서버 응답 없음", station.getStaName());
                 return false;
             }
 
-            // 2. Story 엔티티 생성 및 저장
-            Story story = Story.builder()
-                    .station(station)
-                    .stoTitle(aiResponse.getStoryTitle())
-                    .stoLength(aiResponse.getPages().size())
-                    .stoDescription(aiResponse.getDescription())
-                    .stoTheme(aiResponse.getTheme())
-                    .stoKeywords(String.join(",", aiResponse.getKeywords()))
-                    .build();
-
-            Story savedStory = storyRepository.save(story);
-            log.info("Story 저장 완료: storyId={}, title={}", savedStory.getStoId(), savedStory.getStoTitle());
-
-            // 3. Page 엔티티들 생성 및 저장
-            List<Page> pages = new ArrayList<>();
-            for (int i = 0; i < aiResponse.getPages().size(); i++) {
-                AIPageData pageData = aiResponse.getPages().get(i);
-
-                Page page = Page.builder()
-                        .stoId(savedStory.getStoId())
-                        .pageNumber(i + 1)
-                        .pageContents(pageData.getContent())
-                        .build();
-
-                pages.add(page);
+            // 2. 응답 검증
+            if (!validateAIResponse(aiResponse)) {
+                log.warn("{}역 AI 응답 검증 실패", station.getStaName());
+                return false;
             }
 
-            List<Page> savedPages = pageRepository.saveAll(pages);
-            log.info("Pages 저장 완료: {}개", savedPages.size());
-
-            // 4. Options 엔티티들 생성 및 저장
-            List<Options> allOptions = new ArrayList<>();
-            for (int i = 0; i < aiResponse.getPages().size(); i++) {
-                AIPageData pageData = aiResponse.getPages().get(i);
-                Page savedPage = savedPages.get(i);
-
-                for (AIOptionData optionData : pageData.getOptions()) {
-                    Options option = Options.builder()
-                            .pageId(savedPage.getPageId())
-                            .optContents(optionData.getContent())
-                            .optEffect(optionData.getEffect())
-                            .optAmount(optionData.getAmount())
-                            .nextPageId(determineNextPageId(savedPages, i, optionData))
-                            .build();
-
-                    allOptions.add(option);
-                }
-            }
-
-            optionsRepository.saveAll(allOptions);
-            log.info("Options 저장 완료: {}개", allOptions.size());
-
-            log.info("{}역 스토리 생성 완료: storyId={}", station.getStaName(), savedStory.getStoId());
-            return true;
+            // 3. 트랜잭션 내에서 순차적 저장
+            return saveStoryToDatabase(station, aiResponse);
 
         } catch (Exception e) {
             log.error("{}역 스토리 생성 실패: {}", station.getStaName(), e.getMessage(), e);
@@ -257,19 +241,19 @@ public class AIStoryScheduler {
     }
 
     /**
-     * AI 서버 호출
+     * AI 서버 호출 (완전한 스토리용)
      */
-    private AIStoryResponse callAIServer(AIStoryRequest request) {
+    private AIStoryResponse callAIServerForCompleteStory(AIStoryRequest request) {
         try {
             String url = aiServerUrl + "/generate-complete-story";
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-Internal-API-Key", "behindy-internal-2024-secret-key");
+            headers.set("X-Internal-API-Key", internalApiKey);
 
             HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
 
-            log.debug("AI 서버 요청: {}", url);
+            log.debug("AI 서버 완전한 스토리 요청: {}", url);
 
             ParameterizedTypeReference<AIStoryResponse> responseType =
                     new ParameterizedTypeReference<AIStoryResponse>() {};
@@ -279,8 +263,10 @@ public class AIStoryScheduler {
             );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                log.debug("AI 서버 응답 성공: {} 페이지", response.getBody().getPages().size());
-                return response.getBody();
+                AIStoryResponse storyResponse = response.getBody();
+                log.debug("AI 서버 응답 성공: {} 페이지",
+                        storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
+                return storyResponse;
             } else {
                 log.warn("AI 서버 응답 실패: {}", response.getStatusCode());
                 return null;
@@ -289,6 +275,200 @@ public class AIStoryScheduler {
         } catch (Exception e) {
             log.error("AI 서버 호출 실패: {}", e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * AI 응답 검증
+     */
+    private boolean validateAIResponse(AIStoryResponse response) {
+        try {
+            if (response == null) {
+                log.warn("AI 응답이 null");
+                return false;
+            }
+
+            if (response.getStoryTitle() == null || response.getStoryTitle().trim().isEmpty()) {
+                log.warn("스토리 제목이 없음");
+                return false;
+            }
+
+            if (response.getPages() == null || response.getPages().isEmpty()) {
+                log.warn("페이지가 없음");
+                return false;
+            }
+
+            if (response.getPages().size() > 15) {
+                log.warn("페이지가 너무 많음: {}페이지", response.getPages().size());
+                return false;
+            }
+
+            // 각 페이지 검증
+            for (int i = 0; i < response.getPages().size(); i++) {
+                AIPageData page = response.getPages().get(i);
+
+                if (page == null) {
+                    log.warn("페이지 {}가 null", i + 1);
+                    return false;
+                }
+
+                if (page.getContent() == null || page.getContent().trim().isEmpty()) {
+                    log.warn("페이지 {}의 내용이 없음", i + 1);
+                    return false;
+                }
+
+                if (page.getOptions() == null || page.getOptions().size() < 2 || page.getOptions().size() > 4) {
+                    log.warn("페이지 {}의 선택지 개수 오류: {}개", i + 1,
+                            page.getOptions() != null ? page.getOptions().size() : 0);
+                    return false;
+                }
+
+                // 선택지 검증
+                for (int j = 0; j < page.getOptions().size(); j++) {
+                    AIOptionData option = page.getOptions().get(j);
+                    if (option == null || option.getContent() == null || option.getContent().trim().isEmpty()) {
+                        log.warn("페이지 {} 선택지 {}가 비어있음", i + 1, j + 1);
+                        return false;
+                    }
+                }
+            }
+
+            log.debug("AI 응답 검증 성공: {}페이지", response.getPages().size());
+            return true;
+
+        } catch (Exception e) {
+            log.error("AI 응답 검증 중 오류: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 데이터베이스 저장 (순차적 저장으로 문제 해결)
+     */
+    private boolean saveStoryToDatabase(Station station, AIStoryResponse aiResponse) {
+        try {
+            log.debug("💾 DB 저장 시작: {}역 스토리", station.getStaName());
+
+            // 1. Story 엔티티 생성 및 저장
+            Story story = Story.builder()
+                    .station(station)
+                    .stoTitle(aiResponse.getStoryTitle())
+                    .stoLength(aiResponse.getPages().size())
+                    .stoDescription(aiResponse.getDescription() != null ?
+                            aiResponse.getDescription() :
+                            station.getStaName() + "역에서 벌어지는 이야기")
+                    .stoTheme(aiResponse.getTheme() != null ? aiResponse.getTheme() : "미스터리")
+                    .stoKeywords(aiResponse.getKeywords() != null ?
+                            String.join(",", aiResponse.getKeywords()) :
+                            station.getStaName() + ",지하철,모험")
+                    .build();
+
+            Story savedStory = storyRepository.save(story);
+            log.debug("Story 저장 완료: storyId={}, title={}", savedStory.getStoId(), savedStory.getStoTitle());
+
+            // 2. Page 엔티티들 생성 및 저장 (순차적)
+            List<Page> savedPages = new ArrayList<>();
+            for (int i = 0; i < aiResponse.getPages().size(); i++) {
+                AIPageData pageData = aiResponse.getPages().get(i);
+
+                Page page = Page.builder()
+                        .stoId(savedStory.getStoId())
+                        .pageNumber((long)(i + 1))
+                        .pageContents(pageData.getContent())
+                        .build();
+
+                Page savedPage = pageRepository.save(page);
+                savedPages.add(savedPage);
+
+                log.debug("Page 저장: pageId={}, pageNumber={}", savedPage.getPageId(), savedPage.getPageNumber());
+            }
+
+            log.debug("Pages 저장 완료: {}개", savedPages.size());
+
+            // 3. Options 엔티티들 생성 및 저장 (Page ID 확정 후)
+            List<Options> allOptions = new ArrayList<>();
+            for (int i = 0; i < aiResponse.getPages().size(); i++) {
+                AIPageData pageData = aiResponse.getPages().get(i);
+                Page savedPage = savedPages.get(i);
+
+                for (AIOptionData optionData : pageData.getOptions()) {
+                    // 수정된 nextPageId 결정 로직
+                    Long nextPageId = determineNextPageIdFixed(savedPages, i, aiResponse.getPages().size());
+
+                    Options option = Options.builder()
+                            .pageId(savedPage.getPageId())
+                            .optContents(optionData.getContent())
+                            .optEffect(optionData.getEffect() != null ? optionData.getEffect() : "none")
+                            .optAmount(optionData.getAmount() != null ? optionData.getAmount() : 0)
+                            .nextPageId(nextPageId)
+                            .build();
+
+                    allOptions.add(option);
+                }
+            }
+
+            List<Options> savedOptions = optionsRepository.saveAll(allOptions);
+            log.debug("Options 저장 완료: {}개", savedOptions.size());
+
+            log.info("✅ {}역 스토리 DB 저장 완료: storyId={}", station.getStaName(), savedStory.getStoId());
+            return true;
+
+        } catch (Exception e) {
+            log.error("❌ DB 저장 실패: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * 수정된 다음 페이지 ID 결정 로직
+     */
+    private Long determineNextPageIdFixed(List<Page> savedPages, int currentPageIndex, int totalPages) {
+        try {
+            // 마지막 페이지면 null (게임 종료)
+            if (currentPageIndex >= totalPages - 1) {
+                return null;
+            }
+
+            // 다음 페이지가 존재하면 해당 페이지 ID 반환
+            if (currentPageIndex + 1 < savedPages.size()) {
+                Page nextPage = savedPages.get(currentPageIndex + 1);
+                if (nextPage != null) {
+                    Long nextPageId = nextPage.getPageId();
+                    if (nextPageId != null && nextPageId > 0) {
+                        return nextPageId;
+                    }
+                }
+            }
+
+            // 안전장치: null 반환
+            return null;
+
+        } catch (Exception e) {
+            log.warn("NextPageId 결정 실패: currentIndex={}, totalPages={}", currentPageIndex, totalPages);
+            return null;
+        }
+    }
+
+    /**
+     * AI 서버 상태 확인
+     */
+    private boolean checkAIServerHealth() {
+        try {
+            String url = aiServerUrl + "/health";
+
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+
+            boolean healthy = response.getStatusCode() == HttpStatus.OK;
+
+            if (!healthy) {
+                log.warn("AI 서버 상태 불량: {}", response.getStatusCode());
+            }
+
+            return healthy;
+
+        } catch (Exception e) {
+            log.error("AI 서버 헬스체크 실패: {}", e.getMessage());
+            return false;
         }
     }
 
@@ -302,26 +482,15 @@ public class AIStoryScheduler {
         for (Station station : allStations) {
             List<Story> existingStories = storyRepository.findByStation(station);
 
-            // 각 역당 최소 2개의 스토리 유지
-            if (existingStories.size() < 2) {
+            // 각 역당 최소 스토리 개수 확인
+            if (existingStories.size() < minStoriesPerStation) {
                 stationsNeedingStories.add(station);
             }
         }
 
-        log.info("스토리가 부족한 역: {}개 / 전체 {}개", stationsNeedingStories.size(), allStations.size());
+        log.info("스토리가 부족한 역: {}개 / 전체 {}개 (기준: 역당 최소 {}개)",
+                stationsNeedingStories.size(), allStations.size(), minStoriesPerStation);
         return stationsNeedingStories;
-    }
-
-    /**
-     * 다음 페이지 ID 결정 (간단한 순차 진행)
-     */
-    private Long determineNextPageId(List<Page> pages, int currentIndex, AIOptionData optionData) {
-        // 마지막 페이지가 아니면 다음 페이지로
-        if (currentIndex < pages.size() - 1) {
-            return pages.get(currentIndex + 1).getPageId();
-        }
-        // 마지막 페이지면 null (게임 종료)
-        return null;
     }
 
     /**
@@ -346,12 +515,15 @@ public class AIStoryScheduler {
      * 배치 결과 처리
      */
     private void handleBatchResult(int successCount, int totalAttempts) {
-        lastSuccessfulGeneration = LocalDateTime.now();
-        consecutiveFailures = 0;
+        if (successCount > 0) {
+            lastSuccessfulGeneration = LocalDateTime.now();
+            consecutiveFailures = 0;
+        }
 
         log.info("=== 배치 생성 완료 ===");
         log.info("성공: {}개 / 시도: {}개", successCount, totalAttempts);
         log.info("일일 누적 생성: {}/{}", dailyGeneratedCount.get(), dailyGenerationLimit);
+        log.info("마지막 성공: {}", lastSuccessfulGeneration);
 
         if (successCount == 0) {
             log.warn("모든 스토리 생성 실패");

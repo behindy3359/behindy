@@ -6,16 +6,15 @@ import os
 import logging
 from datetime import datetime
 
-# 기존 imports에 추가
-from models.batch_models import BatchStoryRequest, BatchStoryResponse, BatchPageData, BatchOptionData
-from services.batch_story_service import BatchStoryService
-
-# 향상된 Provider와 서비스
 from providers.llm_provider import LLMProviderFactory
 from services.story_service import StoryService
 from models.request_models import StoryGenerationRequest, StoryContinueRequest
 from models.response_models import StoryGenerationResponse, StoryContinueResponse, OptionData
 from utils.rate_limiter import RateLimiter
+
+from models.batch_models import BatchStoryRequest, BatchStoryResponse
+from services.batch_story_service import BatchStoryService
+
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -245,3 +244,82 @@ if __name__ == "__main__":
         logger.error(f"초기화 중 오류: {str(e)}")
     
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# 서비스 초기화에 추가
+batch_story_service = BatchStoryService()
+
+# ===== 배치 스토리 생성 API (Spring Boot 전용) =====
+
+@app.post("/generate-complete-story", response_model=BatchStoryResponse)
+async def generate_complete_story(request: BatchStoryRequest, http_request: Request):
+    """Spring Boot 배치 시스템용 완전한 스토리 생성"""
+    try:
+        # 내부 API 키 검증
+        api_key = http_request.headers.get("X-Internal-API-Key")
+        if api_key != "behindy-internal-2024-secret-key":
+            raise HTTPException(status_code=403, detail="Unauthorized internal API access")
+        
+        logger.info(f"배치 스토리 생성 요청: {request.station_name}역 ({request.line_number}호선)")
+        
+        # 완전한 스토리 생성
+        response = await batch_story_service.generate_complete_story(request)
+        
+        logger.info(f"배치 스토리 생성 완료: {response.story_title} ({len(response.pages)}페이지)")
+        return response
+        
+    except HTTPException:
+        raise  # 인증 오류는 그대로 전달
+    except Exception as e:
+        logger.error(f"배치 스토리 생성 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"스토리 생성 중 오류: {str(e)}")
+
+@app.post("/validate-story-structure")
+async def validate_story_structure(validation_request: Dict[str, Any], http_request: Request):
+    """스토리 구조 검증 (내부 API)"""
+    try:
+        # 내부 API 키 검증
+        api_key = http_request.headers.get("X-Internal-API-Key")
+        if api_key != "behindy-internal-2024-secret-key":
+            raise HTTPException(status_code=403, detail="Unauthorized internal API access")
+        
+        logger.info("스토리 구조 검증 요청")
+        
+        validation_result = await batch_story_service.validate_story_structure(
+            validation_request.get("story_data", {})
+        )
+        
+        return validation_result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"구조 검증 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"검증 중 오류: {str(e)}")
+
+@app.get("/batch/system-status")
+async def get_batch_system_status(http_request: Request):
+    """배치 시스템 상태 (내부 API)"""
+    try:
+        # 내부 API 키 검증 (선택적)
+        api_key = http_request.headers.get("X-Internal-API-Key")
+        
+        provider = LLMProviderFactory.get_provider()
+        available_providers = LLMProviderFactory.get_available_providers()
+        
+        return {
+            "ai_server_status": "healthy",
+            "current_provider": provider.get_provider_name(),
+            "available_providers": available_providers,
+            "batch_service_ready": True,
+            "supported_stations": len(story_service.get_supported_stations()),
+            "quality_stats": story_service.get_quality_stats(),
+            "rate_limit_status": {
+                "total_requests": rate_limiter.get_total_requests(),
+                "hit_rate": "N/A"
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"배치 시스템 상태 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"상태 조회 중 오류: {str(e)}")
