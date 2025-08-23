@@ -606,10 +606,19 @@ public class AIStoryScheduler {
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class AIStoryRequest {
+        @com.fasterxml.jackson.annotation.JsonProperty("station_name")
         private String stationName;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("line_number")
         private Integer lineNumber;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("character_health")
         private Integer characterHealth;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("character_sanity")
         private Integer characterSanity;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("story_type")
         private String storyType;
     }
 
