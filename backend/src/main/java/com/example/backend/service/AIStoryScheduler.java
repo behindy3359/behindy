@@ -68,7 +68,7 @@ public class AIStoryScheduler {
     private int consecutiveFailures = 0;
     private static final int MAX_CONSECUTIVE_FAILURES = 3;
 
-    @EventListener(ApplicationReadyEvent.class)
+    // @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         log.info("=== AI 스토리 배치 생성 시스템 시작 ===");
         log.info("스토리 생성 활성화: {}", storyGenerationEnabled);
@@ -78,6 +78,7 @@ public class AIStoryScheduler {
         log.info("배치 크기: {}개", batchSize);
         log.info("역당 최소 스토리: {}개", minStoriesPerStation);
 
+        /*
         // 10초 후 첫 번째 생성 실행 (개발 테스트용)
         if (storyGenerationEnabled && aiServerEnabled) {
             new Thread(() -> {
@@ -93,27 +94,19 @@ public class AIStoryScheduler {
                 }
             }).start();
         }
+        */
     }
 
     /**
-     * 스케줄된 스토리 배치 생성 (매일 오전 2시)
+     * 주기적 생성
      */
-    @Scheduled(cron = "0 0 2 * * *")
-    public void scheduledStoryGeneration() {
-        log.info("=== 일일 스케줄된 스토리 생성 시작 ===");
-        generateStoriesBatch();
-    }
-
-    /**
-     * 개발용 빈번한 스케줄 (30분마다) - 운영시 제거 예정
-     */
-    @Scheduled(fixedRateString = "${ai.story.generation.test-interval:1800000}")
+    @Scheduled(fixedRateString = "${ai.story.generation.test-interval:10800000}") // 🔧 30분(1800000) → 3시간(10800000)
     public void testStoryGeneration() {
         if (!storyGenerationEnabled || !aiServerEnabled) {
             return;
         }
 
-        log.info("=== 테스트용 스토리 생성 (30분 주기) ===");
+        log.info("=== 정기 스토리 생성 (3시간 주기) ==="); // 🔧 라벨 변경
         generateStoriesBatch();
     }
 
