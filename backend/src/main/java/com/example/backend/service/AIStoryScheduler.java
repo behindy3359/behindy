@@ -254,6 +254,7 @@ public class AIStoryScheduler {
             HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
 
             log.debug("AI 서버 완전한 스토리 요청: {}", url);
+            log.debug("요청 데이터: {}", request); // 🆕 요청 데이터 로그
 
             ParameterizedTypeReference<AIStoryResponse> responseType =
                     new ParameterizedTypeReference<AIStoryResponse>() {};
@@ -264,16 +265,33 @@ public class AIStoryScheduler {
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 AIStoryResponse storyResponse = response.getBody();
+
+                // 🆕 응답 내용 상세 로그
+                log.debug("AI 서버 응답 상세:");
+                log.debug("- 제목: {}", storyResponse.getStoryTitle());
+                log.debug("- 설명: {}", storyResponse.getDescription());
+                log.debug("- 테마: {}", storyResponse.getTheme());
+                log.debug("- 키워드: {}", storyResponse.getKeywords());
+                log.debug("- 페이지 수: {}", storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
+
+                if (storyResponse.getPages() != null && !storyResponse.getPages().isEmpty()) {
+                    AIPageData firstPage = storyResponse.getPages().get(0);
+                    log.debug("- 첫 페이지 내용: {}", firstPage.getContent());
+                    log.debug("- 첫 페이지 선택지 수: {}", firstPage.getOptions() != null ? firstPage.getOptions().size() : 0);
+                }
+
                 log.debug("AI 서버 응답 성공: {} 페이지",
                         storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
                 return storyResponse;
             } else {
                 log.warn("AI 서버 응답 실패: {}", response.getStatusCode());
+                log.warn("응답 바디: {}", response.getBody()); // 🆕 실패 응답 로그
                 return null;
             }
 
         } catch (Exception e) {
             log.error("AI 서버 호출 실패: {}", e.getMessage());
+            log.error("상세 오류: ", e); // 🆕 상세 오류 스택 트레이스
             return null;
         }
     }
@@ -288,13 +306,22 @@ public class AIStoryScheduler {
                 return false;
             }
 
+            log.debug("=== AI 응답 검증 시작 ===");
+            log.debug("전체 응답 객체: {}", response);
+
             if (response.getStoryTitle() == null || response.getStoryTitle().trim().isEmpty()) {
-                log.warn("스토리 제목이 없음");
+                log.warn("스토리 제목이 없음: '{}'", response.getStoryTitle());
+                log.debug("응답의 모든 필드:");
+                log.debug("- storyTitle: {}", response.getStoryTitle());
+                log.debug("- description: {}", response.getDescription());
+                log.debug("- theme: {}", response.getTheme());
+                log.debug("- keywords: {}", response.getKeywords());
+                log.debug("- pages: {}", response.getPages());
                 return false;
             }
 
             if (response.getPages() == null || response.getPages().isEmpty()) {
-                log.warn("페이지가 없음");
+                log.warn("페이지가 없음: {}", response.getPages());
                 return false;
             }
 
@@ -313,7 +340,7 @@ public class AIStoryScheduler {
                 }
 
                 if (page.getContent() == null || page.getContent().trim().isEmpty()) {
-                    log.warn("페이지 {}의 내용이 없음", i + 1);
+                    log.warn("페이지 {}의 내용이 없음: '{}'", i + 1, page.getContent());
                     return false;
                 }
 
@@ -327,17 +354,18 @@ public class AIStoryScheduler {
                 for (int j = 0; j < page.getOptions().size(); j++) {
                     AIOptionData option = page.getOptions().get(j);
                     if (option == null || option.getContent() == null || option.getContent().trim().isEmpty()) {
-                        log.warn("페이지 {} 선택지 {}가 비어있음", i + 1, j + 1);
+                        log.warn("페이지 {} 선택지 {}가 비어있음: '{}'", i + 1, j + 1,
+                                option != null ? option.getContent() : null);
                         return false;
                     }
                 }
             }
 
-            log.debug("AI 응답 검증 성공: {}페이지", response.getPages().size());
+            log.debug("✅ AI 응답 검증 성공: {}페이지", response.getPages().size());
             return true;
 
         } catch (Exception e) {
-            log.error("AI 응답 검증 중 오류: {}", e.getMessage());
+            log.error("AI 응답 검증 중 오류: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -627,11 +655,33 @@ public class AIStoryScheduler {
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class AIStoryResponse {
+        @com.fasterxml.jackson.annotation.JsonProperty("story_title")
         private String storyTitle;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("description")
         private String description;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("theme")
         private String theme;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("keywords")
         private List<String> keywords;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("pages")
         private List<AIPageData> pages;
+
+        // 🆕 추가 필드들 (AI 서버 응답과 맞추기)
+        @com.fasterxml.jackson.annotation.JsonProperty("estimated_length")
+        private Integer estimatedLength;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("difficulty")
+        private String difficulty;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("station_name")
+        private String stationName;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("line_number")
+        private Integer lineNumber;
     }
 
     @lombok.Data
@@ -639,7 +689,10 @@ public class AIStoryScheduler {
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class AIPageData {
+        @com.fasterxml.jackson.annotation.JsonProperty("content")
         private String content;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("options")
         private List<AIOptionData> options;
     }
 
@@ -648,9 +701,17 @@ public class AIStoryScheduler {
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class AIOptionData {
+        @com.fasterxml.jackson.annotation.JsonProperty("content")
         private String content;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("effect")
         private String effect;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("amount")
         private Integer amount;
+
+        @com.fasterxml.jackson.annotation.JsonProperty("effect_preview")
+        private String effectPreview;
     }
 
     @lombok.Data
