@@ -104,8 +104,10 @@ services:
     build: ./llmserver
     container_name: llmserver
     restart: always
-    expose:
-      - 8000
+    ports:  # 🆕 외부 포트 매핑 추가
+      - "8000:8000"
+    # expose:  # 🗑️ 제거 (ports와 중복)
+    #   - 8000
     environment:
       - AI_PROVIDER=${AI_PROVIDER:-mock}
       
@@ -133,6 +135,13 @@ services:
       - internal
     depends_on:
       - redis
+    # 🆕 헬스체크 추가
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     logging:
       driver: "json-file"
       options:

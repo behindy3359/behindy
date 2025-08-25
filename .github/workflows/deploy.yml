@@ -34,14 +34,34 @@ jobs:
           git reset --hard origin/main
           echo "[+] Force sync complete"
 
-      - name: Stop existing containers
-        run: |
-          cd ~/behindy
-          echo "🛑 기존 컨테이너 중지 중..."
-          
-          docker-compose down --timeout 30 || true
-          
-          echo "✅ 컨테이너 중지 완료"
+          - name: Stop existing containers
+          run: |
+            cd ~/behindy
+            echo "🛑 기존 컨테이너 완전 정리 중..."
+            
+            # 1. Docker Compose 컨테이너 중지
+            docker-compose down --timeout 30 || true
+            
+            # 2. behindy 관련 모든 컨테이너 강제 중지 및 제거
+            echo "📋 behindy 관련 실행 중인 컨테이너 확인:"
+            docker ps | grep behindy || echo "behindy 컨테이너 없음"
+            
+            echo "🗑️ behindy 관련 모든 컨테이너 중지 및 제거:"
+            docker ps -a | grep behindy | awk '{print $1}' | xargs -r docker stop || true
+            docker ps -a | grep behindy | awk '{print $1}' | xargs -r docker rm -f || true
+            
+            # 3. 포트 사용 중인 컨테이너 확인 및 정리
+            echo "🔍 포트 8000, 8080 사용 중인 컨테이너 확인:"
+            docker ps | grep ":8000\|:8080" || echo "해당 포트 사용 컨테이너 없음"
+            
+            # 4. aiserver, llmserver 이름 포함 컨테이너 정리
+            echo "🧹 AI/LLM 서버 관련 컨테이너 정리:"
+            docker ps -a | grep -E "(aiserver|llmserver)" | awk '{print $1}' | xargs -r docker stop || true
+            docker ps -a | grep -E "(aiserver|llmserver)" | awk '{print $1}' | xargs -r docker rm -f || true
+            
+            echo "✅ 컨테이너 정리 완료"
+            echo "현재 실행 중인 컨테이너:"
+            docker ps
 
       - name: Clean up old images
         run: |
