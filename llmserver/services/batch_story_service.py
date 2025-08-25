@@ -29,16 +29,39 @@ class BatchStoryService:
         self.min_story_length = 3
         self.max_story_length = 8
         
+
     async def generate_complete_story(self, request: BatchStoryRequest) -> BatchStoryResponse:
         """완전한 스토리 생성 (Spring Boot DB 저장용)"""
         try:
-            logger.info(f"완전한 스토리 생성 시작: {request.station_name}역")
+            # 🆕 요청 로그
+            logger.info("=" * 60)
+            logger.info("🚀 배치 스토리 생성 시작")
+            logger.info(f"역명: {request.station_name}역 ({request.line_number}호선)")
+            logger.info(f"캐릭터 상태: 체력={request.character_health}, 정신력={request.character_sanity}")
+            logger.info(f"현재 Provider: {self.provider.get_provider_name()}")
+            logger.info("=" * 60)
             
             # 1. 기본 스토리 정보 생성
             story_info = await self._generate_story_metadata(request)
             
+            # 🆕 메타데이터 로그
+            logger.info("📋 스토리 메타데이터 생성 완료:")
+            logger.info(f"  제목: {story_info.get('story_title', 'N/A')}")
+            logger.info(f"  테마: {story_info.get('theme', 'N/A')}")
+            logger.info(f"  예상 길이: {story_info.get('estimated_length', 'N/A')}페이지")
+            logger.info(f"  난이도: {story_info.get('difficulty', 'N/A')}")
+            
             # 2. 페이지별 스토리 생성
             pages = await self._generate_story_pages(request, story_info)
+            
+            # 🆕 페이지 생성 완료 로그
+            logger.info("📄 페이지 생성 완료:")
+            logger.info(f"  총 페이지 수: {len(pages)}")
+            for i, page in enumerate(pages):
+                logger.info(f"  페이지 {i+1}: {len(page.content)}자, 선택지 {len(page.options)}개")
+                logger.info(f"    내용 미리보기: {page.content[:100]}...")
+                for j, option in enumerate(page.options):
+                    logger.info(f"    선택지 {j+1}: {option.content} ({option.effect} {option.amount:+})")
             
             # 3. 응답 구성
             response = BatchStoryResponse(
@@ -53,10 +76,21 @@ class BatchStoryService:
                 line_number=request.line_number
             )
             
-            logger.info(f"완전한 스토리 생성 완료: {len(pages)}페이지")
+            # 🆕 최종 응답 로그
+            logger.info("✅ 배치 스토리 생성 최종 완료:")
+            logger.info(f"  제목: {response.story_title}")
+            logger.info(f"  실제 페이지 수: {len(response.pages)}")
+            logger.info(f"  키워드: {response.keywords}")
+            logger.info("=" * 60)
+            
             return response
             
         except Exception as e:
+            logger.error("❌ 배치 스토리 생성 실패:")
+            logger.error(f"  오류 타입: {type(e).__name__}")
+            logger.error(f"  오류 메시지: {str(e)}")
+            logger.error(f"  스택 트레이스: ", exc_info=True)
+            return self._create_fallback_complete_story(request)
             logger.error(f"완전한 스토리 생성 실패: {str(e)}")
             return self._create_fallback_complete_story(request)
     
@@ -65,29 +99,22 @@ class BatchStoryService:
         try:
             # Provider 타입 결정
             provider_name = self.provider.get_provider_name().lower()
+            logger.info(f"🤖 메타데이터 생성 - Provider: {provider_name}")
+            
             if "mock" in provider_name:
+                logger.info("📝 Mock Provider로 메타데이터 생성")
                 return self._create_mock_story_metadata(request)
             
-            # 실제 LLM으로 메타데이터 생성
+            # 🆕 실제 LLM 호출 전 로그
+            logger.info("🚀 실제 LLM 호출로 메타데이터 생성 시작")
             metadata_prompt = f"""
-{request.station_name}역을 배경으로 한 텍스트 어드벤처 게임의 메타데이터를 JSON 형식으로 생성해주세요.
-
-반드시 다음 JSON 형식으로만 응답하세요:
-{{
-    "story_title": "흥미로운 제목 (20자 이내)",
-    "description": "스토리 설명 (100자 이내)", 
-    "theme": "테마 (미스터리/공포/모험/로맨스/코미디 중 1개)",
-    "keywords": ["키워드1", "키워드2", "키워드3"],
-    "difficulty": "쉬움|보통|어려움",
-    "estimated_length": 5
-}}
-
-조건:
-- {request.station_name}역의 특성을 반영
-- {request.line_number}호선의 분위기에 맞는 테마
-- 키워드는 3-5개
-- 예상 길이는 3-8 사이
-"""
+    {request.station_name}역을 배경으로 한 텍스트 어드벤처 게임의 메타데이터를 JSON 형식으로 생성해주세요.
+    [프롬프트 내용...]
+    """
+            
+            logger.info(f"📤 LLM 프롬프트 전송:")
+            logger.info(f"  길이: {len(metadata_prompt)}자")
+            logger.info(f"  프롬프트 미리보기: {metadata_prompt[:200]}...")
             
             context = {
                 'station_name': request.station_name,
@@ -96,15 +123,28 @@ class BatchStoryService:
             
             result = await self.provider.generate_story(metadata_prompt, **context)
             
+            # 🆕 LLM 응답 로그
+            logger.info("📥 LLM 메타데이터 응답:")
+            logger.info(f"  응답 타입: {type(result)}")
+            if isinstance(result, dict):
+                logger.info(f"  응답 키들: {list(result.keys())}")
+                logger.info(f"  story_title: {result.get('story_title', 'N/A')}")
+                logger.info(f"  description: {result.get('description', 'N/A')}")
+                logger.info(f"  theme: {result.get('theme', 'N/A')}")
+            else:
+                logger.warning(f"  예상치 못한 응답 형식: {result}")
+            
             # 결과 검증 및 보완
             if isinstance(result, dict) and "story_title" in result:
+                logger.info("✅ 메타데이터 생성 성공")
                 return result
             else:
-                logger.warning("메타데이터 생성 결과가 올바르지 않음, Mock 데이터 사용")
+                logger.warning("⚠️ 메타데이터 생성 결과 검증 실패, Mock 데이터 사용")
                 return self._create_mock_story_metadata(request)
                 
         except Exception as e:
-            logger.error(f"메타데이터 생성 실패: {str(e)}")
+            logger.error(f"❌ 메타데이터 생성 실패: {str(e)}")
+            logger.error("Mock 메타데이터로 대체")
             return self._create_mock_story_metadata(request)
     
     async def _generate_story_pages(self, request: BatchStoryRequest, story_info: Dict) -> List[BatchPageData]:

@@ -37,7 +37,7 @@ spring:
 
 behindy:
   internal:
-    api-key: ${INTERNAL_API_KEY:behindy-internal-2024-secret-key}
+    api-key: ${INTERNAL_API_KEY:behindy-internal-2025-secret-key}
 
 crypto:
   field-secret-key: ${FIELD_KEY:default_field_key_32_characters_long}

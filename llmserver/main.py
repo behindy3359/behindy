@@ -254,7 +254,7 @@ async def generate_complete_story(request: BatchStoryRequest, http_request: Requ
     try:
         # 내부 API 키 검증
         api_key = http_request.headers.get("X-Internal-API-Key")
-        if api_key != "behindy-internal-2024-secret-key":
+        if api_key != "behindy-internal-2025-secret-key":
             raise HTTPException(status_code=403, detail="Unauthorized internal API access")
         
         logger.info(f"배치 스토리 생성 요청: {request.station_name}역 ({request.line_number}호선)")
@@ -305,7 +305,7 @@ async def validate_story_structure(validation_request: Dict[str, Any], http_requ
     try:
         # 내부 API 키 검증
         api_key = http_request.headers.get("X-Internal-API-Key")
-        if api_key != "behindy-internal-2024-secret-key":
+        if api_key != "behindy-internal-2025-secret-key":
             raise HTTPException(status_code=403, detail="Unauthorized internal API access")
         
         logger.info("스토리 구조 검증 요청")

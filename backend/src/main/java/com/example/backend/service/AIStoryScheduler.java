@@ -58,7 +58,7 @@ public class AIStoryScheduler {
     @Value("${ai.story.generation.min-stories-per-station:2}")
     private Integer minStoriesPerStation;
 
-    @Value("${behindy.internal.api-key:behindy-internal-2024-secret-key}")
+    @Value("${behindy.internal.api-key:behindy-internal-2025-secret-key}")
     private String internalApiKey;
 
     // 상태 관리
@@ -234,7 +234,7 @@ public class AIStoryScheduler {
     }
 
     /**
-     * AI 서버 호출 (완전한 스토리용)
+     * AI 서버 호출
      */
     private AIStoryResponse callAIServerForCompleteStory(AIStoryRequest request) {
         try {
@@ -246,8 +246,13 @@ public class AIStoryScheduler {
 
             HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
 
-            log.debug("AI 서버 완전한 스토리 요청: {}", url);
-            log.debug("요청 데이터: {}", request); // 🆕 요청 데이터 로그
+            // 🆕 요청 직전 로그
+            log.info("=== AI 서버 호출 시작 ===");
+            log.info("URL: {}", url);
+            log.info("요청 데이터: station={}, line={}, health={}, sanity={}",
+                    request.getStationName(), request.getLineNumber(),
+                    request.getCharacterHealth(), request.getCharacterSanity());
+            log.info("요청 헤더: {}", headers);
 
             ParameterizedTypeReference<AIStoryResponse> responseType =
                     new ParameterizedTypeReference<AIStoryResponse>() {};
@@ -256,35 +261,53 @@ public class AIStoryScheduler {
                     url, HttpMethod.POST, entity, responseType
             );
 
+            // 🆕 응답 직후 로그
+            log.info("=== AI 서버 응답 수신 ===");
+            log.info("HTTP Status: {}", response.getStatusCode());
+            log.info("Response Headers: {}", response.getHeaders());
+
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 AIStoryResponse storyResponse = response.getBody();
 
                 // 🆕 응답 내용 상세 로그
-                log.debug("AI 서버 응답 상세:");
-                log.debug("- 제목: {}", storyResponse.getStoryTitle());
-                log.debug("- 설명: {}", storyResponse.getDescription());
-                log.debug("- 테마: {}", storyResponse.getTheme());
-                log.debug("- 키워드: {}", storyResponse.getKeywords());
-                log.debug("- 페이지 수: {}", storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
+                log.info("=== AI 스토리 응답 상세 ===");
+                log.info("제목: {}", storyResponse.getStoryTitle());
+                log.info("설명: {}", storyResponse.getDescription());
+                log.info("테마: {}", storyResponse.getTheme());
+                log.info("키워드: {}", storyResponse.getKeywords());
+                log.info("예상 길이: {}", storyResponse.getEstimatedLength());
+                log.info("난이도: {}", storyResponse.getDifficulty());
+                log.info("페이지 수: {}", storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
 
+                // 🆕 각 페이지 내용 로그
                 if (storyResponse.getPages() != null && !storyResponse.getPages().isEmpty()) {
-                    AIPageData firstPage = storyResponse.getPages().get(0);
-                    log.debug("- 첫 페이지 내용: {}", firstPage.getContent());
-                    log.debug("- 첫 페이지 선택지 수: {}", firstPage.getOptions() != null ? firstPage.getOptions().size() : 0);
+                    for (int i = 0; i < storyResponse.getPages().size(); i++) {
+                        AIPageData page = storyResponse.getPages().get(i);
+                        log.info("--- 페이지 {} ---", i + 1);
+                        log.info("내용: {}", page.getContent());
+                        log.info("선택지 수: {}", page.getOptions() != null ? page.getOptions().size() : 0);
+
+                        if (page.getOptions() != null) {
+                            for (int j = 0; j < page.getOptions().size(); j++) {
+                                AIOptionData option = page.getOptions().get(j);
+                                log.info("  선택지 {}: {} ({}{})", j + 1, option.getContent(),
+                                        option.getEffect(), option.getAmount());
+                            }
+                        }
+                    }
                 }
 
-                log.debug("AI 서버 응답 성공: {} 페이지",
-                        storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
                 return storyResponse;
             } else {
-                log.warn("AI 서버 응답 실패: {}", response.getStatusCode());
-                log.warn("응답 바디: {}", response.getBody()); // 🆕 실패 응답 로그
+                log.warn("AI 서버 응답 실패: status={}, body={}", response.getStatusCode(), response.getBody());
                 return null;
             }
 
         } catch (Exception e) {
-            log.error("AI 서버 호출 실패: {}", e.getMessage());
-            log.error("상세 오류: ", e); // 🆕 상세 오류 스택 트레이스
+            log.error("=== AI 서버 호출 실패 ===");
+            log.error("오류 타입: {}", e.getClass().getSimpleName());
+            log.error("오류 메시지: {}", e.getMessage());
+            log.error("스택 트레이스: ", e);
             return null;
         }
     }
@@ -368,9 +391,37 @@ public class AIStoryScheduler {
      */
     private boolean saveStoryToDatabase(Station station, AIStoryResponse aiResponse) {
         try {
-            log.debug("💾 DB 저장 시작: {}역 스토리", station.getStaName());
+            // 🆕 DB 저장 시작 로그
+            log.info("💾 DB 저장 프로세스 시작");
+            log.info("역: {}역 ({}호선)", station.getStaName(), station.getStaLine());
+            log.info("AI 응답 데이터 검증:");
+            log.info("  제목: {}", aiResponse.getStoryTitle());
+            log.info("  설명: {}", aiResponse.getDescription());
+            log.info("  테마: {}", aiResponse.getTheme());
+            log.info("  키워드: {}", aiResponse.getKeywords());
+            log.info("  페이지 수: {}", aiResponse.getPages() != null ? aiResponse.getPages().size() : 0);
+
+            // AI 응답 구조 상세 로그
+            if (aiResponse.getPages() != null) {
+                for (int i = 0; i < aiResponse.getPages().size(); i++) {
+                    AIPageData pageData = aiResponse.getPages().get(i);
+                    log.info("  페이지 {}: 내용 {}자, 선택지 {}개",
+                            i + 1,
+                            pageData.getContent() != null ? pageData.getContent().length() : 0,
+                            pageData.getOptions() != null ? pageData.getOptions().size() : 0);
+
+                    if (pageData.getOptions() != null) {
+                        for (int j = 0; j < pageData.getOptions().size(); j++) {
+                            AIOptionData option = pageData.getOptions().get(j);
+                            log.info("    선택지 {}: {} ({} {})",
+                                    j + 1, option.getContent(), option.getEffect(), option.getAmount());
+                        }
+                    }
+                }
+            }
 
             // 1. Story 엔티티 생성 및 저장
+            log.info("📖 Story 엔티티 생성 중...");
             Story story = Story.builder()
                     .station(station)
                     .stoTitle(aiResponse.getStoryTitle())
@@ -385,9 +436,14 @@ public class AIStoryScheduler {
                     .build();
 
             Story savedStory = storyRepository.save(story);
-            log.debug("Story 저장 완료: storyId={}, title={}", savedStory.getStoId(), savedStory.getStoTitle());
+            log.info("✅ Story 저장 완료:");
+            log.info("  Story ID: {}", savedStory.getStoId());
+            log.info("  제목: {}", savedStory.getStoTitle());
+            log.info("  길이: {}페이지", savedStory.getStoLength());
+            log.info("  테마: {}", savedStory.getStoTheme());
 
             // 2. Page 엔티티들 생성 및 저장 (순차적)
+            log.info("📄 Page 엔티티들 생성 중...");
             List<Page> savedPages = new ArrayList<>();
             for (int i = 0; i < aiResponse.getPages().size(); i++) {
                 AIPageData pageData = aiResponse.getPages().get(i);
@@ -401,18 +457,27 @@ public class AIStoryScheduler {
                 Page savedPage = pageRepository.save(page);
                 savedPages.add(savedPage);
 
-                log.debug("Page 저장: pageId={}, pageNumber={}", savedPage.getPageId(), savedPage.getPageNumber());
+                log.info("  Page {} 저장: ID={}, 내용={}자",
+                        savedPage.getPageNumber(), savedPage.getPageId(),
+                        savedPage.getPageContents() != null ? savedPage.getPageContents().length() : 0);
             }
 
-            log.debug("Pages 저장 완료: {}개", savedPages.size());
+            log.info("✅ Pages 저장 완료: {}개", savedPages.size());
 
             // 3. Options 엔티티들 생성 및 저장 (Page ID 확정 후)
+            log.info("🎯 Options 엔티티들 생성 중...");
             List<Options> allOptions = new ArrayList<>();
+            int totalOptionsCount = 0;
+
             for (int i = 0; i < aiResponse.getPages().size(); i++) {
                 AIPageData pageData = aiResponse.getPages().get(i);
                 Page savedPage = savedPages.get(i);
 
-                for (AIOptionData optionData : pageData.getOptions()) {
+                log.info("  페이지 {} 선택지들 처리 중...", i + 1);
+
+                for (int j = 0; j < pageData.getOptions().size(); j++) {
+                    AIOptionData optionData = pageData.getOptions().get(j);
+
                     // 수정된 nextPageId 결정 로직
                     Long nextPageId = determineNextPageIdFixed(savedPages, i, aiResponse.getPages().size());
 
@@ -425,21 +490,45 @@ public class AIStoryScheduler {
                             .build();
 
                     allOptions.add(option);
+                    totalOptionsCount++;
+
+                    log.info("    선택지 {}: {} → nextPageId={}",
+                            j + 1, optionData.getContent(), nextPageId);
                 }
             }
 
             List<Options> savedOptions = optionsRepository.saveAll(allOptions);
-            log.debug("Options 저장 완료: {}개", savedOptions.size());
+            log.info("✅ Options 저장 완료: {}개", savedOptions.size());
 
-            log.info("✅ {}역 스토리 DB 저장 완료: storyId={}", station.getStaName(), savedStory.getStoId());
+            // 🆕 DB 저장 최종 요약
+            log.info("🎉 DB 저장 프로세스 완료:");
+            log.info("  Story ID: {}", savedStory.getStoId());
+            log.info("  총 페이지: {}개", savedPages.size());
+            log.info("  총 선택지: {}개", savedOptions.size());
+            log.info("  역: {} ({}호선)", station.getStaName(), station.getStaLine());
+
+            // 🆕 저장된 데이터 검증
+            log.info("📋 저장 데이터 검증:");
+            for (int i = 0; i < savedPages.size(); i++) {
+                Page page = savedPages.get(i);
+                long optionCount = savedOptions.stream()
+                        .filter(opt -> opt.getPageId() == page.getPageId())
+                        .count();
+                log.info("  페이지 {}: ID={}, 선택지 {}개",
+                        page.getPageNumber(), page.getPageId(), optionCount);
+            }
+
             return true;
 
         } catch (Exception e) {
-            log.error("❌ DB 저장 실패: {}", e.getMessage(), e);
+            log.error("❌ DB 저장 실패:");
+            log.error("  역: {}역", station.getStaName());
+            log.error("  오류 타입: {}", e.getClass().getSimpleName());
+            log.error("  오류 메시지: {}", e.getMessage());
+            log.error("  스택 트레이스: ", e);
             return false;
         }
     }
-
     /**
      * 수정된 다음 페이지 ID 결정 로직
      */

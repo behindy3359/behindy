@@ -57,8 +57,16 @@ class OpenAIProvider(LLMProvider):
         if not self.is_available():
             raise ValueError("OpenAI API 키가 설정되지 않았거나 aiohttp가 설치되지 않았습니다.")
         
+        # 🆕 요청 전 로그
+        logger.info("🔥 OpenAI API 호출 시작")
+        logger.info(f"  모델: {self.model}")
+        logger.info(f"  최대 토큰: {self.max_tokens}")
+        logger.info(f"  프롬프트 길이: {len(prompt)}자")
+        logger.info(f"  컨텍스트: {kwargs}")
+        logger.info(f"  프롬프트 미리보기: {prompt[:300]}...")
+        
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {self.api_key[:20]}...",  # API 키는 일부만 로그
             "Content-Type": "application/json"
         }
         
@@ -72,23 +80,66 @@ class OpenAIProvider(LLMProvider):
             "response_format": {"type": "json_object"}
         }
         
+        logger.info(f"📤 OpenAI 요청 페이로드:")
+        logger.info(f"  모델: {payload['model']}")
+        logger.info(f"  temperature: {payload['temperature']}")
+        logger.info(f"  response_format: {payload['response_format']}")
+        
         try:
+            start_time = time.time()
+            
             async with aiohttp.ClientSession() as session:
                 async with session.post(self.base_url, headers=headers, json=payload, timeout=30) as response:
+                    
+                    # 🆕 응답 수신 로그
+                    response_time = time.time() - start_time
+                    logger.info(f"📥 OpenAI API 응답 수신:")
+                    logger.info(f"  HTTP 상태: {response.status}")
+                    logger.info(f"  응답 시간: {response_time:.2f}초")
+                    logger.info(f"  응답 헤더: {dict(response.headers)}")
+                    
                     if response.status == 200:
                         result = await response.json()
-                        content = result["choices"][0]["message"]["content"]
-                        return self._parse_response(content, kwargs)
+                        
+                        # 🆕 응답 내용 상세 로그
+                        logger.info("✅ OpenAI 응답 성공:")
+                        logger.info(f"  응답 ID: {result.get('id', 'N/A')}")
+                        logger.info(f"  생성된 시간: {result.get('created', 'N/A')}")
+                        logger.info(f"  사용된 토큰: {result.get('usage', {})}")
+                        
+                        if 'choices' in result and len(result['choices']) > 0:
+                            content = result["choices"][0]["message"]["content"]
+                            logger.info(f"  생성된 콘텐츠 길이: {len(content)}자")
+                            logger.info(f"  콘텐츠 미리보기: {content[:500]}...")
+                            
+                            # JSON 파싱 시도
+                            try:
+                                import json
+                                parsed_content = json.loads(content)
+                                logger.info(f"  JSON 파싱 성공: {list(parsed_content.keys())}")
+                            except json.JSONDecodeError as e:
+                                logger.error(f"  ❌ JSON 파싱 실패: {e}")
+                                logger.error(f"  원본 콘텐츠: {content}")
+                            
+                            return self._parse_response(content, kwargs)
+                        else:
+                            logger.error("❌ OpenAI 응답에 choices가 없음")
+                            return self._fallback_response(kwargs)
+                            
                     else:
                         error_text = await response.text()
-                        logger.error(f"OpenAI API 오류: {response.status}, {error_text}")
+                        logger.error(f"❌ OpenAI API 오류:")
+                        logger.error(f"  상태코드: {response.status}")
+                        logger.error(f"  오류 내용: {error_text}")
                         raise Exception(f"OpenAI API 오류: {response.status}")
         
         except asyncio.TimeoutError:
-            logger.error("OpenAI API 타임아웃")
+            logger.error("❌ OpenAI API 타임아웃 (30초 초과)")
             raise Exception("OpenAI API 요청 시간 초과")
         except Exception as e:
-            logger.error(f"OpenAI API 호출 실패: {str(e)}")
+            logger.error(f"❌ OpenAI API 호출 실패:")
+            logger.error(f"  오류 타입: {type(e).__name__}")
+            logger.error(f"  오류 메시지: {str(e)}")
             raise Exception(f"OpenAI API 호출 실패: {str(e)}")
     
     def _parse_response(self, content: str, context: Dict) -> Dict[str, Any]:
@@ -139,42 +190,48 @@ class ClaudeProvider(LLMProvider):
         return bool(self.api_key and self.api_key != "" and aiohttp is not None)
     
     async def generate_story(self, prompt: str, **kwargs) -> Dict[str, Any]:
-        if not self.is_available():
-            raise ValueError("Claude API 키가 설정되지 않았거나 aiohttp가 설치되지 않았습니다.")
+        # 🆕 Mock Provider 로그
+        logger.info("🎭 Mock Provider 호출:")
+        logger.info(f"  프롬프트 길이: {len(prompt)}자")
+        logger.info(f"  컨텍스트: {kwargs}")
+        logger.info(f"  Generator 사용 가능: {self.generator is not None}")
         
-        headers = {
-            "x-api-key": self.api_key,
-            "content-type": "application/json",
-            "anthropic-version": "2023-06-01"
-        }
+        # 인위적 지연 (실제 API 호출 시뮬레이션)
+        await asyncio.sleep(0.3)
         
-        payload = {
-            "model": self.model,
-            "max_tokens": 1000,
-            "temperature": 0.8,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ]
-        }
-        
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.base_url, headers=headers, json=payload, timeout=30) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        content = result["content"][0]["text"]
-                        return self._parse_response(content, kwargs)
-                    else:
-                        error_text = await response.text()
-                        logger.error(f"Claude API 오류: {response.status}, {error_text}")
-                        raise Exception(f"Claude API 오류: {response.status}")
-        
-        except asyncio.TimeoutError:
-            logger.error("Claude API 타임아웃")
-            raise Exception("Claude API 요청 시간 초과")
-        except Exception as e:
-            logger.error(f"Claude API 호출 실패: {str(e)}")
-            raise Exception(f"Claude API 호출 실패: {str(e)}")
+        if self.generator:
+            station_name = kwargs.get('station_name', '강남')
+            character_health = kwargs.get('character_health', 80)
+            character_sanity = kwargs.get('character_sanity', 80)
+            
+            logger.info(f"🎲 Mock 스토리 생성: {station_name}역")
+            result = self.generator.generate_story(station_name, character_health, character_sanity)
+            
+            logger.info("✅ Mock 스토리 생성 완료:")
+            logger.info(f"  제목: {result.get('story_title', 'N/A')}")
+            logger.info(f"  테마: {result.get('theme', 'N/A')}")
+            logger.info(f"  선택지 수: {len(result.get('options', []))}")
+            
+            return result
+        else:
+            logger.warning("⚠️ MockStoryGenerator 없음, 기본 응답 사용")
+            # Generator가 없을 때 기본 응답
+            result = {
+                "story_title": f"{kwargs.get('station_name', '강남')}역의 이야기",
+                "page_content": f"{kwargs.get('station_name', '강남')}역에서 흥미로운 일이 벌어집니다.",
+                "options": [
+                    {"content": "관찰한다", "effect": "sanity", "amount": 2, "effect_preview": "정신력 +2"},
+                    {"content": "행동한다", "effect": "health", "amount": -1, "effect_preview": "체력 -1"}
+                ],
+                "estimated_length": 5,
+                "difficulty": "보통",
+                "theme": "일상",
+                "station_name": kwargs.get('station_name', '강남'),
+                "line_number": kwargs.get('line_number', 2)
+            }
+            
+            logger.info("✅ 기본 Mock 응답 생성 완료")
+            return result
     
     def _parse_response(self, content: str, context: Dict) -> Dict[str, Any]:
         """Claude 응답 파싱 (JSON 블록 추출)"""
