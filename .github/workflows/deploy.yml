@@ -34,34 +34,34 @@ jobs:
           git reset --hard origin/main
           echo "[+] Force sync complete"
 
-          - name: Stop existing containers
-          run: |
-            cd ~/behindy
-            echo "🛑 기존 컨테이너 완전 정리 중..."
-            
-            # 1. Docker Compose 컨테이너 중지
-            docker-compose down --timeout 30 || true
-            
-            # 2. behindy 관련 모든 컨테이너 강제 중지 및 제거
-            echo "📋 behindy 관련 실행 중인 컨테이너 확인:"
-            docker ps | grep behindy || echo "behindy 컨테이너 없음"
-            
-            echo "🗑️ behindy 관련 모든 컨테이너 중지 및 제거:"
-            docker ps -a | grep behindy | awk '{print $1}' | xargs -r docker stop || true
-            docker ps -a | grep behindy | awk '{print $1}' | xargs -r docker rm -f || true
-            
-            # 3. 포트 사용 중인 컨테이너 확인 및 정리
-            echo "🔍 포트 8000, 8080 사용 중인 컨테이너 확인:"
-            docker ps | grep ":8000\|:8080" || echo "해당 포트 사용 컨테이너 없음"
-            
-            # 4. aiserver, llmserver 이름 포함 컨테이너 정리
-            echo "🧹 AI/LLM 서버 관련 컨테이너 정리:"
-            docker ps -a | grep -E "(aiserver|llmserver)" | awk '{print $1}' | xargs -r docker stop || true
-            docker ps -a | grep -E "(aiserver|llmserver)" | awk '{print $1}' | xargs -r docker rm -f || true
-            
-            echo "✅ 컨테이너 정리 완료"
-            echo "현재 실행 중인 컨테이너:"
-            docker ps
+      - name: Stop existing containers
+        run: |
+          cd ~/behindy
+          echo "🛑 기존 컨테이너 완전 정리 중..."
+          
+          # 1. Docker Compose 컨테이너 중지
+          docker-compose down --timeout 30 || true
+          
+          # 2. behindy 관련 모든 컨테이너 강제 중지 및 제거
+          echo "📋 behindy 관련 실행 중인 컨테이너 확인:"
+          docker ps | grep behindy || echo "behindy 컨테이너 없음"
+          
+          echo "🗑️ behindy 관련 모든 컨테이너 중지 및 제거:"
+          docker ps -a | grep behindy | awk '{print $1}' | xargs -r docker stop || true
+          docker ps -a | grep behindy | awk '{print $1}' | xargs -r docker rm -f || true
+          
+          # 3. 포트 사용 중인 컨테이너 확인 및 정리
+          echo "🔍 포트 8000, 8080 사용 중인 컨테이너 확인:"
+          docker ps | grep ":8000\|:8080" || echo "해당 포트 사용 컨테이너 없음"
+          
+          # 4. aiserver, llmserver 이름 포함 컨테이너 정리
+          echo "🧹 AI/LLM 서버 관련 컨테이너 정리:"
+          docker ps -a | grep -E "(aiserver|llmserver)" | awk '{print $1}' | xargs -r docker stop || true
+          docker ps -a | grep -E "(aiserver|llmserver)" | awk '{print $1}' | xargs -r docker rm -f || true
+          
+          echo "✅ 컨테이너 정리 완료"
+          echo "현재 실행 중인 컨테이너:"
+          docker ps
 
       - name: Clean up old images
         run: |
@@ -143,6 +143,16 @@ jobs:
             sleep 2
           done
           
+          echo "⏳ AI 서버 대기..."
+          for i in {1..20}; do
+            if curl -f http://localhost:8000/health >/dev/null 2>&1; then
+              echo "✅ AI 서버 준비 완료! ($i/20)"
+              break
+            fi
+            echo "AI 서버 대기 중... ($i/20)"
+            sleep 2
+          done
+          
           echo "⏳ 최종 헬스체크..."
           sleep 10
           
@@ -177,7 +187,10 @@ jobs:
           curl -s http://localhost:8080/api/metro/status | head -c 100 || echo "응답 없음"
           echo ""
           echo -n "AI서버: "
-          curl -s http://localhost:8000/health | head -c 50 || echo "응답 없음 (정상)"
+          curl -s http://localhost:8000/health | head -c 50 || echo "응답 없음"
+          echo ""
+          echo -n "AI 연동: "
+          curl -s http://localhost:8080/api/ai-stories/health | head -c 100 || echo "응답 없음"
           
           echo ""
           echo "💾 디스크 사용량:"
