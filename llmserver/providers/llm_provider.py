@@ -43,6 +43,7 @@ class LLMProvider(ABC):
 
 class OpenAIProvider(LLMProvider):
     """OpenAI GPT Provider"""
+    logger.info("🔥 OpenAIProvider 도달 - phase1")
     
     def __init__(self, api_key: str, model: str = "gpt-4o-mini", max_tokens: int = 1000):
         super().__init__()
@@ -54,6 +55,8 @@ class OpenAIProvider(LLMProvider):
     def is_available(self) -> bool:
         return bool(self.api_key and self.api_key != "" and aiohttp is not None)
     
+    logger.info("🔥 OpenAIProvider 도달 - phase2")
+
     async def generate_story(self, prompt: str, **kwargs) -> Dict[str, Any]:
         if not self.is_available():
             raise ValueError("OpenAI API 키가 설정되지 않았거나 aiohttp가 설치되지 않았습니다.")
@@ -351,6 +354,7 @@ class LLMProviderFactory:
         
         # 실제 API Provider 우선 시도
         if provider_name == "openai" and settings.OPENAI_API_KEY:
+            logger.info(f"✅ OpenAI Provider phase1, apikey : {settings.OPENAI_API_KEY}")
             provider = OpenAIProvider(
                 api_key=settings.OPENAI_API_KEY,
                 model=settings.OPENAI_MODEL,
