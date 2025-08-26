@@ -82,7 +82,7 @@ ai:
       enabled: ${AI_STORY_GENERATION_ENABLED:true}
       daily-limit: ${AI_STORY_DAILY_LIMIT:50}
       batch-size: ${AI_STORY_BATCH_SIZE:5}
-      test-interval: ${AI_STORY_TEST_INTERVAL:1800000} # 30분 (개발용)
+      test-interval: ${AI_STORY_TEST_INTERVAL:43200000} # 30분 (개발용)
       min-stories-per-station: ${AI_STORY_MIN_PER_STATION:2}
       retry-count: ${AI_STORY_RETRY_COUNT:3}
       generation-delay: ${AI_STORY_GENERATION_DELAY:2000} # 생성 간격 (ms)
