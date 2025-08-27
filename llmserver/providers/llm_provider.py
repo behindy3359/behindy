@@ -70,7 +70,7 @@ class OpenAIProvider(LLMProvider):
         logger.info(f"  프롬프트 미리보기: {prompt[:300]}...")
         
         headers = {
-            "Authorization": f"Bearer {self.api_key[:20]}...",  # API 키는 일부만 로그
+            "Authorization": f"Bearer {self.api_key[:20]}...",
             "Content-Type": "application/json"
         }
         
@@ -354,7 +354,7 @@ class LLMProviderFactory:
         
         # 실제 API Provider 우선 시도
         if provider_name == "openai" and settings.OPENAI_API_KEY:
-            logger.info(f"✅ OpenAI Provider phase1, apikey : {settings.OPENAI_API_KEY}")
+            logger.info(f"✅ OpenAI Provider phase1, apikey : {settings.OPENAI_API_KEY[:15]}")
             provider = OpenAIProvider(
                 api_key=settings.OPENAI_API_KEY,
                 model=settings.OPENAI_MODEL,
