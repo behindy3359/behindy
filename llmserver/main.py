@@ -44,6 +44,18 @@ logger.info("🚦 RateLimiter 초기화 중...")
 rate_limiter = RateLimiter()
 logger.info(f"✅ RateLimiter 초기화 완료: {rate_limiter}")
 
+# FastAPI 미들웨어로 모든 요청 로그
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"🌐 들어오는 요청: {request.method} {request.url}")
+    logger.info(f"🔗 클라이언트 IP: {request.client.host}")
+    logger.info(f"📋 헤더: {dict(request.headers)}")
+    
+    response = await call_next(request)
+    
+    logger.info(f"📤 응답 상태: {response.status_code}")
+    return response
+
 # ===== 헬스체크 및 상태 =====
 
 @app.get("/")

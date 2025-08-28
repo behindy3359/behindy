@@ -236,43 +236,64 @@ public class AIStoryScheduler {
 
             HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
 
-            log.info("=== AI 서버 호출 시작 (5분 타임아웃) ===");
-            log.info("URL: {}", url);
-            log.info("요청 데이터: station={}, line={}, health={}, sanity={}",
-                    request.getStationName(), request.getLineNumber(),
-                    request.getCharacterHealth(), request.getCharacterSanity());
+            // 🔍 요청 전송 전 상세 로그
+            log.info("=== AI 서버 호출 준비 ===");
+            log.info("🎯 URL: {}", url);
+            log.info("🔑 Headers: {}", headers);
+            log.info("📦 Request Body: {}", request);
+            log.info("⏰ 타임아웃: 5분 (300초)");
+
+            // 🚀 실제 요청 전송 시점 로그
+            log.info("🚀 RestTemplate.exchange 호출 시작...");
+            long startTime = System.currentTimeMillis();
 
             ParameterizedTypeReference<AIStoryResponse> responseType =
                     new ParameterizedTypeReference<AIStoryResponse>() {};
 
-            // 🎯 5분 타임아웃 RestTemplate 사용
+            // 실제 HTTP 요청
             ResponseEntity<AIStoryResponse> response = aiServerRestTemplate.exchange(
                     url, HttpMethod.POST, entity, responseType
             );
 
-            log.info("=== AI 서버 응답 수신 ===");
-            log.info("HTTP Status: {}", response.getStatusCode());
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("📥 응답 수신 완료 ({}ms)", duration);
+            log.info("📊 HTTP Status: {}", response.getStatusCode());
+            log.info("📋 Response Headers: {}", response.getHeaders());
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 AIStoryResponse storyResponse = response.getBody();
-
-                log.info("=== AI 스토리 응답 상세 ===");
-                log.info("제목: {}", storyResponse.getStoryTitle());
-                log.info("설명: {}", storyResponse.getDescription());
-                log.info("테마: {}", storyResponse.getTheme());
-                log.info("페이지 수: {}", storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
-
+                log.info("✅ AI 스토리 응답 성공: {}", storyResponse.getStoryTitle());
                 return storyResponse;
             } else {
-                log.warn("AI 서버 응답 실패: status={}, body={}", response.getStatusCode(), response.getBody());
+                log.warn("❌ AI 서버 응답 실패: status={}", response.getStatusCode());
                 return null;
             }
 
+        } catch (org.springframework.web.client.ResourceAccessException e) {
+            // 네트워크/연결 관련 오류
+            log.error("🔌 연결 오류 (ResourceAccessException): {}", e.getMessage());
+            log.error("🔍 연결 오류 상세: {}", e.getCause() != null ? e.getCause().getMessage() : "원인 불명");
+            return null;
+
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // 4xx HTTP 오류
+            log.error("📛 클라이언트 오류 ({}): {}", e.getStatusCode(), e.getMessage());
+            log.error("📄 응답 본문: {}", e.getResponseBodyAsString());
+            return null;
+
+        } catch (org.springframework.web.client.HttpServerErrorException e) {
+            // 5xx HTTP 오류
+            log.error("🔥 서버 오류 ({}): {}", e.getStatusCode(), e.getMessage());
+            log.error("📄 응답 본문: {}", e.getResponseBodyAsString());
+            return null;
+
         } catch (Exception e) {
-            log.error("=== AI 서버 호출 실패 (5분 타임아웃) ===");
-            log.error("오류 타입: {}", e.getClass().getSimpleName());
-            log.error("오류 메시지: {}", e.getMessage());
-            log.error("스택 트레이스: ", e);
+            log.error("💥 예상치 못한 오류: {}", e.getClass().getSimpleName());
+            log.error("💬 오류 메시지: {}", e.getMessage());
+            if (e.getCause() != null) {
+                log.error("🔍 근본 원인: {}", e.getCause().getMessage());
+            }
+            log.error("📚 스택 트레이스:", e);
             return null;
         }
     }
