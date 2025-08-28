@@ -16,7 +16,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class AIStoryScheduler {
 
-    // 🎯 AI 서버용 5분 타임아웃 RestTemplate
+    // 🎯 AI 서버용 12분 타임아웃 RestTemplate
     @Qualifier("aiServerRestTemplate")
     private final RestTemplate aiServerRestTemplate;
 
@@ -62,10 +61,10 @@ public class AIStoryScheduler {
     @Value("${ai.story.generation.enabled:true}")
     private Boolean storyGenerationEnabled;
 
-    @Value("${ai.story.generation.daily-limit:50}")
+    @Value("${ai.story.generation.daily-limit:5}")
     private Integer dailyGenerationLimit;
 
-    @Value("${ai.story.generation.batch-size:5}")
+    @Value("${ai.story.generation.batch-size:1}")
     private Integer batchSize;
 
     @Value("${ai.story.generation.min-stories-per-station:2}")
@@ -88,20 +87,23 @@ public class AIStoryScheduler {
         log.info("AI 서버 활성화: {}", aiServerEnabled);
         log.info("AI 서버 URL: {}", aiServerUrl);
         log.info("일일 생성 한도: {}개", dailyGenerationLimit);
-        log.info("배치 크기: {}개", batchSize);
+        log.info("배치 크기: {}개 (개발용으로 축소)", batchSize);
         log.info("역당 최소 스토리: {}개", minStoriesPerStation);
+        log.info("🕐 실행 주기: 하루 1회 (24시간마다)");
     }
 
     /**
-     * 정기적 배치 생성 (12시간마다)
+     * 정기적 배치 생성 (하루 1회 - 24시간마다)
+     * 개발 단계에서는 리소스 절약을 위해 하루 1회로 설정
      */
-    @Scheduled(fixedRateString = "${ai.story.generation.test-interval:43200000}")
+    @Scheduled(fixedRateString = "${ai.story.generation.test-interval:86400000}")
     public void scheduledBatchGeneration() {
         if (!storyGenerationEnabled || !aiServerEnabled) {
+            log.debug("스토리 생성 비활성화 상태 - 배치 생성 건너뛰기");
             return;
         }
 
-        log.info("=== 정기 스토리 배치 생성 (12시간 주기) ===");
+        log.info("=== 일일 스토리 배치 생성 시작 (하루 1회 실행) ===");
         generateStoriesBatch();
     }
 
@@ -121,6 +123,8 @@ public class AIStoryScheduler {
 
         try {
             log.info("=== AI 스토리 배치 생성 시작 ===");
+            log.info("📊 현재 상태: 일일 생성 {}/{}, 배치 크기 {}개",
+                    dailyGeneratedCount.get(), dailyGenerationLimit, batchSize);
 
             if (!checkGenerationLimit()) {
                 return;
@@ -136,15 +140,16 @@ public class AIStoryScheduler {
             List<Station> targetStations = findStationsNeedingStories();
 
             if (targetStations.isEmpty()) {
-                log.info("모든 역에 충분한 스토리가 있습니다.");
+                log.info("✅ 모든 역에 충분한 스토리가 있습니다. (최소 {}개씩)", minStoriesPerStation);
                 return;
             }
 
-            // 3. 배치 크기만큼 생성
+            // 3. 배치 크기만큼 생성 (개발용으로 소량)
             int actualBatchSize = Math.min(batchSize, targetStations.size());
             actualBatchSize = Math.min(actualBatchSize, dailyGenerationLimit - dailyGeneratedCount.get());
 
-            log.info("배치 생성 대상: {}개 역, 생성 예정: {}개", targetStations.size(), actualBatchSize);
+            log.info("🎯 배치 생성 계획: 대상 {}개 역, 실제 생성 {}개 (제한된 배치 크기)",
+                    targetStations.size(), actualBatchSize);
 
             // 4. 랜덤하게 역 선택
             Collections.shuffle(targetStations);
@@ -170,13 +175,15 @@ public class AIStoryScheduler {
                                 i + 1, selectedStations.size(), station.getStaName());
                     }
 
-                    // 생성 간격 조절 (AI 서버 부하 방지)
+                    // 생성 간격 조절 (AI 서버 부하 방지 & OpenAI API 요청 간격)
                     if (i < selectedStations.size() - 1) {
-                        Thread.sleep(3000); // 3초 대기
+                        int delaySeconds = 10; // 10초 대기 (개발 단계에서 충분한 간격)
+                        log.info("⏳ 다음 스토리 생성까지 {}초 대기...", delaySeconds);
+                        Thread.sleep(delaySeconds * 1000);
                     }
 
                 } catch (Exception e) {
-                    log.error("{}역 스토리 생성 중 예외 발생: {}", station.getStaName(), e.getMessage(), e);
+                    log.error("💥 {}역 스토리 생성 중 예외 발생: {}", station.getStaName(), e.getMessage(), e);
                 }
             }
 
@@ -227,11 +234,12 @@ public class AIStoryScheduler {
             return false;
         }
     }
+
     /**
-     * AI 서버 호출 (10분 타임아웃, 다중 URL 시도) - 로그 개선판
+     * AI 서버 호출 (12분 타임아웃, 다중 URL 시도) - 로그 개선판
      */
     private AIStoryResponse callAIServerForCompleteStory(AIStoryRequest request) {
-        // Docker 네트워크 문제 해결을 위한 다중 URL 시도
+        // 🆘 Docker 네트워크 문제 해결을 위한 다중 URL 시도
         String[] urlsToTry = {
                 aiServerUrl + "/generate-complete-story",           // Docker 네트워크 (원래 방식)
                 "http://localhost:8000/generate-complete-story",    // localhost 직접 연결
@@ -243,11 +251,14 @@ public class AIStoryScheduler {
             boolean isDockerNetwork = i == 0;
 
             try {
+                log.info("================================================================================");
                 log.info("🚀 AI 서버 호출 시도 {} / {}", i + 1, urlsToTry.length);
                 log.info("🎯 URL: {}", url);
                 log.info("🔗 연결 방식: {}", isDockerNetwork ? "Docker 네트워크" : "직접 연결");
-                log.info("⏰ 설정된 타임아웃: {}초", isDockerNetwork ? "600 (10분)" : "600 (10분)");
+                log.info("⏰ 설정된 타임아웃: {}분", "12");
                 log.info("📋 요청 데이터: station={}, line={}", request.getStationName(), request.getLineNumber());
+                log.info("================================================================================");
+
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 headers.set("X-Internal-API-Key", internalApiKey);
@@ -268,7 +279,7 @@ public class AIStoryScheduler {
 
                 // RestTemplate 설정 정보 로깅 (SimpleClientHttpRequestFactory는 getter가 없음)
                 log.info("  📊 RestTemplate Factory: {}", templateToUse.getRequestFactory().getClass().getSimpleName());
-                log.info("  📊 설정된 타임아웃: Connect=30초, Read={}분", isDockerNetwork ? "10" : "10");
+                log.info("  📊 설정된 타임아웃: Connect=30초, Read={}분", "12");
 
                 ResponseEntity<AIStoryResponse> response;
                 try {
@@ -288,12 +299,12 @@ public class AIStoryScheduler {
 
                     // 타임아웃 에러인지 확인
                     if (e.getMessage().contains("timeout") || e.getMessage().contains("timed out")) {
-                        log.error("  ⏰ 타임아웃 에러로 판단됨");
+                        log.error("  ⏰ 타임아웃 에러로 판단됨 - AI 서버 응답이 12분을 초과했습니다");
                     }
 
                     // 연결 거부 에러인지 확인
                     if (e.getMessage().contains("Connection refused") || e.getMessage().contains("refused")) {
-                        log.error("  🚫 연결 거부 에러로 판단됨");
+                        log.error("  🚫 연결 거부 에러로 판단됨 - AI 서버가 실행되지 않거나 포트가 차단됨");
                     }
 
                     if (i == urlsToTry.length - 1) {
@@ -318,6 +329,7 @@ public class AIStoryScheduler {
                     log.info("  📋 페이지 수: {}", storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
                     log.info("  📋 테마: {}", storyResponse.getTheme());
                     log.info("  📋 연결 방식: {}", isDockerNetwork ? "Docker 네트워크" : "직접 연결");
+                    log.info("================================================================================");
                     return storyResponse;
                 } else {
                     log.warn("❌ AI 서버 응답 실패: status={}, body={}",
@@ -335,6 +347,7 @@ public class AIStoryScheduler {
         log.error("  2. Docker 네트워크 연결 상태 확인");
         log.error("  3. 방화벽 또는 포트 차단 확인");
         log.error("  4. AI 서버 응답 시간 (OpenAI API 호출 시간) 확인");
+        log.error("  5. RestTemplate 타임아웃 설정 확인 (현재: 12분)");
 
         return null;
     }
@@ -514,15 +527,15 @@ public class AIStoryScheduler {
      */
     private boolean checkAIServerHealth() {
         String[] urlsToTry = {
-            aiServerUrl + "/health",
-            "http://localhost:8000/health",
-            "http://127.0.0.1:8000/health"
+                aiServerUrl + "/health",
+                "http://localhost:8000/health",
+                "http://127.0.0.1:8000/health"
         };
 
         for (int i = 0; i < urlsToTry.length; i++) {
             String url = urlsToTry[i];
             boolean isDockerNetwork = i == 0;
-            
+
             try {
                 // 🎯 기본 타임아웃 RestTemplate 사용 (빠른 헬스체크)
                 RestTemplate templateToUse = isDockerNetwork ? defaultRestTemplate : localhostRestTemplate;
@@ -530,7 +543,7 @@ public class AIStoryScheduler {
 
                 boolean healthy = response.getStatusCode() == HttpStatus.OK;
                 if (healthy) {
-                    log.info("✅ AI 서버 헬스체크 성공 (방식: {})", 
+                    log.info("✅ AI 서버 헬스체크 성공 (방식: {})",
                             isDockerNetwork ? "Docker" : "직접연결");
                     return true;
                 }
@@ -560,8 +573,17 @@ public class AIStoryScheduler {
             }
         }
 
-        log.info("스토리가 부족한 역: {}개 / 전체 {}개 (기준: 역당 최소 {}개)",
+        log.info("📊 스토리 현황: 부족한 역 {}개 / 전체 {}개 (기준: 역당 최소 {}개)",
                 stationsNeedingStories.size(), allStations.size(), minStoriesPerStation);
+
+        if (stationsNeedingStories.size() > 0) {
+            log.info("🎯 스토리 부족 역 목록: {}",
+                    stationsNeedingStories.stream()
+                            .limit(10)
+                            .map(s -> s.getStaName() + "(" + s.getStaLine() + "호선)")
+                            .toList());
+        }
+
         return stationsNeedingStories;
     }
 
@@ -572,12 +594,12 @@ public class AIStoryScheduler {
         int currentCount = dailyGeneratedCount.get();
 
         if (currentCount >= dailyGenerationLimit) {
-            log.warn("일일 스토리 생성 한도 도달: {}/{}", currentCount, dailyGenerationLimit);
+            log.warn("⚠️ 일일 스토리 생성 한도 도달: {}/{}", currentCount, dailyGenerationLimit);
             return false;
         }
 
-        if (currentCount >= dailyGenerationLimit * 0.9) {
-            log.warn("일일 스토리 생성 한도 임박: {}/{}", currentCount, dailyGenerationLimit);
+        if (currentCount >= dailyGenerationLimit * 0.8) {
+            log.warn("⚠️ 일일 스토리 생성 한도 임박: {}/{}", currentCount, dailyGenerationLimit);
         }
 
         return true;
@@ -593,12 +615,13 @@ public class AIStoryScheduler {
         }
 
         log.info("=== 배치 생성 완료 ===");
-        log.info("성공: {}개 / 시도: {}개", successCount, totalAttempts);
-        log.info("일일 누적 생성: {}/{}", dailyGeneratedCount.get(), dailyGenerationLimit);
-        log.info("마지막 성공: {}", lastSuccessfulGeneration);
+        log.info("✅ 성공: {}개 / 시도: {}개", successCount, totalAttempts);
+        log.info("📊 일일 누적 생성: {}/{}", dailyGeneratedCount.get(), dailyGenerationLimit);
+        log.info("🕐 마지막 성공: {}", lastSuccessfulGeneration);
+        log.info("🔄 다음 실행: 24시간 후");
 
         if (successCount == 0) {
-            log.warn("모든 스토리 생성 실패");
+            log.warn("⚠️ 모든 스토리 생성 실패 - AI 서버 상태 및 OpenAI API 키 확인 필요");
         }
     }
 
@@ -609,10 +632,15 @@ public class AIStoryScheduler {
         consecutiveFailures++;
 
         log.error("=== 배치 생성 실패 ({}/{}) ===", consecutiveFailures, MAX_CONSECUTIVE_FAILURES);
-        log.error("오류: {}", error.getMessage(), error);
+        log.error("💥 오류: {}", error.getMessage(), error);
 
         if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-            log.error("연속 실패 한도 도달 - 스토리 생성 일시 중단");
+            log.error("🚨 연속 실패 한도 도달 - 스토리 생성 일시 중단");
+            log.error("🔍 점검이 필요한 사항:");
+            log.error("  1. OpenAI API 키 상태 및 크레딧 잔액");
+            log.error("  2. AI 서버(llmserver) 컨테이너 상태");
+            log.error("  3. Docker 네트워크 연결 상태");
+            log.error("  4. 데이터베이스 연결 상태");
         }
     }
 
@@ -625,8 +653,9 @@ public class AIStoryScheduler {
         consecutiveFailures = 0;
 
         log.info("=== 일일 스토리 생성 통계 초기화 ===");
-        log.info("어제 생성된 스토리: {}개", previousCount);
-        log.info("오늘 생성 한도: {}개", dailyGenerationLimit);
+        log.info("📊 어제 생성된 스토리: {}개", previousCount);
+        log.info("🎯 오늘 생성 한도: {}개 (개발용 제한)", dailyGenerationLimit);
+        log.info("📅 새로운 하루 시작 - 배치 크기: {}개", batchSize);
     }
 
     // ===== 관리자용 수동 실행 메서드들 =====
@@ -635,7 +664,8 @@ public class AIStoryScheduler {
      * 수동 배치 생성
      */
     public void manualBatchGeneration() {
-        log.info("=== 수동 스토리 배치 생성 요청 ===");
+        log.info("=== 관리자 수동 스토리 배치 생성 요청 ===");
+        log.info("🚀 즉시 실행 모드 (일일 한도 무시하지 않음)");
         generateStoriesBatch();
     }
 
@@ -646,18 +676,28 @@ public class AIStoryScheduler {
         Optional<Station> stationOpt = stationRepository.findByStaNameAndStaLine(stationName, lineNumber);
 
         if (stationOpt.isEmpty()) {
-            log.warn("역을 찾을 수 없음: {}-{}호선", stationName, lineNumber);
+            log.warn("🔍 역을 찾을 수 없음: {}-{}호선", stationName, lineNumber);
             return false;
         }
 
-        log.info("=== 수동 스토리 생성: {}-{}호선 ===", stationName, lineNumber);
-        return generateStoryForStation(stationOpt.get());
+        log.info("=== 관리자 수동 스토리 생성: {}-{}호선 ===", stationName, lineNumber);
+        boolean success = generateStoryForStation(stationOpt.get());
+
+        if (success) {
+            dailyGeneratedCount.incrementAndGet();
+            log.info("✅ 수동 생성 완료 - 일일 카운트: {}/{}",
+                    dailyGeneratedCount.get(), dailyGenerationLimit);
+        }
+
+        return success;
     }
 
     /**
      * 시스템 상태 조회
      */
     public AIStorySystemStatus getSystemStatus() {
+        List<Station> stationsNeedingStories = findStationsNeedingStories();
+
         return AIStorySystemStatus.builder()
                 .isGenerationEnabled(storyGenerationEnabled)
                 .isAIServerEnabled(aiServerEnabled)
@@ -667,8 +707,33 @@ public class AIStoryScheduler {
                 .lastSuccessfulGeneration(lastSuccessfulGeneration)
                 .consecutiveFailures(consecutiveFailures)
                 .batchSize(batchSize)
-                .stationsNeedingStories(findStationsNeedingStories().size())
+                .stationsNeedingStories(stationsNeedingStories.size())
                 .build();
+    }
+
+    /**
+     * 개발자용 통계 조회
+     */
+    public Map<String, Object> getDevelopmentStats() {
+        List<Station> allStations = stationRepository.findAll();
+        List<Station> stationsNeedingStories = findStationsNeedingStories();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalStations", allStations.size());
+        stats.put("stationsNeedingStories", stationsNeedingStories.size());
+        stats.put("stationsSufficient", allStations.size() - stationsNeedingStories.size());
+        stats.put("dailyGenerated", dailyGeneratedCount.get());
+        stats.put("dailyLimit", dailyGenerationLimit);
+        stats.put("batchSize", batchSize);
+        stats.put("minStoriesPerStation", minStoriesPerStation);
+        stats.put("isGenerating", isGenerating.get());
+        stats.put("consecutiveFailures", consecutiveFailures);
+        stats.put("lastSuccessfulGeneration", lastSuccessfulGeneration);
+        stats.put("aiServerEnabled", aiServerEnabled);
+        stats.put("generationEnabled", storyGenerationEnabled);
+        stats.put("scheduleInterval", "24시간 (하루 1회)");
+
+        return stats;
     }
 
     // ===== DTO 클래스들 =====

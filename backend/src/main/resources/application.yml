@@ -81,21 +81,22 @@ seoul:
 ai:
   server:
     url: ${AI_SERVER_URL:http://llmserver:8000}
-    enabled: ${AI_SERVER_ENABLED:true}
-    timeout: ${AI_SERVER_TIMEOUT:720000}  # 🔥 12분으로 증가 (720초)
-  # AI 스토리 배치 생성 설정
+    daily-limit: ${AI_STORY_DAILY_LIMIT:5}  # 하루 최대 5개로 줄임
+    batch-size: ${AI_STORY_BATCH_SIZE:1}    # 한 번에 1개씩만
+
   story:
     generation:
+      cron: ${AI_STORY_CRON:0 0 3 * * *}  # 매일 새벽 3시
+
+      test-interval: ${AI_STORY_TEST_INTERVAL:86400000}
+      min-stories-per-station: ${AI_STORY_MIN_PER_STATION:2}
+      retry-count: ${AI_STORY_RETRY_COUNT:3}
+      generation-delay: ${AI_STORY_GENERATION_DELAY:5000}
       enabled: ${AI_STORY_GENERATION_ENABLED:true}
       daily-limit: ${AI_STORY_DAILY_LIMIT:50}
       batch-size: ${AI_STORY_BATCH_SIZE:5}
-      test-interval: ${AI_STORY_TEST_INTERVAL:43200000} # 12시간
-      min-stories-per-station: ${AI_STORY_MIN_PER_STATION:2}
-      retry-count: ${AI_STORY_RETRY_COUNT:3}
-      generation-delay: ${AI_STORY_GENERATION_DELAY:2000}
-      # 🔥 AI 서버 응답 타임아웃 설정 (매우 길게)
-      ai-timeout: ${AI_STORY_AI_TIMEOUT:720000} # 12분
-      health-check-timeout: ${AI_STORY_HEALTH_TIMEOUT:10000} # 헬스체크는 10초
+      ai-timeout: ${AI_STORY_AI_TIMEOUT:720000}
+      health-check-timeout: ${AI_STORY_HEALTH_TIMEOUT:10000}
 
 # 로깅 설정
 logging:
