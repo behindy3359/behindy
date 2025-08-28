@@ -73,19 +73,22 @@ seoul:
 # AI 서버 설정
 ai:
   server:
-    url: ${AI_SERVER_URL:http://localhost:8000}
+    url: ${AI_SERVER_URL:http://llmserver:8000}
     enabled: ${AI_SERVER_ENABLED:true}
-    timeout: ${AI_SERVER_TIMEOUT:10000}
-  # 🆕 AI 스토리 배치 생성 설정
+    timeout: ${AI_SERVER_TIMEOUT:600000}
+
   story:
     generation:
       enabled: ${AI_STORY_GENERATION_ENABLED:true}
       daily-limit: ${AI_STORY_DAILY_LIMIT:50}
       batch-size: ${AI_STORY_BATCH_SIZE:5}
-      test-interval: ${AI_STORY_TEST_INTERVAL:43200000} # 30분 (개발용)
+      test-interval: ${AI_STORY_TEST_INTERVAL:43200000} # 12시간 (운영용)
       min-stories-per-station: ${AI_STORY_MIN_PER_STATION:2}
       retry-count: ${AI_STORY_RETRY_COUNT:3}
       generation-delay: ${AI_STORY_GENERATION_DELAY:2000} # 생성 간격 (ms)
+
+      ai-timeout: ${AI_STORY_AI_TIMEOUT:600000} # 10분 (600초)
+      health-check-timeout: ${AI_STORY_HEALTH_TIMEOUT:10000} # 헬스체크는 10초
 
 # 로깅 설정
 logging:

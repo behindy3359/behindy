@@ -16,6 +16,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -226,34 +227,34 @@ public class AIStoryScheduler {
             return false;
         }
     }
-
     /**
-     * AI 서버 호출 (5분 타임아웃, 다중 URL 시도)
+     * AI 서버 호출 (10분 타임아웃, 다중 URL 시도) - 로그 개선판
      */
     private AIStoryResponse callAIServerForCompleteStory(AIStoryRequest request) {
-        // 🆘 Docker 네트워크 문제 해결을 위한 다중 URL 시도
+        // Docker 네트워크 문제 해결을 위한 다중 URL 시도
         String[] urlsToTry = {
-            aiServerUrl + "/generate-complete-story",           // Docker 네트워크 (원래 방식)
-            "http://localhost:8000/generate-complete-story",    // localhost 직접 연결
-            "http://127.0.0.1:8000/generate-complete-story"     // IP 직접 연결
+                aiServerUrl + "/generate-complete-story",           // Docker 네트워크 (원래 방식)
+                "http://localhost:8000/generate-complete-story",    // localhost 직접 연결
+                "http://127.0.0.1:8000/generate-complete-story"     // IP 직접 연결
         };
 
         for (int i = 0; i < urlsToTry.length; i++) {
             String url = urlsToTry[i];
             boolean isDockerNetwork = i == 0;
-            
+
             try {
-                log.info("=== AI 서버 호출 시도 {} ===", i + 1);
+                log.info("🚀 AI 서버 호출 시도 {} / {}", i + 1, urlsToTry.length);
                 log.info("🎯 URL: {}", url);
                 log.info("🔗 연결 방식: {}", isDockerNetwork ? "Docker 네트워크" : "직접 연결");
-                
+                log.info("⏰ 설정된 타임아웃: {}초", isDockerNetwork ? "600 (10분)" : "600 (10분)");
+                log.info("📋 요청 데이터: station={}, line={}", request.getStationName(), request.getLineNumber());
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 headers.set("X-Internal-API-Key", internalApiKey);
 
                 HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
 
-                log.info("🚀 RestTemplate 호출 시작...");
+                log.info("📡 RestTemplate 호출 시작 ({})", LocalDateTime.now());
                 long startTime = System.currentTimeMillis();
 
                 ParameterizedTypeReference<AIStoryResponse> responseType =
@@ -261,34 +262,80 @@ public class AIStoryScheduler {
 
                 // 🎯 Docker 네트워크면 aiServerRestTemplate, 직접 연결이면 localhostRestTemplate 사용
                 RestTemplate templateToUse = isDockerNetwork ? aiServerRestTemplate : localhostRestTemplate;
-                
-                ResponseEntity<AIStoryResponse> response = templateToUse.exchange(
-                        url, HttpMethod.POST, entity, responseType
-                );
 
-                long duration = System.currentTimeMillis() - startTime;
-                log.info("✅ 연결 성공! ({}ms, 방식: {})", duration, 
-                        isDockerNetwork ? "Docker" : "직접연결");
-                
+                log.info("🔧 사용할 RestTemplate: {}", isDockerNetwork ? "aiServerRestTemplate" : "localhostRestTemplate");
+                log.info("🔧 RestTemplate 설정 확인중...");
+
+                // RestTemplate 설정 정보 로깅 (SimpleClientHttpRequestFactory는 getter가 없음)
+                log.info("  📊 RestTemplate Factory: {}", templateToUse.getRequestFactory().getClass().getSimpleName());
+                log.info("  📊 설정된 타임아웃: Connect=30초, Read={}분", isDockerNetwork ? "10" : "10");
+
+                ResponseEntity<AIStoryResponse> response;
+                try {
+                    log.info("🚀 실제 HTTP 요청 시작...");
+                    response = templateToUse.exchange(url, HttpMethod.POST, entity, responseType);
+
+                    long duration = System.currentTimeMillis() - startTime;
+                    log.info("✅ HTTP 요청 완료! (소요시간: {}ms = {:.2f}초)", duration, duration / 1000.0);
+                    log.info("📥 응답 상태: {}", response.getStatusCode());
+
+                } catch (org.springframework.web.client.ResourceAccessException e) {
+                    long duration = System.currentTimeMillis() - startTime;
+                    log.error("🔌 연결 실패 (시도 {}, 소요시간: {}ms)", i + 1, duration);
+                    log.error("  📋 에러 타입: {}", e.getClass().getSimpleName());
+                    log.error("  📋 에러 메시지: {}", e.getMessage());
+                    log.error("  📋 근본 원인: {}", e.getCause() != null ? e.getCause().getMessage() : "없음");
+
+                    // 타임아웃 에러인지 확인
+                    if (e.getMessage().contains("timeout") || e.getMessage().contains("timed out")) {
+                        log.error("  ⏰ 타임아웃 에러로 판단됨");
+                    }
+
+                    // 연결 거부 에러인지 확인
+                    if (e.getMessage().contains("Connection refused") || e.getMessage().contains("refused")) {
+                        log.error("  🚫 연결 거부 에러로 판단됨");
+                    }
+
+                    if (i == urlsToTry.length - 1) {
+                        log.error("❌ 모든 연결 방식 실패");
+                    }
+                    continue;
+
+                } catch (Exception e) {
+                    long duration = System.currentTimeMillis() - startTime;
+                    log.error("💥 예상치 못한 HTTP 오류 (시도 {}, 소요시간: {}ms)", i + 1, duration);
+                    log.error("  📋 에러 타입: {}", e.getClass().getSimpleName());
+                    log.error("  📋 에러 메시지: {}", e.getMessage());
+                    log.error("  📋 스택 트레이스: ", e);
+                    continue;
+                }
+
+                // 응답 처리
                 if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                     AIStoryResponse storyResponse = response.getBody();
-                    log.info("🎉 AI 스토리 응답 성공: {}", storyResponse.getStoryTitle());
+                    log.info("🎉 AI 스토리 응답 성공!");
+                    log.info("  📋 스토리 제목: {}", storyResponse.getStoryTitle());
+                    log.info("  📋 페이지 수: {}", storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
+                    log.info("  📋 테마: {}", storyResponse.getTheme());
+                    log.info("  📋 연결 방식: {}", isDockerNetwork ? "Docker 네트워크" : "직접 연결");
                     return storyResponse;
                 } else {
-                    log.warn("❌ AI 서버 응답 실패: status={}", response.getStatusCode());
+                    log.warn("❌ AI 서버 응답 실패: status={}, body={}",
+                            response.getStatusCode(), response.getBody() != null ? "있음" : "없음");
                 }
 
-            } catch (org.springframework.web.client.ResourceAccessException e) {
-                log.warn("🔌 연결 실패 (시도 {}): {}", i + 1, e.getMessage());
-                if (i == urlsToTry.length - 1) {
-                    log.error("❌ 모든 연결 방식 실패");
-                }
             } catch (Exception e) {
-                log.error("💥 예상치 못한 오류 (시도 {}): {}", i + 1, e.getMessage(), e);
+                log.error("💥 전체 처리 오류 (시도 {}): {}", i + 1, e.getMessage(), e);
             }
         }
-        
+
         log.error("❌ 모든 AI 서버 연결 시도 실패");
+        log.error("🔍 점검 사항:");
+        log.error("  1. AI 서버(llmserver) 컨테이너 상태 확인");
+        log.error("  2. Docker 네트워크 연결 상태 확인");
+        log.error("  3. 방화벽 또는 포트 차단 확인");
+        log.error("  4. AI 서버 응답 시간 (OpenAI API 호출 시간) 확인");
+
         return null;
     }
 
