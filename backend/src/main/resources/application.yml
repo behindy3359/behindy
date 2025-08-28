@@ -2,9 +2,16 @@
 spring:
   application:
     name: behindy-backend
-
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:development}
+  mvc:
+    async:
+      request-timeout: 720000  # 12분
+  http:
+    client:
+      timeout:
+        connect: 30000  # 연결 타임아웃 30초
+        read: 720000    # 읽기 타임아웃 12분
 
   # 데이터베이스 설정
   datasource:
@@ -75,26 +82,29 @@ ai:
   server:
     url: ${AI_SERVER_URL:http://llmserver:8000}
     enabled: ${AI_SERVER_ENABLED:true}
-    timeout: ${AI_SERVER_TIMEOUT:600000}
-
+    timeout: ${AI_SERVER_TIMEOUT:720000}  # 🔥 12분으로 증가 (720초)
+  # AI 스토리 배치 생성 설정
   story:
     generation:
       enabled: ${AI_STORY_GENERATION_ENABLED:true}
       daily-limit: ${AI_STORY_DAILY_LIMIT:50}
       batch-size: ${AI_STORY_BATCH_SIZE:5}
-      test-interval: ${AI_STORY_TEST_INTERVAL:43200000} # 12시간 (운영용)
+      test-interval: ${AI_STORY_TEST_INTERVAL:43200000} # 12시간
       min-stories-per-station: ${AI_STORY_MIN_PER_STATION:2}
       retry-count: ${AI_STORY_RETRY_COUNT:3}
-      generation-delay: ${AI_STORY_GENERATION_DELAY:2000} # 생성 간격 (ms)
-
-      ai-timeout: ${AI_STORY_AI_TIMEOUT:600000} # 10분 (600초)
+      generation-delay: ${AI_STORY_GENERATION_DELAY:2000}
+      # 🔥 AI 서버 응답 타임아웃 설정 (매우 길게)
+      ai-timeout: ${AI_STORY_AI_TIMEOUT:720000} # 12분
       health-check-timeout: ${AI_STORY_HEALTH_TIMEOUT:10000} # 헬스체크는 10초
 
 # 로깅 설정
 logging:
   level:
     com.example.backend: INFO
-    com.example.backend.service.AIStoryScheduler: INFO # AI 스토리 스케줄러 로그
+    com.example.backend.service.AIStoryScheduler: INFO
+    com.example.backend.service.AIStoryService: INFO
+    org.springframework.web.client.RestTemplate: DEBUG # HTTP 요청 상세 로그
+    org.apache.http: DEBUG  # HTTP 클라이언트 디버그
     org.springframework.security: WARN
     org.hibernate.SQL: ERROR
     org.hibernate.type.descriptor.sql.BasicBinder: ERROR

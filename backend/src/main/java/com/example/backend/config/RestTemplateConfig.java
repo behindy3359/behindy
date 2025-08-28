@@ -38,9 +38,9 @@ public class RestTemplateConfig {
     public RestTemplate aiServerRestTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 
-        // 10분 타임아웃으로 증가
+        // 🔥 12분 타임아웃으로 증가 (Docker 헬스체크와 맞춤)
         int connectTimeoutMs = 30000;  // 연결 타임아웃 30초
-        int readTimeoutMs = 10 * 60 * 1000; // 읽기 타임아웃 10분
+        int readTimeoutMs = 12 * 60 * 1000; // 읽기 타임아웃 12분 (720초)
 
         factory.setConnectTimeout(connectTimeoutMs);
         factory.setReadTimeout(readTimeoutMs);
@@ -60,7 +60,7 @@ public class RestTemplateConfig {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 
         int connectTimeoutMs = 30000;  // 연결 타임아웃 30초
-        int readTimeoutMs = 10 * 60 * 1000; // 읽기 타임아웃 10분
+        int readTimeoutMs = 12 * 60 * 1000; // 읽기 타임아웃 12분
 
         factory.setConnectTimeout(connectTimeoutMs);
         factory.setReadTimeout(readTimeoutMs);
