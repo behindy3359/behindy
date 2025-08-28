@@ -377,40 +377,4 @@ public class AIStoryController {
                     .build());
         }
     }
-
-    /**
-     * 개발용: 스케줄러 강제 실행 (테스트용)
-     */
-    @PostMapping("/dev/force-schedule")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> forceScheduleExecution() {
-        try {
-            log.info("=== 개발용: 스케줄러 강제 실행 ===");
-
-            // 별도 스레드에서 실행
-            new Thread(() -> {
-                try {
-                    aiStoryScheduler.testStoryGeneration();
-                } catch (Exception e) {
-                    log.error("강제 스케줄 실행 오류: {}", e.getMessage(), e);
-                }
-            }).start();
-
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("스케줄러가 강제 실행되었습니다.")
-                    .data(Map.of(
-                            "execution", "FORCED",
-                            "mode", "DEVELOPMENT"
-                    ))
-                    .build());
-
-        } catch (Exception e) {
-            log.error("스케줄러 강제 실행 실패: {}", e.getMessage(), e);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(false)
-                    .message("스케줄러 실행 실패: " + e.getMessage())
-                    .build());
-        }
-    }
 }
