@@ -43,6 +43,10 @@ public class AIStoryScheduler {
     @Qualifier("defaultRestTemplate")
     private final RestTemplate defaultRestTemplate;
 
+    // 🆘 디버깅용 localhost 직접 연결 RestTemplate
+    @Qualifier("localhostRestTemplate")
+    private final RestTemplate localhostRestTemplate;
+
     private final StationRepository stationRepository;
     private final StoryRepository storyRepository;
     private final PageRepository pageRepository;
@@ -224,78 +228,68 @@ public class AIStoryScheduler {
     }
 
     /**
-     * AI 서버 호출 (5분 타임아웃)
+     * AI 서버 호출 (5분 타임아웃, 다중 URL 시도)
      */
     private AIStoryResponse callAIServerForCompleteStory(AIStoryRequest request) {
-        try {
-            String url = aiServerUrl + "/generate-complete-story";
+        // 🆘 Docker 네트워크 문제 해결을 위한 다중 URL 시도
+        String[] urlsToTry = {
+            aiServerUrl + "/generate-complete-story",           // Docker 네트워크 (원래 방식)
+            "http://localhost:8000/generate-complete-story",    // localhost 직접 연결
+            "http://127.0.0.1:8000/generate-complete-story"     // IP 직접 연결
+        };
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-Internal-API-Key", internalApiKey);
+        for (int i = 0; i < urlsToTry.length; i++) {
+            String url = urlsToTry[i];
+            boolean isDockerNetwork = i == 0;
+            
+            try {
+                log.info("=== AI 서버 호출 시도 {} ===", i + 1);
+                log.info("🎯 URL: {}", url);
+                log.info("🔗 연결 방식: {}", isDockerNetwork ? "Docker 네트워크" : "직접 연결");
+                
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("X-Internal-API-Key", internalApiKey);
 
-            HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
+                HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
 
-            // 🔍 요청 전송 전 상세 로그
-            log.info("=== AI 서버 호출 준비 ===");
-            log.info("🎯 URL: {}", url);
-            log.info("🔑 Headers: {}", headers);
-            log.info("📦 Request Body: {}", request);
-            log.info("⏰ 타임아웃: 5분 (300초)");
+                log.info("🚀 RestTemplate 호출 시작...");
+                long startTime = System.currentTimeMillis();
 
-            // 🚀 실제 요청 전송 시점 로그
-            log.info("🚀 RestTemplate.exchange 호출 시작...");
-            long startTime = System.currentTimeMillis();
+                ParameterizedTypeReference<AIStoryResponse> responseType =
+                        new ParameterizedTypeReference<AIStoryResponse>() {};
 
-            ParameterizedTypeReference<AIStoryResponse> responseType =
-                    new ParameterizedTypeReference<AIStoryResponse>() {};
+                // 🎯 Docker 네트워크면 aiServerRestTemplate, 직접 연결이면 localhostRestTemplate 사용
+                RestTemplate templateToUse = isDockerNetwork ? aiServerRestTemplate : localhostRestTemplate;
+                
+                ResponseEntity<AIStoryResponse> response = templateToUse.exchange(
+                        url, HttpMethod.POST, entity, responseType
+                );
 
-            // 실제 HTTP 요청
-            ResponseEntity<AIStoryResponse> response = aiServerRestTemplate.exchange(
-                    url, HttpMethod.POST, entity, responseType
-            );
+                long duration = System.currentTimeMillis() - startTime;
+                log.info("✅ 연결 성공! ({}ms, 방식: {})", duration, 
+                        isDockerNetwork ? "Docker" : "직접연결");
+                
+                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                    AIStoryResponse storyResponse = response.getBody();
+                    log.info("🎉 AI 스토리 응답 성공: {}", storyResponse.getStoryTitle());
+                    return storyResponse;
+                } else {
+                    log.warn("❌ AI 서버 응답 실패: status={}", response.getStatusCode());
+                }
 
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("📥 응답 수신 완료 ({}ms)", duration);
-            log.info("📊 HTTP Status: {}", response.getStatusCode());
-            log.info("📋 Response Headers: {}", response.getHeaders());
-
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                AIStoryResponse storyResponse = response.getBody();
-                log.info("✅ AI 스토리 응답 성공: {}", storyResponse.getStoryTitle());
-                return storyResponse;
-            } else {
-                log.warn("❌ AI 서버 응답 실패: status={}", response.getStatusCode());
-                return null;
+            } catch (org.springframework.web.client.ResourceAccessException e) {
+                log.warn("🔌 연결 실패 (시도 {}): {}", i + 1, e.getMessage());
+                if (i == urlsToTry.length - 1) {
+                    log.error("❌ 모든 연결 방식 실패");
+                }
+            } catch (Exception e) {
+                log.error("💥 예상치 못한 오류 (시도 {}): {}", i + 1, e.getMessage(), e);
             }
-
-        } catch (org.springframework.web.client.ResourceAccessException e) {
-            // 네트워크/연결 관련 오류
-            log.error("🔌 연결 오류 (ResourceAccessException): {}", e.getMessage());
-            log.error("🔍 연결 오류 상세: {}", e.getCause() != null ? e.getCause().getMessage() : "원인 불명");
-            return null;
-
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            // 4xx HTTP 오류
-            log.error("📛 클라이언트 오류 ({}): {}", e.getStatusCode(), e.getMessage());
-            log.error("📄 응답 본문: {}", e.getResponseBodyAsString());
-            return null;
-
-        } catch (org.springframework.web.client.HttpServerErrorException e) {
-            // 5xx HTTP 오류
-            log.error("🔥 서버 오류 ({}): {}", e.getStatusCode(), e.getMessage());
-            log.error("📄 응답 본문: {}", e.getResponseBodyAsString());
-            return null;
-
-        } catch (Exception e) {
-            log.error("💥 예상치 못한 오류: {}", e.getClass().getSimpleName());
-            log.error("💬 오류 메시지: {}", e.getMessage());
-            if (e.getCause() != null) {
-                log.error("🔍 근본 원인: {}", e.getCause().getMessage());
-            }
-            log.error("📚 스택 트레이스:", e);
-            return null;
         }
+        
+        log.error("❌ 모든 AI 서버 연결 시도 실패");
+        return null;
     }
 
     /**
@@ -469,27 +463,38 @@ public class AIStoryScheduler {
     }
 
     /**
-     * AI 서버 상태 확인 (기본 10초 타임아웃)
+     * AI 서버 상태 확인 (다중 URL 시도)
      */
     private boolean checkAIServerHealth() {
-        try {
-            String url = aiServerUrl + "/health";
+        String[] urlsToTry = {
+            aiServerUrl + "/health",
+            "http://localhost:8000/health",
+            "http://127.0.0.1:8000/health"
+        };
 
-            // 🎯 기본 타임아웃 RestTemplate 사용 (빠른 헬스체크)
-            ResponseEntity<Map> response = defaultRestTemplate.getForEntity(url, Map.class);
+        for (int i = 0; i < urlsToTry.length; i++) {
+            String url = urlsToTry[i];
+            boolean isDockerNetwork = i == 0;
+            
+            try {
+                // 🎯 기본 타임아웃 RestTemplate 사용 (빠른 헬스체크)
+                RestTemplate templateToUse = isDockerNetwork ? defaultRestTemplate : localhostRestTemplate;
+                ResponseEntity<Map> response = templateToUse.getForEntity(url, Map.class);
 
-            boolean healthy = response.getStatusCode() == HttpStatus.OK;
+                boolean healthy = response.getStatusCode() == HttpStatus.OK;
+                if (healthy) {
+                    log.info("✅ AI 서버 헬스체크 성공 (방식: {})", 
+                            isDockerNetwork ? "Docker" : "직접연결");
+                    return true;
+                }
 
-            if (!healthy) {
-                log.warn("AI 서버 상태 불량: {}", response.getStatusCode());
+            } catch (Exception e) {
+                log.debug("AI 서버 헬스체크 실패 (시도 {}): {}", i + 1, e.getMessage());
             }
-
-            return healthy;
-
-        } catch (Exception e) {
-            log.error("AI 서버 헬스체크 실패: {}", e.getMessage());
-            return false;
         }
+
+        log.error("❌ 모든 AI 서버 헬스체크 실패");
+        return false;
     }
 
     /**

@@ -27,6 +27,10 @@ public class AIStoryService {
     @Qualifier("defaultRestTemplate")
     private final RestTemplate defaultRestTemplate;
 
+    // 🆘 디버깅용 localhost 직접 연결 RestTemplate
+    @Qualifier("localhostRestTemplate")
+    private final RestTemplate localhostRestTemplate;
+
     @Value("${ai.server.url:http://llmserver:8000}")
     private String aiServerUrl;
 
@@ -73,115 +77,126 @@ public class AIStoryService {
     }
 
     /**
-     * 🚀 배치 방식 AI 서버 호출 (5분 타임아웃)
+     * 🚀 배치 방식 AI 서버 호출 (5분 타임아웃, 다중 URL 시도)
      */
     private AIStoryResponse callBatchStoryGeneration(
             String stationName, Integer lineNumber,
             Integer characterHealth, Integer characterSanity) {
 
-        try {
-            log.info("🚀 AI 서버 호출 시작 (5분 타임아웃)");
+        AIStoryRequest request = AIStoryRequest.builder()
+                .stationName(stationName)
+                .lineNumber(lineNumber)
+                .characterHealth(characterHealth)
+                .characterSanity(characterSanity)
+                .storyType("BATCH_GENERATION")
+                .build();
 
-            AIStoryRequest request = AIStoryRequest.builder()
-                    .stationName(stationName)
-                    .lineNumber(lineNumber)
-                    .characterHealth(characterHealth)
-                    .characterSanity(characterSanity)
-                    .storyType("BATCH_GENERATION")
-                    .build();
+        // 🆘 Docker 네트워크 문제 해결을 위한 다중 URL 시도
+        String[] urlsToTry = {
+                aiServerUrl + "/generate-complete-story",           // Docker 네트워크 (원래 방식)
+                "http://localhost:8000/generate-complete-story",    // localhost 직접 연결
+                "http://127.0.0.1:8000/generate-complete-story"     // IP 직접 연결
+        };
 
-            String url = aiServerUrl + "/generate-complete-story";
+        for (int i = 0; i < urlsToTry.length; i++) {
+            String url = urlsToTry[i];
+            boolean isDockerNetwork = i == 0;
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-Internal-API-Key", internalApiKey);
+            try {
+                log.info("=== AI 서버 호출 시도 {} ===", i + 1);
+                log.info("🎯 URL: {}", url);
+                log.info("🔗 연결 방식: {}", isDockerNetwork ? "Docker 네트워크" : "직접 연결");
 
-            HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("X-Internal-API-Key", internalApiKey);
 
-            log.info("📤 AI 서버 호출: {}", url);
-            log.info("  Station: {} ({}호선)", stationName, lineNumber);
-            log.info("  Request Type: BATCH_GENERATION");
+                HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
 
-            // 🎯 5분 타임아웃으로 RestTemplate 호출
-            ParameterizedTypeReference<AIStoryResponse> responseType =
-                    new ParameterizedTypeReference<AIStoryResponse>() {};
+                log.info("🚀 RestTemplate 호출 시작...");
+                long startTime = System.currentTimeMillis();
 
-            // 🎯 5분 타임아웃 RestTemplate 사용
-            ResponseEntity<AIStoryResponse> response = aiServerRestTemplate
-                    .exchange(url, HttpMethod.POST, entity, responseType);
+                ParameterizedTypeReference<AIStoryResponse> responseType =
+                        new ParameterizedTypeReference<AIStoryResponse>() {};
 
-            log.info("📥 AI 서버 응답 수신: HTTP {}", response.getStatusCode());
+                // 🎯 Docker 네트워크면 aiServerRestTemplate, 직접 연결이면 localhostRestTemplate 사용
+                RestTemplate templateToUse = isDockerNetwork ? aiServerRestTemplate : localhostRestTemplate;
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                AIStoryResponse storyResponse = response.getBody();
+                ResponseEntity<AIStoryResponse> response = templateToUse.exchange(
+                        url, HttpMethod.POST, entity, responseType
+                );
 
-                log.info("✅ AI 응답 성공:");
-                log.info("  제목: {}", storyResponse.getStoryTitle());
-                log.info("  페이지 수: {}", storyResponse.getPages() != null ?
-                        storyResponse.getPages().size() : 0);
+                long duration = System.currentTimeMillis() - startTime;
+                log.info("✅ 연결 성공! ({}ms, 방식: {})", duration,
+                        isDockerNetwork ? "Docker" : "직접연결");
 
-                return storyResponse;
-            } else {
-                log.warn("❌ AI 응답 실패: Status={}, Body={}", 
-                        response.getStatusCode(), response.getBody());
-                return null;
+                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                    AIStoryResponse storyResponse = response.getBody();
+                    log.info("🎉 AI 스토리 응답 성공: {}", storyResponse.getStoryTitle());
+                    return storyResponse;
+                } else {
+                    log.warn("❌ AI 서버 응답 실패: status={}", response.getStatusCode());
+                }
+
+            } catch (org.springframework.web.client.ResourceAccessException e) {
+                log.warn("🔌 연결 실패 (시도 {}): {}", i + 1, e.getMessage());
+                if (i == urlsToTry.length - 1) {
+                    log.error("❌ 모든 연결 방식 실패");
+                }
+            } catch (Exception e) {
+                log.error("💥 예상치 못한 오류 (시도 {}): {}", i + 1, e.getMessage(), e);
             }
-
-        } catch (RestClientException e) {
-            log.error("❌ RestClient 오류: {}", e.getMessage(), e);
-            return null;
-        } catch (Exception e) {
-            log.error("❌ AI 호출 실패:", e);
-            return null;
         }
+
+        log.error("❌ 모든 AI 서버 연결 시도 실패");
+        return null;
     }
 
     /**
-     * 🕒 5분 타임아웃 RestTemplate 생성
-     */
-    private RestTemplate createExtendedTimeoutRestTemplate() {
-        org.springframework.http.client.SimpleClientHttpRequestFactory factory = 
-                new org.springframework.http.client.SimpleClientHttpRequestFactory();
-        
-        // 5분 타임아웃 설정
-        int fiveMinutesInMs = 5 * 60 * 1000; // 300,000ms
-        factory.setConnectTimeout(fiveMinutesInMs);
-        factory.setReadTimeout(fiveMinutesInMs);
-
-        log.info("🕒 5분 타임아웃 RestTemplate 생성: {}ms", fiveMinutesInMs);
-        
-        return new RestTemplate(factory);
-    }
-
-    /**
-     * AI 서버 상태 확인
+     * AI 서버 상태 확인 (다중 URL 시도)
      */
     public boolean isAIServerHealthy() {
         if (!aiServerEnabled) {
             return false;
         }
 
-        try {
-            String url = aiServerUrl + "/health";
-            log.debug("AI 서버 헬스체크: {}", url);
+        String[] urlsToTry = {
+                aiServerUrl + "/health",
+                "http://localhost:8000/health",
+                "http://127.0.0.1:8000/health"
+        };
 
-            // 🎯 기본 타임아웃 RestTemplate 사용 (빠른 헬스체크)
-            ParameterizedTypeReference<Map<String, Object>> responseType =
-                    new ParameterizedTypeReference<Map<String, Object>>() {};
+        for (int i = 0; i < urlsToTry.length; i++) {
+            String url = urlsToTry[i];
+            boolean isDockerNetwork = i == 0;
 
-            ResponseEntity<Map<String, Object>> response = defaultRestTemplate.exchange(
-                    url, HttpMethod.GET, null, responseType
-            );
+            try {
+                log.debug("헬스체크 시도 {}: {}", i + 1, url);
 
-            boolean healthy = response.getStatusCode() == HttpStatus.OK;
-            log.debug("AI 서버 헬스체크 결과: {}", healthy);
+                // 🎯 기본 타임아웃 RestTemplate 사용 (빠른 헬스체크)
+                RestTemplate templateToUse = isDockerNetwork ? defaultRestTemplate : localhostRestTemplate;
 
-            return healthy;
+                ParameterizedTypeReference<Map<String, Object>> responseType =
+                        new ParameterizedTypeReference<Map<String, Object>>() {};
 
-        } catch (Exception e) {
-            log.warn("AI 서버 헬스체크 실패: {}", e.getMessage());
-            return false;
+                ResponseEntity<Map<String, Object>> response = templateToUse.exchange(
+                        url, HttpMethod.GET, null, responseType
+                );
+
+                boolean healthy = response.getStatusCode() == HttpStatus.OK;
+                if (healthy) {
+                    log.info("✅ AI 서버 헬스체크 성공 (방식: {})",
+                            isDockerNetwork ? "Docker" : "직접연결");
+                    return true;
+                }
+
+            } catch (Exception e) {
+                log.debug("헬스체크 실패 (시도 {}): {}", i + 1, e.getMessage());
+            }
         }
+
+        log.warn("❌ 모든 AI 서버 헬스체크 실패");
+        return false;
     }
 
     // ===== 응답 검증 및 변환 메서드들 =====
