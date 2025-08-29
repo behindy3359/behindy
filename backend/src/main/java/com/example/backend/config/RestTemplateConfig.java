@@ -12,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class RestTemplateConfig {
 
-    @Value("${ai.server.timeout:10000}")
+    @Value("${ai.server.timeout:30000}")
     private Integer defaultTimeout;
 
     /**
@@ -36,14 +36,14 @@ public class RestTemplateConfig {
     public RestTemplate aiServerRestTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 
-        int connectTimeoutMs = 60000;        // 1분
-        int readTimeoutMs = 5 * 60 * 1000;   // 5분
+        int connectTimeoutMs = 120000;
+        int readTimeoutMs = 15 * 60 * 1000;
 
         factory.setConnectTimeout(connectTimeoutMs);
         factory.setReadTimeout(readTimeoutMs);
 
-        log.info("✅ AI 서버 RestTemplate 생성:");
-        log.info("   연결 타임아웃: {}ms ({}초)", connectTimeoutMs, connectTimeoutMs / 1000);
+        log.info("✅ AI 서버 RestTemplate 생성 :");
+        log.info("   연결 타임아웃: {}ms ({}분)", connectTimeoutMs, connectTimeoutMs / 60000);
         log.info("   읽기 타임아웃: {}ms ({}분)", readTimeoutMs, readTimeoutMs / 60000);
 
         return new RestTemplate(factory);

@@ -6,12 +6,12 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:development}
   mvc:
     async:
-      request-timeout: 720000  # 12분
+      request-timeout: 900000  # 15분 (AI 응답 대기)
   http:
     client:
       timeout:
-        connect: 30000  # 연결 타임아웃 30초
-        read: 720000    # 읽기 타임아웃 12분
+        connect: 120000  # 연결 타임아웃 2분
+        read: 900000     # 읽기 타임아웃 15분
 
   # 데이터베이스 설정
   datasource:
@@ -77,26 +77,24 @@ seoul:
     monitoring:
       daily-limit: ${METRO_DAILY_LIMIT:950}
 
-# AI 서버 설정
+# AI 서버 설정 (타임아웃 대폭 증가)
 ai:
   server:
     url: ${AI_SERVER_URL:http://llmserver:8000}
-    daily-limit: ${AI_STORY_DAILY_LIMIT:5}  # 하루 최대 5개로 줄임
-    batch-size: ${AI_STORY_BATCH_SIZE:1}    # 한 번에 1개씩만
+    timeout: ${AI_SERVER_TIMEOUT:900000}  # 15분으로 증가
 
   story:
     generation:
       cron: ${AI_STORY_CRON:0 0 3 * * *}  # 매일 새벽 3시
-
-      test-interval: ${AI_STORY_TEST_INTERVAL:86400000}
+      test-interval: ${AI_STORY_TEST_INTERVAL:86400000}  # 24시간
       min-stories-per-station: ${AI_STORY_MIN_PER_STATION:2}
       retry-count: ${AI_STORY_RETRY_COUNT:3}
       generation-delay: ${AI_STORY_GENERATION_DELAY:5000}
       enabled: ${AI_STORY_GENERATION_ENABLED:true}
-      daily-limit: ${AI_STORY_DAILY_LIMIT:50}
-      batch-size: ${AI_STORY_BATCH_SIZE:5}
-      ai-timeout: ${AI_STORY_AI_TIMEOUT:720000}
-      health-check-timeout: ${AI_STORY_HEALTH_TIMEOUT:10000}
+      daily-limit: ${AI_STORY_DAILY_LIMIT:10}  # 하루 10개로 증가
+      batch-size: ${AI_STORY_BATCH_SIZE:1}     # 한 번에 1개씩
+      ai-timeout: ${AI_STORY_AI_TIMEOUT:900000}      # 15분
+      health-check-timeout: ${AI_STORY_HEALTH_TIMEOUT:30000}  # 30초
 
 # 로깅 설정
 logging:
