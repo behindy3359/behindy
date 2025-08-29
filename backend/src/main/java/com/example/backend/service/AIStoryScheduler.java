@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * AI 스토리 스케줄러
+ * AI 스토리 스케줄러 - 필드명 수정 (snake_case)
  */
 @Slf4j
 @Service
@@ -37,7 +37,7 @@ public class AIStoryScheduler {
     private final OptionsRepository optionsRepository;
 
     @Qualifier("aiServerRestTemplate")
-    private final RestTemplate restTemplate;
+    private final RestTemplate aiServerRestTemplate;
 
     @Value("${ai.server.url:http://llmserver:8000}")
     private String aiServerUrl;
@@ -135,7 +135,7 @@ public class AIStoryScheduler {
     }
 
     /**
-     * LLM 서버 통신
+     * LLM 서버 통신 - 필드명 수정 + 상세 로깅
      */
     private CompleteStoryResponse requestFromLLMServer(Station station) {
         if (aiServerUrl == null || station == null) {
@@ -167,7 +167,7 @@ public class AIStoryScheduler {
             long startTime = System.currentTimeMillis();
 
             // RestTemplate 호출 (12분 타임아웃으로 설정된 aiServerRestTemplate 사용)
-            ResponseEntity<CompleteStoryResponse> response = restTemplate.exchange(
+            ResponseEntity<CompleteStoryResponse> response = aiServerRestTemplate.exchange(
                     url, HttpMethod.POST, entity,
                     new ParameterizedTypeReference<CompleteStoryResponse>() {});
 
