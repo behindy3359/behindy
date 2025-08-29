@@ -104,8 +104,8 @@ logging:
     com.example.backend: INFO
     com.example.backend.service.AIStoryScheduler: INFO
     com.example.backend.service.AIStoryService: INFO
-    org.springframework.web.client.RestTemplate: DEBUG # HTTP 요청 상세 로그
-    org.apache.http: DEBUG  # HTTP 클라이언트 디버그
+    org.springframework.web.client.RestTemplate: DEBUG
+    org.apache.http: DEBUG
     org.springframework.security: WARN
     org.hibernate.SQL: ERROR
     org.hibernate.type.descriptor.sql.BasicBinder: ERROR

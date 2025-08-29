@@ -98,7 +98,7 @@ public class AuthController {
     }
 
     /**
-     * 현재 사용자 정보 조회 (Access Token 검증용)
+     * 현재 사용자 정보 조회
      */
     @GetMapping("/me")
     public ResponseEntity<ApiResponse> getCurrentUser() {
@@ -125,7 +125,7 @@ public class AuthController {
     }
 
     /**
-     * 토큰 상태 확인 (헬스체크용)
+     * 토큰 상태 확인
      */
     @GetMapping("/status")
     public ResponseEntity<ApiResponse> checkAuthStatus(HttpServletRequest request) {

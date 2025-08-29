@@ -182,49 +182,7 @@ public class MetroPositionService {
     }
 
     /**
-     * 관리자용: 필터링 통계 조회
-     */
-    public MetroStationFilter.FilteringStatistics getFilteringStatistics() {
-        try {
-            // 전체 데이터 생성
-            List<TrainPosition> allPositions = new ArrayList<>();
-            for (Integer lineNumber : enabledLines) {
-                List<TrainPosition> linePositions = generateRealisticLinePositions(lineNumber);
-                allPositions.addAll(linePositions);
-            }
-
-            // 필터링 적용
-            List<TrainPosition> filteredPositions = stationFilter.filterFrontendStations(allPositions);
-
-            // 통계 생성
-            return stationFilter.generateFilteringStats(allPositions, filteredPositions);
-
-        } catch (Exception e) {
-            log.error("필터링 통계 생성 실패: {}", e.getMessage(), e);
-            return MetroStationFilter.FilteringStatistics.builder()
-                    .originalCount(0)
-                    .filteredCount(0)
-                    .reductionCount(0)
-                    .reductionPercentage(0.0)
-                    .build();
-        }
-    }
-
-    /**
-     * 관리자용: 제외된 역 목록 조회 (디버깅용)
-     */
-    public List<String> getExcludedStations() {
-        List<TrainPosition> allPositions = new ArrayList<>();
-        for (Integer lineNumber : enabledLines) {
-            List<TrainPosition> linePositions = generateRealisticLinePositions(lineNumber);
-            allPositions.addAll(linePositions);
-        }
-
-        return stationFilter.getExcludedStations(allPositions);
-    }
-
-    /**
-     * 현실적인 위치 정보 생성 (기존과 동일)
+     * 현실적인 위치 정보 생성
      */
     private List<TrainPosition> generateRealisticLinePositions(Integer lineNumber) {
         List<StationInfo> stations = LINE_STATIONS.get(lineNumber);
@@ -303,15 +261,14 @@ public class MetroPositionService {
     }
 
     /**
-     * 현실적인 상행/하행 방향 결정
+     *  상행/하행 방향 결정
      */
     private String getRealisticDirection(Random random, Integer lineNumber) {
-        // 60:40 비율로 약간의 편중 (완전 50:50보다 현실적)
         return random.nextDouble() < 0.6 ? "up" : "down";
     }
 
     /**
-     * 노선별 통계 생성
+     *  노선별 통계 생성
      */
     private Map<String, Integer> createLineStatistics(List<TrainPosition> positions) {
         return positions.stream()
@@ -322,7 +279,7 @@ public class MetroPositionService {
     }
 
     /**
-     * 빈 응답 생성
+     *  빈 응답 생성
      */
     private MetroPositionResponse createEmptyResponse(Integer lineNumber, String reason) {
         return MetroPositionResponse.builder()
@@ -337,7 +294,7 @@ public class MetroPositionService {
     }
 
     /**
-     * 오류 응답 생성
+     *  오류 응답 생성
      */
     private MetroPositionResponse createErrorResponse(String errorMessage) {
         log.error("오류 응답 생성: {}", errorMessage);
@@ -354,21 +311,21 @@ public class MetroPositionService {
     }
 
     /**
-     * 활성화된 노선 목록 반환
+     *  활성화된 노선 목록 반환
      */
     public List<Integer> getEnabledLines() {
         return new ArrayList<>(enabledLines);
     }
 
     /**
-     * 노선 활성화 여부 확인
+     *  노선 활성화 여부 확인
      */
     public boolean isLineEnabled(Integer lineNumber) {
         return enabledLines.contains(lineNumber);
     }
 
     /**
-     * 프론트엔드 역 필터 정보 반환
+     *  프론트엔드 역 필터 정보 반환
      */
     public Map<String, Object> getFilterInfo() {
         return Map.of(

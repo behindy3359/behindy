@@ -90,7 +90,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 기존 공개 엔드포인트
+                        // 공개 엔드포인트
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/metro/**").permitAll()
@@ -98,29 +98,25 @@ public class SecurityConfig {
                         .requestMatchers("/test/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/").permitAll()
-
-                        // 🆕 내부 API 경로 - 별도 필터에서 처리하므로 permitAll
-                        .requestMatchers("/api/ai-stories/internal/**").permitAll()
-
-                        // 🎯 게시판 및 댓글 조회 공개
                         .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ai-stories/**").permitAll()
 
-                        // 🚀 개발용: AI API 전체 공개 (운영시 제거 예정)
+                        // 내부 API 경로 - 별도 필터에서 처리하므로 permitAll
+                        .requestMatchers("/api/ai-stories/internal/**").permitAll()
+
+                        // 개발용: AI API 전체 공개
                         .requestMatchers("/api/ai-stories/**").permitAll()
-                        // 🔥 NEW: 개발 중 AI 서버 전체 개방
                         .requestMatchers("/ai/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight 허용
 
-                        // 나머지는 인증 필요
+                        // 나머지는 인증 요구
                         .anyRequest().authenticated()
                 );
 
         http.authenticationProvider(authenticationProvider());
 
-        // 🆕 필터 순서 수정: UsernamePasswordAuthenticationFilter 기준으로 추가
         http.addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

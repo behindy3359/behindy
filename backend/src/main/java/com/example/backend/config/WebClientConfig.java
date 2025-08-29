@@ -27,7 +27,7 @@ public class WebClientConfig {
                 .responseTimeout(Duration.ofMillis(timeoutMs))
                 .followRedirect(true);
 
-        // 메모리 버퍼 크기 설정 (대용량 응답 처리용)
+        // 메모리 버퍼 크기 설정
         ExchangeStrategies strategies = ExchangeStrategies.builder()
                 .codecs(configurer -> {
                     configurer.defaultCodecs().maxInMemorySize(2 * 1024 * 1024); // 2MB

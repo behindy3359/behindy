@@ -658,40 +658,6 @@ public class AIStoryScheduler {
         log.info("📅 새로운 하루 시작 - 배치 크기: {}개", batchSize);
     }
 
-    // ===== 관리자용 수동 실행 메서드들 =====
-
-    /**
-     * 수동 배치 생성
-     */
-    public void manualBatchGeneration() {
-        log.info("=== 관리자 수동 스토리 배치 생성 요청 ===");
-        log.info("🚀 즉시 실행 모드 (일일 한도 무시하지 않음)");
-        generateStoriesBatch();
-    }
-
-    /**
-     * 특정 역 수동 생성
-     */
-    public boolean manualStationGeneration(String stationName, Integer lineNumber) {
-        Optional<Station> stationOpt = stationRepository.findByStaNameAndStaLine(stationName, lineNumber);
-
-        if (stationOpt.isEmpty()) {
-            log.warn("🔍 역을 찾을 수 없음: {}-{}호선", stationName, lineNumber);
-            return false;
-        }
-
-        log.info("=== 관리자 수동 스토리 생성: {}-{}호선 ===", stationName, lineNumber);
-        boolean success = generateStoryForStation(stationOpt.get());
-
-        if (success) {
-            dailyGeneratedCount.incrementAndGet();
-            log.info("✅ 수동 생성 완료 - 일일 카운트: {}/{}",
-                    dailyGeneratedCount.get(), dailyGenerationLimit);
-        }
-
-        return success;
-    }
-
     /**
      * 시스템 상태 조회
      */
@@ -709,31 +675,6 @@ public class AIStoryScheduler {
                 .batchSize(batchSize)
                 .stationsNeedingStories(stationsNeedingStories.size())
                 .build();
-    }
-
-    /**
-     * 개발자용 통계 조회
-     */
-    public Map<String, Object> getDevelopmentStats() {
-        List<Station> allStations = stationRepository.findAll();
-        List<Station> stationsNeedingStories = findStationsNeedingStories();
-
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("totalStations", allStations.size());
-        stats.put("stationsNeedingStories", stationsNeedingStories.size());
-        stats.put("stationsSufficient", allStations.size() - stationsNeedingStories.size());
-        stats.put("dailyGenerated", dailyGeneratedCount.get());
-        stats.put("dailyLimit", dailyGenerationLimit);
-        stats.put("batchSize", batchSize);
-        stats.put("minStoriesPerStation", minStoriesPerStation);
-        stats.put("isGenerating", isGenerating.get());
-        stats.put("consecutiveFailures", consecutiveFailures);
-        stats.put("lastSuccessfulGeneration", lastSuccessfulGeneration);
-        stats.put("aiServerEnabled", aiServerEnabled);
-        stats.put("generationEnabled", storyGenerationEnabled);
-        stats.put("scheduleInterval", "24시간 (하루 1회)");
-
-        return stats;
     }
 
     // ===== DTO 클래스들 =====

@@ -93,27 +93,4 @@ public class CharacterController {
         CharacterResponse response = characterService.updateCharacterStats(charId, healthChange, sanityChange);
         return ResponseEntity.ok(response);
     }
-
-    /**
-     * 게임 진입 체크 (캐릭터 확인 + 생성 안내)
-     */
-    @PostMapping("/game-enter-check")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse> checkGameEntry() {
-        Optional<CharacterResponse> character = characterService.getCurrentCharacterOptional();
-
-        if (character.isPresent()) {
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("게임에 진입할 수 있습니다.")
-                    .data(character.get())
-                    .build());
-        } else {
-            return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message("게임 진입을 위해 캐릭터를 생성해주세요.")
-                            .build());
-        }
-    }
 }

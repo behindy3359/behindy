@@ -279,28 +279,8 @@ public class MetroDataScheduler {
         }
     }
 
-    // ===== 관리자용 메서드들 =====
-
-    public void manualUpdate() {
-        log.info("=== 수동 업데이트 요청 ===");
-        updateAllMetroPositions();
-    }
-
-    public void manualLineUpdate(String lineNumber) {
-        log.info("=== {}호선 수동 업데이트 요청 ===", lineNumber);
-        updateLineData(lineNumber);
-    }
-
-    public void emergencyCacheClear() {
-        log.warn("=== 긴급 캐시 클리어 실행 ===");
-        metroCacheService.evictAllMetroCache();
-        consecutiveFailures = 0;
-        updateAllMetroPositions(); // 즉시 새 데이터 로드
-        log.info("긴급 캐시 클리어 및 재로드 완료");
-    }
-
     /**
-     * 🔄 리팩토링: 시스템 상태 조회 (단순화)
+     *  시스템 상태 조회
      */
     public SystemStatus getSystemStatus() {
         MetroCacheService.HealthStatus health = metroCacheService.getHealthStatus();
@@ -326,8 +306,6 @@ public class MetroDataScheduler {
                 .frontendStationsByLine(stationFilter.getFrontendStationCountByLine())
                 .build();
     }
-
-    // ===== 시스템 상태 DTO =====
 
     @lombok.Data
     @lombok.Builder
