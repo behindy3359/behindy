@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 개선된 AI 스토리 스케줄러 - NullPointerException 수정
+ * AI 스토리 스케줄러
  */
 @Slf4j
 @Service
@@ -52,11 +52,10 @@ public class AIStoryScheduler {
     private LocalDateTime lastSuccessfulGeneration = null;
 
     /**
-     * 스케줄러 메인 메서드 - 수정됨
+     * 스케줄러 메인 메서드
      */
     @Scheduled(fixedRateString = "${ai.story.generation.test-interval:86400000}")
     public void generateStoryBatch() {
-        // null 안전 처리 추가
         if (storyGenerationEnabled == null || !storyGenerationEnabled) {
             log.debug("스토리 생성 비활성화 상태");
             return;
@@ -133,7 +132,7 @@ public class AIStoryScheduler {
     }
 
     /**
-     * LLM 서버 통신 - null 안전 처리 추가
+     * LLM 서버 통신
      */
     private CompleteStoryResponse requestFromLLMServer(Station station) {
         if (aiServerUrl == null || station == null) {
@@ -144,12 +143,12 @@ public class AIStoryScheduler {
         try {
             String url = aiServerUrl + "/generate-complete-story";
 
-            // 요청 데이터 생성
+            // ✅ FastAPI 형식에 맞게 snake_case로 수정
             CompleteStoryRequest request = CompleteStoryRequest.builder()
-                    .stationName(station.getStaName())
-                    .lineNumber(station.getStaLine())
-                    .characterHealth(80)
-                    .characterSanity(80)
+                    .station_name(station.getStaName())  // ✅ snake_case
+                    .line_number(station.getStaLine())   // ✅ snake_case
+                    .character_health(80)               // ✅ snake_case
+                    .character_sanity(80)               // ✅ snake_case
                     .build();
 
             // HTTP 요청 설정
@@ -307,37 +306,37 @@ public class AIStoryScheduler {
     }
 
     /**
-     * 시스템 상태 조회 (null 안전 처리)
+     * 시스템 상태 조회
      */
     public Map<String, Object> getSystemStatus() {
         Map<String, Object> status = new HashMap<>();
         status.put("enabled", storyGenerationEnabled != null ? storyGenerationEnabled : false);
         status.put("dailyCount", dailyGeneratedCount.get());
         status.put("dailyLimit", dailyGenerationLimit != null ? dailyGenerationLimit : 0);
-        status.put("lastSuccess", lastSuccessfulGeneration); // null 허용
+        status.put("lastSuccess", lastSuccessfulGeneration);
         status.put("llmServerUrl", aiServerUrl != null ? aiServerUrl : "NOT_SET");
         return status;
     }
 
     /**
-     * 수동 스토리 생성 (컨트롤러에서 호출용)
+     * 수동 스토리 생성
      */
     public void requestStoryFromLLM() {
         log.info("수동 스토리 생성 요청");
         generateStoryBatch();
     }
 
-    // ===== DTO 클래스들 =====
+    // ===== DTO 클래스들 - 필드명 수정 =====
 
     @lombok.Data
     @lombok.Builder
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class CompleteStoryRequest {
-        private String stationName;
-        private Integer lineNumber;
-        private Integer characterHealth;
-        private Integer characterSanity;
+        private String station_name;      // ✅ snake_case로 수정
+        private Integer line_number;      // ✅ snake_case로 수정
+        private Integer character_health; // ✅ snake_case로 수정
+        private Integer character_sanity; // ✅ snake_case로 수정
     }
 
     @lombok.Data
