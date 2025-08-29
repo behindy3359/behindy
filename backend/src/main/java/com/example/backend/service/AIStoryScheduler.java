@@ -10,6 +10,7 @@ import com.example.backend.repository.PageRepository;
 import com.example.backend.repository.OptionsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class AIStoryScheduler {
     private final StoryRepository storyRepository;
     private final PageRepository pageRepository;
     private final OptionsRepository optionsRepository;
+
+    @Qualifier("aiServerRestTemplate")
     private final RestTemplate restTemplate;
 
     @Value("${ai.server.url:http://llmserver:8000}")
@@ -157,23 +160,40 @@ public class AIStoryScheduler {
             headers.set("X-Internal-API-Key", internalApiKey != null ? internalApiKey : "default-key");
             HttpEntity<CompleteStoryRequest> entity = new HttpEntity<>(request, headers);
 
-            log.info("🤖 LLM 서버 요청: {} → {}역", url, station.getStaName());
+            log.info("🤖 LLM 서버 요청 시작: {} → {}역", url, station.getStaName());
+            log.info("📤 요청 데이터: {}", request);
+            log.info("📤 요청 헤더: {}", headers);
 
-            // RestTemplate 호출
+            long startTime = System.currentTimeMillis();
+
+            // RestTemplate 호출 (12분 타임아웃으로 설정된 aiServerRestTemplate 사용)
             ResponseEntity<CompleteStoryResponse> response = restTemplate.exchange(
                     url, HttpMethod.POST, entity,
                     new ParameterizedTypeReference<CompleteStoryResponse>() {});
 
+            long responseTime = System.currentTimeMillis() - startTime;
+            log.info("⏱️ LLM 서버 응답 시간: {}ms", responseTime);
+
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 log.info("✅ LLM 서버 응답 성공: {}", response.getBody().getStoryTitle());
+                log.info("📥 응답 상세: 페이지 {}개, 테마 {}",
+                        response.getBody().getPages() != null ? response.getBody().getPages().size() : 0,
+                        response.getBody().getTheme());
                 return response.getBody();
             }
 
             log.warn("❌ LLM 서버 응답 오류: {}", response.getStatusCode());
+            if (response.getBody() != null) {
+                log.warn("❌ 응답 본문: {}", response.getBody());
+            }
             return null;
 
         } catch (Exception e) {
             log.error("❌ LLM 서버 통신 실패: {}", e.getMessage());
+            log.error("❌ 예외 타입: {}", e.getClass().getSimpleName());
+            if (e.getCause() != null) {
+                log.error("❌ 원인: {}", e.getCause().getMessage());
+            }
             return null;
         }
     }
