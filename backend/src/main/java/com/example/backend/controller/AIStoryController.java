@@ -34,40 +34,4 @@ public class AIStoryController {
                 .data(aiStoryScheduler.getSystemStatus())
                 .build());
     }
-
-    /**
-     * 수동 스토리 생성 요청 (개발/테스트용)
-     */
-    @PostMapping("/generate-batch")
-    public ResponseEntity<ApiResponse> manualGenerateBatch() {
-        try {
-            aiStoryScheduler.requestStoryFromLLM();
-
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("LLM 스토리 생성 요청 완료")
-                    .data(aiStoryScheduler.getSystemStatus())
-                    .build());
-
-        } catch (Exception e) {
-            log.error("수동 스토리 생성 실패: {}", e.getMessage());
-
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(false)
-                    .message("스토리 생성 중 오류 발생: " + e.getMessage())
-                    .build());
-        }
-    }
-
-    /**
-     * 시스템 상태 조회
-     */
-    @GetMapping("/status")
-    public ResponseEntity<ApiResponse> getSystemStatus() {
-        return ResponseEntity.ok(ApiResponse.builder()
-                .success(true)
-                .message("AI 스토리 시스템 상태 조회")
-                .data(aiStoryScheduler.getSystemStatus())
-                .build());
-    }
 }
