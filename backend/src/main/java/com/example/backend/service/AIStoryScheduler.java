@@ -10,53 +10,34 @@ import com.example.backend.repository.PageRepository;
 import com.example.backend.repository.OptionsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * AI 스토리 배치 생성 스케줄러
- * 정기적으로 AI 서버에서 완전한 스토리를 받아와 DB에 저장
+ * 개선된 AI 스토리 스케줄러
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AIStoryScheduler {
 
-    // 🎯 AI 서버용 12분 타임아웃 RestTemplate
-    @Qualifier("aiServerRestTemplate")
-    private final RestTemplate aiServerRestTemplate;
-
-    // 🎯 헬스체크용 기본 타임아웃 RestTemplate
-    @Qualifier("defaultRestTemplate")
-    private final RestTemplate defaultRestTemplate;
-
-    // 🆘 디버깅용 localhost 직접 연결 RestTemplate
-    @Qualifier("localhostRestTemplate")
-    private final RestTemplate localhostRestTemplate;
-
     private final StationRepository stationRepository;
     private final StoryRepository storyRepository;
     private final PageRepository pageRepository;
     private final OptionsRepository optionsRepository;
+    private final RestTemplate restTemplate;
 
     @Value("${ai.server.url:http://llmserver:8000}")
     private String aiServerUrl;
-
-    @Value("${ai.server.enabled:true}")
-    private Boolean aiServerEnabled;
 
     @Value("${ai.story.generation.enabled:true}")
     private Boolean storyGenerationEnabled;
@@ -64,387 +45,180 @@ public class AIStoryScheduler {
     @Value("${ai.story.generation.daily-limit:5}")
     private Integer dailyGenerationLimit;
 
-    @Value("${ai.story.generation.batch-size:1}")
-    private Integer batchSize;
-
-    @Value("${ai.story.generation.min-stories-per-station:2}")
-    private Integer minStoriesPerStation;
-
     @Value("${behindy.internal.api-key:behindy-internal-2025-secret-key}")
     private String internalApiKey;
 
-    // 상태 관리
-    private final AtomicBoolean isGenerating = new AtomicBoolean(false);
     private final AtomicInteger dailyGeneratedCount = new AtomicInteger(0);
     private LocalDateTime lastSuccessfulGeneration = null;
-    private int consecutiveFailures = 0;
-    private static final int MAX_CONSECUTIVE_FAILURES = 3;
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void onApplicationReady() {
-        log.info("=== AI 스토리 배치 생성 시스템 시작 ===");
-        log.info("스토리 생성 활성화: {}", storyGenerationEnabled);
-        log.info("AI 서버 활성화: {}", aiServerEnabled);
-        log.info("AI 서버 URL: {}", aiServerUrl);
-        log.info("일일 생성 한도: {}개", dailyGenerationLimit);
-        log.info("배치 크기: {}개 (개발용으로 축소)", batchSize);
-        log.info("역당 최소 스토리: {}개", minStoriesPerStation);
-        log.info("🕐 실행 주기: 하루 1회 (24시간마다)");
-    }
 
     /**
-     * 정기적 배치 생성 (하루 1회 - 24시간마다)
-     * 개발 단계에서는 리소스 절약을 위해 하루 1회로 설정
+     *  스케줄러 메인 메서드
      */
     @Scheduled(fixedRateString = "${ai.story.generation.test-interval:86400000}")
-    public void scheduledBatchGeneration() {
-        if (!storyGenerationEnabled || !aiServerEnabled) {
-            log.debug("스토리 생성 비활성화 상태 - 배치 생성 건너뛰기");
+    public void generateStoryBatch() {
+        if (!storyGenerationEnabled) {
+            log.debug("스토리 생성 비활성화 상태");
             return;
         }
 
-        log.info("=== 일일 스토리 배치 생성 시작 (하루 1회 실행) ===");
-        generateStoriesBatch();
-    }
-
-    /**
-     * 스토리 배치 생성 메인 로직
-     */
-    public void generateStoriesBatch() {
-        if (!storyGenerationEnabled || !aiServerEnabled) {
-            log.debug("스토리 생성 비활성화 - 배치 생성 건너뛰기");
+        if (dailyGeneratedCount.get() >= dailyGenerationLimit) {
+            log.info("일일 스토리 생성 한도 도달: {}/{}",
+                    dailyGeneratedCount.get(), dailyGenerationLimit);
             return;
         }
 
-        if (!isGenerating.compareAndSet(false, true)) {
-            log.warn("스토리 생성 중복 실행 방지");
-            return;
-        }
+        log.info("=== LLM 스토리 배치 생성 시작 ===");
 
         try {
-            log.info("=== AI 스토리 배치 생성 시작 ===");
-            log.info("📊 현재 상태: 일일 생성 {}/{}, 배치 크기 {}개",
-                    dailyGeneratedCount.get(), dailyGenerationLimit, batchSize);
-
-            if (!checkGenerationLimit()) {
+            // 1. 스토리가 부족한 역 선택
+            Station selectedStation = selectStationForGeneration();
+            if (selectedStation == null) {
+                log.info("✅ 모든 역에 충분한 스토리가 있습니다.");
                 return;
             }
 
-            // 1. AI 서버 상태 확인
-            if (!checkAIServerHealth()) {
-                log.warn("AI 서버 상태 불량으로 배치 생성 중단");
+            // 2. LLM 서버에서 완성된 스토리 요청
+            CompleteStoryResponse llmResponse = requestFromLLMServer(selectedStation);
+            if (llmResponse == null || !validateLLMResponse(llmResponse)) {
+                log.warn("❌ LLM 응답 없음 또는 검증 실패: {}역", selectedStation.getStaName());
                 return;
             }
 
-            // 2. 스토리가 부족한 역들 조회
-            List<Station> targetStations = findStationsNeedingStories();
-
-            if (targetStations.isEmpty()) {
-                log.info("✅ 모든 역에 충분한 스토리가 있습니다. (최소 {}개씩)", minStoriesPerStation);
-                return;
+            // 3. DB에 저장
+            boolean saved = saveStoryToDB(selectedStation, llmResponse);
+            if (saved) {
+                dailyGeneratedCount.incrementAndGet();
+                lastSuccessfulGeneration = LocalDateTime.now();
+                log.info("✅ 스토리 생성 성공: {}역, 일일 생성: {}/{}",
+                        selectedStation.getStaName(), dailyGeneratedCount.get(), dailyGenerationLimit);
             }
-
-            // 3. 배치 크기만큼 생성 (개발용으로 소량)
-            int actualBatchSize = Math.min(batchSize, targetStations.size());
-            actualBatchSize = Math.min(actualBatchSize, dailyGenerationLimit - dailyGeneratedCount.get());
-
-            log.info("🎯 배치 생성 계획: 대상 {}개 역, 실제 생성 {}개 (제한된 배치 크기)",
-                    targetStations.size(), actualBatchSize);
-
-            // 4. 랜덤하게 역 선택
-            Collections.shuffle(targetStations);
-            List<Station> selectedStations = targetStations.subList(0, actualBatchSize);
-
-            // 5. 각 역에 대해 스토리 생성
-            int successCount = 0;
-            for (int i = 0; i < selectedStations.size(); i++) {
-                Station station = selectedStations.get(i);
-
-                try {
-                    log.info("🎯 [{}/{}] {}역({}호선) 스토리 생성 시작",
-                            i + 1, selectedStations.size(), station.getStaName(), station.getStaLine());
-
-                    boolean success = generateStoryForStation(station);
-                    if (success) {
-                        successCount++;
-                        dailyGeneratedCount.incrementAndGet();
-                        log.info("✅ [{}/{}] {}역 스토리 생성 성공",
-                                i + 1, selectedStations.size(), station.getStaName());
-                    } else {
-                        log.warn("❌ [{}/{}] {}역 스토리 생성 실패",
-                                i + 1, selectedStations.size(), station.getStaName());
-                    }
-
-                    // 생성 간격 조절 (AI 서버 부하 방지 & OpenAI API 요청 간격)
-                    if (i < selectedStations.size() - 1) {
-                        int delaySeconds = 10; // 10초 대기 (개발 단계에서 충분한 간격)
-                        log.info("⏳ 다음 스토리 생성까지 {}초 대기...", delaySeconds);
-                        Thread.sleep(delaySeconds * 1000);
-                    }
-
-                } catch (Exception e) {
-                    log.error("💥 {}역 스토리 생성 중 예외 발생: {}", station.getStaName(), e.getMessage(), e);
-                }
-            }
-
-            // 6. 결과 기록
-            handleBatchResult(successCount, actualBatchSize);
 
         } catch (Exception e) {
-            handleBatchFailure(e);
-        } finally {
-            isGenerating.set(false);
+            log.error("스토리 생성 중 오류: {}", e.getMessage());
         }
     }
 
     /**
-     * 특정 역의 스토리 생성
+     *  스토리가 부족한 역 선택
      */
-    @Transactional
-    public boolean generateStoryForStation(Station station) {
-        try {
-            log.debug("🎯 {}역({}호선) 스토리 생성 시작", station.getStaName(), station.getStaLine());
+    private Station selectStationForGeneration() {
+        List<Station> allStations = stationRepository.findAll();
+        List<Station> needyStations = new ArrayList<>();
 
-            // 1. AI 서버에 완전한 스토리 생성 요청
-            AIStoryRequest request = AIStoryRequest.builder()
+        for (Station station : allStations) {
+            List<Story> stories = storyRepository.findByStation(station);
+            if (stories.size() < 2) { // 역당 최소 2개
+                needyStations.add(station);
+            }
+        }
+
+        if (needyStations.isEmpty()) {
+            return null;
+        }
+
+        Station selected = needyStations.get(new Random().nextInt(needyStations.size()));
+        log.info("🎯 선택된 역: {}역 ({}호선), 부족한 역: {}개",
+                selected.getStaName(), selected.getStaLine(), needyStations.size());
+
+        return selected;
+    }
+
+    /**
+     *  LLM 서버 통신
+     */
+    private CompleteStoryResponse requestFromLLMServer(Station station) {
+        try {
+            String url = aiServerUrl + "/generate-complete-story";
+
+            // 요청 데이터 생성
+            CompleteStoryRequest request = CompleteStoryRequest.builder()
                     .stationName(station.getStaName())
                     .lineNumber(station.getStaLine())
                     .characterHealth(80)
                     .characterSanity(80)
-                    .storyType("BATCH_GENERATION")
                     .build();
 
-            AIStoryResponse aiResponse = callAIServerForCompleteStory(request);
-            if (aiResponse == null) {
-                log.warn("{}역 AI 서버 응답 없음", station.getStaName());
-                return false;
+            // HTTP 요청 설정
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-Internal-API-Key", internalApiKey);
+            HttpEntity<CompleteStoryRequest> entity = new HttpEntity<>(request, headers);
+
+            log.info("🤖 LLM 서버 요청: {} → {}역", url, station.getStaName());
+
+            // RestTemplate 호출
+            ResponseEntity<CompleteStoryResponse> response = restTemplate.exchange(
+                    url, HttpMethod.POST, entity,
+                    new ParameterizedTypeReference<CompleteStoryResponse>() {});
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                log.info("✅ LLM 서버 응답 성공: {}", response.getBody().getStoryTitle());
+                return response.getBody();
             }
 
-            // 2. 응답 검증
-            if (!validateAIResponse(aiResponse)) {
-                log.warn("{}역 AI 응답 검증 실패", station.getStaName());
-                return false;
-            }
-
-            // 3. 트랜잭션 내에서 순차적 저장
-            return saveStoryToDatabase(station, aiResponse);
+            log.warn("❌ LLM 서버 응답 오류: {}", response.getStatusCode());
+            return null;
 
         } catch (Exception e) {
-            log.error("{}역 스토리 생성 실패: {}", station.getStaName(), e.getMessage(), e);
+            log.error("❌ LLM 서버 통신 실패: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     *  LLM 응답 검증
+     */
+    private boolean validateLLMResponse(CompleteStoryResponse response) {
+        if (response == null || response.getStoryTitle() == null || response.getStoryTitle().trim().isEmpty()) {
+            log.warn("제목이 없는 응답");
             return false;
         }
-    }
 
-    /**
-     * AI 서버 호출 (12분 타임아웃, 다중 URL 시도) - 로그 개선판
-     */
-    private AIStoryResponse callAIServerForCompleteStory(AIStoryRequest request) {
-        // 🆘 Docker 네트워크 문제 해결을 위한 다중 URL 시도
-        String[] urlsToTry = {
-                aiServerUrl + "/generate-complete-story",           // Docker 네트워크 (원래 방식)
-                "http://localhost:8000/generate-complete-story",    // localhost 직접 연결
-                "http://127.0.0.1:8000/generate-complete-story"     // IP 직접 연결
-        };
-
-        for (int i = 0; i < urlsToTry.length; i++) {
-            String url = urlsToTry[i];
-            boolean isDockerNetwork = i == 0;
-
-            try {
-                log.info("================================================================================");
-                log.info("🚀 AI 서버 호출 시도 {} / {}", i + 1, urlsToTry.length);
-                log.info("🎯 URL: {}", url);
-                log.info("🔗 연결 방식: {}", isDockerNetwork ? "Docker 네트워크" : "직접 연결");
-                log.info("⏰ 설정된 타임아웃: {}분", "12");
-                log.info("📋 요청 데이터: station={}, line={}", request.getStationName(), request.getLineNumber());
-                log.info("================================================================================");
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.set("X-Internal-API-Key", internalApiKey);
-
-                HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
-
-                log.info("📡 RestTemplate 호출 시작 ({})", LocalDateTime.now());
-                long startTime = System.currentTimeMillis();
-
-                ParameterizedTypeReference<AIStoryResponse> responseType =
-                        new ParameterizedTypeReference<AIStoryResponse>() {};
-
-                // 🎯 Docker 네트워크면 aiServerRestTemplate, 직접 연결이면 localhostRestTemplate 사용
-                RestTemplate templateToUse = isDockerNetwork ? aiServerRestTemplate : localhostRestTemplate;
-
-                log.info("🔧 사용할 RestTemplate: {}", isDockerNetwork ? "aiServerRestTemplate" : "localhostRestTemplate");
-                log.info("🔧 RestTemplate 설정 확인중...");
-
-                // RestTemplate 설정 정보 로깅 (SimpleClientHttpRequestFactory는 getter가 없음)
-                log.info("  📊 RestTemplate Factory: {}", templateToUse.getRequestFactory().getClass().getSimpleName());
-                log.info("  📊 설정된 타임아웃: Connect=30초, Read={}분", "12");
-
-                ResponseEntity<AIStoryResponse> response;
-                try {
-                    log.info("🚀 실제 HTTP 요청 시작...");
-                    response = templateToUse.exchange(url, HttpMethod.POST, entity, responseType);
-
-                    long duration = System.currentTimeMillis() - startTime;
-                    log.info("✅ HTTP 요청 완료! (소요시간: {}ms = {:.2f}초)", duration, duration / 1000.0);
-                    log.info("📥 응답 상태: {}", response.getStatusCode());
-
-                } catch (org.springframework.web.client.ResourceAccessException e) {
-                    long duration = System.currentTimeMillis() - startTime;
-                    log.error("🔌 연결 실패 (시도 {}, 소요시간: {}ms)", i + 1, duration);
-                    log.error("  📋 에러 타입: {}", e.getClass().getSimpleName());
-                    log.error("  📋 에러 메시지: {}", e.getMessage());
-                    log.error("  📋 근본 원인: {}", e.getCause() != null ? e.getCause().getMessage() : "없음");
-
-                    // 타임아웃 에러인지 확인
-                    if (e.getMessage().contains("timeout") || e.getMessage().contains("timed out")) {
-                        log.error("  ⏰ 타임아웃 에러로 판단됨 - AI 서버 응답이 12분을 초과했습니다");
-                    }
-
-                    // 연결 거부 에러인지 확인
-                    if (e.getMessage().contains("Connection refused") || e.getMessage().contains("refused")) {
-                        log.error("  🚫 연결 거부 에러로 판단됨 - AI 서버가 실행되지 않거나 포트가 차단됨");
-                    }
-
-                    if (i == urlsToTry.length - 1) {
-                        log.error("❌ 모든 연결 방식 실패");
-                    }
-                    continue;
-
-                } catch (Exception e) {
-                    long duration = System.currentTimeMillis() - startTime;
-                    log.error("💥 예상치 못한 HTTP 오류 (시도 {}, 소요시간: {}ms)", i + 1, duration);
-                    log.error("  📋 에러 타입: {}", e.getClass().getSimpleName());
-                    log.error("  📋 에러 메시지: {}", e.getMessage());
-                    log.error("  📋 스택 트레이스: ", e);
-                    continue;
-                }
-
-                // 응답 처리
-                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                    AIStoryResponse storyResponse = response.getBody();
-                    log.info("🎉 AI 스토리 응답 성공!");
-                    log.info("  📋 스토리 제목: {}", storyResponse.getStoryTitle());
-                    log.info("  📋 페이지 수: {}", storyResponse.getPages() != null ? storyResponse.getPages().size() : 0);
-                    log.info("  📋 테마: {}", storyResponse.getTheme());
-                    log.info("  📋 연결 방식: {}", isDockerNetwork ? "Docker 네트워크" : "직접 연결");
-                    log.info("================================================================================");
-                    return storyResponse;
-                } else {
-                    log.warn("❌ AI 서버 응답 실패: status={}, body={}",
-                            response.getStatusCode(), response.getBody() != null ? "있음" : "없음");
-                }
-
-            } catch (Exception e) {
-                log.error("💥 전체 처리 오류 (시도 {}): {}", i + 1, e.getMessage(), e);
-            }
-        }
-
-        log.error("❌ 모든 AI 서버 연결 시도 실패");
-        log.error("🔍 점검 사항:");
-        log.error("  1. AI 서버(llmserver) 컨테이너 상태 확인");
-        log.error("  2. Docker 네트워크 연결 상태 확인");
-        log.error("  3. 방화벽 또는 포트 차단 확인");
-        log.error("  4. AI 서버 응답 시간 (OpenAI API 호출 시간) 확인");
-        log.error("  5. RestTemplate 타임아웃 설정 확인 (현재: 12분)");
-
-        return null;
-    }
-
-    /**
-     * AI 응답 검증
-     */
-    private boolean validateAIResponse(AIStoryResponse response) {
-        try {
-            if (response == null) {
-                log.warn("AI 응답이 null");
-                return false;
-            }
-
-            if (response.getStoryTitle() == null || response.getStoryTitle().trim().isEmpty()) {
-                log.warn("스토리 제목이 없음: '{}'", response.getStoryTitle());
-                return false;
-            }
-
-            if (response.getPages() == null || response.getPages().isEmpty()) {
-                log.warn("페이지가 없음: {}", response.getPages());
-                return false;
-            }
-
-            if (response.getPages().size() > 15) {
-                log.warn("페이지가 너무 많음: {}페이지", response.getPages().size());
-                return false;
-            }
-
-            // 각 페이지 검증
-            for (int i = 0; i < response.getPages().size(); i++) {
-                AIPageData page = response.getPages().get(i);
-
-                if (page == null) {
-                    log.warn("페이지 {}가 null", i + 1);
-                    return false;
-                }
-
-                if (page.getContent() == null || page.getContent().trim().isEmpty()) {
-                    log.warn("페이지 {}의 내용이 없음", i + 1);
-                    return false;
-                }
-
-                if (page.getOptions() == null || page.getOptions().size() < 2 || page.getOptions().size() > 4) {
-                    log.warn("페이지 {}의 선택지 개수 오류: {}개", i + 1,
-                            page.getOptions() != null ? page.getOptions().size() : 0);
-                    return false;
-                }
-
-                // 선택지 검증
-                for (int j = 0; j < page.getOptions().size(); j++) {
-                    AIOptionData option = page.getOptions().get(j);
-                    if (option == null || option.getContent() == null || option.getContent().trim().isEmpty()) {
-                        log.warn("페이지 {} 선택지 {}가 비어있음", i + 1, j + 1);
-                        return false;
-                    }
-                }
-            }
-
-            log.debug("✅ AI 응답 검증 성공: {}페이지", response.getPages().size());
-            return true;
-
-        } catch (Exception e) {
-            log.error("AI 응답 검증 중 오류: {}", e.getMessage(), e);
+        if (response.getPages() == null || response.getPages().isEmpty()) {
+            log.warn("페이지가 없는 응답");
             return false;
         }
+
+        // 페이지별 기본 검증
+        for (LLMPageData page : response.getPages()) {
+            if (page.getContent() == null || page.getContent().trim().isEmpty()) {
+                log.warn("빈 페이지 내용 발견");
+                return false;
+            }
+            if (page.getOptions() == null || page.getOptions().isEmpty()) {
+                log.warn("선택지가 없는 페이지 발견");
+                return false;
+            }
+        }
+
+        log.info("✅ LLM 응답 검증 통과: {}페이지", response.getPages().size());
+        return true;
     }
 
     /**
-     * 데이터베이스 저장
+     *  DB 저장
      */
-    private boolean saveStoryToDatabase(Station station, AIStoryResponse aiResponse) {
+    @Transactional
+    public boolean saveStoryToDB(Station station, CompleteStoryResponse llmResponse) {
         try {
-            log.info("💾 DB 저장 프로세스 시작: {}역 ({}호선)", station.getStaName(), station.getStaLine());
+            log.info("💾 DB 저장 시작: {}", llmResponse.getStoryTitle());
 
-            // 1. Story 엔티티 생성 및 저장
+            // Story 저장
             Story story = Story.builder()
                     .station(station)
-                    .stoTitle(aiResponse.getStoryTitle())
-                    .stoLength(aiResponse.getPages().size())
-                    .stoDescription(aiResponse.getDescription() != null ?
-                            aiResponse.getDescription() :
-                            station.getStaName() + "역에서 벌어지는 이야기")
-                    .stoTheme(aiResponse.getTheme() != null ? aiResponse.getTheme() : "미스터리")
-                    .stoKeywords(aiResponse.getKeywords() != null ?
-                            String.join(",", aiResponse.getKeywords()) :
-                            station.getStaName() + ",지하철,모험")
+                    .stoTitle(llmResponse.getStoryTitle())
+                    .stoLength(llmResponse.getPages().size())
+                    .stoDescription(llmResponse.getDescription())
+                    .stoTheme(llmResponse.getTheme())
+                    .stoKeywords(llmResponse.getKeywords() != null ?
+                            String.join(",", llmResponse.getKeywords()) : "")
                     .build();
-
             Story savedStory = storyRepository.save(story);
-            log.info("✅ Story 저장 완료: ID={}, 제목={}, 길이={}페이지",
-                    savedStory.getStoId(), savedStory.getStoTitle(), savedStory.getStoLength());
 
-            // 2. Page 엔티티들 생성 및 저장
+            // Pages 저장
             List<Page> savedPages = new ArrayList<>();
-            for (int i = 0; i < aiResponse.getPages().size(); i++) {
-                AIPageData pageData = aiResponse.getPages().get(i);
+            for (int i = 0; i < llmResponse.getPages().size(); i++) {
+                LLMPageData pageData = llmResponse.getPages().get(i);
 
                 Page page = Page.builder()
                         .stoId(savedStory.getStoId())
@@ -452,229 +226,71 @@ public class AIStoryScheduler {
                         .pageContents(pageData.getContent())
                         .build();
 
-                Page savedPage = pageRepository.save(page);
-                savedPages.add(savedPage);
-
-                log.debug("Page {} 저장: ID={}, 내용={}자",
-                        savedPage.getPageNumber(), savedPage.getPageId(),
-                        savedPage.getPageContents() != null ? savedPage.getPageContents().length() : 0);
+                savedPages.add(pageRepository.save(page));
             }
 
-            log.info("✅ Pages 저장 완료: {}개", savedPages.size());
-
-            // 3. Options 엔티티들 생성 및 저장
-            List<Options> allOptions = new ArrayList<>();
-
-            for (int i = 0; i < aiResponse.getPages().size(); i++) {
-                AIPageData pageData = aiResponse.getPages().get(i);
+            // Options 저장
+            for (int i = 0; i < llmResponse.getPages().size(); i++) {
+                LLMPageData pageData = llmResponse.getPages().get(i);
                 Page savedPage = savedPages.get(i);
 
-                for (AIOptionData optionData : pageData.getOptions()) {
-                    Long nextPageId = determineNextPageId(savedPages, i, aiResponse.getPages().size());
+                for (LLMOptionData optionData : pageData.getOptions()) {
+                    // 마지막 페이지가 아니면 다음 페이지로, 마지막이면 null
+                    Long nextPageId = (i < savedPages.size() - 1) ?
+                            savedPages.get(i + 1).getPageId() : null;
 
                     Options option = Options.builder()
                             .pageId(savedPage.getPageId())
                             .optContents(optionData.getContent())
-                            .optEffect(optionData.getEffect() != null ? optionData.getEffect() : "none")
-                            .optAmount(optionData.getAmount() != null ? optionData.getAmount() : 0)
+                            .optEffect(optionData.getEffect())
+                            .optAmount(optionData.getAmount())
                             .nextPageId(nextPageId)
                             .build();
 
-                    allOptions.add(option);
+                    optionsRepository.save(option);
                 }
             }
 
-            List<Options> savedOptions = optionsRepository.saveAll(allOptions);
-            log.info("✅ Options 저장 완료: {}개", savedOptions.size());
-
-            log.info("🎉 DB 저장 프로세스 완료: Story ID={}, 총 페이지={}개, 총 선택지={}개",
-                    savedStory.getStoId(), savedPages.size(), savedOptions.size());
-
+            log.info("✅ DB 저장 완료: Story ID={}, {}페이지, {}개 역 처리",
+                    savedStory.getStoId(), savedPages.size(), station.getStaName());
             return true;
 
         } catch (Exception e) {
-            log.error("❌ DB 저장 실패: {}역, 오류={}", station.getStaName(), e.getMessage(), e);
+            log.error("❌ DB 저장 실패: {}", e.getMessage());
             return false;
         }
     }
 
-    /**
-     * 다음 페이지 ID 결정
-     */
-    private Long determineNextPageId(List<Page> savedPages, int currentPageIndex, int totalPages) {
-        try {
-            // 마지막 페이지면 null (게임 종료)
-            if (currentPageIndex >= totalPages - 1) {
-                return null;
-            }
-
-            // 다음 페이지가 존재하면 해당 페이지 ID 반환
-            if (currentPageIndex + 1 < savedPages.size()) {
-                Page nextPage = savedPages.get(currentPageIndex + 1);
-                return nextPage.getPageId();
-            }
-
-            return null;
-
-        } catch (Exception e) {
-            log.warn("NextPageId 결정 실패: currentIndex={}, totalPages={}", currentPageIndex, totalPages);
-            return null;
-        }
-    }
+    // ===== 유틸리티 메서드들 =====
 
     /**
-     * AI 서버 상태 확인 (다중 URL 시도)
-     */
-    private boolean checkAIServerHealth() {
-        String[] urlsToTry = {
-                aiServerUrl + "/health",
-                "http://localhost:8000/health",
-                "http://127.0.0.1:8000/health"
-        };
-
-        for (int i = 0; i < urlsToTry.length; i++) {
-            String url = urlsToTry[i];
-            boolean isDockerNetwork = i == 0;
-
-            try {
-                // 🎯 기본 타임아웃 RestTemplate 사용 (빠른 헬스체크)
-                RestTemplate templateToUse = isDockerNetwork ? defaultRestTemplate : localhostRestTemplate;
-                ResponseEntity<Map> response = templateToUse.getForEntity(url, Map.class);
-
-                boolean healthy = response.getStatusCode() == HttpStatus.OK;
-                if (healthy) {
-                    log.info("✅ AI 서버 헬스체크 성공 (방식: {})",
-                            isDockerNetwork ? "Docker" : "직접연결");
-                    return true;
-                }
-
-            } catch (Exception e) {
-                log.debug("AI 서버 헬스체크 실패 (시도 {}): {}", i + 1, e.getMessage());
-            }
-        }
-
-        log.error("❌ 모든 AI 서버 헬스체크 실패");
-        return false;
-    }
-
-    /**
-     * 스토리가 부족한 역들 조회
-     */
-    private List<Station> findStationsNeedingStories() {
-        List<Station> allStations = stationRepository.findAll();
-        List<Station> stationsNeedingStories = new ArrayList<>();
-
-        for (Station station : allStations) {
-            List<Story> existingStories = storyRepository.findByStation(station);
-
-            // 각 역당 최소 스토리 개수 확인
-            if (existingStories.size() < minStoriesPerStation) {
-                stationsNeedingStories.add(station);
-            }
-        }
-
-        log.info("📊 스토리 현황: 부족한 역 {}개 / 전체 {}개 (기준: 역당 최소 {}개)",
-                stationsNeedingStories.size(), allStations.size(), minStoriesPerStation);
-
-        if (stationsNeedingStories.size() > 0) {
-            log.info("🎯 스토리 부족 역 목록: {}",
-                    stationsNeedingStories.stream()
-                            .limit(10)
-                            .map(s -> s.getStaName() + "(" + s.getStaLine() + "호선)")
-                            .toList());
-        }
-
-        return stationsNeedingStories;
-    }
-
-    /**
-     * 생성 한도 확인
-     */
-    private boolean checkGenerationLimit() {
-        int currentCount = dailyGeneratedCount.get();
-
-        if (currentCount >= dailyGenerationLimit) {
-            log.warn("⚠️ 일일 스토리 생성 한도 도달: {}/{}", currentCount, dailyGenerationLimit);
-            return false;
-        }
-
-        if (currentCount >= dailyGenerationLimit * 0.8) {
-            log.warn("⚠️ 일일 스토리 생성 한도 임박: {}/{}", currentCount, dailyGenerationLimit);
-        }
-
-        return true;
-    }
-
-    /**
-     * 배치 결과 처리
-     */
-    private void handleBatchResult(int successCount, int totalAttempts) {
-        if (successCount > 0) {
-            lastSuccessfulGeneration = LocalDateTime.now();
-            consecutiveFailures = 0;
-        }
-
-        log.info("=== 배치 생성 완료 ===");
-        log.info("✅ 성공: {}개 / 시도: {}개", successCount, totalAttempts);
-        log.info("📊 일일 누적 생성: {}/{}", dailyGeneratedCount.get(), dailyGenerationLimit);
-        log.info("🕐 마지막 성공: {}", lastSuccessfulGeneration);
-        log.info("🔄 다음 실행: 24시간 후");
-
-        if (successCount == 0) {
-            log.warn("⚠️ 모든 스토리 생성 실패 - AI 서버 상태 및 OpenAI API 키 확인 필요");
-        }
-    }
-
-    /**
-     * 배치 실패 처리
-     */
-    private void handleBatchFailure(Throwable error) {
-        consecutiveFailures++;
-
-        log.error("=== 배치 생성 실패 ({}/{}) ===", consecutiveFailures, MAX_CONSECUTIVE_FAILURES);
-        log.error("💥 오류: {}", error.getMessage(), error);
-
-        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-            log.error("🚨 연속 실패 한도 도달 - 스토리 생성 일시 중단");
-            log.error("🔍 점검이 필요한 사항:");
-            log.error("  1. OpenAI API 키 상태 및 크레딧 잔액");
-            log.error("  2. AI 서버(llmserver) 컨테이너 상태");
-            log.error("  3. Docker 네트워크 연결 상태");
-            log.error("  4. 데이터베이스 연결 상태");
-        }
-    }
-
-    /**
-     * 일일 카운트 초기화 (자정)
+     * 일일 카운트 초기화
      */
     @Scheduled(cron = "0 0 0 * * *")
     public void resetDailyCount() {
         int previousCount = dailyGeneratedCount.getAndSet(0);
-        consecutiveFailures = 0;
-
-        log.info("=== 일일 스토리 생성 통계 초기화 ===");
-        log.info("📊 어제 생성된 스토리: {}개", previousCount);
-        log.info("🎯 오늘 생성 한도: {}개 (개발용 제한)", dailyGenerationLimit);
-        log.info("📅 새로운 하루 시작 - 배치 크기: {}개", batchSize);
+        log.info("=== 일일 통계 초기화: 어제 생성 {}개 ===", previousCount);
     }
 
     /**
      * 시스템 상태 조회
      */
-    public AIStorySystemStatus getSystemStatus() {
-        List<Station> stationsNeedingStories = findStationsNeedingStories();
+    public Map<String, Object> getSystemStatus() {
+        return Map.of(
+                "enabled", storyGenerationEnabled,
+                "dailyCount", dailyGeneratedCount.get(),
+                "dailyLimit", dailyGenerationLimit,
+                "lastSuccess", lastSuccessfulGeneration,
+                "llmServerUrl", aiServerUrl
+        );
+    }
 
-        return AIStorySystemStatus.builder()
-                .isGenerationEnabled(storyGenerationEnabled)
-                .isAIServerEnabled(aiServerEnabled)
-                .isGenerating(isGenerating.get())
-                .dailyGeneratedCount(dailyGeneratedCount.get())
-                .dailyGenerationLimit(dailyGenerationLimit)
-                .lastSuccessfulGeneration(lastSuccessfulGeneration)
-                .consecutiveFailures(consecutiveFailures)
-                .batchSize(batchSize)
-                .stationsNeedingStories(stationsNeedingStories.size())
-                .build();
+    /**
+     * 수동 스토리 생성 (컨트롤러에서 호출용)
+     */
+    public void manualGenerate() {
+        log.info("수동 스토리 생성 요청");
+        generateStoryBatch();
     }
 
     // ===== DTO 클래스들 =====
@@ -683,97 +299,41 @@ public class AIStoryScheduler {
     @lombok.Builder
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
-    public static class AIStoryRequest {
-        @com.fasterxml.jackson.annotation.JsonProperty("station_name")
+    public static class CompleteStoryRequest {
         private String stationName;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("line_number")
         private Integer lineNumber;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("character_health")
         private Integer characterHealth;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("character_sanity")
         private Integer characterSanity;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("story_type")
-        private String storyType;
     }
 
     @lombok.Data
     @lombok.Builder
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
-    public static class AIStoryResponse {
-        @com.fasterxml.jackson.annotation.JsonProperty("story_title")
+    public static class CompleteStoryResponse {
         private String storyTitle;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("description")
         private String description;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("theme")
         private String theme;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("keywords")
         private List<String> keywords;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("pages")
-        private List<AIPageData> pages;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("estimated_length")
-        private Integer estimatedLength;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("difficulty")
-        private String difficulty;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("station_name")
-        private String stationName;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("line_number")
-        private Integer lineNumber;
+        private List<LLMPageData> pages;
     }
 
     @lombok.Data
     @lombok.Builder
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
-    public static class AIPageData {
-        @com.fasterxml.jackson.annotation.JsonProperty("content")
+    public static class LLMPageData {
         private String content;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("options")
-        private List<AIOptionData> options;
+        private List<LLMOptionData> options;
     }
 
     @lombok.Data
     @lombok.Builder
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
-    public static class AIOptionData {
-        @com.fasterxml.jackson.annotation.JsonProperty("content")
+    public static class LLMOptionData {
         private String content;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("effect")
         private String effect;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("amount")
         private Integer amount;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("effect_preview")
-        private String effectPreview;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class AIStorySystemStatus {
-        private Boolean isGenerationEnabled;
-        private Boolean isAIServerEnabled;
-        private Boolean isGenerating;
-        private Integer dailyGeneratedCount;
-        private Integer dailyGenerationLimit;
-        private LocalDateTime lastSuccessfulGeneration;
-        private Integer consecutiveFailures;
-        private Integer batchSize;
-        private Integer stationsNeedingStories;
     }
 }

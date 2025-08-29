@@ -1,5 +1,3 @@
-// backend/src/main/java/com/example/backend/config/DataInitializer.java
-
 package com.example.backend.config;
 
 import com.example.backend.entity.Station;
