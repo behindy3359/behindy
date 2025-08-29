@@ -13,7 +13,6 @@ import reactor.util.retry.Retry;
 import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -45,13 +44,6 @@ public class MetroApiService {
     private final AtomicInteger dailyCallCount = new AtomicInteger(0);
     private List<String> enabledLines;
 
-    private static final Map<String, List<String>> SIMPLE_STATIONS = Map.of(
-            "1", Arrays.asList("도봉산", "창동", "종각", "시청", "서울역", "용산", "영등포", "구로"),
-            "2", Arrays.asList("을지로입구", "건대입구", "잠실", "강남", "사당", "신림", "홍대입구", "신촌"),
-            "3", Arrays.asList("구파발", "불광", "독립문", "종로3가", "압구정", "교대", "양재", "오금"),
-            "4", Arrays.asList("당고개", "창동", "혜화", "명동", "서울역", "사당", "남태령")
-    );
-
     @PostConstruct
     public void init() {
         this.enabledLines = Arrays.stream(enabledLinesConfig.split(","))
@@ -59,95 +51,123 @@ public class MetroApiService {
                 .filter(line -> line.matches("\\d+"))
                 .collect(Collectors.toList());
 
-        log.info("=== Metro API 서비스 초기화 (리팩토링 버전) ===");
+        log.info("=== Metro API 서비스 초기화 (OpenAPI 연동 개선) ===");
         log.info("활성 노선: {}", enabledLines);
+        log.info("API 키 상태: {}", isValidApiKey() ? "정상" : "테스트키/없음");
+        log.info("API URL: {}", baseUrl);
     }
 
     /**
-     * 🔄 리팩토링: 직접 TrainPosition 반환
-     * 기존: RealtimePositionInfo → MetroRealtimeDto → TrainPosition
-     * 신규: RealtimePositionInfo → TrainPosition
+     *  실시간 위치 조회 - OpenAPI 우선, 실패시에만 Mock
      */
     public Mono<List<TrainPosition>> getRealtimePositions(String lineNumber) {
         log.info("=== {}호선 실시간 위치 조회 시작 ===", lineNumber);
 
-        if (!apiEnabled || "TEMP_KEY".equals(apiKey)) {
-            log.warn("API 비활성화 또는 임시 키 - Mock 데이터 사용");
-            return createSimplifiedMockData(lineNumber);
+        // API 비활성화된 경우에만 Mock 사용
+        if (!apiEnabled) {
+            log.info("API 비활성화 설정 - Mock 데이터 사용");
+            return createRealisticMockData(lineNumber);
         }
 
-        String url = buildUrl("realtimePosition", lineNumber + "호선");
-        log.info("API 요청: {}", url);
+        // API 키 검증
+        if (!isValidApiKey()) {
+            log.warn("유효하지 않은 API 키 - Mock 데이터 사용 (키: {})", maskApiKey(apiKey));
+            return createRealisticMockData(lineNumber);
+        }
+
+        // 실제 OpenAPI 호출
+        return callSeoulMetroAPI(lineNumber)
+                .doOnSuccess(positions -> {
+                    log.info("✅ {}호선 OpenAPI 호출 성공: {}대 열차", lineNumber, positions.size());
+                    incrementCallCount();
+                })
+                .doOnError(error -> {
+                    log.error("❌ {}호선 OpenAPI 호출 실패: {}", lineNumber, error.getMessage());
+                })
+                .onErrorResume(error -> {
+                    log.warn("OpenAPI 실패 → Mock 데이터로 폴백: {}", error.getMessage());
+                    return createRealisticMockData(lineNumber);
+                });
+    }
+
+    /**
+     *  실제 서울시 지하철 OpenAPI 호출
+     */
+    private Mono<List<TrainPosition>> callSeoulMetroAPI(String lineNumber) {
+        String url = buildOpenApiUrl(lineNumber);
+
+        log.debug("OpenAPI 요청: {}", url);
 
         return webClient.get()
                 .uri(url)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response -> {
-                    log.error("HTTP 에러: {} - {}", response.statusCode(), url);
-                    return Mono.error(new RuntimeException("API 호출 실패: " + response.statusCode()));
+                    log.error("OpenAPI HTTP 에러: {} - {}", response.statusCode(), url);
+                    return Mono.error(new RuntimeException("OpenAPI HTTP 에러: " + response.statusCode()));
                 })
                 .bodyToMono(RealtimePositionResponse.class)
                 .timeout(Duration.ofMillis(timeoutMs))
-                .retryWhen(Retry.fixedDelay(retryCount, Duration.ofSeconds(1)))
-                .map(this::processApiResponse)
-                .onErrorResume(error -> {
-                    log.error("API 호출 실패: {} - Mock 데이터 사용", error.getMessage());
-                    return createSimplifiedMockData(lineNumber);
-                });
+                .retryWhen(Retry.fixedDelay(retryCount, Duration.ofSeconds(2))
+                        .doBeforeRetry(retrySignal ->
+                                log.warn("OpenAPI 재시도 {}/{}: {}",
+                                        retrySignal.totalRetries() + 1, retryCount, lineNumber)))
+                .map(response -> processOpenApiResponse(response, lineNumber))
+                .onErrorMap(Exception.class, error ->
+                        new RuntimeException("OpenAPI 호출 완전 실패: " + error.getMessage(), error));
     }
 
     /**
-     * 🎯 API 응답 처리 (직접 TrainPosition 변환)
+     *  OpenAPI 응답 처리
      */
-    private List<TrainPosition> processApiResponse(RealtimePositionResponse response) {
-        incrementCallCount();
-
+    private List<TrainPosition> processOpenApiResponse(RealtimePositionResponse response, String lineNumber) {
+        // 에러 응답 체크
         if (response.isAnyError()) {
-            log.warn("API 에러 응답: {}", response.getUnifiedErrorMessage());
-            throw new RuntimeException("API_ERROR: " + response.getUnifiedErrorMessage());
+            String errorMsg = response.getUnifiedErrorMessage();
+            log.warn("OpenAPI 에러 응답: {}", errorMsg);
+            throw new RuntimeException("API_ERROR: " + errorMsg);
         }
 
+        // 빈 데이터 체크
         if (response.isEmpty()) {
-            log.warn("정상 응답이지만 데이터 없음 (심야시간 등)");
-            throw new RuntimeException("API_EMPTY_DATA: 운행 데이터 없음");
+            log.warn("OpenAPI 정상 응답이지만 데이터 없음 (심야시간대 등)");
+            throw new RuntimeException("API_EMPTY: 운행 데이터 없음");
         }
 
-        List<RealtimePositionInfo> positionList = response.getRealtimePositionList();
-
-        // 🔄 직접 TrainPosition으로 변환 (MetroRealtimeDto 건너뛰기)
-        List<TrainPosition> trainPositions = positionList.stream()
-                .map(this::convertToTrainPosition)
+        // 실제 데이터 변환
+        List<RealtimePositionInfo> apiData = response.getRealtimePositionList();
+        List<TrainPosition> trainPositions = apiData.stream()
+                .map(this::convertApiDataToTrainPosition)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        log.info("API 데이터 변환 완료: {}대 열차", trainPositions.size());
+        log.info("OpenAPI 데이터 변환 완료: {}개 → {}대 열차", apiData.size(), trainPositions.size());
         return trainPositions;
     }
 
     /**
-     * 🔄 리팩토링: RealtimePositionInfo → TrainPosition 직접 변환
+     *  OpenAPI 데이터 → TrainPosition 변환
      */
-    private TrainPosition convertToTrainPosition(RealtimePositionInfo position) {
+    private TrainPosition convertApiDataToTrainPosition(RealtimePositionInfo apiData) {
         try {
             return TrainPosition.builder()
-                    .trainId(position.getTrainNo())
-                    .lineNumber(Integer.valueOf(extractLineNumber(position.getSubwayId())))
-                    .stationId(position.getStatnId())
-                    .stationName(position.getStatnNm())
-                    .frontendStationId(position.getStatnNm())
-                    .direction(convertDirection(position.getUpdnLine()))
+                    .trainId(apiData.getTrainNo())
+                    .lineNumber(Integer.valueOf(extractLineNumber(apiData.getSubwayId())))
+                    .stationId(apiData.getStatnId())
+                    .stationName(cleanStationName(apiData.getStatnNm()))
+                    .frontendStationId(cleanStationName(apiData.getStatnNm()))
+                    .direction(convertApiDirection(apiData.getUpdnLine()))
                     .lastUpdated(LocalDateTime.now())
-                    .dataSource("API")
+                    .dataSource("SEOUL_OPENAPI")
                     .isRealtime(true)
                     .build();
         } catch (Exception e) {
-            log.error("위치 데이터 변환 실패: {}", e.getMessage());
+            log.error("OpenAPI 데이터 변환 실패: {}", e.getMessage());
             return null;
         }
     }
 
     /**
-     * 🎯 전체 노선 조회 (리팩토링된 버전)
+     *  전체 노선 조회
      */
     public Mono<List<TrainPosition>> getAllLinesRealtime() {
         log.info("=== 전체 노선 실시간 데이터 조회 시작 ===");
@@ -161,37 +181,43 @@ public class MetroApiService {
                     .flatMap(result -> ((List<TrainPosition>) result).stream())
                     .collect(Collectors.toList());
 
-            log.info("전체 데이터 통합 완료: {}개 노선, {}대 열차",
-                    enabledLines.size(), allTrains.size());
+            // 실제 API 데이터와 Mock 데이터 분류
+            long realApiCount = allTrains.stream()
+                    .filter(train -> "SEOUL_OPENAPI".equals(train.getDataSource()))
+                    .count();
+            long mockCount = allTrains.size() - realApiCount;
+
+            log.info("전체 데이터 통합 완료: {}개 노선, {}대 열차 (실제API: {}대, Mock: {}대)",
+                    enabledLines.size(), allTrains.size(), realApiCount, mockCount);
 
             return allTrains;
         });
     }
 
     /**
-     * 🎯 간소화된 Mock 데이터 생성 (기존 400줄 → 50줄)
+     *  현실적인 Mock 데이터 생성
      */
-    private Mono<List<TrainPosition>> createSimplifiedMockData(String lineNumber) {
-        log.info("=== Mock 데이터 생성: {}호선 ===", lineNumber);
+    private Mono<List<TrainPosition>> createRealisticMockData(String lineNumber) {
+        log.info("Mock 데이터 생성: {}호선", lineNumber);
 
-        List<String> stations = SIMPLE_STATIONS.getOrDefault(lineNumber,
-                Arrays.asList("역1", "역2", "역3"));
+        List<String> stations = getStationsForLine(lineNumber);
+        int trainCount = getRealisticTrainCountForTime(lineNumber);
 
-        int trainCount = getRealisticTrainCount(lineNumber);
         List<TrainPosition> mockData = new ArrayList<>();
+        Random random = new Random();
 
         for (int i = 0; i < trainCount; i++) {
-            String stationName = stations.get(i % stations.size());
+            String stationName = stations.get(random.nextInt(stations.size()));
 
             TrainPosition position = TrainPosition.builder()
-                    .trainId(generateTrainId(lineNumber, i))
+                    .trainId(generateRealisticTrainId(lineNumber, i))
                     .lineNumber(Integer.parseInt(lineNumber))
-                    .stationId("100" + lineNumber + String.format("%03d", i))
+                    .stationId("MOCK_" + lineNumber + String.format("%03d", i))
                     .stationName(stationName)
                     .frontendStationId(stationName)
-                    .direction(i % 2 == 0 ? "up" : "down")
-                    .lastUpdated(LocalDateTime.now().minusSeconds(new Random().nextInt(120)))
-                    .dataSource("MOCK")
+                    .direction(random.nextBoolean() ? "up" : "down")
+                    .lastUpdated(LocalDateTime.now().minusSeconds(random.nextInt(300)))
+                    .dataSource("MOCK_REALISTIC")
                     .isRealtime(false)
                     .build();
 
@@ -204,47 +230,114 @@ public class MetroApiService {
 
     // ===== 유틸리티 메서드들 =====
 
-    private int getRealisticTrainCount(String lineNumber) {
-        Map<String, Integer> baseCounts = Map.of("1", 6, "2", 8, "3", 5, "4", 4);
+    /**
+     * OpenAPI URL 생성
+     */
+    private String buildOpenApiUrl(String lineNumber) {
+        // 서울시 지하철 실시간 위치 API URL 형식
+        return String.format("%s/%s/json/realtimePosition/0/100/%s호선",
+                baseUrl, apiKey, lineNumber);
+    }
+
+    /**
+     * API 키 유효성 검사
+     */
+    private boolean isValidApiKey() {
+        return apiKey != null &&
+                !apiKey.trim().isEmpty() &&
+                !apiKey.equals("test_key") &&
+                !apiKey.equals("TEMP_KEY") &&
+                apiKey.length() > 10; // 실제 API 키는 길이가 10자 이상
+    }
+
+    /**
+     * API 키 마스킹 (로그용)
+     */
+    private String maskApiKey(String key) {
+        if (key == null || key.length() < 8) {
+            return "INVALID";
+        }
+        return key.substring(0, 4) + "****" + key.substring(key.length() - 4);
+    }
+
+    /**
+     * 노선별 주요 역 목록
+     */
+    private List<String> getStationsForLine(String lineNumber) {
+        Map<String, List<String>> stationsByLine = Map.of(
+                "1", Arrays.asList("서울역", "종각", "시청", "용산", "영등포", "구로", "온수"),
+                "2", Arrays.asList("을지로입구", "건대입구", "잠실", "강남", "사당", "홍대입구", "신촌"),
+                "3", Arrays.asList("구파발", "불광", "독립문", "종로3가", "압구정", "교대", "양재"),
+                "4", Arrays.asList("당고개", "창동", "혜화", "명동", "서울역", "사당")
+        );
+        return stationsByLine.getOrDefault(lineNumber, Arrays.asList("역1", "역2", "역3"));
+    }
+
+    /**
+     * 시간대별 현실적인 열차 수
+     */
+    private int getRealisticTrainCountForTime(String lineNumber) {
+        Map<String, Integer> baseCounts = Map.of("1", 8, "2", 12, "3", 7, "4", 6);
         int baseCount = baseCounts.getOrDefault(lineNumber, 5);
 
-        // 시간대별 조정 (간소화)
-        LocalTime now = LocalTime.now();
-        if (now.getHour() >= 7 && now.getHour() <= 9) return baseCount + 2; // 출근
-        if (now.getHour() >= 18 && now.getHour() <= 20) return baseCount + 1; // 퇴근
-        if (now.getHour() >= 0 && now.getHour() <= 5) return Math.max(2, baseCount - 2); // 심야
+        int hour = LocalDateTime.now().getHour();
+        if (hour >= 7 && hour <= 9 || hour >= 18 && hour <= 20) {
+            return baseCount + 3; // 출퇴근시간 증가
+        } else if (hour >= 0 && hour <= 5) {
+            return Math.max(2, baseCount - 3); // 심야시간 감소
+        }
         return baseCount;
     }
 
-    private String generateTrainId(String lineNumber, int index) {
-        LocalTime now = LocalTime.now();
-        if (now.getHour() >= 23 || now.getHour() <= 5) {
-            return String.format("N%s%03d", lineNumber, 100 + index); // 심야
+    /**
+     * 현실적인 열차번호 생성
+     */
+    private String generateRealisticTrainId(String lineNumber, int index) {
+        return String.format("%s%04d", lineNumber, 1000 + index);
+    }
+
+    /**
+     * 역명 정제
+     */
+    private String cleanStationName(String stationName) {
+        if (stationName == null) return "미정";
+        return stationName.replaceAll("\\([^)]*\\)", "").trim();
+    }
+
+    /**
+     * API 방향 데이터 변환
+     */
+    private String convertApiDirection(String updnLine) {
+        if ("0".equals(updnLine)) return "up";
+        if ("1".equals(updnLine)) return "down";
+        return updnLine != null ? updnLine : "unknown";
+    }
+
+    /**
+     * 지하철 ID에서 노선번호 추출
+     */
+    private String extractLineNumber(String subwayId) {
+        if (subwayId == null || subwayId.length() < 4) {
+            return "1";
         }
-        return String.format("%s%04d", lineNumber, 1000 + index); // 일반
+        try {
+            return subwayId.substring(3, 4);
+        } catch (Exception e) {
+            return "1";
+        }
     }
 
-    private String buildUrl(String service, String param) {
-        return String.format("%s/%s/json/%s/0/100/%s", baseUrl, apiKey, service, param);
-    }
-
+    /**
+     * API 호출 카운트 증가
+     */
     private void incrementCallCount() {
         int count = dailyCallCount.incrementAndGet();
-        if (count % 50 == 0) {
-            log.info("일일 API 호출 수: {}", count);
+        if (count % 10 == 0) {
+            log.info("일일 OpenAPI 호출 수: {}", count);
         }
     }
 
-    private String extractLineNumber(String subwayId) {
-        if (subwayId == null || subwayId.length() < 4) return "1";
-        return subwayId.substring(3);
-    }
-
-    private String convertDirection(String updnLine) {
-        return "0".equals(updnLine) ? "up" : "down";
-    }
-
-    // ===== 기존 메서드들 유지 =====
+    // ===== Getter 메서드들 =====
 
     public List<String> getEnabledLines() {
         return new ArrayList<>(enabledLines);
@@ -261,5 +354,26 @@ public class MetroApiService {
     public void resetDailyCallCount() {
         dailyCallCount.set(0);
         log.info("일일 API 호출 카운트 초기화");
+    }
+
+    /**
+     * API 연결 상태 확인
+     */
+    public boolean isApiHealthy() {
+        return apiEnabled && isValidApiKey();
+    }
+
+    /**
+     * 시스템 상태 요약
+     */
+    public Map<String, Object> getSystemStatus() {
+        return Map.of(
+                "apiEnabled", apiEnabled,
+                "validApiKey", isValidApiKey(),
+                "dailyCalls", dailyCallCount.get(),
+                "enabledLines", enabledLines,
+                "baseUrl", baseUrl,
+                "timeout", timeoutMs
+        );
     }
 }
