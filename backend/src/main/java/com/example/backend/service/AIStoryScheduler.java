@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 개선된 AI 스토리 스케줄러
+ * 개선된 AI 스토리 스케줄러 - NullPointerException 수정
  */
 @Slf4j
 @Service
@@ -52,18 +52,20 @@ public class AIStoryScheduler {
     private LocalDateTime lastSuccessfulGeneration = null;
 
     /**
-     *  스케줄러 메인 메서드
+     * 스케줄러 메인 메서드 - 수정됨
      */
     @Scheduled(fixedRateString = "${ai.story.generation.test-interval:86400000}")
     public void generateStoryBatch() {
-        if (!storyGenerationEnabled) {
+        // null 안전 처리 추가
+        if (storyGenerationEnabled == null || !storyGenerationEnabled) {
             log.debug("스토리 생성 비활성화 상태");
             return;
         }
 
-        if (dailyGeneratedCount.get() >= dailyGenerationLimit) {
+        if (dailyGenerationLimit == null || dailyGeneratedCount.get() >= dailyGenerationLimit) {
             log.info("일일 스토리 생성 한도 도달: {}/{}",
-                    dailyGeneratedCount.get(), dailyGenerationLimit);
+                    dailyGeneratedCount.get(),
+                    dailyGenerationLimit != null ? dailyGenerationLimit : 0);
             return;
         }
 
@@ -90,7 +92,9 @@ public class AIStoryScheduler {
                 dailyGeneratedCount.incrementAndGet();
                 lastSuccessfulGeneration = LocalDateTime.now();
                 log.info("✅ 스토리 생성 성공: {}역, 일일 생성: {}/{}",
-                        selectedStation.getStaName(), dailyGeneratedCount.get(), dailyGenerationLimit);
+                        selectedStation.getStaName(),
+                        dailyGeneratedCount.get(),
+                        dailyGenerationLimit != null ? dailyGenerationLimit : 0);
             }
 
         } catch (Exception e) {
@@ -99,34 +103,44 @@ public class AIStoryScheduler {
     }
 
     /**
-     *  스토리가 부족한 역 선택
+     * 스토리가 부족한 역 선택
      */
     private Station selectStationForGeneration() {
-        List<Station> allStations = stationRepository.findAll();
-        List<Station> needyStations = new ArrayList<>();
+        try {
+            List<Station> allStations = stationRepository.findAll();
+            List<Station> needyStations = new ArrayList<>();
 
-        for (Station station : allStations) {
-            List<Story> stories = storyRepository.findByStation(station);
-            if (stories.size() < 2) { // 역당 최소 2개
-                needyStations.add(station);
+            for (Station station : allStations) {
+                List<Story> stories = storyRepository.findByStation(station);
+                if (stories.size() < 2) { // 역당 최소 2개
+                    needyStations.add(station);
+                }
             }
-        }
 
-        if (needyStations.isEmpty()) {
+            if (needyStations.isEmpty()) {
+                return null;
+            }
+
+            Station selected = needyStations.get(new Random().nextInt(needyStations.size()));
+            log.info("🎯 선택된 역: {}역 ({}호선), 부족한 역: {}개",
+                    selected.getStaName(), selected.getStaLine(), needyStations.size());
+
+            return selected;
+        } catch (Exception e) {
+            log.error("역 선택 중 오류: {}", e.getMessage());
             return null;
         }
-
-        Station selected = needyStations.get(new Random().nextInt(needyStations.size()));
-        log.info("🎯 선택된 역: {}역 ({}호선), 부족한 역: {}개",
-                selected.getStaName(), selected.getStaLine(), needyStations.size());
-
-        return selected;
     }
 
     /**
-     *  LLM 서버 통신
+     * LLM 서버 통신 - null 안전 처리 추가
      */
     private CompleteStoryResponse requestFromLLMServer(Station station) {
+        if (aiServerUrl == null || station == null) {
+            log.error("LLM 서버 URL 또는 역 정보가 null입니다.");
+            return null;
+        }
+
         try {
             String url = aiServerUrl + "/generate-complete-story";
 
@@ -141,7 +155,7 @@ public class AIStoryScheduler {
             // HTTP 요청 설정
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-Internal-API-Key", internalApiKey);
+            headers.set("X-Internal-API-Key", internalApiKey != null ? internalApiKey : "default-key");
             HttpEntity<CompleteStoryRequest> entity = new HttpEntity<>(request, headers);
 
             log.info("🤖 LLM 서버 요청: {} → {}역", url, station.getStaName());
@@ -166,10 +180,15 @@ public class AIStoryScheduler {
     }
 
     /**
-     *  LLM 응답 검증
+     * LLM 응답 검증
      */
     private boolean validateLLMResponse(CompleteStoryResponse response) {
-        if (response == null || response.getStoryTitle() == null || response.getStoryTitle().trim().isEmpty()) {
+        if (response == null) {
+            log.warn("응답이 null입니다");
+            return false;
+        }
+
+        if (response.getStoryTitle() == null || response.getStoryTitle().trim().isEmpty()) {
             log.warn("제목이 없는 응답");
             return false;
         }
@@ -181,7 +200,7 @@ public class AIStoryScheduler {
 
         // 페이지별 기본 검증
         for (LLMPageData page : response.getPages()) {
-            if (page.getContent() == null || page.getContent().trim().isEmpty()) {
+            if (page == null || page.getContent() == null || page.getContent().trim().isEmpty()) {
                 log.warn("빈 페이지 내용 발견");
                 return false;
             }
@@ -196,10 +215,15 @@ public class AIStoryScheduler {
     }
 
     /**
-     *  DB 저장
+     * DB 저장
      */
     @Transactional
     public boolean saveStoryToDB(Station station, CompleteStoryResponse llmResponse) {
+        if (station == null || llmResponse == null) {
+            log.error("저장할 데이터가 null입니다");
+            return false;
+        }
+
         try {
             log.info("💾 DB 저장 시작: {}", llmResponse.getStoryTitle());
 
@@ -207,7 +231,7 @@ public class AIStoryScheduler {
             Story story = Story.builder()
                     .station(station)
                     .stoTitle(llmResponse.getStoryTitle())
-                    .stoLength(llmResponse.getPages().size())
+                    .stoLength(llmResponse.getPages() != null ? llmResponse.getPages().size() : 0)
                     .stoDescription(llmResponse.getDescription())
                     .stoTheme(llmResponse.getTheme())
                     .stoKeywords(llmResponse.getKeywords() != null ?
@@ -217,37 +241,47 @@ public class AIStoryScheduler {
 
             // Pages 저장
             List<Page> savedPages = new ArrayList<>();
-            for (int i = 0; i < llmResponse.getPages().size(); i++) {
-                LLMPageData pageData = llmResponse.getPages().get(i);
+            List<LLMPageData> pages = llmResponse.getPages();
+            if (pages != null) {
+                for (int i = 0; i < pages.size(); i++) {
+                    LLMPageData pageData = pages.get(i);
+                    if (pageData == null) continue;
 
-                Page page = Page.builder()
-                        .stoId(savedStory.getStoId())
-                        .pageNumber((long)(i + 1))
-                        .pageContents(pageData.getContent())
-                        .build();
+                    Page page = Page.builder()
+                            .stoId(savedStory.getStoId())
+                            .pageNumber((long)(i + 1))
+                            .pageContents(pageData.getContent() != null ? pageData.getContent() : "")
+                            .build();
 
-                savedPages.add(pageRepository.save(page));
+                    savedPages.add(pageRepository.save(page));
+                }
             }
 
             // Options 저장
-            for (int i = 0; i < llmResponse.getPages().size(); i++) {
-                LLMPageData pageData = llmResponse.getPages().get(i);
-                Page savedPage = savedPages.get(i);
+            if (pages != null) {
+                for (int i = 0; i < pages.size() && i < savedPages.size(); i++) {
+                    LLMPageData pageData = pages.get(i);
+                    Page savedPage = savedPages.get(i);
 
-                for (LLMOptionData optionData : pageData.getOptions()) {
-                    // 마지막 페이지가 아니면 다음 페이지로, 마지막이면 null
-                    Long nextPageId = (i < savedPages.size() - 1) ?
-                            savedPages.get(i + 1).getPageId() : null;
+                    if (pageData == null || pageData.getOptions() == null) continue;
 
-                    Options option = Options.builder()
-                            .pageId(savedPage.getPageId())
-                            .optContents(optionData.getContent())
-                            .optEffect(optionData.getEffect())
-                            .optAmount(optionData.getAmount())
-                            .nextPageId(nextPageId)
-                            .build();
+                    for (LLMOptionData optionData : pageData.getOptions()) {
+                        if (optionData == null) continue;
 
-                    optionsRepository.save(option);
+                        // 마지막 페이지가 아니면 다음 페이지로, 마지막이면 null
+                        Long nextPageId = (i < savedPages.size() - 1) ?
+                                savedPages.get(i + 1).getPageId() : null;
+
+                        Options option = Options.builder()
+                                .pageId(savedPage.getPageId())
+                                .optContents(optionData.getContent() != null ? optionData.getContent() : "")
+                                .optEffect(optionData.getEffect() != null ? optionData.getEffect() : "none")
+                                .optAmount(optionData.getAmount() != null ? optionData.getAmount() : 0)
+                                .nextPageId(nextPageId)
+                                .build();
+
+                        optionsRepository.save(option);
+                    }
                 }
             }
 
@@ -273,22 +307,22 @@ public class AIStoryScheduler {
     }
 
     /**
-     * 시스템 상태 조회
+     * 시스템 상태 조회 (null 안전 처리)
      */
     public Map<String, Object> getSystemStatus() {
-        return Map.of(
-                "enabled", storyGenerationEnabled,
-                "dailyCount", dailyGeneratedCount.get(),
-                "dailyLimit", dailyGenerationLimit,
-                "lastSuccess", lastSuccessfulGeneration,
-                "llmServerUrl", aiServerUrl
-        );
+        Map<String, Object> status = new HashMap<>();
+        status.put("enabled", storyGenerationEnabled != null ? storyGenerationEnabled : false);
+        status.put("dailyCount", dailyGeneratedCount.get());
+        status.put("dailyLimit", dailyGenerationLimit != null ? dailyGenerationLimit : 0);
+        status.put("lastSuccess", lastSuccessfulGeneration); // null 허용
+        status.put("llmServerUrl", aiServerUrl != null ? aiServerUrl : "NOT_SET");
+        return status;
     }
 
     /**
      * 수동 스토리 생성 (컨트롤러에서 호출용)
      */
-    public void manualGenerate() {
+    public void requestStoryFromLLM() {
         log.info("수동 스토리 생성 요청");
         generateStoryBatch();
     }

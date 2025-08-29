@@ -10,12 +10,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 지하철 데이터 스케줄러
+ * 지하철 데이터 스케줄러 - null 안전 처리
  */
 @Slf4j
 @Service
@@ -41,7 +42,9 @@ public class MetroDataScheduler {
     public void onApplicationReady() {
         log.info("=== 지하철 실시간 위치 시스템 시작 ===");
         log.info("API 활성화: {}", apiEnabled);
-        log.info("프론트엔드 역 필터링: {}개 역", stationFilter.getFrontendStationIds().size());
+        log.info("프론트엔드 역 필터링: {}개 역",
+                stationFilter.getFrontendStationIds() != null ?
+                        stationFilter.getFrontendStationIds().size() : 0);
 
         // 5초 후 첫 번째 업데이트 실행
         new Thread(() -> {
@@ -60,7 +63,7 @@ public class MetroDataScheduler {
     }
 
     /**
-     *  전체 지하철 위치 데이터 업데이트
+     * 전체 지하철 위치 데이터 업데이트 - null 안전 처리
      */
     public void updateAllMetroPositions() {
         if (!apiEnabled) {
@@ -80,12 +83,16 @@ public class MetroDataScheduler {
                 return;
             }
 
-            // 🎯 단순화된 업데이트 로직
-            metroApiService.getAllLinesRealtime()
-                    .subscribe(
-                            this::handleSuccessfulUpdate,
-                            this::handleFailedUpdate
-                    );
+            // 단순화된 업데이트 로직 - null 안전 처리 추가
+            if (metroApiService != null) {
+                metroApiService.getAllLinesRealtime()
+                        .subscribe(
+                                this::handleSuccessfulUpdate,
+                                this::handleFailedUpdate
+                        );
+            } else {
+                log.error("MetroApiService가 null입니다");
+            }
 
         } catch (Exception e) {
             handleFailedUpdate(e);
@@ -95,10 +102,10 @@ public class MetroDataScheduler {
     }
 
     /**
-     * 특정 노선 업데이트
+     * 특정 노선 업데이트 - null 안전 처리
      */
     public void updateLineData(String lineNumber) {
-        if (!apiEnabled || !checkApiLimit()) {
+        if (!apiEnabled || !checkApiLimit() || metroApiService == null) {
             return;
         }
 
@@ -107,15 +114,23 @@ public class MetroDataScheduler {
         metroApiService.getRealtimePositions(lineNumber)
                 .subscribe(
                         allTrains -> {
-                            // 프론트엔드 역만 필터링
-                            List<TrainPosition> filteredTrains = stationFilter.filterLineStations(
-                                    allTrains, Integer.parseInt(lineNumber));
+                            if (allTrains != null && stationFilter != null) {
+                                try {
+                                    // 프론트엔드 역만 필터링
+                                    List<TrainPosition> filteredTrains = stationFilter.filterLineStations(
+                                            allTrains, Integer.parseInt(lineNumber));
 
-                            // 캐시 저장
-                            metroCacheService.cacheLinePositions(lineNumber, filteredTrains);
+                                    // 캐시 저장
+                                    if (metroCacheService != null) {
+                                        metroCacheService.cacheLinePositions(lineNumber, filteredTrains);
+                                    }
 
-                            log.info("{}호선 업데이트 완료: {}대 → {}대",
-                                    lineNumber, allTrains.size(), filteredTrains.size());
+                                    log.info("{}호선 업데이트 완료: {}대 → {}대",
+                                            lineNumber, allTrains.size(), filteredTrains.size());
+                                } catch (Exception e) {
+                                    log.error("{}호선 데이터 처리 중 오류: {}", lineNumber, e.getMessage());
+                                }
+                            }
                         },
                         error -> {
                             log.error("{}호선 업데이트 실패: {}", lineNumber, error.getMessage());
@@ -124,39 +139,69 @@ public class MetroDataScheduler {
                 );
     }
 
-    // 성공적인 업데이트 처리
+    // 성공적인 업데이트 처리 - null 안전
     private void handleSuccessfulUpdate(List<TrainPosition> allTrains) {
+        if (allTrains == null) {
+            log.warn("업데이트 데이터가 null입니다");
+            return;
+        }
+
         try {
             // 1. 프론트엔드 역 필터링
-            List<TrainPosition> filteredTrains = stationFilter.filterFrontendStations(allTrains);
+            List<TrainPosition> filteredTrains = null;
+            if (stationFilter != null) {
+                filteredTrains = stationFilter.filterFrontendStations(allTrains);
+            } else {
+                filteredTrains = allTrains;
+                log.warn("StationFilter가 null - 필터링 없이 진행");
+            }
 
             // 2. 전체 데이터 캐시
-            metroCacheService.cacheAllPositions(filteredTrains);
+            if (metroCacheService != null && filteredTrains != null) {
+                metroCacheService.cacheAllPositions(filteredTrains);
+            }
 
             // 3. 노선별 캐시
-            for (String lineNum : metroApiService.getEnabledLines()) {
-                List<TrainPosition> lineTrains = filteredTrains.stream()
-                        .filter(train -> lineNum.equals(String.valueOf(train.getLineNumber())))
-                        .toList();
-                metroCacheService.cacheLinePositions(lineNum, lineTrains);
+            if (metroApiService != null && metroCacheService != null && filteredTrains != null) {
+                List<String> enabledLines = metroApiService.getEnabledLines();
+                if (enabledLines != null) {
+                    for (String lineNum : enabledLines) {
+                        List<TrainPosition> lineTrains = filteredTrains.stream()
+                                .filter(train -> train != null &&
+                                        lineNum.equals(String.valueOf(train.getLineNumber())))
+                                .toList();
+                        metroCacheService.cacheLinePositions(lineNum, lineTrains);
+                    }
+                }
             }
 
             // 4. 성공 기록
             lastSuccessfulUpdate = LocalDateTime.now();
             consecutiveFailures = 0;
-            metroCacheService.setLastUpdateTime(lastSuccessfulUpdate);
+            if (metroCacheService != null) {
+                metroCacheService.setLastUpdateTime(lastSuccessfulUpdate);
+            }
 
             // 5. 통계 생성
-            MetroStationFilter.FilteringStatistics stats =
-                    stationFilter.generateFilteringStats(allTrains, filteredTrains);
+            String statsMessage = "정상 업데이트 완료";
+            if (stationFilter != null && filteredTrains != null) {
+                MetroStationFilter.FilteringStatistics stats =
+                        stationFilter.generateFilteringStats(allTrains, filteredTrains);
+                if (stats != null) {
+                    statsMessage = String.format("정상 업데이트 완료. %s", stats.getSummary());
+                }
+            }
 
-            metroCacheService.cacheHealthStatus("HEALTHY",
-                    String.format("정상 업데이트 완료. %s", stats.getSummary()));
+            if (metroCacheService != null) {
+                metroCacheService.cacheHealthStatus("HEALTHY", statsMessage);
+            }
+
+            int filteredCount = filteredTrains != null ? filteredTrains.size() : 0;
+            int dailyCalls = metroApiService != null ? metroApiService.getDailyCallCount() : 0;
 
             log.info("=== 업데이트 성공 ===");
-            log.info("원본: {}대 → 필터링: {}대 ({})",
-                    allTrains.size(), filteredTrains.size(), stats.getSummary());
-            log.info("API 호출: {}/{}", metroApiService.getDailyCallCount(), dailyLimit);
+            log.info("원본: {}대 → 필터링: {}대", allTrains.size(), filteredCount);
+            log.info("API 호출: {}/{}", dailyCalls, dailyLimit);
 
         } catch (Exception e) {
             log.error("업데이트 후처리 중 오류: {}", e.getMessage(), e);
@@ -164,54 +209,68 @@ public class MetroDataScheduler {
     }
 
     /**
-     * 실패한 업데이트 처리
+     * 실패한 업데이트 처리 - null 안전
      */
     private void handleFailedUpdate(Throwable error) {
         consecutiveFailures++;
         String errorMsg = String.format("업데이트 실패 (%d/%d): %s",
-                consecutiveFailures, MAX_CONSECUTIVE_FAILURES, error.getMessage());
+                consecutiveFailures, MAX_CONSECUTIVE_FAILURES,
+                error != null ? error.getMessage() : "Unknown error");
 
         log.error(errorMsg, error);
 
         if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
             handleCriticalFailure();
         } else {
-            metroCacheService.cacheHealthStatus("WARNING", errorMsg);
+            if (metroCacheService != null) {
+                metroCacheService.cacheHealthStatus("WARNING", errorMsg);
+            }
         }
     }
 
     /**
-     * 특정 노선 업데이트 실패 처리
+     * 특정 노선 업데이트 실패 처리 - null 안전
      */
     private void handleLineUpdateFailure(String lineNumber, Throwable error) {
-        log.error("{}호선 업데이트 실패: {}", lineNumber, error.getMessage());
+        log.error("{}호선 업데이트 실패: {}", lineNumber,
+                error != null ? error.getMessage() : "Unknown error");
 
         // 기존 캐시 데이터 유지 확인
-        MetroCacheService.PositionCacheData existingData =
-                metroCacheService.getLinePositions(lineNumber);
-        if (existingData != null && metroCacheService.isCacheValid(existingData)) {
-            log.info("{}호선 기존 캐시 데이터 유지", lineNumber);
+        if (metroCacheService != null) {
+            MetroCacheService.PositionCacheData existingData =
+                    metroCacheService.getLinePositions(lineNumber);
+            if (existingData != null && metroCacheService.isCacheValid(existingData)) {
+                log.info("{}호선 기존 캐시 데이터 유지", lineNumber);
+            }
         }
     }
 
     /**
-     * 심각한 오류 상황 처리
+     * 심각한 오류 상황 처리 - null 안전
      */
     private void handleCriticalFailure() {
         String criticalMsg = String.format("연속 %d회 업데이트 실패", MAX_CONSECUTIVE_FAILURES);
         log.error("=== 심각한 오류: {} ===", criticalMsg);
-        metroCacheService.cacheHealthStatus("CRITICAL", criticalMsg);
+        if (metroCacheService != null) {
+            metroCacheService.cacheHealthStatus("CRITICAL", criticalMsg);
+        }
     }
 
     /**
-     * API 호출 한도 확인
+     * API 호출 한도 확인 - null 안전
      */
     private boolean checkApiLimit() {
+        if (metroApiService == null) {
+            return false;
+        }
+
         int currentCalls = metroApiService.getDailyCallCount();
 
         if (currentCalls >= dailyLimit) {
             log.warn("일일 API 호출 한도 도달: {}/{}", currentCalls, dailyLimit);
-            metroCacheService.cacheHealthStatus("LIMITED", "일일 API 호출 한도 도달");
+            if (metroCacheService != null) {
+                metroCacheService.cacheHealthStatus("LIMITED", "일일 API 호출 한도 도달");
+            }
             return false;
         }
 
@@ -226,10 +285,14 @@ public class MetroDataScheduler {
 
     @Scheduled(cron = "0 0 0 * * *")
     public void resetDailyApiCount() {
-        metroApiService.resetDailyCallCount();
+        if (metroApiService != null) {
+            metroApiService.resetDailyCallCount();
+        }
         consecutiveFailures = 0;
         log.info("=== 일일 API 카운트 초기화 ===");
-        metroCacheService.cacheHealthStatus("RESET", "일일 시스템 상태 초기화 완료");
+        if (metroCacheService != null) {
+            metroCacheService.cacheHealthStatus("RESET", "일일 시스템 상태 초기화 완료");
+        }
     }
 
     @Scheduled(cron = "0 0 * * * *")
@@ -237,15 +300,19 @@ public class MetroDataScheduler {
         log.info("=== 시간별 시스템 상태 점검 ===");
 
         try {
-            MetroCacheService.CacheStatistics stats = metroCacheService.getCacheStatistics();
-            int currentCalls = metroApiService.getDailyCallCount();
+            MetroCacheService.CacheStatistics stats = metroCacheService != null ?
+                    metroCacheService.getCacheStatistics() : null;
+            int currentCalls = metroApiService != null ? metroApiService.getDailyCallCount() : 0;
             double usagePercentage = (double) currentCalls / dailyLimit * 100;
 
-            LocalDateTime lastUpdate = metroCacheService.getLastUpdateTime();
+            LocalDateTime lastUpdate = metroCacheService != null ?
+                    metroCacheService.getLastUpdateTime() : null;
             boolean isDataFresh = lastUpdate != null &&
                     lastUpdate.isAfter(LocalDateTime.now().minusMinutes(10));
 
-            int frontendStationCount = stationFilter.getFrontendStationIds().size();
+            int frontendStationCount = stationFilter != null &&
+                    stationFilter.getFrontendStationIds() != null ?
+                    stationFilter.getFrontendStationIds().size() : 0;
 
             // 상태 판정
             String healthStatus;
@@ -263,47 +330,69 @@ public class MetroDataScheduler {
                 healthDetails = String.format("연속 실패 %d회", consecutiveFailures);
             } else {
                 healthStatus = "HEALTHY";
+                int activeCaches = stats != null ? stats.getActiveLinesCaches() : 0;
                 healthDetails = String.format("정상 운영중. API: %.1f%%, 활성캐시: %d개, 필터링: %d개역",
-                        usagePercentage, stats.getActiveLinesCaches(), frontendStationCount);
+                        usagePercentage, activeCaches, frontendStationCount);
             }
 
-            metroCacheService.cacheHealthStatus(healthStatus, healthDetails);
+            if (metroCacheService != null) {
+                metroCacheService.cacheHealthStatus(healthStatus, healthDetails);
+            }
 
             log.info("시스템 상태: {} - {}", healthStatus, healthDetails);
-            log.info("캐시 통계: 활성 {}개, 열차 {}대",
-                    stats.getActiveLinesCaches(), stats.getTotalTrains());
+            if (stats != null) {
+                log.info("캐시 통계: 활성 {}개, 열차 {}대",
+                        stats.getActiveLinesCaches(), stats.getTotalTrains());
+            }
 
         } catch (Exception e) {
             log.error("시간별 상태 점검 실패: {}", e.getMessage(), e);
-            metroCacheService.cacheHealthStatus("ERROR", "상태 점검 실패: " + e.getMessage());
+            if (metroCacheService != null) {
+                metroCacheService.cacheHealthStatus("ERROR", "상태 점검 실패: " + e.getMessage());
+            }
         }
     }
 
     /**
-     *  시스템 상태 조회
+     * 시스템 상태 조회 - null 안전 처리
      */
     public SystemStatus getSystemStatus() {
-        MetroCacheService.HealthStatus health = metroCacheService.getHealthStatus();
-        MetroCacheService.CacheStatistics stats = metroCacheService.getCacheStatistics();
+        MetroCacheService.HealthStatus health = metroCacheService != null ?
+                metroCacheService.getHealthStatus() : null;
+        MetroCacheService.CacheStatistics stats = metroCacheService != null ?
+                metroCacheService.getCacheStatistics() : null;
+
+        // null 안전 처리로 HashMap 사용
+        Map<Integer, Integer> frontendStationsByLine = new HashMap<>();
+        if (stationFilter != null) {
+            Map<Integer, Integer> filterStats = stationFilter.getFrontendStationCountByLine();
+            if (filterStats != null) {
+                frontendStationsByLine.putAll(filterStats);
+            }
+        }
 
         return SystemStatus.builder()
-                .healthStatus(health.getStatus())
-                .healthDetails(health.getDetails())
-                .lastHealthCheck(health.getTimestamp())
-                .lastSuccessfulUpdate(lastSuccessfulUpdate)
-                .lastUpdateTime(metroCacheService.getLastUpdateTime())
+                .healthStatus(health != null ? health.getStatus() : "UNKNOWN")
+                .healthDetails(health != null ? health.getDetails() : "상태 정보 없음")
+                .lastHealthCheck(health != null ? health.getTimestamp() : LocalDateTime.now())
+                .lastSuccessfulUpdate(lastSuccessfulUpdate) // null 허용
+                .lastUpdateTime(metroCacheService != null ?
+                        metroCacheService.getLastUpdateTime() : null) // null 허용
                 .consecutiveFailures(consecutiveFailures)
-                .dailyApiCalls(metroApiService.getDailyCallCount())
+                .dailyApiCalls(metroApiService != null ? metroApiService.getDailyCallCount() : 0)
                 .dailyApiLimit(dailyLimit)
-                .apiUsagePercentage((double) metroApiService.getDailyCallCount() / dailyLimit * 100)
-                .activeCaches(stats.getActiveLinesCaches())
-                .totalTrains(stats.getTotalTrains())
-                .hasAllPositionsCache(stats.isHasAllPositionsCache())
+                .apiUsagePercentage(metroApiService != null ?
+                        (double) metroApiService.getDailyCallCount() / dailyLimit * 100 : 0.0)
+                .activeCaches(stats != null ? stats.getActiveLinesCaches() : 0)
+                .totalTrains(stats != null ? stats.getTotalTrains() : 0)
+                .hasAllPositionsCache(stats != null ? stats.isHasAllPositionsCache() : false)
                 .isUpdating(isUpdating.get())
                 .apiEnabled(apiEnabled)
-                .filteringEnabled(true)
-                .frontendStationCount(stationFilter.getFrontendStationIds().size())
-                .frontendStationsByLine(stationFilter.getFrontendStationCountByLine())
+                .filteringEnabled(stationFilter != null)
+                .frontendStationCount(stationFilter != null &&
+                        stationFilter.getFrontendStationIds() != null ?
+                        stationFilter.getFrontendStationIds().size() : 0)
+                .frontendStationsByLine(frontendStationsByLine)
                 .build();
     }
 
@@ -313,8 +402,8 @@ public class MetroDataScheduler {
         private String healthStatus;
         private String healthDetails;
         private LocalDateTime lastHealthCheck;
-        private LocalDateTime lastSuccessfulUpdate;
-        private LocalDateTime lastUpdateTime;
+        private LocalDateTime lastSuccessfulUpdate; // null 허용
+        private LocalDateTime lastUpdateTime; // null 허용
         private int consecutiveFailures;
         private int dailyApiCalls;
         private int dailyApiLimit;
@@ -326,6 +415,6 @@ public class MetroDataScheduler {
         private boolean apiEnabled;
         private boolean filteringEnabled;
         private int frontendStationCount;
-        private Map<Integer, Integer> frontendStationsByLine;
+        private Map<Integer, Integer> frontendStationsByLine; // null 허용
     }
 }
