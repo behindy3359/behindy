@@ -27,9 +27,109 @@ public class GameService {
     private final OptionsRepository optionsRepository;
     private final NowRepository nowRepository;
     private final CharacterRepository characterRepository;
+    private final LogERepository logERepository;
     private final CharacterService characterService;
     private final AuthService authService;
+    private final StoryService storyService;
     private final EntityDtoMapper entityDtoMapper;
+
+    /**
+     * 역 기반 게임 진입 (핵심 로직)
+     */
+    @Transactional
+    public GameEnterResponse enterGameByStation(String stationName, Integer lineNumber) {
+        User currentUser = authService.getCurrentUser();
+        Character character = getAliveCharacter(currentUser);
+
+        log.info("게임 진입 요청: userId={}, charId={}, station={}-{}",
+                currentUser.getUserId(), character.getCharId(), stationName, lineNumber);
+
+        // 1. 진행 중인 게임이 있는지 확인
+        Optional<Now> existingGame = nowRepository.findByCharacter(character);
+        if (existingGame.isPresent()) {
+            return handleExistingGame(existingGame.get(), character, stationName, lineNumber);
+        }
+
+        // 2. 해당 역의 미완료 스토리 조회
+        List<StoryResponse> uncompletedStories = storyService.getUncompletedStoriesByStation(
+                stationName, lineNumber, character.getCharId());
+
+        if (uncompletedStories.isEmpty()) {
+            return GameEnterResponse.builder()
+                    .success(false)
+                    .action("NO_STORIES")
+                    .message(String.format("%s역 %d호선에 플레이 가능한 스토리가 없습니다.", stationName, lineNumber))
+                    .character(entityDtoMapper.toCharacterResponse(character))
+                    .stationName(stationName)
+                    .stationLine(lineNumber)
+                    .build();
+        }
+
+        // 3. 적절한 스토리 선택 (첫 번째 미완료 스토리)
+        StoryResponse selectedStory = uncompletedStories.get(0);
+
+        // 4. 새 게임 시작
+        GameStartResponse startResponse = startGame(selectedStory.getStoryId());
+
+        return GameEnterResponse.builder()
+                .success(true)
+                .action("START_NEW")
+                .message(String.format("새로운 스토리를 시작합니다: %s", selectedStory.getStoryTitle()))
+                .selectedStoryId(selectedStory.getStoryId())
+                .selectedStoryTitle(selectedStory.getStoryTitle())
+                .firstPage(startResponse.getCurrentPage())
+                .character(startResponse.getCharacter())
+                .stationName(stationName)
+                .stationLine(lineNumber)
+                .availableStories(uncompletedStories.size() > 1 ? uncompletedStories : null)
+                .build();
+    }
+
+    /**
+     * 기존 진행 중인 게임 처리
+     */
+    private GameEnterResponse handleExistingGame(Now existingGame, Character character,
+                                                 String requestedStation, Integer requestedLine) {
+        Page currentPage = existingGame.getPage();
+        Story currentStory = storyRepository.findById(currentPage.getStoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Story", "id", currentPage.getStoId()));
+
+        Station currentStation = currentStory.getStation();
+
+        // 같은 역인 경우 기존 게임 재개
+        if (currentStation.getStaName().equals(requestedStation) &&
+                currentStation.getStaLine().equals(requestedLine)) {
+
+            PageResponse pageResponse = entityDtoMapper.toPageResponse(currentPage);
+            CharacterResponse characterResponse = entityDtoMapper.toCharacterResponse(character);
+
+            return GameEnterResponse.builder()
+                    .success(true)
+                    .action("RESUME_EXISTING")
+                    .message(String.format("진행 중인 게임을 재개합니다: %s", currentStory.getStoTitle()))
+                    .resumeStoryId(currentStory.getStoId())
+                    .resumeStoryTitle(currentStory.getStoTitle())
+                    .currentPage(pageResponse)
+                    .character(characterResponse)
+                    .stationName(requestedStation)
+                    .stationLine(requestedLine)
+                    .build();
+        }
+
+        // 다른 역인 경우 기존 게임 정보와 함께 안내
+        return GameEnterResponse.builder()
+                .success(false)
+                .action("RESUME_EXISTING")
+                .message(String.format("다른 역에서 진행 중인 게임이 있습니다: %s역 %d호선 - %s",
+                        currentStation.getStaName(), currentStation.getStaLine(), currentStory.getStoTitle()))
+                .resumeStoryId(currentStory.getStoId())
+                .resumeStoryTitle(currentStory.getStoTitle())
+                .currentPage(entityDtoMapper.toPageResponse(currentPage))
+                .character(entityDtoMapper.toCharacterResponse(character))
+                .stationName(requestedStation)
+                .stationLine(requestedLine)
+                .build();
+    }
 
     /**
      * 게임 시작
@@ -112,7 +212,7 @@ public class GameService {
         if (gameSession.isEmpty()) {
             return GameStateResponse.builder()
                     .hasActiveGame(false)
-                    .character(entityDtoMapper.toCharacterResponse(character)) // 🔄
+                    .character(entityDtoMapper.toCharacterResponse(character))
                     .message("진행 중인 게임이 없습니다.")
                     .build();
         }
@@ -121,7 +221,6 @@ public class GameService {
         Story story = storyRepository.findById(currentPage.getStoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Story", "id", currentPage.getStoId()));
 
-        // 🔄 공통 Mapper 사용
         PageResponse pageResponse = entityDtoMapper.toPageResponse(currentPage);
         CharacterResponse characterResponse = entityDtoMapper.toCharacterResponse(character);
 
@@ -193,7 +292,6 @@ public class GameService {
                 .message("선택이 적용되었습니다.")
                 .build();
     }
-
 
     /**
      * 다음 페이지 결정 로직
@@ -374,8 +472,7 @@ public class GameService {
                         .logeEnding(endType.equals("COMPLETE") ? 1 : 0) // 1: 성공, 0: 실패
                         .build();
 
-                // LogE Repository가 있다면 저장
-                // logERepository.save(endLog);
+                logERepository.save(endLog); // ✅ 실제 저장 활성화
 
                 log.info("게임 종료 로그 기록: charId={}, storyId={}, endType={}, reason={}",
                         character.getCharId(), story.getStoId(), endType, reason);

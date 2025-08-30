@@ -6,6 +6,7 @@ import com.example.backend.entity.Now;
 import com.example.backend.entity.Station;
 import com.example.backend.entity.Story;
 import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.repository.LogERepository;
 import com.example.backend.repository.NowRepository;
 import com.example.backend.repository.StationRepository;
 import com.example.backend.repository.StoryRepository;
@@ -27,9 +28,87 @@ public class StoryService {
     private final StoryRepository storyRepository;
     private final StationRepository stationRepository;
     private final NowRepository nowRepository;
+    private final LogERepository logERepository;
     private final AuthService authService;
     private final CharacterService characterService;
     private final EntityDtoMapper entityDtoMapper;
+
+    /**
+     * 특정 역의 미완료 스토리 조회 (게임 진입 시 사용)
+     */
+    @Transactional(readOnly = true)
+    public List<StoryResponse> getUncompletedStoriesByStation(String stationName, Integer lineNumber, Long characterId) {
+        // 1. 해당 역의 모든 스토리 조회
+        List<Story> allStories = storyRepository.findByStationNameAndLine(stationName, lineNumber);
+
+        if (allStories.isEmpty()) {
+            log.info("{}역 {}호선에 스토리가 없습니다.", stationName, lineNumber);
+            return List.of();
+        }
+
+        // 2. 해당 캐릭터가 클리어한 스토리 ID 목록 조회
+        List<Long> completedStoryIds = logERepository.findCompletedStoryIdsByCharacter(characterId);
+
+        // 3. 미완료 스토리 필터링
+        List<Story> uncompletedStories = allStories.stream()
+                .filter(story -> !completedStoryIds.contains(story.getStoId()))
+                .collect(Collectors.toList());
+
+        log.info("{}역 {}호선 - 전체: {}개, 클리어: {}개, 미완료: {}개",
+                stationName, lineNumber, allStories.size(), completedStoryIds.size(), uncompletedStories.size());
+
+        return uncompletedStories.stream()
+                .map(entityDtoMapper::toStoryResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 게임 진입을 위한 적절한 스토리 선택
+     */
+    @Transactional(readOnly = true)
+    public Optional<StoryResponse> selectStoryForGameEntry(String stationName, Integer lineNumber, Long characterId) {
+        List<StoryResponse> uncompletedStories = getUncompletedStoriesByStation(stationName, lineNumber, characterId);
+
+        if (uncompletedStories.isEmpty()) {
+            log.info("{}역 {}호선에 플레이 가능한 스토리가 없습니다.", stationName, lineNumber);
+            return Optional.empty();
+        }
+
+        // 전략: 가장 첫 번째 미완료 스토리 선택 (향후 난이도순 정렬 등으로 개선 가능)
+        StoryResponse selectedStory = uncompletedStories.get(0);
+
+        log.info("게임 진입 스토리 선택: {} (ID: {})", selectedStory.getStoryTitle(), selectedStory.getStoryId());
+
+        return Optional.of(selectedStory);
+    }
+
+    /**
+     * 캐릭터의 스토리 클리어 여부 확인
+     */
+    @Transactional(readOnly = true)
+    public boolean hasCharacterCompletedStory(Long characterId, Long storyId) {
+        return logERepository.hasCharacterCompletedStory(characterId, storyId);
+    }
+
+    /**
+     * 캐릭터의 클리어 통계 조회
+     */
+    @Transactional(readOnly = true)
+    public CharacterStoryStatistics getCharacterStoryStatistics(Long characterId) {
+        Long totalClears = logERepository.countCompletionsByCharacter(characterId);
+        Long totalPlays = logERepository.countTotalPlaysByCharacter(characterId);
+
+        double clearRate = totalPlays > 0 ? (double) totalClears / totalPlays * 100 : 0.0;
+
+        return CharacterStoryStatistics.builder()
+                .characterId(characterId)
+                .totalClears(totalClears)
+                .totalPlays(totalPlays)
+                .clearRate(clearRate)
+                .build();
+    }
+
+    // 기존 메서드들...
 
     /**
      * 전체 스토리 목록 조회
@@ -291,5 +370,18 @@ public class StoryService {
         return allStations.stream()
                 .filter(station -> !stationsWithStories.contains(station))
                 .collect(Collectors.toList());
+    }
+
+    // ===== 내부 DTO 클래스 =====
+
+    @lombok.Data
+    @lombok.Builder
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class CharacterStoryStatistics {
+        private Long characterId;
+        private Long totalClears;
+        private Long totalPlays;
+        private Double clearRate;
     }
 }

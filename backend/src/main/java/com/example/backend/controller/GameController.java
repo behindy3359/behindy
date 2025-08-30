@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.example.backend.dto.game.GameEnterResponse;
+import com.example.backend.dto.character.CharacterGameStatusResponse;
 
 import java.util.List;
 
@@ -47,6 +49,18 @@ public class GameController {
     public ResponseEntity<GameStartResponse> startGame(@PathVariable Long storyId) {
         GameStartResponse response = gameService.startGame(storyId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * 역 기반 게임 진입 (핵심 기능)
+     */
+    @PostMapping("/enter/station/{stationName}/line/{lineNumber}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GameEnterResponse> enterGameByStation(
+            @PathVariable String stationName,
+            @PathVariable Integer lineNumber) {
+        GameEnterResponse response = gameService.enterGameByStation(stationName, lineNumber);
+        return ResponseEntity.ok(response);
     }
 
     /**
