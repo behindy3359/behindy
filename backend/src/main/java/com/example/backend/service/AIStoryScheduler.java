@@ -8,6 +8,7 @@ import com.example.backend.repository.StationRepository;
 import com.example.backend.repository.StoryRepository;
 import com.example.backend.repository.PageRepository;
 import com.example.backend.repository.OptionsRepository;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -133,9 +134,8 @@ public class AIStoryScheduler {
             return null;
         }
     }
-
     /**
-     * LLM 서버 통신 - 필드명 수정 + 상세 로깅
+     * LLM 서버 통신 - 수동 JSON 파싱으로 확실한 매핑
      */
     private CompleteStoryResponse requestFromLLMServer(Station station) {
         if (aiServerUrl == null || station == null) {
@@ -146,72 +146,59 @@ public class AIStoryScheduler {
         try {
             String url = aiServerUrl + "/generate-complete-story";
 
-            // ✅ FastAPI 형식에 맞게 snake_case로 수정
             CompleteStoryRequest request = CompleteStoryRequest.builder()
-                    .station_name(station.getStaName())  // ✅ snake_case
-                    .line_number(station.getStaLine())   // ✅ snake_case
-                    .character_health(80)               // ✅ snake_case
-                    .character_sanity(80)               // ✅ snake_case
+                    .station_name(station.getStaName())
+                    .line_number(station.getStaLine())
+                    .character_health(80)
+                    .character_sanity(80)
                     .build();
 
-            // HTTP 요청 설정
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("X-Internal-API-Key", internalApiKey != null ? internalApiKey : "default-key");
             HttpEntity<CompleteStoryRequest> entity = new HttpEntity<>(request, headers);
 
             log.info("🤖 LLM 서버 요청 시작: {} → {}역", url, station.getStaName());
-            log.info("📤 요청 데이터: {}", request);
-            log.info("📤 요청 헤더: {}", headers);
 
             long startTime = System.currentTimeMillis();
 
-            // RestTemplate 호출 (12분 타임아웃으로 설정된 aiServerRestTemplate 사용)
-            ResponseEntity<CompleteStoryResponse> response = aiServerRestTemplate.exchange(
-                    url, HttpMethod.POST, entity,
-                    new ParameterizedTypeReference<CompleteStoryResponse>() {});
+            // 🔥 String으로 응답 받아서 수동 파싱
+            ResponseEntity<String> rawResponse = aiServerRestTemplate.exchange(
+                    url, HttpMethod.POST, entity, String.class);
 
             long responseTime = System.currentTimeMillis() - startTime;
             log.info("⏱️ LLM 서버 응답 시간: {}ms", responseTime);
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                // 🔥 원본 응답을 JSON 문자열로 먼저 확인
-                try {
-                    // ResponseEntity에서 원본 문자열 추출을 위한 별도 호출
-                    ResponseEntity<String> rawResponse = aiServerRestTemplate.exchange(
-                            url, HttpMethod.POST, entity, String.class);
+            if (rawResponse.getStatusCode() == HttpStatus.OK && rawResponse.getBody() != null) {
+                String jsonResponse = rawResponse.getBody();
 
-                    log.info("🔍 LLM 서버 원본 응답 (문자열):");
-                    log.info("---start---");
-                    log.info(rawResponse.getBody());
-                    log.info("---end---");
+                log.info("🔍 LLM 서버 원본 응답:");
+                log.info("---start---");
+                log.info(jsonResponse);
+                log.info("---end---");
 
-                } catch (Exception e) {
-                    log.warn("원본 응답 로깅 실패: {}", e.getMessage());
+                // 🔥 수동 JSON 파싱 및 매핑
+                CompleteStoryResponse parsedResponse = parseJsonManually(jsonResponse);
+
+                if (parsedResponse != null) {
+                    log.info("✅ 수동 파싱 성공:");
+                    log.info("  story_title: {}", parsedResponse.getStoryTitle());
+                    log.info("  description: {}", parsedResponse.getDescription());
+                    log.info("  theme: {}", parsedResponse.getTheme());
+                    log.info("  pages 개수: {}", parsedResponse.getPages() != null ? parsedResponse.getPages().size() : "null");
+
+                    return parsedResponse;
+                } else {
+                    log.error("❌ 수동 파싱 실패");
+                    return null;
                 }
-
-                CompleteStoryResponse responseBody = response.getBody();
-
-                // 기존 로깅 코드...
-                log.info("✅ LLM 서버 응답 성공:");
-                log.info("  story_title: {}", responseBody.getStoryTitle());
-                log.info("  description: {}", responseBody.getDescription());
-                log.info("  theme: {}", responseBody.getTheme());
-                log.info("  keywords: {}", responseBody.getKeywords());
-                log.info("  pages 개수: {}", responseBody.getPages() != null ? responseBody.getPages().size() : "null");
-
-                return responseBody;
             }
 
-            log.warn("❌ LLM 서버 응답 오류: {}", response.getStatusCode());
-            if (response.getBody() != null) {
-                log.warn("❌ 응답 본문: {}", response.getBody());
-            }
+            log.warn("❌ LLM 서버 응답 오류: {}", rawResponse.getStatusCode());
             return null;
 
         } catch (Exception e) {
             log.error("❌ LLM 서버 통신 실패: {}", e.getMessage());
-            log.error("❌ 예외 타입: {}", e.getClass().getSimpleName());
             if (e.getCause() != null) {
                 log.error("❌ 원인: {}", e.getCause().getMessage());
             }
@@ -219,6 +206,86 @@ public class AIStoryScheduler {
         }
     }
 
+    /**
+     * 🔥 수동 JSON 파싱 메서드 (Jackson 문제 우회)
+     */
+    private CompleteStoryResponse parseJsonManually(String jsonString) {
+        try {
+            log.info("🔧 수동 JSON 파싱 시작");
+
+            // Jackson ObjectMapper 사용
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(jsonString);
+
+            // 각 필드 수동 추출
+            String storyTitle = root.has("story_title") ? root.get("story_title").asText() : null;
+            String description = root.has("description") ? root.get("description").asText() : null;
+            String theme = root.has("theme") ? root.get("theme").asText() : null;
+            Integer estimatedLength = root.has("estimated_length") ? root.get("estimated_length").asInt() : null;
+            String difficulty = root.has("difficulty") ? root.get("difficulty").asText() : null;
+            String stationName = root.has("station_name") ? root.get("station_name").asText() : null;
+            Integer lineNumber = root.has("line_number") ? root.get("line_number").asInt() : null;
+
+            // keywords 배열 파싱
+            List<String> keywords = new ArrayList<>();
+            if (root.has("keywords") && root.get("keywords").isArray()) {
+                for (com.fasterxml.jackson.databind.JsonNode keyword : root.get("keywords")) {
+                    keywords.add(keyword.asText());
+                }
+            }
+
+            // pages 배열 파싱
+            List<LLMPageData> pages = new ArrayList<>();
+            if (root.has("pages") && root.get("pages").isArray()) {
+                for (com.fasterxml.jackson.databind.JsonNode pageNode : root.get("pages")) {
+                    String content = pageNode.has("content") ? pageNode.get("content").asText() : "";
+
+                    // options 파싱
+                    List<LLMOptionData> options = new ArrayList<>();
+                    if (pageNode.has("options") && pageNode.get("options").isArray()) {
+                        for (com.fasterxml.jackson.databind.JsonNode optionNode : pageNode.get("options")) {
+                            LLMOptionData option = LLMOptionData.builder()
+                                    .content(optionNode.has("content") ? optionNode.get("content").asText() : "")
+                                    .effect(optionNode.has("effect") ? optionNode.get("effect").asText() : "none")
+                                    .amount(optionNode.has("amount") ? optionNode.get("amount").asInt() : 0)
+                                    .effect_preview(optionNode.has("effect_preview") ? optionNode.get("effect_preview").asText() : "")
+                                    .build();
+                            options.add(option);
+                        }
+                    }
+
+                    LLMPageData page = LLMPageData.builder()
+                            .content(content)
+                            .options(options)
+                            .build();
+                    pages.add(page);
+                }
+            }
+
+            CompleteStoryResponse result = CompleteStoryResponse.builder()
+                    .story_title(storyTitle)
+                    .description(description)
+                    .theme(theme)
+                    .keywords(keywords)
+                    .pages(pages)
+                    .estimated_length(estimatedLength)
+                    .difficulty(difficulty)
+                    .station_name(stationName)
+                    .line_number(lineNumber)
+                    .build();
+
+            log.info("✅ 수동 파싱 완료:");
+            log.info("  파싱된 story_title: {}", result.getStoryTitle());
+            log.info("  파싱된 pages 개수: {}", result.getPages().size());
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("❌ 수동 JSON 파싱 실패: {}", e.getMessage());
+            log.error("원본 JSON: {}", jsonString);
+            return null;
+        }
+    }
     /**
      * LLM 응답 검증
      */
@@ -374,22 +441,63 @@ public class AIStoryScheduler {
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class CompleteStoryRequest {
-        private String station_name;      // ✅ snake_case로 수정
-        private Integer line_number;      // ✅ snake_case로 수정
-        private Integer character_health; // ✅ snake_case로 수정
-        private Integer character_sanity; // ✅ snake_case로 수정
+        @JsonProperty("station_name")
+        private String station_name;
+
+        @JsonProperty("line_number")
+        private Integer line_number;
+
+        @JsonProperty("character_health")
+        private Integer character_health;
+
+        @JsonProperty("character_sanity")
+        private Integer character_sanity;
     }
+
 
     @lombok.Data
     @lombok.Builder
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class CompleteStoryResponse {
-        private String storyTitle;
+        // 🔥 필드명을 snake_case로 변경 (Lombok Builder와 일치)
+        @JsonProperty("story_title")
+        private String story_title;
+
+        @JsonProperty("description")
         private String description;
+
+        @JsonProperty("theme")
         private String theme;
+
+        @JsonProperty("keywords")
         private List<String> keywords;
+
+        @JsonProperty("pages")
         private List<LLMPageData> pages;
+
+        @JsonProperty("estimated_length")
+        private Integer estimated_length;
+
+        @JsonProperty("difficulty")
+        private String difficulty;
+
+        @JsonProperty("station_name")
+        private String station_name;
+
+        @JsonProperty("line_number")
+        private Integer line_number;
+
+        // 🔥 getter 메서드들 (기존 코드 호환)
+        public String getStoryTitle() { return story_title; }
+        public String getDescription() { return description; }
+        public String getTheme() { return theme; }
+        public List<String> getKeywords() { return keywords; }
+        public List<LLMPageData> getPages() { return pages; }
+        public Integer getEstimatedLength() { return estimated_length; }
+        public String getDifficulty() { return difficulty; }
+        public String getStationName() { return station_name; }
+        public Integer getLineNumber() { return line_number; }
     }
 
     @lombok.Data
@@ -397,17 +505,35 @@ public class AIStoryScheduler {
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class LLMPageData {
+        @JsonProperty("content")
         private String content;
+
+        @JsonProperty("options")
         private List<LLMOptionData> options;
     }
+
 
     @lombok.Data
     @lombok.Builder
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class LLMOptionData {
+        @JsonProperty("content")
         private String content;
+
+        @JsonProperty("effect")
         private String effect;
+
+        @JsonProperty("amount")
         private Integer amount;
+
+        @JsonProperty("effect_preview")
+        private String effect_preview;
+
+        // 🔥 getter 메서드 (기존 코드 호환)
+        public String getContent() { return content; }
+        public String getEffect() { return effect; }
+        public Integer getAmount() { return amount; }
+        public String getEffectPreview() { return effect_preview; }
     }
 }
