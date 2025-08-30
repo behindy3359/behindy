@@ -175,11 +175,32 @@ public class AIStoryScheduler {
             log.info("⏱️ LLM 서버 응답 시간: {}ms", responseTime);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                log.info("✅ LLM 서버 응답 성공: {}", response.getBody().getStoryTitle());
-                log.info("📥 응답 상세: 페이지 {}개, 테마 {}",
-                        response.getBody().getPages() != null ? response.getBody().getPages().size() : 0,
-                        response.getBody().getTheme());
-                return response.getBody();
+                // 🔥 원본 응답을 JSON 문자열로 먼저 확인
+                try {
+                    // ResponseEntity에서 원본 문자열 추출을 위한 별도 호출
+                    ResponseEntity<String> rawResponse = aiServerRestTemplate.exchange(
+                            url, HttpMethod.POST, entity, String.class);
+
+                    log.info("🔍 LLM 서버 원본 응답 (문자열):");
+                    log.info("---start---");
+                    log.info(rawResponse.getBody());
+                    log.info("---end---");
+
+                } catch (Exception e) {
+                    log.warn("원본 응답 로깅 실패: {}", e.getMessage());
+                }
+
+                CompleteStoryResponse responseBody = response.getBody();
+
+                // 기존 로깅 코드...
+                log.info("✅ LLM 서버 응답 성공:");
+                log.info("  story_title: {}", responseBody.getStoryTitle());
+                log.info("  description: {}", responseBody.getDescription());
+                log.info("  theme: {}", responseBody.getTheme());
+                log.info("  keywords: {}", responseBody.getKeywords());
+                log.info("  pages 개수: {}", responseBody.getPages() != null ? responseBody.getPages().size() : "null");
+
+                return responseBody;
             }
 
             log.warn("❌ LLM 서버 응답 오류: {}", response.getStatusCode());
