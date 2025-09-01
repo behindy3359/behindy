@@ -11,7 +11,7 @@ import { useToast } from '@/shared/store/uiStore';
 import { Button } from '@/shared/components/ui/button/Button';
 import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
 import { CharacterGameStatus } from '@/features/game/types/gameTypes';
-import { resumeGame } from '@/features/game/utils/gameNavigation';
+import { resumeCurrentGame } from '@/features/game/utils/gameNavigation';
 
 export default function CharacterPage() {
   const router = useRouter();
@@ -47,9 +47,16 @@ export default function CharacterPage() {
 
   // 게임 재개
   const handleResumeGame = () => {
-    resumeGame(
+    resumeCurrentGame(
       () => toast.success('게임을 재개합니다'),
-      (error) => toast.error(error)
+      (error: unknown) => {
+        // 타입 체크 후 처리
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+        } else {
+          console.error('Unknown error:', error);
+        }
+      }
     );
   };
 
