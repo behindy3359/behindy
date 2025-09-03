@@ -16,8 +16,17 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const pathname = usePathname();
   const { isAuthenticated, status, checkAuthStatus } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // 클라이언트 하이드레이션 체크
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
+    // 하이드레이션 전에는 실행하지 않음
+    if (!isHydrated) return;
+
     const initializeAuth = async () => {
       console.log('🔍 AuthGuard 초기화 시작:', {
         pathname,
@@ -38,11 +47,13 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       if (requiresAuth(pathname)) {
         console.log('🔐 보호된 라우트 - 인증 확인 필요:', pathname);
         
+        // sessionStorage에서 토큰 확인 (클라이언트에서만)
         const hasToken = !!TokenManager.getAccessToken();
         
         if (!hasToken) {
           console.warn('❌ 토큰 없음 - 로그인 페이지로 리다이렉트');
           router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
+          setIsLoading(false);
           return;
         }
 
@@ -55,6 +66,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
           } catch (error) {
             console.error('❌ 인증 상태 확인 실패:', error);
             router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
+            setIsLoading(false);
             return;
           }
         }
@@ -66,10 +78,10 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     };
 
     initializeAuth();
-  }, [pathname, checkAuthStatus, isAuthenticated, status, router]);
+  }, [pathname, checkAuthStatus, isAuthenticated, status, router, isHydrated]);
 
-  // 로딩 중일 때
-  if (isLoading || status === 'loading') {
+  // 하이드레이션 전이거나 로딩 중일 때
+  if (!isHydrated || isLoading || status === 'loading') {
     return (
       <div style={{
         display: 'flex',

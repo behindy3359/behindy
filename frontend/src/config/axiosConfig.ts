@@ -11,23 +11,38 @@ if (typeof window !== 'undefined') {
 class TokenManager {
   static getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return sessionStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS); 
+    return sessionStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS);
   }
 
   static setAccessToken(accessToken: string): void {
     if (typeof window === 'undefined') return;
-    sessionStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS, accessToken); 
+    sessionStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS, accessToken);
+    // 토큰 저장 시간도 함께 저장
+    sessionStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS + '_time', Date.now().toString());
   }
 
   static clearAccessToken(): void {
     if (typeof window === 'undefined') return;
     sessionStorage.removeItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS);
+    sessionStorage.removeItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS + '_time');
   }
 
-  // Refresh Token은 HttpOnly Cookie로 관리되므로 JS에서 접근 불가
+  static isTokenValid(): boolean {
+    if (typeof window === 'undefined') return false;
+    
+    const token = sessionStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS);
+    const tokenTime = sessionStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS + '_time');
+    
+    if (!token || !tokenTime) return false;
+    
+    const tokenAge = Date.now() - parseInt(tokenTime);
+    const maxAge = SECURITY_CONFIG.JWT.ACCESS_TOKEN_LIFETIME;
+    
+    // 토큰이 만료되었으면 false
+    return tokenAge < maxAge;
+  }
   static hasValidTokens = (): boolean => {
-    const accessToken = TokenManager.getAccessToken();
-    return Boolean(accessToken);
+    return TokenManager.isTokenValid();
   };
 
   // 모든 토큰 정리

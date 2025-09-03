@@ -260,27 +260,42 @@ export const useAuthStore = create<AuthStore>()(
           );
         },
 
-        // 🔒 인증 상태 확인 - 사용자 정보 재조회
         checkAuthStatus: async (): Promise<void> => {
           try {
             set({ isLoading: true }, false, 'auth/check/start');
-
+        
             const accessToken = TokenManager.getAccessToken();
-
+        
             if (!accessToken) {
-              set(
-                {
+              console.log('🔄 Access Token 없음 - Refresh 시도');
+              const refreshSuccess = await get().refreshToken();
+              
+              if (!refreshSuccess) {
+                set({
                   status: 'unauthenticated',
                   user: null,
                   isLoading: false,
-                },
-                false,
-                'auth/check/noTokens'
-              );
-              return;
+                }, false, 'auth/check/noTokens');
+                return;
+              }
+            } else {
+              // Access Token이 있으면 유효성 검증
+              if (!TokenManager.isTokenValid()) {
+                console.log('🔄 Access Token 만료 - Refresh 시도');
+                const refreshSuccess = await get().refreshToken();
+                
+                if (!refreshSuccess) {
+                  set({
+                    status: 'unauthenticated',
+                    user: null,
+                    isLoading: false,
+                  }, false, 'auth/check/expired');
+                  return;
+                }
+              }
             }
-
-            // 🔒 토큰이 있으면 사용자 정보 재조회
+        
+            // 사용자 정보 재조회
             await get().fetchCurrentUser();
           } catch (error) {
             console.error('Auth status check failed:', error);
