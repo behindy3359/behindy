@@ -20,26 +20,43 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
   const router = useRouter();
   const toast = useToast();
 
-  // 역 클릭 핸들러
-  const handleStationClick = (stationName: string) => {
+  // 역 클릭 핸들러 개선
+  const handleStationClick = async (stationName: string) => {
+    console.log(`🚉 역 클릭: ${stationName}, 로그인 상태: ${isAuthenticated()}`);
+    
     if (!isAuthenticated()) {
       // 로그인하지 않았을 때: 기존 동작 (역 이름 표시만)
+      console.log('🔓 비로그인 상태 - 역 이름만 표시');
       onStationClick(stationName);
       return;
     }
 
     // 로그인했을 때: 게임 진입 시도
-    const station = visibleStations.find(s => s.id === stationName);
-    if (!station) {
-      toast.error('역 정보를 찾을 수 없습니다');
-      return;
-    }
+    try {
+      const station = visibleStations.find(s => s.id === stationName);
+      if (!station) {
+        toast.error('역 정보를 찾을 수 없습니다');
+        return;
+      }
 
-    // 첫 번째 노선 번호 사용 (환승역의 경우)
-    const lineNumber = station.lines[0];
-    
-    // 게임 페이지로 이동
-    router.push(`/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`);
+      // 첫 번째 노선 번호 사용 (환승역의 경우)
+      const lineNumber = station.lines[0];
+      
+      console.log(`🎮 게임 진입 시도: ${stationName}역 ${lineNumber}호선`);
+      
+      // 로딩 토스트 표시
+      toast.info(`${stationName}역으로 이동중...`);
+      
+      // 게임 페이지로 이동 (비동기 처리)
+      const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
+      await router.push(gameUrl);
+      
+      console.log(`✅ 게임 페이지 이동 성공: ${gameUrl}`);
+      
+    } catch (error) {
+      console.error('❌ 게임 진입 실패:', error);
+      toast.error('게임 진입에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   return (
@@ -174,7 +191,7 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
                   />
                 )}
                 
-                {/* 역 메인 아이콘 */}
+                {/* 역 메인 아이콘 - 개선된 클릭 핸들러 */}
                 <circle
                   cx={station.x}
                   cy={station.y}
@@ -190,11 +207,47 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
                   strokeWidth="0.3"
                   style={{ 
                     cursor: 'pointer',
-                    transition: 'fill 0.2s ease',
-                    filter: isLoggedIn ? 'brightness(1.1)' : 'none'
+                    transition: 'all 0.2s ease',
+                    filter: isLoggedIn ? 'brightness(1.2)' : 'none'
                   }}
-                  onClick={() => handleStationClick(station.id)}
+                  onClick={(e) => {
+                    // 이벤트 전파 방지
+                    e.stopPropagation();
+                    console.log(`🖱️ 역 아이콘 클릭: ${station.id}`);
+                    handleStationClick(station.id);
+                  }}
+                  onMouseEnter={(e) => {
+                    // 마우스 호버 효과
+                    if (isLoggedIn) {
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    // 마우스 호버 해제
+                    if (isLoggedIn) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }
+                  }}
                 />
+
+                {/* 로그인 사용자를 위한 게임 아이콘 힌트 */}
+                {isLoggedIn && (
+                  <text
+                    x={station.x}
+                    y={station.y + 0.2}
+                    fontSize="0.8"
+                    fill="white"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    style={{ 
+                      fontWeight: 'bold',
+                      pointerEvents: 'none',
+                      filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.8))'
+                    }}
+                  >
+                    🎮
+                  </text>
+                )}
               </g>
             );
           })}
