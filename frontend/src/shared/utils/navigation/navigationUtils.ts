@@ -2,7 +2,6 @@
 export const PROTECTED_ROUTES = [
   '/community/write',      // 글쓰기만 보호
   '/community/edit',       // 글 수정만 보호  
-  '/game',                // 게임 시작
   '/character',           // 캐릭터 생성
   '/profile'              // 프로필
 ];
@@ -12,6 +11,7 @@ export const PUBLIC_ROUTES = [
   '/community',           // 커뮤니티 목록
   '/community/[id]',      // 게시글 상세
   '/metro',               // 지하철 노선도
+  '/game',                // 게임 시작
   '/auth/login',
   '/auth/signup',
   '/auth/error',
