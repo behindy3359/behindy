@@ -95,6 +95,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/metro/**").permitAll()
                         .requestMatchers("/api/stories/**").permitAll()
+                        .requestMatchers("/api/game/**").permitAll()
+                        .requestMatchers("/api/characters/**").permitAll()
                         .requestMatchers("/test/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/").permitAll()
