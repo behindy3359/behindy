@@ -1,3 +1,5 @@
+// frontend/src/features/game/components/CharacterCreationForm/CharacterCreationForm.tsx
+
 "use client";
 
 import React, { useState } from 'react';
@@ -78,10 +80,32 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
       setIsLoading(true);
       setValidationError('');
 
+      // 🔥 요청 전 로그
+      console.log('🎮 [캐릭터 생성] API 요청 시작:', {
+        timestamp: new Date().toISOString(),
+        stationName,
+        lineNumber,
+        charName: trimmedName,
+        requestData: { charName: trimmedName }
+      });
+
       const response = await api.post<CreateCharacterResponse>(
         '/api/characters',
         { charName: trimmedName } as CreateCharacterRequest
       );
+
+      // 🔥 성공 응답 로그
+      console.log('✅ [캐릭터 생성] API 응답 성공:', {
+        timestamp: new Date().toISOString(),
+        response: {
+          charId: response.charId,
+          charName: response.charName,
+          charHealth: response.charHealth,
+          charSanity: response.charSanity,
+          isAlive: response.isAlive,
+          statusMessage: response.statusMessage
+        }
+      });
 
       // API 응답을 Character 타입으로 변환
       const character: Character = {
@@ -96,19 +120,65 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
         createdAt: response.createdAt
       };
 
+      console.log('🎯 [캐릭터 생성] 캐릭터 객체 변환 완료:', character);
       onCharacterCreated(character);
 
     } catch (error: unknown) {
-      console.error('캐릭터 생성 실패:', error);
-      
+      // 🔥 에러 상세 로그
+      console.error('❌ [캐릭터 생성] API 요청 실패:', {
+        timestamp: new Date().toISOString(),
+        error,
+        errorType: error?.constructor?.name,
+        stationName,
+        lineNumber,
+        charName: trimmedName
+      });
+
+      let errorMessage = '캐릭터 생성에 실패했습니다';
+
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response: { data: { message: string } } };
-        onError(axiosError.response?.data?.message || '캐릭터 생성에 실패했습니다');
-      } else {
-        onError('캐릭터 생성 중 오류가 발생했습니다');
+        const axiosError = error as { 
+          response: { 
+            status: number;
+            data: { message: string };
+            statusText?: string;
+          };
+          message?: string;
+        };
+
+        console.error('📡 [캐릭터 생성] 서버 응답 상세:', {
+          status: axiosError.response?.status,
+          statusText: axiosError.response?.statusText,
+          data: axiosError.response?.data,
+          message: axiosError.message
+        });
+
+        errorMessage = axiosError.response?.data?.message || errorMessage;
+        
+        // 특정 에러 상황별 추가 로그
+        if (axiosError.response?.status === 401) {
+          console.error('🚨 [캐릭터 생성] 인증 실패 - 로그인 상태 확인 필요');
+        } else if (axiosError.response?.status === 409) {
+          console.warn('⚠️ [캐릭터 생성] 이미 캐릭터가 존재함');
+        } else if (axiosError.response?.status === 400) {
+          console.warn('⚠️ [캐릭터 생성] 잘못된 요청 데이터');
+        }
+      } else if (error instanceof Error) {
+        console.error('💥 [캐릭터 생성] 네트워크/클라이언트 에러:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+        errorMessage = error.message;
       }
+
+      onError(errorMessage);
     } finally {
       setIsLoading(false);
+      console.log('🏁 [캐릭터 생성] 요청 완료:', {
+        timestamp: new Date().toISOString(),
+        success: !validationError
+      });
     }
   };
 
@@ -212,7 +282,7 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
   );
 };
 
-// Styled Components
+// Styled Components (기존과 동일)
 const Container = styled.div`
   max-width: 500px;
   width: 100%;

@@ -1,3 +1,5 @@
+// frontend/src/shared/store/uiStore.ts
+
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { ModalState, ToastState, LoadingState } from '@/shared/types/common';
@@ -207,7 +209,7 @@ export const useUIStore = create<UIStore>()(
       }),
       {
         name: 'ui-store',
-        // 사이드바 상태만 persist
+        // 사이드바 상태와 테마만 persist
         partialize: (state) => ({
           sidebar: {
             isOpen: state.sidebar.isOpen,
