@@ -1,5 +1,3 @@
-// frontend/src/features/metro/components/inner/MetroSVG.tsx
-
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { SVG_CONFIG } from '@/features/metro/data/stationsData';
@@ -22,7 +20,7 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
   const router = useRouter();
   const toast = useToast();
 
-  // 🎯 단순화된 역 클릭 핸들러 - 버튼에서만 분기 처리
+  // 🎯 단순화된 역 클릭 핸들러 - 진행 중인 게임 자동 재개
   const handleStationClick = async (stationName: string) => {
     console.log(`🚉 역 클릭: ${stationName}, 로그인 상태: ${isAuthenticated()}`);
     
@@ -34,6 +32,7 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
     }
 
     // 🔐 로그인: 바로 게임 페이지로 이동
+    // 백엔드에서 진행 중인 게임이 있으면 자동으로 RESUME_EXISTING 처리
     try {
       const station = visibleStations.find(s => s.id === stationName);
       if (!station) {
@@ -44,6 +43,8 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
       const lineNumber = station.lines[0];
       console.log(`🎮 게임 진입: ${stationName}역 ${lineNumber}호선`);
       
+      // 🔥 어떤 역을 클릭해도 같은 URL로 이동
+      // 백엔드 API가 진행 중인 게임이 있으면 자동으로 해당 스토리로 재개
       const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
       await router.push(gameUrl);
       
@@ -112,7 +113,7 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
             
             return (
               <g key={`station-${station.id}`}>
-                {/* 실시간 열차 도착 정보 표시 (기존 유지) */}
+                {/* 실시간 열차 도착 정보 표시 */}
                 {hasRealtimeData && (
                   <circle
                     cx={station.x}
@@ -151,7 +152,7 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
                   />
                 )}
                 
-                {/* 🎯 단순화된 역 메인 아이콘 - 로그인 상태 관계없이 동일 */}
+                {/* 🎯 역 메인 아이콘 - 로그인 상태 관계없이 동일 */}
                 <circle
                   cx={station.x}
                   cy={station.y}
