@@ -1,5 +1,3 @@
-// frontend/src/features/game/components/CharacterCreationForm/CharacterCreationForm.tsx
-
 "use client";
 
 import React, { useState } from 'react';
@@ -122,6 +120,8 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
       };
 
       console.log('🎯 [캐릭터 생성] 캐릭터 객체 변환 완료:', character);
+      
+      // 🔥 캐릭터 생성 완료 후 원래 목적지로 이동
       onCharacterCreated(character);
 
     } catch (error: unknown) {

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Sparkles, AlertCircle, ArrowRight, Info } from 'lucide-react';
+import { User, Sparkles, AlertCircle, ArrowRight, Info, Home, ArrowLeft } from 'lucide-react';
 import { api } from '@/config/axiosConfig';
 import { useAuthStore } from '@/shared/store/authStore';
 import { useToast } from '@/shared/store/uiStore';
@@ -25,8 +25,10 @@ export default function CharacterCreatePage() {
   const toast = useToast();
   const { isAuthenticated } = useAuthStore();
 
-  // returnUrl 파라미터 확인 (게임 진입 시 돌아갈 URL)
+  // 🔥 URL 파라미터에서 원래 목적지 정보 추출
   const returnUrl = searchParams.get('returnUrl') || '/';
+  const stationName = searchParams.get('station');
+  const lineNumber = searchParams.get('line');
 
   // 상태
   const [charName, setCharName] = useState('');
@@ -35,7 +37,7 @@ export default function CharacterCreatePage() {
   const [existingCharacter, setExistingCharacter] = useState<Character | null>(null);
   const [nameError, setNameError] = useState('');
 
-  // 기존 캐릭터 확인 - 올바른 API 엔드포인트 사용
+  // 기존 캐릭터 확인
   const checkExistingCharacter = async () => {
     if (!isAuthenticated()) {
       router.push('/auth/login');
@@ -45,7 +47,6 @@ export default function CharacterCreatePage() {
     try {
       setIsChecking(true);
       
-      // 🔥 올바른 API 엔드포인트 사용: /characters/exists
       console.log('📡 [Character Create] API 요청: /characters/exists');
       
       const response = await api.get<{
@@ -65,12 +66,16 @@ export default function CharacterCreatePage() {
         setExistingCharacter(response.data);
       }
     } catch (error: any) {
-      console.error('❌ [Character Create] Character check failed:', {
+      console.log('⚠️ [Character Create] Character check error:', {
         status: error.response?.status,
         message: error.response?.data?.message,
-        url: error.config?.url
+        isNotFound: error.response?.status === 404
       });
-      // 에러 무시하고 생성 화면 표시
+      
+      // 404는 정상 (캐릭터 없음)
+      if (error.response?.status !== 404) {
+        console.error('❌ [Character Create] Unexpected error:', error);
+      }
     } finally {
       setIsChecking(false);
     }
@@ -98,7 +103,6 @@ export default function CharacterCreatePage() {
       setNameError('이름은 20자 이하여야 합니다');
       return false;
     }
-    // 특수문자 체크 (한글, 영문, 숫자, 공백만 허용)
     const nameRegex = /^[가-힣a-zA-Z0-9\s]+$/;
     if (!nameRegex.test(name)) {
       setNameError('한글, 영문, 숫자만 사용 가능합니다');
@@ -116,19 +120,17 @@ export default function CharacterCreatePage() {
     try {
       setIsLoading(true);
       
-      // 🔥 요청 전 로그
-      console.log('🎮 [Character Create] API 요청 시작:', {
+      console.log('🎮 [캐릭터 생성] API 요청 시작:', {
         timestamp: new Date().toISOString(),
         charName: charName.trim(),
-        requestData: { charName: charName.trim() }
+        originalDestination: { stationName, lineNumber, returnUrl }
       });
 
       const response = await api.post<Character>('/characters', {
         charName: charName.trim()
       });
 
-      // 🔥 성공 응답 로그
-      console.log('✅ [Character Create] API 응답 성공:', {
+      console.log('✅ [캐릭터 생성] API 응답 성공:', {
         timestamp: new Date().toISOString(),
         response: {
           charId: response.charId,
@@ -142,18 +144,22 @@ export default function CharacterCreatePage() {
 
       toast.success(`캐릭터 '${response.charName}'이 생성되었습니다!`);
       
-      // returnUrl이 있으면 해당 URL로, 없으면 메인으로
-      if (returnUrl.includes('/game')) {
+      // 🔥 원래 목적지로 이동 (역 클릭에서 온 경우 게임으로, 아니면 홈으로)
+      if (stationName && lineNumber) {
+        console.log('🎯 [캐릭터 생성] 게임으로 복귀:', { stationName, lineNumber });
+        const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
+        router.push(gameUrl);
+      } else if (returnUrl && returnUrl !== '/') {
+        console.log('🎯 [캐릭터 생성] 원래 페이지로 복귀:', returnUrl);
         router.push(returnUrl);
       } else {
+        console.log('🎯 [캐릭터 생성] 홈으로 이동');
         router.push('/');
       }
     } catch (error: any) {
-      // 🔥 에러 상세 로그
-      console.error('❌ [Character Create] API 요청 실패:', {
+      console.error('❌ [캐릭터 생성] API 요청 실패:', {
         timestamp: new Date().toISOString(),
         error,
-        errorType: error?.constructor?.name,
         charName: charName.trim()
       });
 
@@ -169,47 +175,36 @@ export default function CharacterCreatePage() {
           message?: string;
         };
 
-        console.error('📡 [Character Create] 서버 응답 상세:', {
-          status: axiosError.response?.status,
-          statusText: axiosError.response?.statusText,
-          data: axiosError.response?.data,
-          message: axiosError.message
-        });
-
         errorMessage = axiosError.response?.data?.message || errorMessage;
         
-        // 특정 에러 상황별 추가 로그
-        if (axiosError.response?.status === 401) {
-          console.error('🚨 [Character Create] 인증 실패 - 로그인 상태 확인 필요');
-        } else if (axiosError.response?.status === 409) {
-          console.warn('⚠️ [Character Create] 이미 캐릭터가 존재함');
-        } else if (axiosError.response?.status === 400) {
-          console.warn('⚠️ [Character Create] 잘못된 요청 데이터');
+        if (axiosError.response?.status === 409) {
+          // 이미 캐릭터가 있다는 에러인 경우 다시 확인
+          checkExistingCharacter();
         }
       }
 
       toast.error(errorMessage);
-      
-      // 이미 캐릭터가 있다는 에러인 경우
-      if (errorMessage.includes('이미') || errorMessage.includes('존재')) {
-        checkExistingCharacter();
-      }
     } finally {
       setIsLoading(false);
-      console.log('🏁 [Character Create] 요청 완료:', {
-        timestamp: new Date().toISOString(),
-        success: !nameError
-      });
     }
   };
 
-  // 기존 캐릭터로 계속하기
+  // 🔥 기존 캐릭터로 계속하기 (원래 목적지로)
   const handleContinueWithExisting = () => {
-    if (returnUrl.includes('/game')) {
+    if (stationName && lineNumber) {
+      console.log('🎯 [기존 캐릭터] 게임으로 진입:', { stationName, lineNumber });
+      const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
+      router.push(gameUrl);
+    } else if (returnUrl && returnUrl !== '/') {
       router.push(returnUrl);
     } else {
-      router.push('/game');
+      router.push('/');
     }
+  };
+
+  // 🔥 홈으로 돌아가기
+  const handleGoHome = () => {
+    router.push('/');
   };
 
   // 기존 캐릭터 포기하고 새로 만들기
@@ -224,21 +219,14 @@ export default function CharacterCreatePage() {
       setIsLoading(true);
       console.log('🚪 [Character Create] 게임 포기 시도...');
       
-      // 게임 포기 API 호출
       await api.post('/game/quit');
       
       console.log('✅ [Character Create] 게임 포기 성공');
       
-      // 캐릭터 삭제는 백엔드에서 자동 처리되므로
-      // 바로 새 캐릭터 생성 가능 상태로 변경
       setExistingCharacter(null);
       toast.info('이전 캐릭터를 포기했습니다. 새로운 캐릭터를 만들어주세요.');
     } catch (error: any) {
-      console.error('❌ [Character Create] 캐릭터 포기 실패:', {
-        error,
-        message: error.message,
-        response: error.response?.data
-      });
+      console.error('❌ [Character Create] 캐릭터 포기 실패:', error);
       toast.error('캐릭터 포기에 실패했습니다');
     } finally {
       setIsLoading(false);
@@ -263,7 +251,7 @@ export default function CharacterCreatePage() {
     );
   }
 
-  // 이미 캐릭터가 있는 경우
+  // 🔥 이미 캐릭터가 있는 경우 - 개선된 UI
   if (existingCharacter) {
     return (
       <AppLayout>
@@ -308,15 +296,38 @@ export default function CharacterCreatePage() {
                 <span>한 번에 하나의 캐릭터만 플레이할 수 있습니다.</span>
               </InfoMessage>
 
+              {/* 🔥 원래 목적지 정보 표시 */}
+              {stationName && lineNumber && (
+                <DestinationInfo>
+                  <span>🚉 목적지: {stationName}역 {lineNumber}호선</span>
+                </DestinationInfo>
+              )}
+
               <ButtonGroup>
+                {/* 🔥 상황에 맞는 버튼 텍스트 */}
                 <Button
                   onClick={handleContinueWithExisting}
                   size="lg"
                   fullWidth
-                  rightIcon={<ArrowRight size={20} />}
+                  rightIcon={stationName && lineNumber ? <ArrowRight size={20} /> : <Home size={20} />}
                 >
-                  이 캐릭터로 계속하기
+                  {stationName && lineNumber 
+                    ? `${stationName}역으로 이동하기` 
+                    : '이 캐릭터로 계속하기'
+                  }
                 </Button>
+                
+                {/* 🔥 홈으로 돌아가기 버튼 추가 */}
+                <Button
+                  variant="outline"
+                  onClick={handleGoHome}
+                  size="lg"
+                  fullWidth
+                  leftIcon={<Home size={20} />}
+                >
+                  홈으로 돌아가기
+                </Button>
+
                 <Button
                   variant="destructive"
                   onClick={handleAbandonAndCreate}
@@ -334,7 +345,7 @@ export default function CharacterCreatePage() {
     );
   }
 
-  // 새 캐릭터 생성
+  // 새 캐릭터 생성 UI (기존과 동일)
   return (
     <AppLayout>
       <Container>
@@ -349,7 +360,14 @@ export default function CharacterCreatePage() {
               새로운 캐릭터 만들기
             </CardTitle>
             <CardDescription>
-              지하철 모험을 함께할 캐릭터를 생성하세요
+              {stationName && lineNumber ? (
+                <>
+                  <strong>{stationName}역 {lineNumber}호선</strong>에서 펼쳐질 모험을 위해<br />
+                  새로운 캐릭터를 생성하세요
+                </>
+              ) : (
+                <>지하철 모험을 함께할 캐릭터를 생성하세요</>
+              )}
             </CardDescription>
           </CardHeader>
 
@@ -385,18 +403,10 @@ export default function CharacterCreatePage() {
             <InfoBox>
               <InfoTitle>캐릭터 정보</InfoTitle>
               <InfoList>
-                <InfoItem>
-                  <span>• 초기 체력: 100</span>
-                </InfoItem>
-                <InfoItem>
-                  <span>• 초기 정신력: 100</span>
-                </InfoItem>
-                <InfoItem>
-                  <span>• 선택에 따라 능력치가 변화합니다</span>
-                </InfoItem>
-                <InfoItem>
-                  <span>• 체력이나 정신력이 0이 되면 게임 오버</span>
-                </InfoItem>
+                <InfoItem><span>• 초기 체력: 100</span></InfoItem>
+                <InfoItem><span>• 초기 정신력: 100</span></InfoItem>
+                <InfoItem><span>• 선택에 따라 능력치가 변화합니다</span></InfoItem>
+                <InfoItem><span>• 체력이나 정신력이 0이 되면 게임 오버</span></InfoItem>
               </InfoList>
             </InfoBox>
 
@@ -410,6 +420,17 @@ export default function CharacterCreatePage() {
             >
               캐릭터 생성하기
             </Button>
+
+            {/* 🔥 뒤로가기 버튼 추가 */}
+            <Button
+              variant="outline"
+              onClick={handleGoHome}
+              size="lg"
+              fullWidth
+              leftIcon={<ArrowLeft size={20} />}
+            >
+              취소
+            </Button>
           </FormSection>
         </CreateCard>
       </Container>
@@ -417,6 +438,21 @@ export default function CharacterCreatePage() {
   );
 }
 
+// 🔥 추가된 스타일 컴포넌트들
+const DestinationInfo = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing[3]};
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  color: ${({ theme }) => theme.colors.primary[600]};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: 500;
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
+`;
+
+// 기존 스타일 컴포넌트들 (동일)...
 // Styled Components
 const Container = styled.div`
   max-width: 600px;

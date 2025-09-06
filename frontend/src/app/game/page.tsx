@@ -126,9 +126,8 @@ export default function UnifiedGamePage() {
         
         // 404 또는 캐릭터 없음의 경우
         if (characterError.response?.status === 404) {
-          console.log('👤 [Game Page] Character not found (404), switching to creation');
-          setGameState('CHARACTER_CREATE');
-          setHasInitialized(true);
+          console.log('👤 [Game Page] Character not found (404), redirecting to creation');
+          redirectToCharacterCreation();  // 🔥 개선된 리다이렉트 함수 사용
           return;
         } else {
           // 다른 에러는 실제 에러로 처리
@@ -242,25 +241,34 @@ export default function UnifiedGamePage() {
     }
   }, [stationName, lineNumber, isAuthenticated, router, toast, hasInitialized]);
 
-  // 캐릭터 생성 완료 핸들러
+  // 캐릭터가 없을 때 생성 페이지로 이동하는 로직 개선
+  const redirectToCharacterCreation = () => {
+    console.log('👤 [Game Page] 캐릭터 생성 페이지로 이동');
+    
+    // 🔥 현재 게임 목적지 정보를 URL 파라미터로 전달
+    const createUrl = `/character/create?station=${encodeURIComponent(stationName!)}&line=${lineNumber}&returnUrl=${encodeURIComponent(window.location.href)}`;
+    
+    router.push(createUrl);
+  };
+
+  // 캐릭터 생성 완료 핸들러 개선
   const handleCharacterCreated = useCallback((newCharacter: Character) => {
-    console.log('✅ [Game Page] Character created:', {
+    console.log('✅ [Game Page] Character created, continuing with game:', {
       charId: newCharacter.charId,
       charName: newCharacter.charName,
-      charHealth: newCharacter.charHealth,
-      charSanity: newCharacter.charSanity
+      originalDestination: { stationName, lineNumber }
     });
     
     setCharacter(newCharacter);
-    setHasInitialized(false); // 🔥 재초기화 허용
-    toast.success(`${newCharacter.charName} 캐릭터가 생성되었습니다!`);
+    setHasInitialized(false); // 재초기화 허용
+    toast.success(`${newCharacter.charName} 캐릭터로 게임을 시작합니다!`);
     
-    // 캐릭터 생성 후 게임 재시작
+    // 🔥 캐릭터 생성 후 즉시 게임 초기화 재시도
     setTimeout(() => {
-      console.log('🔄 [Game Page] Restarting game after character creation');
+      console.log('🔄 [Game Page] Restarting game initialization after character creation');
       initializeGame();
-    }, 500);
-  }, [initializeGame, toast]);
+    }, 1000);  // 1초 후 재시도 (서버 동기화 시간 확보)
+  }, [initializeGame, toast, stationName, lineNumber]);
 
   // 선택지 선택 처리
   const handleChoice = async (optionId: number) => {
