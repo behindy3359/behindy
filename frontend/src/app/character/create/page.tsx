@@ -35,7 +35,7 @@ export default function CharacterCreatePage() {
   const [existingCharacter, setExistingCharacter] = useState<Character | null>(null);
   const [nameError, setNameError] = useState('');
 
-  // 기존 캐릭터 확인
+  // 기존 캐릭터 확인 - 올바른 API 엔드포인트 사용
   const checkExistingCharacter = async () => {
     if (!isAuthenticated()) {
       router.push('/auth/login');
@@ -44,17 +44,32 @@ export default function CharacterCreatePage() {
 
     try {
       setIsChecking(true);
+      
+      // 🔥 올바른 API 엔드포인트 사용: /api/characters/exists
+      console.log('📡 [Character Create] API 요청: /api/characters/exists');
+      
       const response = await api.get<{
         success: boolean;
-        data: Character | null;
         message: string;
+        data: Character | null;
       }>('/api/characters/exists');
+
+      console.log('✅ [Character Create] Character exists response:', {
+        success: response.success,
+        message: response.message,
+        hasData: !!response.data,
+        charName: response.data?.charName
+      });
 
       if (response.success && response.data) {
         setExistingCharacter(response.data);
       }
-    } catch (error) {
-      console.error('캐릭터 확인 실패:', error);
+    } catch (error: any) {
+      console.error('❌ [Character Create] Character check failed:', {
+        status: error.response?.status,
+        message: error.response?.data?.message,
+        url: error.config?.url
+      });
       // 에러 무시하고 생성 화면 표시
     } finally {
       setIsChecking(false);
@@ -100,8 +115,29 @@ export default function CharacterCreatePage() {
 
     try {
       setIsLoading(true);
+      
+      // 🔥 요청 전 로그
+      console.log('🎮 [Character Create] API 요청 시작:', {
+        timestamp: new Date().toISOString(),
+        charName: charName.trim(),
+        requestData: { charName: charName.trim() }
+      });
+
       const response = await api.post<Character>('/api/characters', {
         charName: charName.trim()
+      });
+
+      // 🔥 성공 응답 로그
+      console.log('✅ [Character Create] API 응답 성공:', {
+        timestamp: new Date().toISOString(),
+        response: {
+          charId: response.charId,
+          charName: response.charName,
+          charHealth: response.charHealth,
+          charSanity: response.charSanity,
+          isAlive: response.isAlive,
+          statusMessage: response.statusMessage
+        }
       });
 
       toast.success(`캐릭터 '${response.charName}'이 생성되었습니다!`);
@@ -113,8 +149,45 @@ export default function CharacterCreatePage() {
         router.push('/');
       }
     } catch (error: any) {
-      console.error('캐릭터 생성 실패:', error);
-      const errorMessage = error.response?.data?.message || '캐릭터 생성에 실패했습니다';
+      // 🔥 에러 상세 로그
+      console.error('❌ [Character Create] API 요청 실패:', {
+        timestamp: new Date().toISOString(),
+        error,
+        errorType: error?.constructor?.name,
+        charName: charName.trim()
+      });
+
+      let errorMessage = '캐릭터 생성에 실패했습니다';
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { 
+          response: { 
+            status: number;
+            data: { message: string };
+            statusText?: string;
+          };
+          message?: string;
+        };
+
+        console.error('📡 [Character Create] 서버 응답 상세:', {
+          status: axiosError.response?.status,
+          statusText: axiosError.response?.statusText,
+          data: axiosError.response?.data,
+          message: axiosError.message
+        });
+
+        errorMessage = axiosError.response?.data?.message || errorMessage;
+        
+        // 특정 에러 상황별 추가 로그
+        if (axiosError.response?.status === 401) {
+          console.error('🚨 [Character Create] 인증 실패 - 로그인 상태 확인 필요');
+        } else if (axiosError.response?.status === 409) {
+          console.warn('⚠️ [Character Create] 이미 캐릭터가 존재함');
+        } else if (axiosError.response?.status === 400) {
+          console.warn('⚠️ [Character Create] 잘못된 요청 데이터');
+        }
+      }
+
       toast.error(errorMessage);
       
       // 이미 캐릭터가 있다는 에러인 경우
@@ -123,6 +196,10 @@ export default function CharacterCreatePage() {
       }
     } finally {
       setIsLoading(false);
+      console.log('🏁 [Character Create] 요청 완료:', {
+        timestamp: new Date().toISOString(),
+        success: !nameError
+      });
     }
   };
 
@@ -145,15 +222,23 @@ export default function CharacterCreatePage() {
 
     try {
       setIsLoading(true);
+      console.log('🚪 [Character Create] 게임 포기 시도...');
+      
       // 게임 포기 API 호출
       await api.post('/api/game/quit');
+      
+      console.log('✅ [Character Create] 게임 포기 성공');
       
       // 캐릭터 삭제는 백엔드에서 자동 처리되므로
       // 바로 새 캐릭터 생성 가능 상태로 변경
       setExistingCharacter(null);
       toast.info('이전 캐릭터를 포기했습니다. 새로운 캐릭터를 만들어주세요.');
-    } catch (error) {
-      console.error('캐릭터 포기 실패:', error);
+    } catch (error: any) {
+      console.error('❌ [Character Create] 캐릭터 포기 실패:', {
+        error,
+        message: error.message,
+        response: error.response?.data
+      });
       toast.error('캐릭터 포기에 실패했습니다');
     } finally {
       setIsLoading(false);
@@ -282,7 +367,6 @@ export default function CharacterCreatePage() {
                 fullWidth
                 size="lg"
                 leftIcon={<User size={20} />}
-                // maxLength={20}
               />
               <NameHelper>
                 <span>{charName.length}/20</span>
