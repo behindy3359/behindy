@@ -39,25 +39,36 @@ public class CharacterService {
     private final StoryRepository storyRepository;
     private final LogERepository logERepository;
 
-    /**
-     * 캐릭터 생성
-     */
     @Transactional
     public CharacterResponse createCharacter(CharacterCreateRequest request) {
+        log.info("🎮 캐릭터 생성 서비스 시작: charName={}", request.getCharName());
+
         User currentUser = authService.getCurrentUser();
+        log.info("   현재 사용자: userId={}, userName={}", currentUser.getUserId(), currentUser.getUserName());
 
         // 1. 기존 살아있는 캐릭터 확인
-        if (characterRepository.existsByUserAndDeletedAtIsNull(currentUser)) {
+        boolean hasExistingCharacter = characterRepository.existsByUserAndDeletedAtIsNull(currentUser);
+        log.info("   기존 살아있는 캐릭터 존재 여부: {}", hasExistingCharacter);
+
+        if (hasExistingCharacter) {
+            log.warn("⚠️ 캐릭터 생성 실패 - 기존 살아있는 캐릭터 존재");
             throw new IllegalStateException("이미 살아있는 캐릭터가 있습니다. 기존 캐릭터가 사망해야 새 캐릭터를 생성할 수 있습니다.");
         }
 
         // 2. 캐릭터 이름 중복 확인
         String sanitizedName = htmlSanitizer.sanitize(request.getCharName());
-        if (characterRepository.existsByCharNameAndDeletedAtIsNull(sanitizedName)) {
+        log.info("   캐릭터 이름 검증: 원본={}, 정제됨={}", request.getCharName(), sanitizedName);
+
+        boolean nameExists = characterRepository.existsByCharNameAndDeletedAtIsNull(sanitizedName);
+        log.info("   캐릭터 이름 중복 여부: {}", nameExists);
+
+        if (nameExists) {
+            log.warn("⚠️ 캐릭터 생성 실패 - 캐릭터 이름 중복: {}", sanitizedName);
             throw new IllegalArgumentException("이미 사용 중인 캐릭터 이름입니다.");
         }
 
         // 3. 캐릭터 생성
+        log.info("   캐릭터 엔티티 생성 중...");
         Character character = Character.builder()
                 .user(currentUser)
                 .charName(sanitizedName)
@@ -65,36 +76,62 @@ public class CharacterService {
                 .charSanity(100)
                 .build();
 
+        log.info("   데이터베이스에 캐릭터 저장 중...");
         Character savedCharacter = characterRepository.save(character);
-        log.info("새 캐릭터 생성됨: userId={}, charId={}, charName={}",
-                currentUser.getUserId(), savedCharacter.getCharId(), sanitizedName);
+        log.info("✅ 캐릭터 데이터베이스 저장 완료: charId={}", savedCharacter.getCharId());
 
-        return entityDtoMapper.toCharacterResponse(savedCharacter);
+        CharacterResponse response = entityDtoMapper.toCharacterResponse(savedCharacter);
+        log.info("✅ 캐릭터 생성 서비스 완료: charId={}, charName={}, health={}, sanity={}",
+                response.getCharId(), response.getCharName(), response.getCharHealth(), response.getCharSanity());
+
+        return response;
     }
 
-    /**
-     * 현재 사용자의 살아있는 캐릭터 조회
-     */
     @Transactional(readOnly = true)
     public CharacterResponse getCurrentCharacter() {
-        User currentUser = authService.getCurrentUser();
+        log.info("🔍 현재 캐릭터 조회 서비스 시작");
 
-        Character character = characterRepository.findByUserAndDeletedAtIsNull(currentUser)
-                .orElseThrow(() -> new ResourceNotFoundException("Character", "user", currentUser.getUserId()));
+        User currentUser = authService.getCurrentUser();
+        log.info("   현재 사용자: userId={}", currentUser.getUserId());
+
+        log.info("   데이터베이스에서 살아있는 캐릭터 조회 중...");
+        Optional<Character> characterOpt = characterRepository.findByUserAndDeletedAtIsNull(currentUser);
+
+        if (characterOpt.isEmpty()) {
+            log.warn("⚠️ 살아있는 캐릭터를 찾을 수 없음: userId={}", currentUser.getUserId());
+            throw new ResourceNotFoundException("Character", "user", currentUser.getUserId());
+        }
+
+        Character character = characterOpt.get();
+        log.info("✅ 캐릭터 조회 완료: charId={}, charName={}, health={}, sanity={}, alive={}",
+                character.getCharId(), character.getCharName(), character.getCharHealth(),
+                character.getCharSanity(), !character.isDeleted());
 
         return entityDtoMapper.toCharacterResponse(character);
     }
 
-    /**
-     * 현재 사용자의 살아있는 캐릭터 조회 (Optional)
-     */
     @Transactional(readOnly = true)
     public Optional<CharacterResponse> getCurrentCharacterOptional() {
-        User currentUser = authService.getCurrentUser();
+        log.info("🔍 현재 캐릭터 선택적 조회 서비스 시작");
 
-        return characterRepository.findByUserAndDeletedAtIsNull(currentUser)
-                .map(entityDtoMapper::toCharacterResponse);
+        User currentUser = authService.getCurrentUser();
+        log.info("   현재 사용자: userId={}", currentUser.getUserId());
+
+        log.info("   데이터베이스에서 살아있는 캐릭터 조회 중...");
+        Optional<Character> characterOpt = characterRepository.findByUserAndDeletedAtIsNull(currentUser);
+
+        if (characterOpt.isEmpty()) {
+            log.info("   살아있는 캐릭터가 없음");
+            return Optional.empty();
+        }
+
+        Character character = characterOpt.get();
+        log.info("✅ 캐릭터 조회 완료: charId={}, charName={}, health={}, sanity={}",
+                character.getCharId(), character.getCharName(), character.getCharHealth(), character.getCharSanity());
+
+        return Optional.of(entityDtoMapper.toCharacterResponse(character));
     }
+
 
     /**
      * 캐릭터 게임 상태 조회 (게임 컨텍스트 포함)
@@ -170,84 +207,124 @@ public class CharacterService {
                 .build();
     }
 
-    /**
-     * 사용자의 모든 캐릭터 조회 (사망한 것 포함)
-     */
     @Transactional(readOnly = true)
     public List<CharacterResponse> getCharacterHistory() {
+        log.info("📜 캐릭터 히스토리 조회 서비스 시작");
+
         User currentUser = authService.getCurrentUser();
+        log.info("   현재 사용자: userId={}", currentUser.getUserId());
 
+        log.info("   데이터베이스에서 사용자의 모든 캐릭터 조회 중...");
         List<Character> characters = characterRepository.findByUserOrderByCreatedAtDesc(currentUser);
+        log.info("   조회된 캐릭터 수: {}", characters.size());
 
-        return characters.stream()
-                .map(entityDtoMapper::toCharacterResponse)
+        List<CharacterResponse> responses = characters.stream()
+                .map(character -> {
+                    log.debug("     캐릭터: charId={}, charName={}, alive={}, createdAt={}",
+                            character.getCharId(), character.getCharName(),
+                            !character.isDeleted(), character.getCreatedAt());
+                    return entityDtoMapper.toCharacterResponse(character);
+                })
                 .collect(Collectors.toList());
+
+        log.info("✅ 캐릭터 히스토리 조회 완료: {}개 캐릭터", responses.size());
+        return responses;
     }
 
-    /**
-     * 캐릭터 사망 처리 (수동)
-     */
     @Transactional
     public void killCharacter(Long charId) {
-        User currentUser = authService.getCurrentUser();
+        log.info("💀 캐릭터 사망 처리 서비스 시작: charId={}", charId);
 
+        User currentUser = authService.getCurrentUser();
+        log.info("   현재 사용자: userId={}", currentUser.getUserId());
+
+        log.info("   데이터베이스에서 살아있는 캐릭터 조회 중...");
         Character character = characterRepository.findAliveCharacterById(charId)
-                .orElseThrow(() -> new ResourceNotFoundException("Character", "id", charId));
+                .orElseThrow(() -> {
+                    log.warn("⚠️ 살아있는 캐릭터를 찾을 수 없음: charId={}", charId);
+                    return new ResourceNotFoundException("Character", "id", charId);
+                });
+
+        log.info("   캐릭터 권한 확인: charOwner={}, currentUser={}",
+                character.getUser().getUserId(), currentUser.getUserId());
 
         if (!character.getUser().getUserId().equals(currentUser.getUserId())) {
+            log.warn("⚠️ 캐릭터 삭제 권한 없음: charId={}, charOwner={}, currentUser={}",
+                    charId, character.getUser().getUserId(), currentUser.getUserId());
             throw new AccessDeniedException("캐릭터를 삭제할 권한이 없습니다.");
         }
 
+        log.info("   캐릭터 사망 처리 중: charName={}", character.getCharName());
         // 캐릭터 사망 처리
         character.delete();
-        characterRepository.save(character);
+        Character savedCharacter = characterRepository.save(character);
+        log.info("   데이터베이스에 사망 처리 저장 완료: deletedAt={}", savedCharacter.getDeletedAt());
 
         // 게임 진행 데이터 정리
+        log.info("   게임 진행 데이터 정리 시작...");
         cleanupGameProgress(character);
 
-        log.info("캐릭터 사망 처리됨: charId={}, charName={}, userId={}",
-                charId, character.getCharName(), currentUser.getUserId());
+        log.info("✅ 캐릭터 사망 처리 완료: charId={}, charName={}", charId, character.getCharName());
     }
 
-    /**
-     * 캐릭터 스탯 업데이트 및 자동 사망 체크
-     */
     @Transactional
     public CharacterResponse updateCharacterStats(Long charId, Integer healthChange, Integer sanityChange) {
+        log.info("📊 캐릭터 스탯 업데이트 서비스 시작: charId={}, healthChange={}, sanityChange={}",
+                charId, healthChange, sanityChange);
+
+        log.info("   데이터베이스에서 살아있는 캐릭터 조회 중...");
         Character character = characterRepository.findAliveCharacterById(charId)
-                .orElseThrow(() -> new ResourceNotFoundException("Character", "id", charId));
+                .orElseThrow(() -> {
+                    log.warn("⚠️ 살아있는 캐릭터를 찾을 수 없음: charId={}", charId);
+                    return new ResourceNotFoundException("Character", "id", charId);
+                });
+
+        int oldHealth = character.getCharHealth();
+        int oldSanity = character.getCharSanity();
+        log.info("   현재 스탯: health={}, sanity={}", oldHealth, oldSanity);
 
         // 스탯 업데이트
         if (healthChange != null) {
             int newHealth = Math.max(0, character.getCharHealth() + healthChange);
             character.setCharHealth(newHealth);
+            log.info("   체력 변경: {} + {} = {} (0~100 범위 적용)", oldHealth, healthChange, newHealth);
         }
 
         if (sanityChange != null) {
             int newSanity = Math.max(0, character.getCharSanity() + sanityChange);
             character.setCharSanity(newSanity);
+            log.info("   정신력 변경: {} + {} = {} (0~100 범위 적용)", oldSanity, sanityChange, newSanity);
         }
 
         // 자동 사망 체크
+        log.info("   자동 사망 체크 중: health={}, sanity={}", character.getCharHealth(), character.getCharSanity());
         checkAndProcessDeath(character);
 
+        log.info("   데이터베이스에 스탯 변경 저장 중...");
         Character savedCharacter = characterRepository.save(character);
 
-        return entityDtoMapper.toCharacterResponse(savedCharacter);
+        CharacterResponse response = entityDtoMapper.toCharacterResponse(savedCharacter);
+        log.info("✅ 캐릭터 스탯 업데이트 완료: charId={}, finalHealth={}, finalSanity={}, alive={}",
+                response.getCharId(), response.getCharHealth(), response.getCharSanity(), response.isAlive());
+
+        return response;
     }
 
-    /**
-     * 자동 사망 체크 및 처리
-     */
     @Transactional
     public void checkAndProcessDeath(Character character) {
-        if (character.getCharHealth() <= 0 || character.getCharSanity() <= 0) {
+        boolean isDying = character.getCharHealth() <= 0 || character.getCharSanity() <= 0;
+        log.info("   사망 조건 확인: health={}, sanity={}, isDying={}",
+                character.getCharHealth(), character.getCharSanity(), isDying);
+
+        if (isDying) {
+            log.warn("💀 캐릭터 자동 사망 처리: charId={}, health={}, sanity={}",
+                    character.getCharId(), character.getCharHealth(), character.getCharSanity());
+
             character.delete();
             characterRepository.save(character);
             cleanupGameProgress(character);
 
-            log.info("캐릭터 자동 사망: charId={}, health={}, sanity={}",
-                    character.getCharId(), character.getCharHealth(), character.getCharSanity());
+            log.info("✅ 자동 사망 처리 완료: charId={}", character.getCharId());
         }
     }
 
@@ -274,12 +351,18 @@ public class CharacterService {
         return "보통";
     }
 
-    /**
-     * 게임 진행 데이터 정리 (캐릭터 사망 시)
-     */
     private void cleanupGameProgress(Character character) {
-        // Now 테이블의 현재 위치 정보 정리
-        nowRepository.deleteByCharacter(character);
-        log.info("캐릭터 {}의 게임 진행 데이터 정리 완료", character.getCharId());
+        log.info("🧹 게임 진행 데이터 정리 시작: charId={}", character.getCharId());
+
+        try {
+            // Now 테이블의 현재 위치 정보 정리
+            log.info("   Now 테이블에서 캐릭터 데이터 삭제 중...");
+            nowRepository.deleteByCharacter(character);
+            log.info("✅ 캐릭터 {}의 게임 진행 데이터 정리 완료", character.getCharId());
+
+        } catch (Exception e) {
+            log.error("❌ 게임 진행 데이터 정리 실패: charId={}, error={}", character.getCharId(), e.getMessage(), e);
+            // 정리 실패는 치명적이지 않으므로 예외를 다시 던지지 않음
+        }
     }
 }
