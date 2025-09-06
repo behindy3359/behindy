@@ -87,17 +87,17 @@ export default function UnifiedGamePage() {
 
       console.log('📡 [Game Page] Checking character status...');
       
-      // 🔥 올바른 API 엔드포인트 사용: /api/characters/exists
+      // 🔥 올바른 API 엔드포인트 사용: /characters/exists
       let characterStatus: Character | null = null;
       
       try {
-        console.log('🎯 [Game Page] API 요청: /api/characters/exists');
+        console.log('🎯 [Game Page] API 요청: /characters/exists');
         
         const characterResponse = await api.get<{
           success: boolean;
           message: string;
           data: Character | null;
-        }>('/api/characters/exists');
+        }>('/characters/exists');
         
         console.log('✅ [Game Page] Character exists response:', {
           success: characterResponse.success,
@@ -146,7 +146,7 @@ export default function UnifiedGamePage() {
           charName: characterStatus.charName
         });
 
-        const gameEnterUrl = `/api/game/enter/station/${encodeURIComponent(stationName)}/line/${lineNumber}`;
+        const gameEnterUrl = `/game/enter/station/${encodeURIComponent(stationName)}/line/${lineNumber}`;
         console.log('🎯 [Game Page] Game enter URL:', gameEnterUrl);
 
         const gameResponse = await api.post<GameEnterResponse>(gameEnterUrl);
@@ -284,7 +284,7 @@ export default function UnifiedGamePage() {
 
       console.log('📡 [Game Page] Sending choice to API:', optionId);
 
-      const response = await api.post<ChoiceResponse>(`/api/game/choice/${optionId}`);
+      const response = await api.post<ChoiceResponse>(`/game/choice/${optionId}`);
       
       console.log('✅ [Game Page] Choice response:', {
         success: response.success,
@@ -345,7 +345,7 @@ export default function UnifiedGamePage() {
     if (confirm('정말로 게임을 포기하시겠습니까?')) {
       try {
         console.log('🚪 [Game Page] Quitting game...');
-        await api.post('/api/game/quit');
+        await api.post('/game/quit');
         console.log('✅ [Game Page] Game quit successful');
         toast.info('게임을 포기했습니다');
         router.push('/');

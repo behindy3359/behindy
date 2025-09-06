@@ -30,7 +30,7 @@ export default function CharacterPage() {
 
     try {
       setIsLoading(true);
-      const response = await api.get<CharacterGameStatus>('/api/characters/game-status');
+      const response = await api.get<CharacterGameStatus>('/characters/game-status');
       setCharacter(response);
     } catch (error: any) {
       // 캐릭터가 없는 경우

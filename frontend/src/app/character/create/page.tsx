@@ -45,14 +45,14 @@ export default function CharacterCreatePage() {
     try {
       setIsChecking(true);
       
-      // 🔥 올바른 API 엔드포인트 사용: /api/characters/exists
-      console.log('📡 [Character Create] API 요청: /api/characters/exists');
+      // 🔥 올바른 API 엔드포인트 사용: /characters/exists
+      console.log('📡 [Character Create] API 요청: /characters/exists');
       
       const response = await api.get<{
         success: boolean;
         message: string;
         data: Character | null;
-      }>('/api/characters/exists');
+      }>('/characters/exists');
 
       console.log('✅ [Character Create] Character exists response:', {
         success: response.success,
@@ -123,7 +123,7 @@ export default function CharacterCreatePage() {
         requestData: { charName: charName.trim() }
       });
 
-      const response = await api.post<Character>('/api/characters', {
+      const response = await api.post<Character>('/characters', {
         charName: charName.trim()
       });
 
@@ -225,7 +225,7 @@ export default function CharacterCreatePage() {
       console.log('🚪 [Character Create] 게임 포기 시도...');
       
       // 게임 포기 API 호출
-      await api.post('/api/game/quit');
+      await api.post('/game/quit');
       
       console.log('✅ [Character Create] 게임 포기 성공');
       
