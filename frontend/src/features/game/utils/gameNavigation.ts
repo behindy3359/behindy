@@ -72,7 +72,7 @@ export async function quitGame(
   onError?: (error: string) => void
 ): Promise<void> {
   try {
-    await api.post('/api/game/quit');
+    await api.post('/game/quit');
     console.log('🏁 게임 종료됨');
     onSuccess?.();
     

@@ -89,8 +89,9 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
         requestData: { charName: trimmedName }
       });
 
+      // 🔥 수정: /api 제거 - baseURL에 이미 포함되어 있음
       const response = await api.post<CreateCharacterResponse>(
-        '/api/characters',
+        '/characters',  // /api 제거됨
         { charName: trimmedName } as CreateCharacterRequest
       );
 
