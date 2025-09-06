@@ -489,7 +489,7 @@ public class GameService {
                     return new ResourceNotFoundException("Living Character", "userId", user.getUserId());
                 });
     }
-    
+
     /**
      * 선택 로그 기록
      */
