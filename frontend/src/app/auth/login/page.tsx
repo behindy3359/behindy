@@ -1,8 +1,8 @@
 import React, { Suspense, useEffect } from 'react';
 import { LoginForm } from '@/features/auth/components/LoginForm/LoginForm';
 import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
-import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/shared/store/uiStore';
+import { useSearchParams } from 'next/navigation';
 
 // 로딩 폴백 컴포넌트
 function LoginLoadingFallback() {
