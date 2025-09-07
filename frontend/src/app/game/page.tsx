@@ -177,10 +177,6 @@ export default function UnifiedGamePage() {
           stationLine: gameResponse.stationLine
         });
 
-        if (!gameResponse.success) {
-          throw new Error(gameResponse.message);
-        }
-
         // 게임 응답에서 받은 캐릭터 정보로 업데이트
         if (gameResponse.character) {
           console.log('🔄 [Game Page] Updating character from game response');
