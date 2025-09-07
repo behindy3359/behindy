@@ -1,3 +1,5 @@
+"use client";
+
 import React, { Suspense, useEffect } from 'react';
 import { LoginForm } from '@/features/auth/components/LoginForm/LoginForm';
 import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
