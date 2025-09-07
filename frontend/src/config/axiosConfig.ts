@@ -121,8 +121,8 @@ const createApiClient = (baseURL: string) => {
       return Promise.reject(error);
     }
   );
-
-  // 응답 인터셉터 - 자동 토큰 갱신
+  
+  // 응답 인터셉터 - 자동 토큰 갱신 및 강제 로그아웃
   client.interceptors.response.use(
     (response) => {
       if (env.DEV_MODE) {
@@ -153,12 +153,11 @@ const createApiClient = (baseURL: string) => {
         try {
           console.log('🔄 Access Token 만료, 자동 갱신 시도...');
 
-          // 🔥 Refresh Token이 Cookie에 있으므로 요청 body 없이 호출
           const refreshResponse = await axios.post(
             `${env.API_URL}/auth/refresh`, 
-            {}, // 빈 body
+            {}, 
             { 
-              withCredentials: true, // Cookie 전송
+              withCredentials: true,
               timeout: SECURITY_CONFIG.API.TIMEOUT_MS
             }
           );
@@ -167,10 +166,8 @@ const createApiClient = (baseURL: string) => {
             accessToken: string; 
           };
           
-          // 새로운 Access Token만 저장 (Refresh Token은 Cookie에서 자동 갱신됨)
           TokenManager.setAccessToken(responseData.accessToken);
 
-          // 원래 요청 재시도
           const retryConfig = {
             ...originalRequest,
             headers: {
@@ -185,20 +182,42 @@ const createApiClient = (baseURL: string) => {
         } catch (refreshError) {
           console.error('❌ 토큰 갱신 실패:', refreshError);
           
-          // 토큰 갱신 실패 시 로그아웃 처리
+          // 🔥 토큰 갱신 실패 시 강제 로그아웃 처리
+          console.log('🧹 토큰 갱신 실패 - 강제 로그아웃 처리 시작');
+          
+          // 1. 클라이언트 토큰 정리
           TokenManager.clearAllTokens();
           
-          // 로그아웃 API 호출 (Cookie 정리)
+          // 2. 로그아웃 API 호출 (쿠키 정리) - 실패해도 무시
           try {
             await axios.post(`${env.API_URL}/auth/logout`, {}, { 
-              withCredentials: true 
+              withCredentials: true,
+              timeout: 3000 // 짧은 타임아웃
             });
+            console.log('✅ 서버 로그아웃 API 호출 성공');
           } catch (logoutError) {
-            console.warn('로그아웃 API 호출 실패:', logoutError);
+            console.warn('⚠️ 서버 로그아웃 API 호출 실패 (무시):', logoutError);
           }
           
+          // 3. Zustand 스토어 초기화
+          try {
+            const { useAuthStore } = await import('@/shared/store/authStore');
+            await useAuthStore.getState().logout();
+            console.log('✅ 인증 스토어 초기화 완료');
+          } catch (storeError) {
+            console.warn('⚠️ 인증 스토어 초기화 실패:', storeError);
+          }
+          
+          // 4. 강제 페이지 리다이렉트
           if (typeof window !== 'undefined') {
-            window.location.href = '/auth/login';
+            console.log('🔄 로그인 페이지로 강제 리다이렉트');
+            
+            // 현재 페이지 정보 저장
+            const currentPath = window.location.pathname + window.location.search;
+            const redirectUrl = `/auth/login?redirect=${encodeURIComponent(currentPath)}&reason=session_expired`;
+            
+            // 즉시 리다이렉트
+            window.location.href = redirectUrl;
           }
           
           return Promise.reject(refreshError);
