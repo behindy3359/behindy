@@ -135,19 +135,38 @@ export default function UnifiedGamePage() {
         }
       }
 
+
       if (characterStatus && characterStatus.charId) {
+        // 🔥 캐릭터 상태 상세 로깅
+        console.log('👤 [Game Page] Character status detailed:', {
+          charId: characterStatus.charId,
+          charName: characterStatus.charName,
+          charHealth: characterStatus.charHealth,
+          charSanity: characterStatus.charSanity,
+          isAlive: characterStatus.isAlive,
+          isDying: characterStatus.isDying,
+          statusMessage: characterStatus.statusMessage,
+          hasGameProgress: characterStatus.hasGameProgress,
+          createdAt: characterStatus.createdAt
+        });
+      
         setCharacter(characterStatus);
         
         console.log('📡 [Game Page] Attempting to enter game...', {
           stationName,
           lineNumber,
-          charId: characterStatus.charId,
-          charName: characterStatus.charName
+          character: {
+            charId: characterStatus.charId,
+            charName: characterStatus.charName,
+            isAlive: characterStatus.isAlive,
+            health: characterStatus.charHealth,
+            sanity: characterStatus.charSanity
+          }
         });
 
         const gameEnterUrl = `/game/enter/station/${encodeURIComponent(stationName)}/line/${lineNumber}`;
         console.log('🎯 [Game Page] Game enter URL:', gameEnterUrl);
-
+      
         const gameResponse = await api.post<GameEnterResponse>(gameEnterUrl);
         
         console.log('✅ [Game Page] Game enter response:', {
@@ -157,20 +176,39 @@ export default function UnifiedGamePage() {
           selectedStoryId: gameResponse.selectedStoryId,
           resumeStoryId: gameResponse.resumeStoryId,
           stationName: gameResponse.stationName,
-          stationLine: gameResponse.stationLine
+          stationLine: gameResponse.stationLine,
+          // 🔥 응답으로 받은 캐릭터 정보도 로깅
+          responseCharacter: gameResponse.character ? {
+            charId: gameResponse.character.charId,
+            charName: gameResponse.character.charName,
+            isAlive: gameResponse.character.isAlive,
+            health: gameResponse.character.charHealth,
+            sanity: gameResponse.character.charSanity
+          } : null
         });
-
+      
         if (!gameResponse.success) {
           throw new Error(gameResponse.message);
         }
-
+      
+        // 🔥 게임 응답에서 받은 캐릭터 정보로 업데이트
+        if (gameResponse.character) {
+          console.log('🔄 [Game Page] Updating character from game response');
+          setCharacter(gameResponse.character);
+        }
+      
         switch (gameResponse.action) {
           case 'START_NEW':
             console.log('🆕 [Game Page] Starting new game:', {
               storyId: gameResponse.selectedStoryId,
               storyTitle: gameResponse.selectedStoryTitle,
-              firstPageId: gameResponse.firstPage?.pageId
+              firstPageId: gameResponse.firstPage?.pageId,
+              character: gameResponse.character ? {
+                charId: gameResponse.character.charId,
+                isAlive: gameResponse.character.isAlive
+              } : null
             });
+            
             setGameData({
               storyId: gameResponse.selectedStoryId!,
               storyTitle: gameResponse.selectedStoryTitle!,
@@ -181,13 +219,18 @@ export default function UnifiedGamePage() {
             setGameState('GAME_PLAYING');
             toast.success('새로운 스토리를 시작합니다!');
             break;
-
+      
           case 'RESUME_EXISTING':
             console.log('▶️ [Game Page] Resuming existing game:', {
               storyId: gameResponse.resumeStoryId,
               storyTitle: gameResponse.resumeStoryTitle,
-              currentPageId: gameResponse.currentPage?.pageId
+              currentPageId: gameResponse.currentPage?.pageId,
+              character: gameResponse.character ? {
+                charId: gameResponse.character.charId,
+                isAlive: gameResponse.character.isAlive
+              } : null
             });
+            
             setGameData({
               storyId: gameResponse.resumeStoryId!,
               storyTitle: gameResponse.resumeStoryTitle!,
@@ -198,7 +241,7 @@ export default function UnifiedGamePage() {
             setGameState('GAME_PLAYING');
             toast.info('진행 중인 게임을 재개합니다');
             break;
-
+      
           case 'NO_STORIES':
             console.log('⚠️ [Game Page] No stories available');
             setError('플레이 가능한 스토리가 없습니다');
@@ -206,7 +249,7 @@ export default function UnifiedGamePage() {
             toast.error('이 역에는 아직 스토리가 없습니다');
             router.push('/');
             break;
-
+      
           default:
             throw new Error('알 수 없는 게임 상태');
         }
@@ -270,177 +313,200 @@ export default function UnifiedGamePage() {
     }, 1000);  // 1초 후 재시도 (서버 동기화 시간 확보)
   }, [initializeGame, toast, stationName, lineNumber]);
 
-  // 선택지 선택 처리 함수 수정
-  const handleChoice = async (optionId: number) => {
-    console.log('🎯 [Game Page] Choice selected:', {
-      optionId,
+// frontend/src/app/game/page.tsx - handleChoice 함수 수정
+
+const handleChoice = async (optionId: number) => {
+  console.log('🎯 [Game Page] Choice selected:', {
+    optionId,
+    character: character ? {
+      charId: character.charId,
+      charName: character.charName,
+      isAlive: character.isAlive,
+      charHealth: character.charHealth,
+      charSanity: character.charSanity
+    } : null,
+    isLoading: isChoiceLoading,
+    canMakeChoice,
+    gameData: gameData ? {
+      storyId: gameData.storyId,
+      currentPageId: gameData.currentPage?.pageId
+    } : null
+  });
+  
+  // 🔥 개선된 조건 체크 - isAlive가 undefined인 경우도 허용
+  if (!character || isChoiceLoading || !gameData) {
+    console.warn('⚠️ [Game Page] Cannot make choice:', {
+      hasCharacter: !!character,
       isAlive: character?.isAlive,
       isLoading: isChoiceLoading,
-      gameData: gameData ? {
-        storyId: gameData.storyId,
-        currentPageId: gameData.currentPage?.pageId
+      hasGameData: !!gameData,
+      canMakeChoice
+    });
+    return;
+  }
+
+  // 🔥 캐릭터가 명시적으로 사망한 경우만 막기
+  if (character.isAlive === false) {
+    console.warn('⚠️ [Game Page] Character is dead, cannot make choice');
+    toast.error('사망한 캐릭터로는 선택할 수 없습니다');
+    return;
+  }
+
+  try {
+    setIsChoiceLoading(true);
+    setCanMakeChoice(false);
+
+    // 🔥 요청 URL 수정 - /api 제거
+    const requestUrl = `/game/choice/${optionId}`;
+    console.log('📡 [Game Page] Sending choice to API:', {
+      optionId,
+      requestUrl,
+      method: 'POST',
+      timestamp: new Date().toISOString(),
+      characterState: {
+        charId: character.charId,
+        charName: character.charName,
+        health: character.charHealth,
+        sanity: character.charSanity,
+        isAlive: character.isAlive
+      }
+    });
+
+    const response = await api.post<ChoiceResponse>(requestUrl);
+    
+    console.log('✅ [Game Page] Choice response:', {
+      success: response.success,
+      result: response.result,
+      isGameOver: response.isGameOver,
+      gameOverReason: response.gameOverReason,
+      hasNextPage: !!response.nextPage,
+      nextPageId: response.nextPage?.pageId,
+      updatedCharacter: response.updatedCharacter ? {
+        charId: response.updatedCharacter.charId,
+        charHealth: response.updatedCharacter.charHealth,
+        charSanity: response.updatedCharacter.charSanity,
+        isAlive: response.updatedCharacter.isAlive
       } : null
     });
-    
-    if (!character?.isAlive || isChoiceLoading || !gameData) {
-      console.warn('⚠️ [Game Page] Cannot make choice:', {
-        isAlive: character?.isAlive,
-        isLoading: isChoiceLoading,
-        hasGameData: !!gameData
-      });
-      return;
+
+    if (!response.success) {
+      throw new Error(response.message || '선택 처리 실패');
     }
 
-    try {
-      setIsChoiceLoading(true);
-      setCanMakeChoice(false);
+    toast.info(response.result);
 
-      // 🔥 API 요청 전 상세 로그
-      const requestUrl = `/game/choice/${optionId}`;
-      console.log('📡 [Game Page] Sending choice to API:', {
-        optionId,
-        requestUrl,
-        method: 'POST',
-        timestamp: new Date().toISOString(),
-        baseURL: 'API_URL에 이미 /api 포함됨'
+    // 캐릭터 상태 업데이트
+    if (response.updatedCharacter) {
+      setCharacter(response.updatedCharacter);
+      console.log('👤 [Game Page] Character updated:', {
+        charId: response.updatedCharacter.charId,
+        health: `${response.updatedCharacter.charHealth}/100`,
+        sanity: `${response.updatedCharacter.charSanity}/100`,
+        isAlive: response.updatedCharacter.isAlive,
+        statusMessage: response.updatedCharacter.statusMessage
       });
+    }
 
-      // 🔥 API 요청 - 명세서와 일치하는 엔드포인트
-      const response = await api.post<ChoiceResponse>(requestUrl);
+    // 게임 종료 처리
+    if (response.isGameOver) {
+      console.log('🏁 [Game Page] Game over:', {
+        reason: response.gameOverReason,
+        isCharacterDead: !response.updatedCharacter?.isAlive
+      });
       
-      console.log('✅ [Game Page] Choice response:', {
-        success: response.success,
-        result: response.result,
-        isGameOver: response.isGameOver,
-        gameOverReason: response.gameOverReason,
-        hasNextPage: !!response.nextPage,
-        nextPageId: response.nextPage?.pageId,
-        updatedCharacter: response.updatedCharacter ? {
-          charId: response.updatedCharacter.charId,
-          charHealth: response.updatedCharacter.charHealth,
-          charSanity: response.updatedCharacter.charSanity,
-          isAlive: response.updatedCharacter.isAlive
-        } : null
-      });
-
-      if (!response.success) {
-        throw new Error(response.message || '선택 처리 실패');
-      }
-
-      toast.info(response.result);
-
-      // 캐릭터 상태 업데이트
-      if (response.updatedCharacter) {
-        setCharacter(response.updatedCharacter);
-        console.log('👤 [Game Page] Character updated:', {
-          charId: response.updatedCharacter.charId,
-          health: `${response.updatedCharacter.charHealth}/100`,
-          sanity: `${response.updatedCharacter.charSanity}/100`,
-          isAlive: response.updatedCharacter.isAlive,
-          statusMessage: response.updatedCharacter.statusMessage
-        });
-      }
-
-      // 게임 종료 처리
-      if (response.isGameOver) {
-        console.log('🏁 [Game Page] Game over:', {
-          reason: response.gameOverReason,
-          isCharacterDead: !response.updatedCharacter?.isAlive
-        });
-        
-        setGameState('GAME_OVER');
-        
-        if (response.gameOverReason === '스토리 완료') {
-          toast.success('🎉 축하합니다! 스토리를 완료했습니다!');
-        } else if (response.gameOverReason === '캐릭터 사망') {
-          toast.error('💀 캐릭터가 사망했습니다');
-        } else {
-          toast.error(`게임 오버: ${response.gameOverReason}`);
-        }
-      } 
-      // 다음 페이지로 이동
-      else if (response.nextPage && gameData) {
-        console.log('📄 [Game Page] Moving to next page:', {
-          currentPageId: gameData.currentPage?.pageId,
-          nextPageId: response.nextPage.pageId,
-          nextPageNumber: response.nextPage.pageNumber,
-          totalPages: response.nextPage.totalPages
-        });
-        
-        setGameData({
-          ...gameData,
-          currentPage: response.nextPage
-        });
-        
-        // 🔥 새 페이지로 이동 시 선택 비활성화 (타이핑 완료까지)
-        setCanMakeChoice(false);
+      setGameState('GAME_OVER');
+      
+      if (response.gameOverReason === '스토리 완료') {
+        toast.success('🎉 축하합니다! 스토리를 완료했습니다!');
+      } else if (response.gameOverReason === '캐릭터 사망') {
+        toast.error('💀 캐릭터가 사망했습니다');
       } else {
-        console.warn('⚠️ [Game Page] No next page but game not over');
+        toast.error(`게임 오버: ${response.gameOverReason}`);
       }
-
-    } catch (error: unknown) {
-      console.error('❌ [Game Page] Choice processing failed:', {
-        error,
-        optionId,
-        errorType: error?.constructor?.name,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
+    } 
+    // 다음 페이지로 이동
+    else if (response.nextPage && gameData) {
+      console.log('📄 [Game Page] Moving to next page:', {
+        currentPageId: gameData.currentPage?.pageId,
+        nextPageId: response.nextPage.pageId,
+        nextPageNumber: response.nextPage.pageNumber,
+        totalPages: response.nextPage.totalPages
       });
-
-      // 🔥 에러 타입별 상세 처리
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { 
-          response: { 
-            status: number;
-            data: { message: string };
-            statusText?: string;
-          };
-          message?: string;
-          config?: { url?: string; method?: string };
-        };
-
-        console.error('📡 [Game Page] HTTP Error Details:', {
-          status: axiosError.response?.status,
-          statusText: axiosError.response?.statusText,
-          data: axiosError.response?.data,
-          url: axiosError.config?.url,
-          method: axiosError.config?.method
-        });
-
-        const errorMessage = axiosError.response?.data?.message || '선택을 처리할 수 없습니다';
-        
-        // 특정 상태 코드별 처리
-        if (axiosError.response?.status === 404) {
-          toast.error('게임 세션을 찾을 수 없습니다. 게임을 다시 시작해주세요.');
-          setGameState('ERROR');
-          setError('게임 세션이 만료되었습니다');
-        } else if (axiosError.response?.status === 400) {
-          toast.error('잘못된 선택입니다. 다시 시도해주세요.');
-        } else if (axiosError.response?.status === 401) {
-          toast.error('로그인이 필요합니다');
-          router.push('/auth/login');
-        } else {
-          toast.error(errorMessage);
-        }
-      } else if (error instanceof Error) {
-        console.error('💥 [Game Page] Client Error:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-        toast.error(`클라이언트 오류: ${error.message}`);
-      } else {
-        console.error('🤔 [Game Page] Unknown Error:', error);
-        toast.error('알 수 없는 오류가 발생했습니다');
-      }
-    } finally {
-      setIsChoiceLoading(false);
-      console.log('🏁 [Game Page] Choice processing complete:', {
-        timestamp: new Date().toISOString(),
-        optionId
+      
+      setGameData({
+        ...gameData,
+        currentPage: response.nextPage
       });
+      
+      // 새 페이지로 이동 시 선택 비활성화 (타이핑 완료까지)
+      setCanMakeChoice(false);
+    } else {
+      console.warn('⚠️ [Game Page] No next page but game not over');
     }
-  };
+
+  } catch (error: unknown) {
+    console.error('❌ [Game Page] Choice processing failed:', {
+      error,
+      optionId,
+      errorType: error?.constructor?.name,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+
+    // 에러 타입별 상세 처리
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { 
+        response: { 
+          status: number;
+          data: { message: string };
+          statusText?: string;
+        };
+        message?: string;
+        config?: { url?: string; method?: string };
+      };
+
+      console.error('📡 [Game Page] HTTP Error Details:', {
+        status: axiosError.response?.status,
+        statusText: axiosError.response?.statusText,
+        data: axiosError.response?.data,
+        url: axiosError.config?.url,
+        method: axiosError.config?.method
+      });
+
+      const errorMessage = axiosError.response?.data?.message || '선택을 처리할 수 없습니다';
+      
+      // 특정 상태 코드별 처리
+      if (axiosError.response?.status === 404) {
+        toast.error('게임 세션을 찾을 수 없습니다. 게임을 다시 시작해주세요.');
+        setGameState('ERROR');
+        setError('게임 세션이 만료되었습니다');
+      } else if (axiosError.response?.status === 400) {
+        toast.error('잘못된 선택입니다. 다시 시도해주세요.');
+      } else if (axiosError.response?.status === 401) {
+        toast.error('로그인이 필요합니다');
+        router.push('/auth/login');
+      } else {
+        toast.error(errorMessage);
+      }
+    } else if (error instanceof Error) {
+      console.error('💥 [Game Page] Client Error:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      toast.error(`클라이언트 오류: ${error.message}`);
+    } else {
+      console.error('🤔 [Game Page] Unknown Error:', error);
+      toast.error('알 수 없는 오류가 발생했습니다');
+    }
+  } finally {
+    setIsChoiceLoading(false);
+    console.log('🏁 [Game Page] Choice processing complete:', {
+      timestamp: new Date().toISOString(),
+      optionId
+    });
+  }
+};
 
   // 게임 포기
   const handleQuitGame = async () => {
