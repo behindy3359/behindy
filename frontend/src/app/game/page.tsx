@@ -166,7 +166,7 @@ export default function UnifiedGamePage() {
         console.log('🎯 [Game Page] Game enter URL:', gameEnterUrl);
 
         const gameResponse = await api.post<GameEnterResponse>(gameEnterUrl);
-        
+
         console.log('✅ [Game Page] Game enter response:', {
           success: gameResponse.success,
           action: gameResponse.action,
@@ -214,17 +214,27 @@ export default function UnifiedGamePage() {
             console.log('▶️ [Game Page] Resuming existing game:', {
               storyId: gameResponse.resumeStoryId,
               storyTitle: gameResponse.resumeStoryTitle,
-              currentPageId: gameResponse.currentPage?.pageId
+              currentPageId: gameResponse.currentPage?.pageId,
+              originalRequest: `${stationName} ${lineNumber}호선`,
+              actualLocation: `${gameResponse.stationName} ${gameResponse.stationLine}호선`
             });
+
             setGameData({
               storyId: gameResponse.resumeStoryId!,
               storyTitle: gameResponse.resumeStoryTitle!,
               currentPage: gameResponse.currentPage!,
-              stationName: gameResponse.stationName,
-              stationLine: gameResponse.stationLine
+              stationName: gameResponse.stationName,  
+              stationLine: gameResponse.stationLine 
             });
+            
             setGameState('GAME_PLAYING');
-            toast.info('진행 중인 게임을 재개합니다');
+            
+            // 다른 역에서 요청했지만 기존 게임을 재개하는 경우 알림
+            if (stationName !== gameResponse.stationName || lineNumber !== gameResponse.stationLine.toString()) {
+              toast.info(`진행 중인 게임을 재개합니다 (${gameResponse.stationName}역 ${gameResponse.stationLine}호선)`);
+            } else {
+              toast.info('진행 중인 게임을 재개합니다');
+            }
             break;
 
           case 'NO_STORIES':
@@ -236,6 +246,7 @@ export default function UnifiedGamePage() {
             break;
 
           default:
+            console.error('❌ [Game Page] Unknown game action:', gameResponse.action);
             throw new Error('알 수 없는 게임 상태');
         }
       } else {
