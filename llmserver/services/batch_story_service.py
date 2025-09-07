@@ -219,13 +219,8 @@ JSON 응답 형식:
                 )
                 
                 if page_data:
-                    # 🎯 페이지별 테마 일관성 검증 (선택지 효과로 추정)
-                    if self._validate_page_theme_consistency(page_data, theme):
-                        pages.append(page_data)
-                        logger.info(f"✅ 페이지 {page_num} 테마 일관성 검증 통과")
-                    else:
-                        logger.warning(f"⚠️ 페이지 {page_num} 테마 불일치, 기본 페이지 사용")
-                        pages.append(self._create_fallback_page(page_num, target_length, theme))
+                    pages.append(page_data)
+                    logger.info(f"✅ 페이지 {page_num} 생성 완료")
                 else:
                     logger.warning(f"페이지 {page_num} 생성 실패, 기본 페이지 사용")
                     pages.append(self._create_fallback_page(page_num, target_length, theme))
@@ -238,36 +233,7 @@ JSON 응답 형식:
         return pages
     
     def _validate_page_theme_consistency(self, page_data: BatchPageData, expected_theme: str) -> bool:
-        """페이지 테마 일관성 검증 (선택지 효과 패턴으로 추정)"""
-        try:
-            # 테마별 기대되는 효과 패턴
-            theme_patterns = {
-                "공포": {"high_health_loss": True, "sanity_focus": True},
-                "미스터리": {"sanity_gain": True, "moderate_effects": True}, 
-                "스릴러": {"extreme_effects": True, "tension": True}
-            }
-            
-            # 선택지 효과 분석
-            health_effects = [opt.amount for opt in page_data.options if opt.effect == "health"]
-            sanity_effects = [opt.amount for opt in page_data.options if opt.effect == "sanity"]
-            
-            # 간단한 패턴 매칭 (너무 복잡하지 않게)
-            if expected_theme == "공포":
-                # 공포는 체력 손실이 큰 선택지가 있어야 함
-                return any(effect <= -5 for effect in health_effects)
-            elif expected_theme == "미스터리":
-                # 미스터리는 정신력 회복이 큰 선택지가 있어야 함
-                return any(effect >= 3 for effect in sanity_effects)
-            elif expected_theme == "스릴러":
-                # 스릴러는 극단적인 효과가 있어야 함
-                all_effects = health_effects + sanity_effects
-                return any(abs(effect) >= 4 for effect in all_effects)
-            
-            return True  # 기본적으로 통과
-            
-        except Exception as e:
-            logger.warning(f"테마 일관성 검증 실패: {str(e)}")
-            return True  # 오류시 통과 처리
+        return True 
     
     async def _generate_single_page(self, request: BatchStoryRequest, story_info: Dict, 
                                    page_num: int, total_pages: int, 
