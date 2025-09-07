@@ -8,7 +8,8 @@ import { Character } from '../../types/gameTypes';
 import { 
   isCharacterAlive, 
   isCharacterDying, 
-  getCharacterStatusColor 
+  getCharacterStatusColor,
+  getCharacterStatusMessage
 } from '../../utils/characterUtils';
 
 interface CharacterStatusProps {
@@ -35,10 +36,10 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
     );
   }
 
-  // 🔥 실시간 상태 계산
+  // 실시간 상태 계산
   const isAlive = isCharacterAlive(character.charHealth, character.charSanity);
   const isDying = isCharacterDying(character.charHealth, character.charSanity);
-  const statusColor = getCharacterStatusColor(character.charHealth, character.charSanity);
+  const statusMessage = getCharacterStatusMessage(character.charHealth, character.charSanity);
 
   const getHealthColor = (health: number) => {
     if (health > 70) return '#10b981';
@@ -58,17 +59,6 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
     return null;
   };
 
-  // 🔥 실시간 상태 메시지 계산
-  const getStatusMessage = (): string => {
-    if (!isAlive) return '사망';
-    if (isDying) return '위험';
-    
-    const minStat = Math.min(character.charHealth, character.charSanity);
-    if (minStat <= 40) return '주의';
-    if (minStat <= 60) return '보통';
-    return '건강';
-  };
-
   const healthPercentage = Math.max(0, Math.min(100, character.charHealth));
   const sanityPercentage = Math.max(0, Math.min(100, character.charSanity));
 
@@ -85,9 +75,9 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
             <User size={16} />
             {character.charName}
           </CharacterName>
-          <StatusBadge $status={getStatusMessage()}>
+          <StatusBadge $status={statusMessage}>
             {getStatusIcon()}
-            {getStatusMessage()}
+            {statusMessage}
           </StatusBadge>
         </Header>
       )}
@@ -132,7 +122,7 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
         </StatBar>
       </StatsContainer>
 
-      {/* 🔥 실시간 계산된 상태로 조건부 렌더링 */}
+      {/* 실시간 계산된 상태로 조건부 렌더링 */}
       {isDying && isAlive && (
         <WarningMessage
           initial={{ opacity: 0 }}
@@ -203,7 +193,7 @@ const StatusBadge = styled.div<{ $status: string }>`
       return theme.colors.error;
     }
     if ($status.includes('주의')) {
-      return theme.colors.warning;
+      return '#f59e0b';
     }
     return theme.colors.text.secondary;
   }};
@@ -263,7 +253,7 @@ const WarningMessage = styled(motion.div)`
   margin-top: ${({ theme }) => theme.spacing[4]};
   padding: ${({ theme }) => theme.spacing[3]};
   background: rgba(245, 158, 11, 0.1);
-  color: ${({ theme }) => theme.colors.warning};
+  color: #f59e0b;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: 500;
