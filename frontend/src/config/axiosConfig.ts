@@ -99,7 +99,7 @@ const createApiClient = (baseURL: string) => {
     withCredentials: true, // 🔥 HttpOnly Cookie 전송을 위해 필수
   });
 
-  // 요청 인터셉터
+  // 요청 인터셉터 개선 - 더 상세한 로깅
   client.interceptors.request.use(
     (config) => {
       if (requiresAuth(config)) {
@@ -109,9 +109,23 @@ const createApiClient = (baseURL: string) => {
         }
       }
 
+      // 🔥 상세한 요청 로깅
       if (env.DEV_MODE) {
         const hasAuth = config.headers?.Authorization ? '🔐' : '🌍';
-        console.log(`${hasAuth} API Request: ${config.method?.toUpperCase()} ${config.url}`);
+        const fullUrl = `${config.baseURL}${config.url}`;
+        
+        console.group(`${hasAuth} API Request`);
+        console.log(`Method: ${config.method?.toUpperCase()}`);
+        console.log(`URL: ${fullUrl}`);
+        console.log(`Base URL: ${config.baseURL}`);
+        console.log(`Path: ${config.url}`);
+        console.log(`Headers:`, config.headers);
+        if (config.data) {
+          console.log(`Data:`, config.data);
+        }
+        console.log(`Requires Auth: ${requiresAuth(config)}`);
+        console.log(`Has Token: ${!!TokenManager.getAccessToken()}`);
+        console.groupEnd();
       }
 
       return config;
@@ -121,12 +135,19 @@ const createApiClient = (baseURL: string) => {
       return Promise.reject(error);
     }
   );
-  
-  // 응답 인터셉터 - 자동 토큰 갱신 및 강제 로그아웃
+
+  // 응답 인터셉터 개선 - 더 상세한 로깅
   client.interceptors.response.use(
     (response) => {
       if (env.DEV_MODE) {
-        console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url} (${response.status})`);
+        const fullUrl = `${response.config.baseURL}${response.config.url}`;
+        
+        console.group(`✅ API Response`);
+        console.log(`Method: ${response.config.method?.toUpperCase()}`);
+        console.log(`URL: ${fullUrl}`);
+        console.log(`Status: ${response.status} ${response.statusText}`);
+        console.log(`Data:`, response.data);
+        console.groupEnd();
       }
       return response;
     },
@@ -136,13 +157,29 @@ const createApiClient = (baseURL: string) => {
         response?: {
           status: number;
           data: unknown;
+          statusText?: string;
         };
         message?: string;
       };
 
+      // 🔥 상세한 에러 로깅
+      if (env.DEV_MODE) {
+        const config = axiosError.config;
+        const fullUrl = config ? `${config.baseURL}${config.url}` : 'Unknown URL';
+        
+        console.group(`❌ API Error`);
+        console.log(`Method: ${config?.method?.toString()?.toUpperCase()}`);
+        console.log(`URL: ${fullUrl}`);
+        console.log(`Status: ${axiosError.response?.status} ${axiosError.response?.statusText}`);
+        console.log(`Error Message: ${axiosError.message}`);
+        console.log(`Response Data:`, axiosError.response?.data);
+        console.log(`Original Request Config:`, config);
+        console.groupEnd();
+      }
+
       const originalRequest = axiosError.config;
 
-      // 401 에러 시 자동 토큰 갱신 시도
+      // 401 에러 시 자동 토큰 갱신 시도 (기존 로직 유지)
       if (axiosError.response?.status === 401 && 
           originalRequest && 
           !originalRequest._retry &&
@@ -182,24 +219,21 @@ const createApiClient = (baseURL: string) => {
         } catch (refreshError) {
           console.error('❌ 토큰 갱신 실패:', refreshError);
           
-          // 🔥 토큰 갱신 실패 시 강제 로그아웃 처리
+          // 토큰 갱신 실패 시 강제 로그아웃 처리 (기존 로직 유지)
           console.log('🧹 토큰 갱신 실패 - 강제 로그아웃 처리 시작');
           
-          // 1. 클라이언트 토큰 정리
           TokenManager.clearAllTokens();
           
-          // 2. 로그아웃 API 호출 (쿠키 정리) - 실패해도 무시
           try {
             await axios.post(`${env.API_URL}/auth/logout`, {}, { 
               withCredentials: true,
-              timeout: 3000 // 짧은 타임아웃
+              timeout: 3000
             });
             console.log('✅ 서버 로그아웃 API 호출 성공');
           } catch (logoutError) {
             console.warn('⚠️ 서버 로그아웃 API 호출 실패 (무시):', logoutError);
           }
           
-          // 3. Zustand 스토어 초기화
           try {
             const { useAuthStore } = await import('@/shared/store/authStore');
             await useAuthStore.getState().logout();
@@ -208,24 +242,18 @@ const createApiClient = (baseURL: string) => {
             console.warn('⚠️ 인증 스토어 초기화 실패:', storeError);
           }
           
-          // 4. 강제 페이지 리다이렉트
           if (typeof window !== 'undefined') {
             console.log('🔄 로그인 페이지로 강제 리다이렉트');
             
-            // 현재 페이지 정보 저장
             const currentPath = window.location.pathname + window.location.search;
             const redirectUrl = `/auth/login?redirect=${encodeURIComponent(currentPath)}&reason=session_expired`;
             
-            // 즉시 리다이렉트
             window.location.href = redirectUrl;
           }
           
           return Promise.reject(refreshError);
         }
       }
-
-      // 에러 로깅
-      console.error(`❌ API Error: ${originalRequest?.method?.toString()?.toUpperCase()} ${originalRequest?.url} (${axiosError.response?.status})`);
 
       return Promise.reject(error);
     }
