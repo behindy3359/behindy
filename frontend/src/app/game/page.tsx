@@ -20,6 +20,7 @@ import { StoryDisplay } from '@/features/game/components/StoryDisplay/StoryDispl
 import { ChoiceButtons } from '@/features/game/components/ChoiceButtons/ChoiceButtons';
 import { CharacterStatus } from '@/features/game/components/CharacterStatus/CharacterStatus';
 import { CharacterCreationForm } from '@/features/game/components/CharacterCreationForm/CharacterCreationForm';
+import { enrichCharacterData } from '@/features/game/utils/characterUtils';
 
 export type GameFlowState = 
   | 'LOADING'           
@@ -313,7 +314,6 @@ export default function UnifiedGamePage() {
     }, 1000);  // 1초 후 재시도 (서버 동기화 시간 확보)
   }, [initializeGame, toast, stationName, lineNumber]);
 
-// frontend/src/app/game/page.tsx - handleChoice 함수 수정
 
 const handleChoice = async (optionId: number) => {
   console.log('🎯 [Game Page] Choice selected:', {
@@ -397,13 +397,27 @@ const handleChoice = async (optionId: number) => {
 
     // 캐릭터 상태 업데이트
     if (response.updatedCharacter) {
-      setCharacter(response.updatedCharacter);
+      const enrichedCharacter = enrichCharacterData(character, response.updatedCharacter);
+      
+      setCharacter(enrichedCharacter);
+      
       console.log('👤 [Game Page] Character updated:', {
-        charId: response.updatedCharacter.charId,
-        health: `${response.updatedCharacter.charHealth}/100`,
-        sanity: `${response.updatedCharacter.charSanity}/100`,
-        isAlive: response.updatedCharacter.isAlive,
-        statusMessage: response.updatedCharacter.statusMessage
+        before: {
+          health: character.charHealth,
+          sanity: character.charSanity,
+          isAlive: character.isAlive,
+          statusMessage: character.statusMessage
+        },
+        after: {
+          health: enrichedCharacter.charHealth,
+          sanity: enrichedCharacter.charSanity,
+          isAlive: enrichedCharacter.isAlive,
+          statusMessage: enrichedCharacter.statusMessage
+        },
+        changes: {
+          healthChange: enrichedCharacter.charHealth - character.charHealth,
+          sanityChange: enrichedCharacter.charSanity - character.charSanity
+        }
       });
     }
 

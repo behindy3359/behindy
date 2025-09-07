@@ -5,6 +5,11 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Heart, Brain, User, AlertTriangle, Skull } from 'lucide-react';
 import { Character } from '../../types/gameTypes';
+import { 
+  isCharacterAlive, 
+  isCharacterDying, 
+  getCharacterStatusColor 
+} from '../../utils/characterUtils';
 
 interface CharacterStatusProps {
   character: Character | null;
@@ -30,22 +35,38 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
     );
   }
 
+  // 🔥 실시간 상태 계산
+  const isAlive = isCharacterAlive(character.charHealth, character.charSanity);
+  const isDying = isCharacterDying(character.charHealth, character.charSanity);
+  const statusColor = getCharacterStatusColor(character.charHealth, character.charSanity);
+
   const getHealthColor = (health: number) => {
-    if (health > 70) return '#10b981'; // success
-    if (health > 30) return '#f59e0b'; // warning
-    return '#ef4444'; // error
+    if (health > 70) return '#10b981';
+    if (health > 30) return '#f59e0b';
+    return '#ef4444';
   };
 
   const getSanityColor = (sanity: number) => {
-    if (sanity > 70) return '#667eea'; // primary
-    if (sanity > 30) return '#f59e0b'; // warning
-    return '#ef4444'; // error
+    if (sanity > 70) return '#667eea';
+    if (sanity > 30) return '#f59e0b';
+    return '#ef4444';
   };
 
   const getStatusIcon = () => {
-    if (!character.isAlive) return <Skull size={16} />;
-    if (character.isDying) return <AlertTriangle size={16} />;
+    if (!isAlive) return <Skull size={16} />;
+    if (isDying) return <AlertTriangle size={16} />;
     return null;
+  };
+
+  // 🔥 실시간 상태 메시지 계산
+  const getStatusMessage = (): string => {
+    if (!isAlive) return '사망';
+    if (isDying) return '위험';
+    
+    const minStat = Math.min(character.charHealth, character.charSanity);
+    if (minStat <= 40) return '주의';
+    if (minStat <= 60) return '보통';
+    return '건강';
   };
 
   const healthPercentage = Math.max(0, Math.min(100, character.charHealth));
@@ -64,9 +85,9 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
             <User size={16} />
             {character.charName}
           </CharacterName>
-          <StatusBadge $status={character.statusMessage}>
+          <StatusBadge $status={getStatusMessage()}>
             {getStatusIcon()}
-            {character.statusMessage}
+            {getStatusMessage()}
           </StatusBadge>
         </Header>
       )}
@@ -111,7 +132,8 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
         </StatBar>
       </StatsContainer>
 
-      {character.isDying && (
+      {/* 🔥 실시간 계산된 상태로 조건부 렌더링 */}
+      {isDying && isAlive && (
         <WarningMessage
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -122,7 +144,7 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
         </WarningMessage>
       )}
 
-      {!character.isAlive && (
+      {!isAlive && (
         <DeathMessage
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
