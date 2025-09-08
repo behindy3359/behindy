@@ -34,7 +34,6 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
   stationName,
   stationLine,
   completionType,
-  onNewGame,
   onBackToMain,
 }) => {
 
@@ -152,16 +151,6 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
 
       {/* 액션 버튼들 */}
       <ActionButtons>
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={onNewGame}
-          leftIcon={<RotateCcw size={18} />}
-          fullWidth
-        >
-          새로운 모험 시작
-        </Button>
-
         <Button
           variant="outline"
           size="lg"

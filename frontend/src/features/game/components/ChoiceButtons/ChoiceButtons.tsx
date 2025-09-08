@@ -21,7 +21,6 @@ export const ChoiceButtons: React.FC<ChoiceButtonsProps> = ({
   disabled = false,
   isLoading = false,
   showEffectPreview = false,
-  allowEffectToggle = true
 }) => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showEffects, setShowEffects] = useState(showEffectPreview);
@@ -33,10 +32,6 @@ export const ChoiceButtons: React.FC<ChoiceButtonsProps> = ({
     setSelectedId(optionId);
     setSelectedChoice(optionId);
     onChoice(optionId);
-  };
-
-  const toggleEffectVisibility = () => {
-    setShowEffects(!showEffects);
   };
 
   const getEffectIcon = (effect?: string) => {
@@ -81,17 +76,6 @@ export const ChoiceButtons: React.FC<ChoiceButtonsProps> = ({
 
   return (
     <Container>
-      {/* 효과 보기/숨기기 토글 버튼 */}
-      {allowEffectToggle && !isLoading && (
-        <EffectToggleButton
-          onClick={toggleEffectVisibility}
-          $isActive={showEffects}
-        >
-          {showEffects ? <EyeOff size={16} /> : <Eye size={16} />}
-          <span>{showEffects ? '효과 숨기기' : '효과 미리보기'}</span>
-        </EffectToggleButton>
-      )}
-
       <OptionsGrid>
         <AnimatePresence mode="wait">
           {options.map((option, index) => (

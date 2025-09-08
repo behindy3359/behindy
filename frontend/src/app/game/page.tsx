@@ -1,5 +1,3 @@
-// frontend/src/app/game/page.tsx
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
