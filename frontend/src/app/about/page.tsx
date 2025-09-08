@@ -1,3 +1,6 @@
+// 🔧 About 페이지 import 에러 수정
+// frontend/src/app/about/page.tsx
+
 "use client";
 
 import React from 'react';
@@ -8,47 +11,48 @@ import {
   GamepadIcon, 
   Users, 
 } from 'lucide-react';
-import { PublicLayout } from '@/shared/components/layout/applayout/AppLayout';
+// 🔥 수정된 import - AppLayout 사용
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
 import { PageContainer } from '@/shared/styles/commonContainers';
 import { gradients } from '@/shared/styles/theme';
 
 // ================================================================
-// Styled Components
+// Styled Components (CSS 변수 사용으로 수정)
 // ================================================================
 
 const HeroSection = styled.div`
   text-align: center;
-  margin-bottom: 80px;
+  margin-bottom: 5rem;
   
   .hero-title {
-    font-size: 48px;
+    font-size: 3rem;
     font-weight: 800;
-    color: #111827;
-    margin-bottom: 24px;
-    background: ${gradients.primary};
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     
     @media (max-width: 768px) {
-      font-size: 36px;
+      font-size: 2.25rem;
     }
   }
   
   .hero-subtitle {
-    font-size: 24px;
-    color: #6b7280;
-    margin-bottom: 32px;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
     line-height: 1.5;
     
     @media (max-width: 768px) {
-      font-size: 20px;
+      font-size: 1.25rem;
     }
   }
   
   .hero-description {
-    font-size: 18px;
-    color: #9ca3af;
+    font-size: 1.125rem;
+    color: var(--text-tertiary);
     max-width: 600px;
     margin: 0 auto;
     line-height: 1.7;
@@ -58,99 +62,99 @@ const HeroSection = styled.div`
 const FeatureGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 40px;
-  margin-bottom: 80px;
+  gap: 2.5rem;
+  margin-bottom: 5rem;
 `;
 
 const FeatureCard = styled(motion.div)`
-  background: white;
-  padding: 40px 32px;
-  border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  background: var(--bg-primary);
+  padding: 2.5rem 2rem;
+  border-radius: 1.25rem;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-card);
   text-align: center;
   transition: all 0.3s ease;
   
   &:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border-color: #667eea;
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-500);
   }
   
   .feature-icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 16px;
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
+    border-radius: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--text-inverse);
   }
   
   .feature-title {
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 700;
-    color: #111827;
-    margin-bottom: 16px;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
   }
   
   .feature-description {
-    color: #6b7280;
+    color: var(--text-secondary);
     line-height: 1.6;
-    font-size: 16px;
+    font-size: 1rem;
   }
 `;
 
 const StorySection = styled.div`
   text-align: center;
-  margin-bottom: 80px;
+  margin-bottom: 5rem;
   
   .story-title {
-    font-size: 36px;
+    font-size: 2.25rem;
     font-weight: 700;
-    color: #111827;
-    margin-bottom: 24px;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
   }
   
   .story-content {
     max-width: 700px;
     margin: 0 auto;
-    font-size: 18px;
-    color: #6b7280;
+    font-size: 1.125rem;
+    color: var(--text-secondary);
     line-height: 1.8;
     text-align: left;
     
     p {
-      margin-bottom: 24px;
+      margin-bottom: 1.5rem;
     }
     
     .highlight {
-      color: #667eea;
+      color: var(--primary-500);
       font-weight: 600;
     }
   }
 `;
 
 const TechSection = styled.div`
-  background: #f8fafc;
-  border-radius: 20px;
-  padding: 60px 40px;
+  background: var(--bg-secondary);
+  border-radius: 1.25rem;
+  padding: 3.75rem 2.5rem;
   text-align: center;
-  margin-bottom: 80px;
+  margin-bottom: 5rem;
   
   .tech-title {
-    font-size: 32px;
+    font-size: 2rem;
     font-weight: 700;
-    color: #111827;
-    margin-bottom: 24px;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
   }
   
   .tech-description {
-    font-size: 18px;
-    color: #6b7280;
-    margin-bottom: 40px;
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
@@ -160,19 +164,19 @@ const TechSection = styled.div`
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 16px;
-    margin-top: 32px;
+    gap: 1rem;
+    margin-top: 2rem;
   }
   
   .tech-item {
-    background: white;
-    padding: 12px 24px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    font-size: 14px;
+    background: var(--bg-primary);
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-light);
+    font-size: 0.875rem;
     font-weight: 600;
-    color: #374151;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-card);
   }
 `;
 
@@ -180,28 +184,28 @@ const ContactSection = styled.div`
   text-align: center;
   
   .contact-title {
-    font-size: 32px;
+    font-size: 2rem;
     font-weight: 700;
-    color: #111827;
-    margin-bottom: 24px;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
   }
   
   .contact-description {
-    font-size: 18px;
-    color: #6b7280;
-    margin-bottom: 32px;
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
   }
   
   .contact-info {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 32px;
-    border-radius: 16px;
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
+    color: var(--text-inverse);
+    padding: 2rem;
+    border-radius: 1rem;
     display: inline-block;
     
     .contact-item {
-      font-size: 16px;
-      margin-bottom: 8px;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
       
       &:last-child {
         margin-bottom: 0;
@@ -234,11 +238,12 @@ export default function AboutPage() {
 
   const techStack = [
     "Next.js 15", "TypeScript", "Spring Boot 3.4", "PostgreSQL", 
-    "Redis", "Docker", "AWS EC2", "GitHub Actions"
+    "Redis", "Docker", "AWS EC2", "GitHub Actions", "FastAPI", "LLM Integration"
   ];
 
   return (
-    <PublicLayout>
+    // 🔥 수정: PublicLayout → AppLayout으로 변경
+    <AppLayout>
       <PageContainer>
         {/* Hero Section */}
         <HeroSection>
@@ -257,7 +262,7 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            behindy 의 포트폴리오 페이지
+            지하철 노선도 기반 텍스트 어드벤처 게임
           </motion.h2>
           
           <motion.p 
@@ -266,7 +271,8 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            프로젝트 소개 섹션
+            일상적인 지하철 공간을 신비로운 모험의 무대로 변화시키는 웹 기반 인터랙티브 게임입니다.
+            실시간 지하철 정보와 AI 생성 스토리를 결합하여 독특한 경험을 제공합니다.
           </motion.p>
         </HeroSection>
 
@@ -307,15 +313,20 @@ export default function AboutPage() {
             transition={{ duration: 0.6, delay: 1.4 }}
           >
             <p>
-              프로젝트 소개 섹션2
+              <span className="highlight">Behindy</span>는 "Behind(뒤편) + dy(동적)"의 합성어로, 
+              일상적인 지하철역 뒤편에 숨겨진 동적인 이야기들을 발견한다는 의미를 담고 있습니다.
             </p>
             
             <p>
-              프로젝트 소개 섹션3
+              매일 지나치는 익숙한 지하철역들이 갑자기 미스터리한 모험의 무대가 된다면 어떨까요? 
+              각 역마다 <span className="highlight">AI가 생성한 독특한 스토리</span>가 기다리고 있으며, 
+              플레이어의 선택에 따라 다양한 결말을 경험할 수 있습니다.
             </p>
             
             <p>
-              프로젝트 소개 섹션4
+              이 프로젝트는 <span className="highlight">포트폴리오용 웹 애플리케이션</span>으로, 
+              창의적인 아이디어와 최신 웹 기술을 결합하여 완성도 높은 서비스를 구현하는 것을 목표로 합니다.
+              실시간 데이터 연동, 마이크로서비스 아키텍처, AI 통합 등 다양한 기술적 도전을 담고 있습니다.
             </p>
           </motion.div>
         </StorySection>
@@ -329,7 +340,9 @@ export default function AboutPage() {
           <TechSection>
             <h2 className="tech-title">기술 스택</h2>
             <p className="tech-description">
-              프로젝트 소개 섹션5
+              현대적인 웹 개발 기술과 클라우드 인프라를 활용하여 확장 가능하고 
+              안정적인 서비스를 구축했습니다. 프론트엔드부터 AI 서버까지 
+              전체 시스템을 직접 설계하고 구현했습니다.
             </p>
             
             <div className="tech-stack">
@@ -358,6 +371,7 @@ export default function AboutPage() {
             <h2 className="contact-title">개발자 정보</h2>
             <p className="contact-description">
               이 프로젝트는 웹 개발자 포트폴리오용으로 제작되었습니다.
+              창의적인 아이디어와 기술적 완성도를 동시에 추구하며 개발했습니다.
             </p>
             
             <div className="contact-info">
@@ -365,15 +379,18 @@ export default function AboutPage() {
                 <strong>프로젝트:</strong> Behindy - 지하철 텍스트 어드벤처
               </div>
               <div className="contact-item">
-                <strong>메일:</strong> 여기입니다.
+                <strong>개발 기간:</strong> 2024.08 ~ 2025.09 (진행중)
               </div>
               <div className="contact-item">
-                <strong>깃허브:</strong> 여기입니다.
+                <strong>개발 규모:</strong> 풀스택 개인 프로젝트
+              </div>
+              <div className="contact-item">
+                <strong>특징:</strong> AI 연동, 실시간 데이터, 마이크로서비스
               </div>
             </div>
           </ContactSection>
         </motion.div>
       </PageContainer>
-    </PublicLayout>
+    </AppLayout>
   );
 }
