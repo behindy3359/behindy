@@ -2,9 +2,8 @@
 
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { PublicLayout } from '@/shared/components/layout/applayout/AppLayout';
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout'; // 🔥 수정
 import { HomePage } from '@/features/hompage/components/HomePage';
-
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,9 +17,9 @@ const queryClient = new QueryClient({
 export default function Home() {
   return (
     <QueryClientProvider client={queryClient}>
-      <PublicLayout>
+      <AppLayout> {/* 🔥 PublicLayout → AppLayout */}
         <HomePage />
-      </PublicLayout>
+      </AppLayout>
     </QueryClientProvider>
   );
 }

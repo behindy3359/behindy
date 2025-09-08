@@ -3,16 +3,16 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostForm } from '@/features/community/components/PostForm/PostForm';
-import { DashboardLayout } from '@/shared/components/layout/applayout/AppLayout';
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout'; // 🔥 수정
 
 const queryClient = new QueryClient();
 
 export default function WritePostPage() {
   return (
     <QueryClientProvider client={queryClient}>
-      <DashboardLayout>
+      <AppLayout> {/* 🔥 DashboardLayout → AppLayout */}
         <PostForm mode="create" />
-      </DashboardLayout>
+      </AppLayout>
     </QueryClientProvider>
   );
 }

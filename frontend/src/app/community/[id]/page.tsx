@@ -1,10 +1,11 @@
+
 "use client";
 
 import React from 'react';
 import { useParams } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostDetail } from '@/features/community/components/PostDetail/PostDetail';
-import { DashboardLayout, PublicLayout } from '@/shared/components/layout/applayout/AppLayout';
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout'; // 🔥 수정
 
 const queryClient = new QueryClient();
 
@@ -14,7 +15,7 @@ export default function PostDetailPage() {
 
   if (isNaN(postId)) {
     return (
-      <DashboardLayout>
+      <AppLayout>
         <div style={{ 
           textAlign: 'center', 
           padding: '40px', 
@@ -22,15 +23,15 @@ export default function PostDetailPage() {
         }}>
           잘못된 게시글 ID입니다.
         </div>
-      </DashboardLayout>
+      </AppLayout>
     );
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <PublicLayout>
+      <AppLayout>
         <PostDetail postId={postId} />
-      </PublicLayout>
+      </AppLayout>
     </QueryClientProvider>
   );
 }

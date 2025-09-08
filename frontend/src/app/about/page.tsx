@@ -1,6 +1,3 @@
-// 🔧 About 페이지 import 에러 수정
-// frontend/src/app/about/page.tsx
-
 "use client";
 
 import React from 'react';
@@ -11,14 +8,8 @@ import {
   GamepadIcon, 
   Users, 
 } from 'lucide-react';
-// 🔥 수정된 import - AppLayout 사용
 import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
 import { PageContainer } from '@/shared/styles/commonContainers';
-import { gradients } from '@/shared/styles/theme';
-
-// ================================================================
-// Styled Components (CSS 변수 사용으로 수정)
-// ================================================================
 
 const HeroSection = styled.div`
   text-align: center;
@@ -313,7 +304,7 @@ export default function AboutPage() {
             transition={{ duration: 0.6, delay: 1.4 }}
           >
             <p>
-              <span className="highlight">Behindy</span>는 "Behind(뒤편) + dy(동적)"의 합성어로, 
+              <span className="highlight">Behindy</span>는 &quot;Behind(뒤편) + dy(동적)&quot;의 합성어로, 
               일상적인 지하철역 뒤편에 숨겨진 동적인 이야기들을 발견한다는 의미를 담고 있습니다.
             </p>
             

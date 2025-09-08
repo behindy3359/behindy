@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostForm } from '@/features/community/components/PostForm/PostForm';
-import { DashboardLayout } from '@/shared/components/layout/applayout/AppLayout';
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout'; // 🔥 수정
 
 const queryClient = new QueryClient();
 
@@ -14,7 +14,7 @@ export default function EditPostPage() {
 
   if (isNaN(postId)) {
     return (
-      <DashboardLayout>
+      <AppLayout> {/* 🔥 DashboardLayout → AppLayout */}
         <div style={{ 
           textAlign: 'center', 
           padding: '40px', 
@@ -22,15 +22,15 @@ export default function EditPostPage() {
         }}>
           잘못된 게시글 ID입니다.
         </div>
-      </DashboardLayout>
+      </AppLayout>
     );
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <DashboardLayout>
+      <AppLayout> {/* 🔥 DashboardLayout → AppLayout */}
         <PostForm mode="edit" postId={postId} />
-      </DashboardLayout>
+      </AppLayout>
     </QueryClientProvider>
   );
 }
