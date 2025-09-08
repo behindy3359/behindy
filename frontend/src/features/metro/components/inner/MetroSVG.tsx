@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SVG_CONFIG } from '@/features/metro/data/stationsData';
 import { SEOUL_DISTRICTS, HAN_RIVER } from '@/features/metro/data/seoulDistrictData';
@@ -12,27 +12,24 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
   visibleLines,
   lineConnections,
   visibleStations,
-  clickedStations,
   processedRealtimeData,
-  onStationClick,
 }) => {
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const toast = useToast();
+  const [hoveredStation, setHoveredStation] = useState<string | null>(null);
 
-  // 🎯 단순화된 역 클릭 핸들러 - 진행 중인 게임 자동 재개
+  // 단순화된 역 클릭 핸들러 - 로그인 시에만 게임 진입
   const handleStationClick = async (stationName: string) => {
     console.log(`🚉 역 클릭: ${stationName}, 로그인 상태: ${isAuthenticated()}`);
     
     if (!isAuthenticated()) {
-      // 🔓 비로그인: 역 이름 표시만
-      console.log('🔓 비로그인 상태 - 역 이름 표시');
-      onStationClick(stationName);
+      // 비로그인: 아무 동작 안 함
+      console.log('🔓 비로그인 상태 - 클릭 무시');
       return;
     }
 
-    // 🔐 로그인: 바로 게임 페이지로 이동
-    // 백엔드에서 진행 중인 게임이 있으면 자동으로 RESUME_EXISTING 처리
+    // 로그인: 바로 게임 페이지로 이동
     try {
       const station = visibleStations.find(s => s.id === stationName);
       if (!station) {
@@ -43,8 +40,6 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
       const lineNumber = station.lines[0];
       console.log(`🎮 게임 진입: ${stationName}역 ${lineNumber}호선`);
       
-      // 🔥 어떤 역을 클릭해도 같은 URL로 이동
-      // 백엔드 API가 진행 중인 게임이 있으면 자동으로 해당 스토리로 재개
       const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
       await router.push(gameUrl);
       
@@ -102,14 +97,14 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
           ))}
         </g>
 
-        {/* 🎯 간소화된 역 아이콘들 */}
+        {/* 역 아이콘들 */}
         <g id="stations">
           {visibleStations.map(station => {
             const realtimeInfo = processedRealtimeData.filter(
               data => data.stationName === station.id
             );
             const hasRealtimeData = realtimeInfo.length > 0;
-            const isClicked = clickedStations.has(station.id);
+            const isHovered = hoveredStation === station.id;
             
             return (
               <g key={`station-${station.id}`}>
@@ -139,8 +134,8 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
                   </circle>
                 )}
                 
-                {/* 클릭된 역 표시 (비로그인 상태에서만) */}
-                {isClicked && !hasRealtimeData && !isAuthenticated() && (
+                {/* 호버 시 하이라이트 */}
+                {isHovered && (
                   <circle
                     cx={station.x}
                     cy={station.y}
@@ -152,7 +147,7 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
                   />
                 )}
                 
-                {/* 🎯 역 메인 아이콘 - 로그인 상태 관계없이 동일 */}
+                {/* 역 메인 아이콘 */}
                 <circle
                   cx={station.x}
                   cy={station.y}
@@ -160,15 +155,17 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
                   fill={
                     hasRealtimeData 
                       ? "#ffff00" 
-                      : isClicked && !isAuthenticated()
+                      : isHovered
                         ? "#6366f1" 
                         : "#2d3748"
                   }
                   stroke="#ffffff"
                   strokeWidth="0.3"
                   style={{ 
-                    cursor: 'pointer',
+                    cursor: isAuthenticated() ? 'pointer' : 'default',
                   }}
+                  onMouseEnter={() => setHoveredStation(station.id)}
+                  onMouseLeave={() => setHoveredStation(null)}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleStationClick(station.id);
@@ -179,11 +176,10 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
           })}
         </g>
 
-        {/* 역 이름 라벨 (비로그인 상태에서 클릭된 역만) */}
+        {/* 호버된 역 라벨 표시 */}
         <g id="station-labels">
           {visibleStations.map(station => {
-            // 비로그인 상태에서 클릭된 역만 라벨 표시
-            if (isAuthenticated() || !clickedStations.has(station.id)) return null;
+            if (hoveredStation !== station.id) return null;
             if (!visibleLines.some(line => station.lines.includes(line))) return null;
             
             const realtimeInfo = processedRealtimeData.filter(
