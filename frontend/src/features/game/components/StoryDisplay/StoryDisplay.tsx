@@ -101,14 +101,14 @@ export const StoryDisplay: React.FC<StoryDisplayProps> = ({
   );
 };
 
-// Styled Components
+// 🔥 CSS 변수 기반 Styled Components
 const Container = styled(motion.div)`
-  background: ${({ theme }) => theme.colors.background.primary};
+  background: var(--bg-primary);
   border-radius: ${({ theme }) => theme.borderRadius.xl};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  border: 1px solid var(--border-light);
   padding: ${({ theme }) => theme.spacing[8]};
   margin-bottom: ${({ theme }) => theme.spacing[6]};
-  box-shadow: ${({ theme }) => theme.shadows.card};
+  box-shadow: var(--shadow-card);
   position: relative;
   min-height: 300px;
 
@@ -124,20 +124,20 @@ const StoryHeader = styled.div`
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing[6]};
   padding-bottom: ${({ theme }) => theme.spacing[4]};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+  border-bottom: 1px solid var(--border-light);
 `;
 
 const StoryTitle = styled.h2`
   font-size: ${({ theme }) => theme.typography.fontSize.xl};
   font-weight: 700;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--text-primary);
   margin: 0;
 `;
 
 const PageIndicator = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  background: ${({ theme }) => theme.colors.background.secondary};
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
   padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
   border-radius: ${({ theme }) => theme.borderRadius.md};
 `;
@@ -149,7 +149,7 @@ const StoryContent = styled.div`
 const StoryText = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
   line-height: 1.8;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--text-primary);
   white-space: pre-wrap;
   word-break: keep-all;
   margin: 0;
@@ -166,7 +166,7 @@ const Cursor = styled.span`
   display: inline-block;
   width: 2px;
   height: 1.2em;
-  background: ${({ theme }) => theme.colors.primary[500]};
+  background: var(--primary-500);
   margin-left: 2px;
   animation: blink 1s infinite;
 
@@ -184,17 +184,17 @@ const SkipButton = styled(motion.button)`
   align-items: center;
   gap: ${({ theme }) => theme.spacing[1]};
   padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
-  background: ${({ theme }) => theme.colors.background.secondary};
-  border: 1px solid ${({ theme }) => theme.colors.border.medium};
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: var(--text-secondary);
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${({ theme }) => theme.colors.background.tertiary};
-    color: ${({ theme }) => theme.colors.text.primary};
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
   }
 `;
 
@@ -202,8 +202,8 @@ const LastPageIndicator = styled(motion.div)`
   text-align: center;
   margin-top: ${({ theme }) => theme.spacing[6]};
   padding-top: ${({ theme }) => theme.spacing[4]};
-  border-top: 1px solid ${({ theme }) => theme.colors.border.light};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  border-top: 1px solid var(--border-light);
+  color: var(--text-secondary);
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-style: italic;
 `;
@@ -214,7 +214,7 @@ const LoadingState = styled.div`
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: var(--text-secondary);
 
   .loading-icon {
     width: 48px;
@@ -235,7 +235,7 @@ const EmptyState = styled.div`
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  color: ${({ theme }) => theme.colors.text.tertiary};
+  color: var(--text-tertiary);
 
   .empty-icon {
     width: 48px;

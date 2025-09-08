@@ -117,7 +117,7 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
 
         <StatsGrid>
           <StatCard>
-            <StatIcon style={{ backgroundColor: '#667eea' }}>
+            <StatIcon style={{ backgroundColor: 'var(--primary-500)' }}>
               <Trophy size={20} />
             </StatIcon>
             <StatInfo>
@@ -127,7 +127,7 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
           </StatCard>
 
           <StatCard>
-            <StatIcon style={{ backgroundColor: '#ef4444' }}>
+            <StatIcon style={{ backgroundColor: 'var(--game-health)' }}>
               <Heart size={20} />
             </StatIcon>
             <StatInfo>
@@ -137,7 +137,7 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
           </StatCard>
 
           <StatCard>
-            <StatIcon style={{ backgroundColor: '#667eea' }}>
+            <StatIcon style={{ backgroundColor: 'var(--game-sanity)' }}>
               <Brain size={20} />
             </StatIcon>
             <StatInfo>
@@ -165,22 +165,22 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
   );
 };
 
-// Styled Components
+// 🔥 CSS 변수 기반 Styled Components
 const Container = styled(motion.div)`
   max-width: 600px;
   width: 100%;
-  background: #ffffff;
+  background: var(--bg-primary);
   border-radius: ${({ theme }) => theme.borderRadius['2xl']};
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
 `;
 
 const CompletionHeader = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing[12]} ${({ theme }) => theme.spacing[8]};
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-bottom: 1px solid var(--border-light);
 `;
 
 const CompletionEmoji = styled.div`
@@ -191,13 +191,13 @@ const CompletionEmoji = styled.div`
 const CompletionTitle = styled.h1`
   font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary);
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
 const CompletionSubtitle = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: ${({ theme }) => theme.spacing[6]};
 `;
 
@@ -208,11 +208,11 @@ const GradeBadge = styled.div<{ $color: string }>`
   width: 80px;
   height: 80px;
   background: ${({ $color }) => $color};
-  color: white;
+  color: var(--text-inverse);
   border-radius: 50%;
   font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
   font-weight: 700;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 `;
 
@@ -227,7 +227,7 @@ const SummaryHeader = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing[6]};
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
 `;
 
 const StoryInfo = styled.div`
@@ -238,7 +238,7 @@ const StoryInfo = styled.div`
 const StoryTitle = styled.h2`
   font-size: ${({ theme }) => theme.typography.fontSize.xl};
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
@@ -248,7 +248,7 @@ const StoryLocation = styled.div`
   justify-content: center;
   gap: ${({ theme }) => theme.spacing[2]};
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  color: #64748b;
+  color: var(--text-secondary);
 `;
 
 const StatsGrid = styled.div`
@@ -266,9 +266,9 @@ const StatCard = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing[3]};
   padding: ${({ theme }) => theme.spacing[4]};
-  background: #f8fafc;
+  background: var(--bg-secondary);
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-light);
 `;
 
 const StatIcon = styled.div`
@@ -278,7 +278,7 @@ const StatIcon = styled.div`
   width: 40px;
   height: 40px;
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: white;
+  color: var(--text-inverse);
 `;
 
 const StatInfo = styled.div`
@@ -287,14 +287,14 @@ const StatInfo = styled.div`
 
 const StatLabel = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: ${({ theme }) => theme.spacing[1]};
 `;
 
 const StatValue = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
 `;
 
 const ActionButtons = styled.div`
@@ -302,8 +302,7 @@ const ActionButtons = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing[3]};
   padding: ${({ theme }) => theme.spacing[8]};
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-light);
 `;
-
 
 export default GameCompletion;

@@ -283,7 +283,6 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
   );
 };
 
-// Styled Components (기존과 동일)
 const Container = styled.div`
   max-width: 500px;
   width: 100%;
@@ -300,26 +299,26 @@ const IconWrapper = styled.div`
   justify-content: center;
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
   border-radius: 50%;
-  color: white;
+  color: var(--text-inverse);
   margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
 
 const Title = styled.h2`
   font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
   font-weight: 700;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--text-primary);
   margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
 
 const Description = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: var(--text-secondary);
   line-height: 1.6;
 
   strong {
-    color: ${({ theme }) => theme.colors.primary[600]};
+    color: var(--primary-600);
     font-weight: 600;
   }
 `;
@@ -330,9 +329,9 @@ const StatsPreview = styled.div`
   gap: ${({ theme }) => theme.spacing[4]};
   margin-bottom: ${({ theme }) => theme.spacing[8]};
   padding: ${({ theme }) => theme.spacing[6]};
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: var(--bg-secondary);
   border-radius: ${({ theme }) => theme.borderRadius.xl};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  border: 1px solid var(--border-light);
 
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
@@ -347,19 +346,19 @@ const StatItem = styled.div`
   gap: ${({ theme }) => theme.spacing[2]};
 
   svg {
-    color: ${({ theme }) => theme.colors.primary[500]};
+    color: var(--primary-500);
   }
 `;
 
 const StatLabel = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: var(--text-secondary);
   font-weight: 500;
 `;
 
 const StatValue = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--text-primary);
   font-weight: 600;
 `;
 
@@ -372,20 +371,20 @@ const InputLabel = styled.label`
   display: block;
   font-size: ${({ theme }) => theme.typography.fontSize.base};
   font-weight: 600;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--text-primary);
   margin-bottom: ${({ theme }) => theme.spacing[3]};
 `;
 
 const InputWrapper = styled.div<{ $hasError: boolean }>`
   position: relative;
-  border: 2px solid ${({ theme, $hasError }) => 
-    $hasError ? theme.colors.error : theme.colors.border.medium};
+  border: 2px solid ${({ $hasError }) => 
+    $hasError ? 'var(--error)' : 'var(--border-medium)'};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   transition: border-color 0.2s ease;
 
   &:focus-within {
-    border-color: ${({ theme, $hasError }) => 
-      $hasError ? theme.colors.error : theme.colors.primary[500]};
+    border-color: ${({ $hasError }) => 
+      $hasError ? 'var(--error)' : 'var(--primary-500)'};
   }
 `;
 
@@ -396,14 +395,14 @@ const CharNameInput = styled.input`
   border: none;
   background: transparent;
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--text-primary);
 
   &:focus {
     outline: none;
   }
 
   &::placeholder {
-    color: ${({ theme }) => theme.colors.text.tertiary};
+    color: var(--text-tertiary);
   }
 
   &:disabled {
@@ -418,7 +417,7 @@ const CharacterCount = styled.span`
   top: 50%;
   transform: translateY(-50%);
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: var(--text-secondary);
 `;
 
 const ErrorMessage = styled(motion.div)`
@@ -428,7 +427,7 @@ const ErrorMessage = styled(motion.div)`
   margin-top: ${({ theme }) => theme.spacing[3]};
   padding: ${({ theme }) => theme.spacing[3]};
   background: rgba(239, 68, 68, 0.1);
-  color: ${({ theme }) => theme.colors.error};
+  color: var(--error);
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 
@@ -462,7 +461,7 @@ const ButtonSpinner = styled.div`
 
 const HelpText = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.tertiary};
+  color: var(--text-tertiary);
   margin: 0;
 `;
 

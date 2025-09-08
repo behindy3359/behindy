@@ -1,4 +1,3 @@
-import { gradients } from "@/shared/styles/theme";
 import { motion } from "framer-motion";
 import styled from "styled-components";
 
@@ -9,12 +8,12 @@ export const SidebarContainer = styled(motion.aside).withConfig({
   top: 0;
   left: 0;
   height: 100vh;
-  background: ${gradients.primary};
-  color: white;
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
+  color: var(--text-inverse);
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   
   &::-webkit-scrollbar {
@@ -75,7 +74,7 @@ export const HeaderSection = styled.div.withConfig({
   min-height: 80px;
   flex-shrink: 0;
   
-  background: ${gradients.primary}
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
 `;
 
 export const BrandLogo = styled.div.withConfig({
@@ -110,11 +109,7 @@ export const BrandLogo = styled.div.withConfig({
     font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.5px;
-    
-    background: ${gradients.primary}
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--text-inverse);
   }
   
   @media (max-width: 767px) {
@@ -125,7 +120,7 @@ export const BrandLogo = styled.div.withConfig({
 export const ToggleButton = styled.button`
   background: rgba(255, 255, 255, 0.1);
   border: none;
-  color: white;
+  color: var(--text-inverse);
   width: 36px;
   height: 36px;
   border-radius: 8px;
@@ -191,7 +186,7 @@ export const StyledNavItem = styled.div.withConfig({
     align-items: center;
     gap: 16px;
     padding: 12px 16px;
-    color: white;
+    color: var(--text-inverse);
     text-decoration: none;
     border-radius: 12px;
     transition: all 0.2s ease;
@@ -211,7 +206,7 @@ export const StyledNavItem = styled.div.withConfig({
         transform: translateY(-50%);
         width: 4px;
         height: 24px;
-        background: white;
+        background: var(--text-inverse);
         border-radius: 0 2px 2px 0;
       }
       
@@ -290,7 +285,7 @@ export const AccountSection = styled.div.withConfig({
   gap: 8px;
   flex-shrink: 0;
   
-  background: ${gradients.primary}
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
   
   @media (max-width: 767px) {
     display: flex;
@@ -316,7 +311,7 @@ export const BottomSection = styled.div.withConfig({
     padding: 12px 16px;
     background: rgba(255, 255, 255, 0.1);
     border: none;
-    color: white;
+    color: var(--text-inverse);
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s ease;

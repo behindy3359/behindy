@@ -136,30 +136,9 @@ export const ChoiceButtons: React.FC<ChoiceButtonsProps> = ({
   );
 };
 
-// Styled Components
+// 🔥 CSS 변수 기반 Styled Components
 const Container = styled.div`
   margin-top: ${({ theme }) => theme.spacing[6]};
-`;
-
-const EffectToggleButton = styled.button<{ $isActive: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
-  background: ${({ $isActive }) => $isActive ? '#e0e7ff' : '#f8fafc'};
-  border: 1px solid ${({ $isActive }) => $isActive ? '#c7d2fe' : '#e2e8f0'};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  color: ${({ $isActive }) => $isActive ? '#3730a3' : '#64748b'};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  align-self: flex-end;
-
-  &:hover {
-    background: ${({ $isActive }) => $isActive ? '#c7d2fe' : '#f1f5f9'};
-    color: #1e293b;
-  }
 `;
 
 const OptionsGrid = styled.div`
@@ -173,18 +152,20 @@ const ChoiceButton = styled(motion.button)<{
   $isLoading?: boolean;
 }>`
   position: relative;
-  background: ${({ $isSelected }) => $isSelected ? '#ede9fe' : '#ffffff'};
-  border: 2px solid ${({ $isSelected }) => $isSelected ? '#667eea' : '#e2e8f0'};
+  background: ${({ $isSelected }) => $isSelected ? 'var(--bg-tertiary)' : 'var(--bg-primary)'};
+  border: 2px solid ${({ $isSelected }) => $isSelected ? 'var(--primary-500)' : 'var(--border-medium)'};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   padding: ${({ theme }) => theme.spacing[6]};
   text-align: left;
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
   transition: all 0.3s ease;
   overflow: hidden;
+  box-shadow: var(--shadow-card);
 
   &:hover:not(:disabled) {
-    border-color: #667eea;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-500);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-lg);
     
     .arrow {
       transform: translateX(4px);
@@ -193,7 +174,7 @@ const ChoiceButton = styled(motion.button)<{
 
   &:disabled {
     opacity: 0.6;
-    background: #f8fafc;
+    background: var(--bg-secondary);
   }
 
   ${({ $isLoading }) => $isLoading && `pointer-events: none;`}
@@ -210,7 +191,7 @@ const ButtonContent = styled.div`
 
   .arrow {
     margin-left: auto;
-    color: #64748b;
+    color: var(--text-secondary);
     transition: transform 0.2s ease;
   }
 `;
@@ -221,8 +202,8 @@ const ChoiceNumber = styled.span`
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
+  color: var(--text-inverse);
   border-radius: 50%;
   font-weight: 700;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
@@ -232,7 +213,7 @@ const ChoiceNumber = styled.span`
 const ChoiceText = styled.span`
   flex: 1;
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  color: #1e293b;
+  color: var(--text-primary);
   line-height: 1.6;
 
   @media (max-width: 768px) {
@@ -248,9 +229,9 @@ const EffectPreview = styled.div<{ $type: string }>`
   margin-left: 48px;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   color: ${({ $type }) => {
-    if ($type === 'positive') return '#16a34a';
-    if ($type === 'negative') return '#dc2626';
-    return '#64748b';
+    if ($type === 'positive') return 'var(--game-success)';
+    if ($type === 'negative') return 'var(--game-danger)';
+    return 'var(--text-secondary)';
   }};
 
   svg {
@@ -265,6 +246,7 @@ const LoadingOverlay = styled.div`
   right: 0;
   bottom: 0;
   background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -273,8 +255,8 @@ const LoadingOverlay = styled.div`
 const Spinner = styled.div`
   width: 24px;
   height: 24px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #667eea;
+  border: 3px solid var(--border-medium);
+  border-top-color: var(--primary-500);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 
@@ -289,9 +271,9 @@ const EmptyState = styled.div`
   justify-content: center;
   gap: ${({ theme }) => theme.spacing[3]};
   padding: ${({ theme }) => theme.spacing[8]};
-  background: #f8fafc;
+  background: var(--bg-secondary);
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  color: #64748b;
+  color: var(--text-secondary);
 `;
 
 const DisabledMessage = styled.div`
@@ -301,9 +283,9 @@ const DisabledMessage = styled.div`
   gap: ${({ theme }) => theme.spacing[2]};
   margin-top: ${({ theme }) => theme.spacing[4]};
   padding: ${({ theme }) => theme.spacing[3]};
-  background: #f8fafc;
+  background: var(--bg-secondary);
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 

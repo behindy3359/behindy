@@ -1,34 +1,66 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-
-// 🎮 게임 모드 라우트 정의
-const GAME_ROUTES = ['/game', '/character'];
 
 export const useAutoTheme = () => {
   const pathname = usePathname();
+  const [isGameMode, setIsGameMode] = useState(false);
+
+  // 게임 관련 경로 정의
+  const gameRoutes = [
+    '/game',
+    '/character'
+  ];
 
   useEffect(() => {
-    const isGameMode = GAME_ROUTES.some(route => pathname.startsWith(route));
+    // 현재 경로가 게임 관련 경로인지 확인
+    const shouldEnterGameMode = gameRoutes.some(route => pathname.startsWith(route));
     
-    // 🎯 HTML 요소에 데이터 속성 추가
-    document.documentElement.setAttribute('data-theme', isGameMode ? 'dark' : 'light');
-    document.documentElement.classList.toggle('game-mode', isGameMode);
-    
-    // 🌟 게임 진입 시 전환 효과 트리거
-    if (isGameMode) {
-      document.documentElement.classList.add('theme-transitioning');
-      setTimeout(() => {
-        document.documentElement.classList.remove('theme-transitioning');
-      }, 500);
+    if (shouldEnterGameMode !== isGameMode) {
+      setIsGameMode(shouldEnterGameMode);
+      
+      // 테마 전환
+      if (shouldEnterGameMode) {
+        // 🌙 다크 테마 (게임 모드) 활성화
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.body.classList.add('game-mode');
+        
+        // 전환 애니메이션 트리거
+        document.dispatchEvent(new CustomEvent('game-mode-enter'));
+        
+        console.log('🎮 게임 모드 진입 - 다크 테마 활성화');
+      } else {
+        // ☀️ 라이트 테마 (일반 모드) 활성화
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.body.classList.remove('game-mode');
+        
+        console.log('🏠 일반 모드 진입 - 라이트 테마 활성화');
+      }
     }
-    
-    console.log(`🎨 테마 변경: ${isGameMode ? '다크(게임)' : '라이트(일상)'} 모드`);
-  }, [pathname]);
+  }, [pathname, isGameMode]);
 
-  const isGameMode = GAME_ROUTES.some(route => pathname.startsWith(route));
-  
+  // 컴포넌트 언마운트 시 정리
+  useEffect(() => {
+    return () => {
+      // 페이지 이동 시 기본 테마로 복원
+      if (isGameMode) {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.body.classList.remove('game-mode');
+      }
+    };
+  }, []);
+
   return {
     isGameMode,
-    theme: isGameMode ? 'dark' : 'light'
+    setGameMode: (gameMode: boolean) => {
+      setIsGameMode(gameMode);
+      
+      if (gameMode) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.body.classList.add('game-mode');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.body.classList.remove('game-mode');
+      }
+    }
   };
 };
