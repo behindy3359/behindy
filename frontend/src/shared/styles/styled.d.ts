@@ -1,4 +1,3 @@
-
 import 'styled-components';
 
 // 🔥 완전한 테마 타입 정의
@@ -95,10 +94,10 @@ export interface Theme {
     buttonHover: string;
   };
 
-  // 타이포그래피 시스템
+  // 타이포그래피 시스템 - readonly 배열 타입으로 수정
   typography: {
     fontFamily: {
-      sans: string[];
+      sans: readonly string[];
     };
     lineHeight: {
       normal: number;

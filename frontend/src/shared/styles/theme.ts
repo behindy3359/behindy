@@ -62,10 +62,12 @@ export const theme = {
 
   // 그림자 시스템 - CSS 변수 사용
   shadows: {
+    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    lg: 'var(--shadow-lg)',
     card: 'var(--shadow-card)',
     button: 'var(--shadow-button)',
     buttonHover: 'var(--shadow-button)',
-    lg: 'var(--shadow-lg)',
   },
 
   // 나머지는 기존과 동일

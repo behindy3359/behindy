@@ -47,7 +47,6 @@ export const PostTime = styled.div`
   color: ${({ theme }) => theme.colors.text.tertiary};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
 `;
-
 export const MetroLine = styled.div<{ $lineNumber?: string }>`
   display: inline-flex;
   align-items: center;
@@ -64,7 +63,7 @@ export const MetroLine = styled.div<{ $lineNumber?: string }>`
       case '2': return `background: ${theme.colors.metro.line2};`;
       case '3': return `background: ${theme.colors.metro.line3};`;
       case '4': return `background: ${theme.colors.metro.line4};`;
-      default: return `background: ${theme.colors.gray[500]};`;
+      default: return `background: ${theme.colors.text.tertiary};`;
     }
   }}
 `;
