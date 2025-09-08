@@ -2,6 +2,7 @@
 import { AuthGuard } from '@/shared/components/AuthGuard';
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/shared/providers/ThemeProvider';
+import '@/shared/styles/globalTheme.css';
 
 export const metadata: Metadata = {
   title: {

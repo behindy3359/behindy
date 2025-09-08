@@ -1,8 +1,7 @@
-"use client";
-
 import React from 'react';
 import { Sidebar } from '../sidebar/Sidebar';
 import { useUIStore } from '@/shared/store/uiStore';
+import { useAutoTheme } from '@/shared/hooks/useAutoTheme'; // 🔥 추가
 import { AppLayoutProps } from './types';
 import { ContentArea, LayoutContainer, MainContent, MobileToggleButton } from './styled';
 
@@ -13,6 +12,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
   const { sidebar, toggleSidebar } = useUIStore();
   const [isMobile, setIsMobile] = React.useState(false);
+  
+  // 🎨 자동 테마 적용
+  const { isGameMode } = useAutoTheme();
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -36,8 +38,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           left: 0,
           right: 0,
           height: '60px',
-          background: 'white',
-          borderBottom: '1px solid #e5e7eb',
+          background: 'var(--bg-primary)', // 🔥 CSS 변수 사용
+          borderBottom: '1px solid var(--border-light)', // 🔥 CSS 변수 사용
           zIndex: 1000,
           display: 'flex',
           alignItems: 'center',
@@ -65,11 +67,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         </MobileToggleButton>
       )}
 
-      {/* 메인 컨텐츠 */}
       <MainContent 
         $sidebarOpen={sidebar.isOpen} 
         $isMobile={isMobile}
         $layoutType={layoutType}
+        $isGameMode={isGameMode}
       >
         <ContentArea>
           {children}
@@ -79,13 +81,4 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   );
 };
 
-// 편의성을 위한 래퍼 컴포넌트들
-export const PublicLayout: React.FC<Omit<AppLayoutProps, 'layoutType'>> = (props) => (
-  <AppLayout {...props} layoutType="sidebar" />
-);
-
-export const DashboardLayout: React.FC<Omit<AppLayoutProps, 'layoutType'>> = (props) => (
-  <AppLayout {...props} layoutType="sidebar" />
-);
-
-export default AppLayout;
+export default AppLayout

@@ -42,15 +42,15 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
   const statusMessage = getCharacterStatusMessage(character.charHealth, character.charSanity);
 
   const getHealthColor = (health: number) => {
-    if (health > 70) return '#10b981';
-    if (health > 30) return '#f59e0b';
-    return '#ef4444';
+    if (health > 70) return 'var(--game-success)';
+    if (health > 30) return 'var(--warning)';
+    return 'var(--game-health)';
   };
 
   const getSanityColor = (sanity: number) => {
-    if (sanity > 70) return '#667eea';
-    if (sanity > 30) return '#f59e0b';
-    return '#ef4444';
+    if (sanity > 70) return 'var(--game-sanity)';
+    if (sanity > 30) return 'var(--warning)';
+    return 'var(--game-danger)';
   };
 
   const getStatusIcon = () => {
@@ -89,7 +89,7 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
               <Heart size={16} />
               체력
             </StatLabel>
-            <StatValue>{character.charHealth}/100</StatValue>
+            <StatValue $type="health">{character.charHealth}/100</StatValue>
           </StatHeader>
           <ProgressBar>
             <ProgressFill
@@ -108,7 +108,7 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
               <Brain size={16} />
               정신력
             </StatLabel>
-            <StatValue>{character.charSanity}/100</StatValue>
+            <StatValue $type="sanity">{character.charSanity}/100</StatValue>
           </StatHeader>
           <ProgressBar>
             <ProgressFill
@@ -148,64 +148,64 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
   );
 };
 
-// Styled Components
+// 🔥 수정된 Styled Components (CSS 변수 사용)
 const Container = styled(motion.div)<{ $compact?: boolean }>`
-  background: ${({ theme }) => theme.colors.background.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.xl};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  padding: ${({ theme, $compact }) => $compact ? theme.spacing[4] : theme.spacing[6]};
-  box-shadow: ${({ theme }) => theme.shadows.card};
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-xl, 1rem);
+  border: 1px solid var(--border-light);
+  padding: ${({ $compact }) => $compact ? '1rem' : '1.5rem'};
+  box-shadow: var(--shadow-card);
 `;
 
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: 1rem;
 `;
 
 const CharacterName = styled.h3`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  font-size: ${({ theme }) => theme.typography.fontSize.lg};
+  gap: 0.5rem;
+  font-size: 1.125rem;
   font-weight: 600;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--text-primary);
   margin: 0;
 `;
 
 const StatusBadge = styled.div<{ $status: string }>`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing[1]};
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
-  background: ${({ theme, $status }) => {
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: ${({ $status }) => {
     if ($status.includes('위험') || $status.includes('사망')) {
       return 'rgba(239, 68, 68, 0.1)';
     }
     if ($status.includes('주의')) {
       return 'rgba(245, 158, 11, 0.1)';
     }
-    return theme.colors.background.secondary;
+    return 'var(--bg-secondary)';
   }};
-  color: ${({ theme, $status }) => {
+  color: ${({ $status }) => {
     if ($status.includes('위험') || $status.includes('사망')) {
-      return theme.colors.error;
+      return 'var(--error)';
     }
     if ($status.includes('주의')) {
-      return '#f59e0b';
+      return 'var(--warning)';
     }
-    return theme.colors.text.secondary;
+    return 'var(--text-secondary)';
   }};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
   font-weight: 500;
 `;
 
 const StatsContainer = styled.div<{ $compact?: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme, $compact }) => $compact ? theme.spacing[3] : theme.spacing[4]};
+  gap: ${({ $compact }) => $compact ? '0.75rem' : '1rem'};
 `;
 
 const StatBar = styled.div``;
@@ -214,28 +214,28 @@ const StatHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing[2]};
+  margin-bottom: 0.5rem;
 `;
 
 const StatLabel = styled.span`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
   font-weight: 500;
 `;
 
-const StatValue = styled.span`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.primary};
+const StatValue = styled.span<{ $type: 'health' | 'sanity' }>`
+  font-size: 0.875rem;
+  color: var(--text-primary);
   font-weight: 600;
 `;
 
 const ProgressBar = styled.div`
   width: 100%;
   height: 8px;
-  background: ${({ theme }) => theme.colors.background.tertiary};
+  background: var(--bg-tertiary);
   border-radius: 4px;
   overflow: hidden;
 `;
@@ -249,26 +249,26 @@ const ProgressFill = styled(motion.div)<{ $percentage: number; $color: string }>
 const WarningMessage = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  margin-top: ${({ theme }) => theme.spacing[4]};
-  padding: ${({ theme }) => theme.spacing[3]};
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
   background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: var(--warning);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
   font-weight: 500;
 `;
 
 const DeathMessage = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  margin-top: ${({ theme }) => theme.spacing[4]};
-  padding: ${({ theme }) => theme.spacing[3]};
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
   background: rgba(239, 68, 68, 0.1);
-  color: ${({ theme }) => theme.colors.error};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: var(--error);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
   font-weight: 500;
 `;
 
@@ -276,9 +276,9 @@ const EmptyState = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  padding: ${({ theme }) => theme.spacing[6]};
-  color: ${({ theme }) => theme.colors.text.tertiary};
+  gap: 0.5rem;
+  padding: 1.5rem;
+  color: var(--text-tertiary);
 `;
 
 export default CharacterStatus;

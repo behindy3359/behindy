@@ -21,7 +21,12 @@ import { ChoiceButtons } from '@/features/game/components/ChoiceButtons/ChoiceBu
 import { CharacterStatus } from '@/features/game/components/CharacterStatus/CharacterStatus';
 import { CharacterCreationForm } from '@/features/game/components/CharacterCreationForm/CharacterCreationForm';
 import { GameCompletion } from '@/features/game/components/GameCompletion/GameCompletion';
-import { enrichCharacterData } from '@/features/game/utils/characterUtils';
+import { 
+  enrichCharacterData, 
+  createCharacterFromAPI,
+  isCharacterAlive,
+  getCharacterStatusMessage
+} from '@/features/game/utils/characterUtils';
 
 export type GameFlowState = 
   | 'LOADING'           
@@ -126,7 +131,8 @@ export default function UnifiedGamePage() {
         });
 
         if (characterResponse.success && characterResponse.data) {
-          characterStatus = characterResponse.data;
+          // 🔥 백엔드 응답을 완전한 Character로 변환
+          characterStatus = createCharacterFromAPI(characterResponse.data);
         } else {
           console.log('👤 [Game Page] No character found, switching to creation');
           setGameState('CHARACTER_CREATE');
@@ -175,10 +181,11 @@ export default function UnifiedGamePage() {
           stationLine: gameResponse.stationLine
         });
 
-        // 게임 응답에서 받은 캐릭터 정보로 업데이트
+        // 🔥 게임 응답에서 받은 캐릭터 정보로 업데이트 (완전한 정보로 변환)
         if (gameResponse.character) {
           console.log('🔄 [Game Page] Updating character from game response');
-          setCharacter(gameResponse.character);
+          const enrichedCharacter = enrichCharacterData(characterStatus, gameResponse.character);
+          setCharacter(enrichedCharacter);
         }
 
         // 게임 시작 시간 기록
@@ -290,9 +297,11 @@ export default function UnifiedGamePage() {
       originalDestination: { stationName, lineNumber }
     });
     
-    setCharacter(newCharacter);
+    // 🔥 새로 생성된 캐릭터를 완전한 정보로 변환
+    const enrichedCharacter = createCharacterFromAPI(newCharacter);
+    setCharacter(enrichedCharacter);
     setHasInitialized(false);
-    toast.success(`${newCharacter.charName} 캐릭터로 게임을 시작합니다!`);
+    toast.success(`${enrichedCharacter.charName} 캐릭터로 게임을 시작합니다!`);
     
     setTimeout(() => {
       console.log('🔄 [Game Page] Restarting game initialization after character creation');
@@ -366,7 +375,6 @@ export default function UnifiedGamePage() {
           charId: response.updatedCharacter.charId,
           charHealth: response.updatedCharacter.charHealth,
           charSanity: response.updatedCharacter.charSanity,
-          isAlive: response.updatedCharacter.isAlive
         } : null,
         timestamp: new Date().toISOString()
       });
@@ -381,7 +389,7 @@ export default function UnifiedGamePage() {
         toast.info(response.result);
       }
 
-      // 캐릭터 상태 업데이트
+      // 🔥 캐릭터 상태 업데이트 (완전한 정보로 변환)
       let updatedCharacter = character;
       if (response.updatedCharacter) {
         updatedCharacter = enrichCharacterData(character, response.updatedCharacter);
@@ -779,15 +787,15 @@ export default function UnifiedGamePage() {
   );
 }
 
-// Styled Components
+// 🔥 theme 객체 대신 CSS 변수 사용으로 수정
 const GameContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing[6]};
+  padding: 1.5rem;
   min-height: 100vh;
 
   @media (max-width: 768px) {
-    padding: ${({ theme }) => theme.spacing[4]};
+    padding: 1rem;
   }
 `;
 
@@ -795,37 +803,37 @@ const GameHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  padding-bottom: ${({ theme }) => theme.spacing[4]};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
 `;
 
 const BackButton = styled.button`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background: transparent;
   border: none;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.2s ease;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.text.primary};
+    color: var(--text-primary);
   }
 `;
 
 const HeaderTitle = styled.h1`
-  font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
+  font-size: 1.5rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--text-primary);
   margin: 0;
 `;
 
 const HeaderActions = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing[3]};
+  gap: 0.75rem;
 `;
 
 const GameContent = styled.div`
@@ -841,18 +849,18 @@ const LoadingSection = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: var(--text-secondary);
 
   p {
-    margin-top: ${({ theme }) => theme.spacing[4]};
+    margin-top: 1rem;
   }
 `;
 
 const Spinner = styled.div`
   width: 48px;
   height: 48px;
-  border: 4px solid ${({ theme }) => theme.colors.border.light};
-  border-top-color: ${({ theme }) => theme.colors.primary[500]};
+  border: 4px solid var(--border-light);
+  border-top-color: var(--primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 
@@ -871,7 +879,7 @@ const GamePlayingSection = styled.div`
   width: 100%;
   display: grid;
   grid-template-columns: 300px 1fr;
-  gap: ${({ theme }) => theme.spacing[6]};
+  gap: 1.5rem;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -896,7 +904,7 @@ const GameCompletionSection = styled.div`
   align-items: center;
   width: 100%;
   min-height: 60vh;
-  padding: ${({ theme }) => theme.spacing[4]};
+  padding: 1rem;
 `;
 
 const ErrorSection = styled(motion.div)`
@@ -909,21 +917,21 @@ const ErrorTitle = styled.h2`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${({ theme }) => theme.spacing[3]};
-  font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
+  gap: 0.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.colors.error};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  color: var(--error);
+  margin-bottom: 1rem;
 `;
 
 const ErrorMessage = styled.p`
-  font-size: ${({ theme }) => theme.typography.fontSize.base};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
 `;
 
 const ErrorActions = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing[4]};
+  gap: 1rem;
   justify-content: center;
 `;

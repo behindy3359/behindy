@@ -1,3 +1,4 @@
+
 import { Character } from '../types/gameTypes';
 
 /**
@@ -32,7 +33,8 @@ export const getCharacterStatusMessage = (health: number, sanity: number): strin
 };
 
 /**
- * 백엔드 응답을 완전한 Character 객체로 보완
+ * 🔥 백엔드 응답을 완전한 Character 객체로 보완
+ * DB에서 오는 부분적 데이터를 완전한 Character로 변환
  */
 export const enrichCharacterData = (
   baseCharacter: Character,
@@ -44,9 +46,38 @@ export const enrichCharacterData = (
   return {
     ...baseCharacter,
     ...updatedData,
+    // 🔥 프론트엔드에서 계산된 필드들
     isAlive: isCharacterAlive(health, sanity),
     isDying: isCharacterDying(health, sanity),
     statusMessage: getCharacterStatusMessage(health, sanity)
+  };
+};
+
+/**
+ * 🔥 백엔드 API 응답을 Character 타입으로 안전하게 변환
+ * API에서 누락된 필드들을 자동으로 계산해서 채움
+ */
+export const createCharacterFromAPI = (apiData: {
+  charId: number;
+  charName: string;
+  charHealth: number;
+  charSanity: number;
+  hasGameProgress?: boolean;
+  createdAt?: string;
+}): Character => {
+  const { charHealth, charSanity } = apiData;
+  
+  return {
+    charId: apiData.charId,
+    charName: apiData.charName,
+    charHealth,
+    charSanity,
+    // 🔥 계산된 필드들
+    isAlive: isCharacterAlive(charHealth, charSanity),
+    isDying: isCharacterDying(charHealth, charSanity),
+    statusMessage: getCharacterStatusMessage(charHealth, charSanity),
+    hasGameProgress: apiData.hasGameProgress || false,
+    createdAt: apiData.createdAt
   };
 };
 
