@@ -2,12 +2,8 @@ import React from 'react';
 import { 
   Controls,
   CheckboxItem, 
-  StatusIndicator,
   TrainCountBadge,
   NoTrainBadge,
-  ArrivalStationInfo,
-  ErrorText,
-  RealtimeStatus
 } from '../styles';
 import type { MetroControlsProps } from '../../types/metroMapTypes';
 import {CommonGroup} from '@/shared/styles/commonStyles';
@@ -15,13 +11,9 @@ import {CommonGroup} from '@/shared/styles/commonStyles';
 export const MetroControls: React.FC<MetroControlsProps> = ({
   lineStats,
   visibleLines,
-  arrivalStationIds,
-  areAllArrivalStationsShown,
   isLoading,
   error,
-  processedRealtimeData,
   onLineToggle,
-  onArrivalStationsToggle,
 }) => {
   return (
     <Controls>
@@ -46,22 +38,6 @@ export const MetroControls: React.FC<MetroControlsProps> = ({
             )}
           </CheckboxItem>
         ))}
-        
-        <CheckboxItem>
-          <input
-            type="checkbox"
-            checked={areAllArrivalStationsShown}
-            onChange={onArrivalStationsToggle}
-          />
-          <span style={{ fontSize: '14px', fontWeight: '500' }}>
-            🚇 도착 역 표시
-          </span>
-          {arrivalStationIds.length > 0 && (
-            <ArrivalStationInfo>
-              ({arrivalStationIds.length}개 역)
-            </ArrivalStationInfo>
-          )}
-        </CheckboxItem>
       </CommonGroup>
     </Controls>
   );

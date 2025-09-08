@@ -6,8 +6,6 @@ import { useMetroRealtime } from '../hooks/useMetroRealtime';
 import { useMetroState } from '../hooks/useMetroState';
 import {
   processRealtimeData,
-  getArrivalStationIds,
-  areAllArrivalStationsShown,
   getVisibleStations,
   calculateLineStats,
 } from '../utils/metroMapUtils';
@@ -17,10 +15,7 @@ export const MetroMap: React.FC = () => {
   const {
     visibleLines,
     showDistricts,
-    clickedStations,
     handleLineToggle,
-    handleStationClick,
-    handleArrivalStationsToggle,
   } = useMetroState();
 
   const { data: realtimeData, isLoading, error } = useMetroRealtime(30000);
@@ -28,14 +23,6 @@ export const MetroMap: React.FC = () => {
   const processedRealtimeData = useMemo(() => {
     return processRealtimeData(realtimeData);
   }, [realtimeData]);
-
-  const arrivalStationNames = useMemo(() => {
-    return getArrivalStationIds(processedRealtimeData);
-  }, [processedRealtimeData]);
-
-  const areAllArrivalStationsShownn = useMemo(() => {
-    return areAllArrivalStationsShown(arrivalStationNames, clickedStations);
-  }, [arrivalStationNames, clickedStations]);
 
   const lineConnections = useMemo(() => {
     return getVisibleLineConnections(visibleLines);
@@ -49,23 +36,15 @@ export const MetroMap: React.FC = () => {
     return calculateLineStats(visibleLines, processedRealtimeData);
   }, [visibleLines, processedRealtimeData]);
 
-  const handleArrivalStationsToggleWrapper = () => {
-    handleArrivalStationsToggle(arrivalStationNames, areAllArrivalStationsShownn);
-  };
-
   return (
     <BasicFullWidthContainer>
       <MetroControls
         lineStats={lineStats}
         visibleLines={visibleLines}
-        clickedStations={clickedStations}
-        arrivalStationIds={arrivalStationNames}
-        areAllArrivalStationsShown={areAllArrivalStationsShownn}
         isLoading={isLoading}
         error={error}
         processedRealtimeData={processedRealtimeData}
         onLineToggle={handleLineToggle}
-        onArrivalStationsToggle={handleArrivalStationsToggleWrapper}
       />
       
       <MetroSVG
@@ -73,9 +52,7 @@ export const MetroMap: React.FC = () => {
         visibleLines={visibleLines}
         lineConnections={lineConnections}
         visibleStations={visibleStations}
-        clickedStations={clickedStations}
         processedRealtimeData={processedRealtimeData}
-        onStationClick={handleStationClick}
       />
     </BasicFullWidthContainer>
   );
