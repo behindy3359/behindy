@@ -52,11 +52,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           isOpen={sidebar.isOpen}
           onNavigate={handleNavigation}
         />
-        <SidebarFooter
+        {/* <SidebarFooter
           isOpen={sidebar.isOpen}
           isDarkTheme={isDarkTheme}
           onThemeToggle={handleThemeToggle}
-        />
+        /> */}
       </SidebarContainer>
     </>
   );
