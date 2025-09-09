@@ -4,11 +4,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { ArrowLeft, RotateCcw, LogOut, User, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, RotateCcw, LogOut, AlertTriangle } from 'lucide-react';
 import { api } from '@/config/axiosConfig';
 import { useAuthStore } from '@/shared/store/authStore';
 import { useToast } from '@/shared/store/uiStore';
-import { useAutoTheme, confirmGameEntry, handleGameEntryFailure } from '@/shared/hooks/useAutoTheme';
+import { gameThemeControls } from '@/shared/hooks/useAutoTheme'; // 🔥 수동 제어 가져오기
 import { Button } from '@/shared/components/ui/button/Button';
 import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
 import { 
@@ -25,8 +25,6 @@ import { GameCompletion } from '@/features/game/components/GameCompletion/GameCo
 import { 
   enrichCharacterData, 
   createCharacterFromAPI,
-  isCharacterAlive,
-  getCharacterStatusMessage
 } from '@/features/game/utils/characterUtils';
 
 export type GameFlowState = 
@@ -56,8 +54,8 @@ export default function UnifiedGamePage() {
   const searchParams = useSearchParams();
   const toast = useToast();
   const { isAuthenticated } = useAuthStore();
-  const { isGameMode } = useAutoTheme();
   const initializeRef = useRef(false);
+  const [gameThemeApplied, setGameThemeApplied] = useState(false); // 🔥 테마 적용 상태
 
   const stationName = searchParams.get('station');
   const lineNumber = searchParams.get('line');
@@ -72,7 +70,20 @@ export default function UnifiedGamePage() {
   const [gameCompletionData, setGameCompletionData] = useState<GameCompletionData | null>(null);
   const [gameStartTime, setGameStartTime] = useState<string | null>(null);
 
-  // 완료 등급 계산 함수
+  // 🔥 게임 페이지 진입 시 라이트모드 유지 (초기값)
+  useEffect(() => {
+    console.log('🎮 [Game Page] 컴포넌트 마운트 - 라이트모드 유지');
+    gameThemeControls.disableGameMode();
+  }, []);
+
+  // 🔥 게임 페이지 떠날 때 라이트모드 복원
+  useEffect(() => {
+    return () => {
+      console.log('🎮 [Game Page] 컴포넌트 언마운트 - 라이트모드 복원');
+      gameThemeControls.disableGameMode();
+    };
+  }, []);
+
   const getCompletionGrade = (character: Character): string => {
     const totalStats = character.charHealth + character.charSanity;
     if (totalStats >= 180) return 'S';
@@ -82,7 +93,6 @@ export default function UnifiedGamePage() {
     return 'D';
   };
 
-  // 게임 초기화 로직
   const initializeGame = useCallback(async () => {
     if (initializeRef.current || hasInitialized) {
       console.log('🔄 [Game Page] Already initializing or initialized, skipping...');
@@ -94,21 +104,16 @@ export default function UnifiedGamePage() {
     
     if (!isAuthenticated()) {
       console.log('❌ [Game Page] Not authenticated, redirecting to login');
-      handleGameEntryFailure(); // 🔥 테마 전환 제어
       router.push('/auth/login');
       return;
     }
 
     if (!stationName || !lineNumber) {
       console.log('❌ [Game Page] Missing params:', { stationName, lineNumber });
-      handleGameEntryFailure(); // 🔥 테마 전환 제어
       setError('역 정보가 올바르지 않습니다');
       setGameState('ERROR');
       toast.error('역 정보가 올바르지 않습니다');
-      
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      router.push('/');
       return;
     }
 
@@ -121,21 +126,11 @@ export default function UnifiedGamePage() {
       let characterStatus: Character | null = null;
       
       try {
-        console.log('🎯 [Game Page] API 요청: /characters/exists');
-        
         const characterResponse = await api.get<{
           success: boolean;
           message: string;
           data: Character | null;
         }>('/characters/exists');
-        
-        console.log('✅ [Game Page] Character exists response:', {
-          success: characterResponse.success,
-          message: characterResponse.message,
-          hasData: !!characterResponse.data,
-          charName: characterResponse.data?.charName,
-          isAlive: characterResponse.data?.isAlive
-        });
 
         if (characterResponse.success && characterResponse.data) {
           characterStatus = createCharacterFromAPI(characterResponse.data);
@@ -146,13 +141,6 @@ export default function UnifiedGamePage() {
           return;
         }
       } catch (characterError: any) {
-        console.log('⚠️ [Game Page] Character check error:', {
-          status: characterError.response?.status,
-          message: characterError.response?.data?.message || characterError.message,
-          url: characterError.config?.url,
-          isNotFound: characterError.response?.status === 404
-        });
-        
         if (characterError.response?.status === 404) {
           console.log('👤 [Game Page] Character not found (404), redirecting to creation');
           redirectToCharacterCreation();
@@ -165,49 +153,28 @@ export default function UnifiedGamePage() {
       if (characterStatus && characterStatus.charId) {
         setCharacter(characterStatus);
         
-        console.log('📡 [Game Page] Attempting to enter game...', {
-          stationName,
-          lineNumber,
-          charId: characterStatus.charId,
-          charName: characterStatus.charName
-        });
+        console.log('📡 [Game Page] Attempting to enter game...');
 
         const gameEnterUrl = `/game/enter/station/${encodeURIComponent(stationName)}/line/${lineNumber}`;
-        console.log('🎯 [Game Page] Game enter URL:', gameEnterUrl);
-
         const gameResponse = await api.post<GameEnterResponse>(gameEnterUrl);
 
-        console.log('✅ [Game Page] Game enter response:', {
-          success: gameResponse.success,
-          action: gameResponse.action,
-          message: gameResponse.message,
-          selectedStoryId: gameResponse.selectedStoryId,
-          resumeStoryId: gameResponse.resumeStoryId,
-          stationName: gameResponse.stationName,
-          stationLine: gameResponse.stationLine
-        });
-
-        // 게임 응답에서 받은 캐릭터 정보로 업데이트
+        // 🔥 게임 응답에서 받은 캐릭터 정보로 업데이트
         if (gameResponse.character) {
-          console.log('🔄 [Game Page] Updating character from game response');
           const enrichedCharacter = enrichCharacterData(characterStatus, gameResponse.character);
           setCharacter(enrichedCharacter);
         }
 
-        // 게임 시작 시간 기록
         if (!gameStartTime) {
           setGameStartTime(new Date().toISOString());
         }
 
         switch (gameResponse.action) {
           case 'START_NEW':
-            console.log('🆕 [Game Page] Starting new game:', {
-              storyId: gameResponse.selectedStoryId,
-              storyTitle: gameResponse.selectedStoryTitle,
-              firstPageId: gameResponse.firstPage?.pageId
-            });
+            console.log('🆕 [Game Page] Starting new game - 다크모드 활성화');
             
-            confirmGameEntry(); // 🔥 게임 진입 성공 확인
+            // 🔥 게임 성공 시에만 다크모드 적용
+            gameThemeControls.enableGameMode();
+            setGameThemeApplied(true);
             
             setGameData({
               storyId: gameResponse.selectedStoryId!,
@@ -221,15 +188,11 @@ export default function UnifiedGamePage() {
             break;
 
           case 'RESUME_EXISTING':
-            console.log('▶️ [Game Page] Resuming existing game:', {
-              storyId: gameResponse.resumeStoryId,
-              storyTitle: gameResponse.resumeStoryTitle,
-              currentPageId: gameResponse.currentPage?.pageId,
-              originalRequest: `${stationName} ${lineNumber}호선`,
-              actualLocation: `${gameResponse.stationName} ${gameResponse.stationLine}호선`
-            });
+            console.log('▶️ [Game Page] Resuming existing game - 다크모드 활성화');
 
-            confirmGameEntry(); // 🔥 게임 진입 성공 확인
+            // 🔥 게임 재개 시에도 다크모드 적용
+            gameThemeControls.enableGameMode();
+            setGameThemeApplied(true);
 
             setGameData({
               storyId: gameResponse.resumeStoryId!,
@@ -241,7 +204,6 @@ export default function UnifiedGamePage() {
             
             setGameState('GAME_PLAYING');
             
-            // 다른 역에서 요청했지만 기존 게임을 재개하는 경우 알림
             if (stationName !== gameResponse.stationName || lineNumber !== gameResponse.stationLine.toString()) {
               toast.info(`진행 중인 게임을 재개합니다 (${gameResponse.stationName}역 ${gameResponse.stationLine}호선)`);
             } else {
@@ -250,21 +212,17 @@ export default function UnifiedGamePage() {
             break;
 
           case 'NO_STORIES':
-            console.log('⚠️ [Game Page] No stories available - 홈 복귀');
+            console.log('⚠️ [Game Page] No stories available - 라이트모드 유지하고 즉시 복귀');
             
-            handleGameEntryFailure();
-            
+            // 🔥 스토리 없으면 라이트모드 그대로 유지하고 바로 홈으로
             setError('플레이 가능한 스토리가 없습니다');
             setGameState('ERROR');
-            
-            setTimeout(() => {
-              router.push('/');
-            }, 2500);
+            toast.error('이 역에는 아직 스토리가 없습니다');
+            router.push('/'); // 즉시 홈으로 (테마 변경 없음)
             break;
 
           default:
             console.error('❌ [Game Page] Unknown game action:', gameResponse.action);
-            handleGameEntryFailure(); // 🔥 에러 시에도 실패 처리
             throw new Error('알 수 없는 게임 상태');
         }
       } else {
@@ -275,94 +233,43 @@ export default function UnifiedGamePage() {
       setHasInitialized(true);
 
     } catch (error: any) {
-      console.error('❌ [Game Page] Game initialization failed:', {
-        error,
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        url: error.config?.url,
-        stationName,
-        lineNumber
-      });
-      
-      handleGameEntryFailure(); // 🔥 에러 시에도 실패 처리
+      console.error('❌ [Game Page] Game initialization failed:', error);
       
       const errorMessage = error.response?.data?.message || error.message || '게임을 시작할 수 없습니다';
       setError(errorMessage);
       setGameState('ERROR');
       toast.error(errorMessage);
       
-      // 에러 시에도 지연 후 홈으로 이동
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      router.push('/'); // 에러 시에도 즉시 홈으로 (라이트모드 유지)
     } finally {
       initializeRef.current = false;
-      console.log('🏁 [Game Page] Game initialization complete');
     }
   }, [stationName, lineNumber, isAuthenticated, router, toast, hasInitialized, gameStartTime]);
 
-  // 캐릭터 생성 페이지로 이동
   const redirectToCharacterCreation = () => {
     console.log('👤 [Game Page] 캐릭터 생성 페이지로 이동');
-    
-    handleGameEntryFailure(); // 🔥 테마 전환 제어
-    
     const createUrl = `/character/create?station=${encodeURIComponent(stationName!)}&line=${lineNumber}&returnUrl=${encodeURIComponent(window.location.href)}`;
-    
     router.push(createUrl);
   };
 
-  // 캐릭터 생성 완료 핸들러
   const handleCharacterCreated = useCallback((newCharacter: Character) => {
-    console.log('✅ [Game Page] Character created, continuing with game:', {
-      charId: newCharacter.charId,
-      charName: newCharacter.charName,
-      originalDestination: { stationName, lineNumber }
-    });
-    
+    console.log('✅ [Game Page] Character created, continuing with game');
     const enrichedCharacter = createCharacterFromAPI(newCharacter);
     setCharacter(enrichedCharacter);
     setHasInitialized(false);
     toast.success(`${enrichedCharacter.charName} 캐릭터로 게임을 시작합니다!`);
     
     setTimeout(() => {
-      console.log('🔄 [Game Page] Restarting game initialization after character creation');
       initializeGame();
     }, 1000);
-  }, [initializeGame, toast, stationName, lineNumber]);
+  }, [initializeGame, toast]);
 
   const handleChoice = async (optionId: number) => {
-    console.log('🎯 [Game Page] Choice selected:', {
-      optionId,
-      character: character ? {
-        charId: character.charId,
-        charName: character.charName,
-        charHealth: character.charHealth,
-        charSanity: character.charSanity
-      } : null,
-      isLoading: isChoiceLoading,
-      canMakeChoice,
-      gameData: gameData ? {
-        storyId: gameData.storyId,
-        currentPageId: gameData.currentPage?.pageId
-      } : null
-    });
-    
-    // 기본 조건 체크
     if (!character || isChoiceLoading || !gameData) {
-      console.warn('⚠️ [Game Page] Cannot make choice - invalid state:', {
-        hasCharacter: !!character,
-        isLoading: isChoiceLoading,
-        hasGameData: !!gameData,
-        canMakeChoice
-      });
       return;
     }
 
-    // 캐릭터 사망 체크
     if (character.isAlive === false) {
-      console.warn('⚠️ [Game Page] Character is dead, cannot make choice');
       toast.error('사망한 캐릭터로는 선택할 수 없습니다');
       return;
     }
@@ -372,63 +279,22 @@ export default function UnifiedGamePage() {
       setCanMakeChoice(false);
 
       const requestUrl = `/game/choice/${optionId}`;
-      console.log('📡 [Game Page] Sending choice to API:', {
-        optionId,
-        requestUrl,
-        method: 'POST',
-        timestamp: new Date().toISOString(),
-        characterState: {
-          charId: character.charId,
-          charName: character.charName,
-          health: character.charHealth,
-          sanity: character.charSanity
-        }
-      });
-
       const response = await api.post<ChoiceResponse>(requestUrl);
-      
-      console.log('✅ [Game Page] Choice response received:', {
-        success: response.success,
-        result: response.result,
-        isGameOver: response.isGameOver,
-        gameOverReason: response.gameOverReason,
-        hasNextPage: !!response.nextPage,
-        nextPageId: response.nextPage?.pageId,
-        updatedCharacter: response.updatedCharacter ? {
-          charId: response.updatedCharacter.charId,
-          charHealth: response.updatedCharacter.charHealth,
-          charSanity: response.updatedCharacter.charSanity,
-        } : null,
-        timestamp: new Date().toISOString()
-      });
 
-      // 응답 성공 여부 체크
       if (!response.success) {
         throw new Error(response.message || '선택 처리에 실패했습니다');
       }
 
-      // 결과 메시지 표시
       if (response.result) {
         toast.info(response.result);
       }
 
-      // 캐릭터 상태 업데이트
       let updatedCharacter = character;
       if (response.updatedCharacter) {
         updatedCharacter = enrichCharacterData(character, response.updatedCharacter);
         setCharacter(updatedCharacter);
-        
-        console.log('👤 [Game Page] Character updated:', {
-          charId: updatedCharacter.charId,
-          health: `${updatedCharacter.charHealth}/100`,
-          sanity: `${updatedCharacter.charSanity}/100`,
-          isAlive: updatedCharacter.isAlive,
-          statusMessage: updatedCharacter.statusMessage,
-          timestamp: new Date().toISOString()
-        });
       }
 
-      // 게임 종료 조건 체크
       const isStoryComplete = response.gameOverReason === '스토리 완료';
       const isCharacterDead = response.gameOverReason === '캐릭터 사망';
       const hasNoNextPage = !response.nextPage;
@@ -437,21 +303,6 @@ export default function UnifiedGamePage() {
       const shouldEndGame = isStoryComplete || isCharacterDead || hasNoNextPage || isExplicitGameOver;
 
       if (shouldEndGame) {
-        console.log('🏁 [Game Page] Game ending detected:', {
-          isStoryComplete,
-          isCharacterDead,
-          hasNoNextPage,
-          isExplicitGameOver,
-          gameOverReason: response.gameOverReason,
-          finalCharacterState: {
-            health: updatedCharacter.charHealth,
-            sanity: updatedCharacter.charSanity,
-            isAlive: updatedCharacter.isAlive
-          },
-          timestamp: new Date().toISOString()
-        });
-        
-        // 게임 완료 데이터 설정
         if (gameData && gameStartTime) {
           const completionType = isStoryComplete ? 'success' : 'death';
           
@@ -461,22 +312,10 @@ export default function UnifiedGamePage() {
             gameStartTime,
             storyData: gameData
           });
-          
-          console.log('📊 [Game Page] Game completion data set:', {
-            completionType,
-            storyTitle: gameData.storyTitle,
-            stationName: gameData.stationName,
-            stationLine: gameData.stationLine,
-            finalStats: {
-              health: updatedCharacter.charHealth,
-              sanity: updatedCharacter.charSanity
-            }
-          });
         }
         
         setGameState('GAME_COMPLETED');
         
-        // 완료 유형별 토스트 메시지
         if (isStoryComplete) {
           toast.success('🎉 축하합니다! 스토리를 완료했습니다!');
         } else if (isCharacterDead) {
@@ -488,40 +327,15 @@ export default function UnifiedGamePage() {
         return;
       }
       
-      // 다음 페이지로 진행
       if (response.nextPage && gameData) {
-        console.log('📄 [Game Page] Moving to next page:', {
-          currentPageId: gameData.currentPage?.pageId,
-          currentPageNumber: gameData.currentPage?.pageNumber,
-          nextPageId: response.nextPage.pageId,
-          nextPageNumber: response.nextPage.pageNumber,
-          totalPages: response.nextPage.totalPages,
-          timestamp: new Date().toISOString()
-        });
-        
-        // 게임 데이터 업데이트
         setGameData({
           ...gameData,
           currentPage: response.nextPage
         });
-        
-        // 타이핑 효과를 위해 선택 비활성화 (타이핑 완료 후 다시 활성화됨)
         setCanMakeChoice(false);
-        
-        console.log('✅ [Game Page] Successfully moved to next page');
         return;
       }
       
-      // 예상치 못한 상황 처리
-      console.error('⚠️ [Game Page] Unexpected response state:', {
-        hasGameOver: !!response.isGameOver,
-        gameOverReason: response.gameOverReason,
-        hasNextPage: !!response.nextPage,
-        fullResponse: response,
-        timestamp: new Date().toISOString()
-      });
-      
-      // 안전장치: 강제로 게임 종료 처리
       toast.warning('게임이 예상치 못하게 종료되었습니다');
       
       if (gameData && gameStartTime) {
@@ -536,127 +350,81 @@ export default function UnifiedGamePage() {
       setGameState('GAME_COMPLETED');
 
     } catch (error: unknown) {
-      console.error('❌ [Game Page] Choice processing failed:', {
-        error,
-        optionId,
-        errorType: error?.constructor?.name,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      });
+      console.error('❌ [Game Page] Choice processing failed:', error);
 
-      // HTTP 에러 상세 처리
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { 
           response: { 
             status: number;
             data: { message: string };
-            statusText?: string;
           };
-          message?: string;
-          config?: { url?: string; method?: string };
         };
-
-        console.error('📡 [Game Page] HTTP Error Details:', {
-          status: axiosError.response?.status,
-          statusText: axiosError.response?.statusText,
-          data: axiosError.response?.data,
-          url: axiosError.config?.url,
-          method: axiosError.config?.method,
-          timestamp: new Date().toISOString()
-        });
 
         const errorMessage = axiosError.response?.data?.message || '선택을 처리할 수 없습니다';
         
-        // 특정 에러 상황별 처리
         switch (axiosError.response?.status) {
           case 404:
             toast.error('게임 세션을 찾을 수 없습니다. 게임을 다시 시작해주세요.');
             setGameState('ERROR');
             setError('게임 세션이 만료되었습니다');
             break;
-            
           case 401:
             toast.error('로그인이 필요합니다');
             router.push('/auth/login');
             break;
-            
           case 400:
             toast.error('잘못된 선택입니다. 다시 시도해주세요.');
             break;
-            
           case 500:
             toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
             break;
-            
           default:
             toast.error(errorMessage);
         }
-      } else if (error instanceof Error) {
-        console.error('💥 [Game Page] Client Error:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-          timestamp: new Date().toISOString()
-        });
-        toast.error(`클라이언트 오류: ${error.message}`);
       } else {
-        console.error('🤔 [Game Page] Unknown Error:', {
-          error,
-          timestamp: new Date().toISOString()
-        });
         toast.error('알 수 없는 오류가 발생했습니다');
       }
     } finally {
       setIsChoiceLoading(false);
-      console.log('🏁 [Game Page] Choice processing complete:', {
-        optionId,
-        timestamp: new Date().toISOString()
-      });
     }
   };
 
-  // 게임 포기
   const handleQuitGame = async () => {
     if (confirm('정말로 게임을 포기하시겠습니까?')) {
       try {
-        console.log('🚪 [Game Page] Quitting game...');
         await api.post('/game/quit');
-        console.log('✅ [Game Page] Game quit successful');
+        
+        // 🔥 게임 포기 시 라이트모드 복원
+        gameThemeControls.disableGameMode();
+        setGameThemeApplied(false);
+        
         toast.info('게임을 포기했습니다');
         router.push('/');
       } catch (error: any) {
-        console.error('❌ [Game Page] Game quit failed:', {
-          error,
-          message: error.message,
-          response: error.response?.data
-        });
         toast.error('게임 종료 중 오류가 발생했습니다');
       }
     }
   };
 
-  // 타이핑 완료 시 선택 가능하게
   const handleTypingComplete = () => {
     setCanMakeChoice(true);
   };
 
   useEffect(() => {
-    console.log('🎮 [Game Page] Component mounted');
-    
     if (!hasInitialized && !initializeRef.current) {
       initializeGame();
     }
-
-    return () => {
-      console.log('🎮 [Game Page] Component unmounting');
-    };
   }, []);
 
   return (
     <AppLayout>
       <GameContainer>
         <GameHeader>
-          <BackButton onClick={() => router.push('/')}>
+          <BackButton onClick={() => {
+            // 🔥 홈으로 돌아갈 때 라이트모드 복원
+            gameThemeControls.disableGameMode();
+            router.push('/');
+          }}>
             <ArrowLeft size={20} />
             <span>돌아가기</span>
           </BackButton>
@@ -698,7 +466,6 @@ export default function UnifiedGamePage() {
                 lineNumber={parseInt(lineNumber!)}
                 onCharacterCreated={handleCharacterCreated}
                 onError={(error) => {
-                  console.error('❌ [Game Page] Character creation error:', error);
                   setError(error);
                   setGameState('ERROR');
                 }}
@@ -756,6 +523,9 @@ export default function UnifiedGamePage() {
                   toast.info('새로운 모험을 시작해보세요!');
                 }}
                 onBackToMain={() => {
+                  // 🔥 메인으로 돌아갈 때 라이트모드 복원
+                  gameThemeControls.disableGameMode();
+                  setGameThemeApplied(false);
                   router.push('/');
                 }}
                 onShareResult={() => {
@@ -798,7 +568,10 @@ export default function UnifiedGamePage() {
                 }} leftIcon={<RotateCcw size={16} />}>
                   다시 시도
                 </Button>
-                <Button variant="outline" onClick={() => router.push('/')}>
+                <Button variant="outline" onClick={() => {
+                  gameThemeControls.disableGameMode();
+                  router.push('/');
+                }}>
                   메인으로
                 </Button>
               </ErrorActions>
@@ -810,7 +583,7 @@ export default function UnifiedGamePage() {
   );
 }
 
-// Styled Components
+// Styled Components (기존과 동일)
 const GameContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
