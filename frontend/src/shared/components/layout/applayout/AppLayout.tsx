@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Sidebar } from '../sidebar/Sidebar';
 import { useUIStore } from '@/shared/store/uiStore';
-import { useAutoTheme } from '@/shared/hooks/useAutoTheme'; // 🔥 추가
+import { useAutoTheme } from '@/shared/hooks/useAutoTheme';
 import { AppLayoutProps } from './types';
 import { ContentArea, LayoutContainer, MainContent, MobileToggleButton } from './styled';
 
@@ -13,8 +14,28 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const { sidebar, toggleSidebar } = useUIStore();
   const [isMobile, setIsMobile] = React.useState(false);
   
-  // 🎨 자동 테마 적용
+  // 🎨 자동 테마 적용 - 강제로 호출
   const { isGameMode } = useAutoTheme();
+
+  // 🔥 추가 안전장치: 컴포넌트 마운트 시에도 테마 확인
+  React.useEffect(() => {
+    const pathname = window.location.pathname;
+    const shouldBeGameMode = pathname.startsWith('/game') || pathname.startsWith('/character');
+    
+    console.log('🔍 [AppLayout] 마운트 시 테마 확인:', {
+      pathname,
+      shouldBeGameMode,
+      currentTheme: document.documentElement.getAttribute('data-theme')
+    });
+    
+    if (shouldBeGameMode) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.body.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.body.setAttribute('data-theme', 'light');
+    }
+  }, []);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -30,24 +51,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   return (
     <LayoutContainer className={className}>
       {layoutType === 'sidebar' && <Sidebar />}
-      
-      {layoutType === 'header' && (
-        <header style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '60px',
-          background: 'var(--bg-primary)', // 🔥 CSS 변수 사용
-          borderBottom: '1px solid var(--border-light)', // 🔥 CSS 변수 사용
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 24px'
-        }}>
-          <h1>Header Layout</h1>
-        </header>
-      )}
       
       {layoutType === 'sidebar' && (
         <MobileToggleButton
@@ -80,5 +83,3 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     </LayoutContainer>
   );
 };
-
-export default AppLayout

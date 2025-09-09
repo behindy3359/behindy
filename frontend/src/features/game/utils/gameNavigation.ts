@@ -63,10 +63,6 @@ export function resumeCurrentGame(
   }
 }
 
-/**
- * 🏁 게임 포기 및 종료
- * API 호출 후 메인 페이지로 이동
- */
 export async function quitGame(
   onSuccess?: () => void,
   onError?: (error: string) => void
@@ -74,6 +70,11 @@ export async function quitGame(
   try {
     await api.post('/game/quit');
     console.log('🏁 게임 종료됨');
+    
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.remove('game-mode');
+    document.body.setAttribute('data-theme', 'light');
+    
     onSuccess?.();
     
     if (typeof window !== 'undefined') {
@@ -90,6 +91,12 @@ export async function quitGame(
  *  게임 종료 후 메인으로 (API 호출 없이)
  */
 export function exitToMain(): void {
+  console.log('🏠 메인으로 이동 - 라이트모드 강제 적용');
+  
+  document.documentElement.setAttribute('data-theme', 'light');
+  document.documentElement.classList.remove('game-mode');
+  document.body.setAttribute('data-theme', 'light');
+  
   if (typeof window !== 'undefined') {
     window.location.href = '/';
   }

@@ -1,66 +1,53 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+
+// 🎮 게임 관련 라우트만 다크모드 적용
+const GAME_ROUTES = ['/game', '/character'];
 
 export const useAutoTheme = () => {
   const pathname = usePathname();
-  const [isGameMode, setIsGameMode] = useState(false);
-
-  // 게임 관련 경로 정의
-  const gameRoutes = [
-    '/game',
-    '/character'
-  ];
 
   useEffect(() => {
-    // 현재 경로가 게임 관련 경로인지 확인
-    const shouldEnterGameMode = gameRoutes.some(route => pathname.startsWith(route));
+    const isGameMode = GAME_ROUTES.some(route => pathname.startsWith(route));
     
-    if (shouldEnterGameMode !== isGameMode) {
-      setIsGameMode(shouldEnterGameMode);
-      
-      // 테마 전환
-      if (shouldEnterGameMode) {
-        // 🌙 다크 테마 (게임 모드) 활성화
-        document.documentElement.setAttribute('data-theme', 'dark');
-        document.body.classList.add('game-mode');
-        
-        // 전환 애니메이션 트리거
-        document.dispatchEvent(new CustomEvent('game-mode-enter'));
-        
-        console.log('🎮 게임 모드 진입 - 다크 테마 활성화');
-      } else {
-        // ☀️ 라이트 테마 (일반 모드) 활성화
-        document.documentElement.setAttribute('data-theme', 'light');
-        document.body.classList.remove('game-mode');
-        
-        console.log('🏠 일반 모드 진입 - 라이트 테마 활성화');
-      }
+    console.log('🎨 [useAutoTheme] 라우트 체크:', {
+      pathname,
+      isGameMode,
+      gameRoutes: GAME_ROUTES
+    });
+    
+    // 🔥 강제로 테마 설정
+    if (isGameMode) {
+      console.log('🌙 다크모드 적용');
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.documentElement.classList.add('game-mode');
+      document.body.setAttribute('data-theme', 'dark'); // body에도 추가
+    } else {
+      console.log('☀️ 라이트모드 적용');
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.classList.remove('game-mode');
+      document.body.setAttribute('data-theme', 'light'); // body에도 추가
     }
-  }, [pathname, isGameMode]);
-
-  // 컴포넌트 언마운트 시 정리
-  useEffect(() => {
+    
+    // 🔄 정리 함수
     return () => {
-      // 페이지 이동 시 기본 테마로 복원
-      if (isGameMode) {
+      // 컴포넌트 언마운트 시에도 테마 확인
+      const currentPath = window.location.pathname;
+      const stillInGame = GAME_ROUTES.some(route => currentPath.startsWith(route));
+      
+      if (!stillInGame) {
+        console.log('🧹 컴포넌트 정리 시 라이트모드 강제 적용');
         document.documentElement.setAttribute('data-theme', 'light');
-        document.body.classList.remove('game-mode');
+        document.documentElement.classList.remove('game-mode');
+        document.body.setAttribute('data-theme', 'light');
       }
     };
-  }, []);
+  }, [pathname]); // pathname이 변경될 때마다 실행
 
+  const isGameMode = GAME_ROUTES.some(route => pathname.startsWith(route));
+  
   return {
     isGameMode,
-    setGameMode: (gameMode: boolean) => {
-      setIsGameMode(gameMode);
-      
-      if (gameMode) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        document.body.classList.add('game-mode');
-      } else {
-        document.documentElement.setAttribute('data-theme', 'light');
-        document.body.classList.remove('game-mode');
-      }
-    }
+    theme: isGameMode ? 'dark' : 'light'
   };
 };
