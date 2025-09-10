@@ -1,3 +1,6 @@
+// 🧹 정리된 Axios 설정 - 개발 로그 제거
+// frontend/src/config/axiosConfig.ts
+
 import axios from 'axios';
 import { env } from '@/config/env';
 import { SECURITY_CONFIG, validateSecurityConfig } from '@/shared/utils/common/constants';
@@ -7,7 +10,7 @@ if (typeof window !== 'undefined') {
   validateSecurityConfig();
 }
 
-// 토큰 관리 유틸리티 - sessionStorage 사용으로 변경
+// 토큰 관리 유틸리티
 class TokenManager {
   static getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
@@ -17,7 +20,6 @@ class TokenManager {
   static setAccessToken(accessToken: string): void {
     if (typeof window === 'undefined') return;
     sessionStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS, accessToken);
-    // 토큰 저장 시간도 함께 저장
     sessionStorage.setItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS + '_time', Date.now().toString());
   }
 
@@ -38,17 +40,15 @@ class TokenManager {
     const tokenAge = Date.now() - parseInt(tokenTime);
     const maxAge = SECURITY_CONFIG.JWT.ACCESS_TOKEN_LIFETIME;
     
-    // 토큰이 만료되었으면 false
     return tokenAge < maxAge;
   }
+
   static hasValidTokens = (): boolean => {
     return TokenManager.isTokenValid();
   };
 
-  // 모든 토큰 정리
   static clearAllTokens(): void {
     TokenManager.clearAccessToken();
-    // Refresh Token은 서버에서 Cookie 삭제 API를 통해 처리
   }
 }
 
@@ -96,10 +96,10 @@ const createApiClient = (baseURL: string) => {
     headers: {
       'Content-Type': 'application/json',
     },
-    withCredentials: true, // 🔥 HttpOnly Cookie 전송을 위해 필수
+    withCredentials: true,
   });
 
-  // 요청 인터셉터 개선 - 더 상세한 로깅
+  // 요청 인터셉터
   client.interceptors.request.use(
     (config) => {
       if (requiresAuth(config)) {
@@ -109,46 +109,17 @@ const createApiClient = (baseURL: string) => {
         }
       }
 
-      // 🔥 상세한 요청 로깅
-      if (env.DEV_MODE) {
-        const hasAuth = config.headers?.Authorization ? '🔐' : '🌍';
-        const fullUrl = `${config.baseURL}${config.url}`;
-        
-        console.group(`${hasAuth} API Request`);
-        console.log(`Method: ${config.method?.toUpperCase()}`);
-        console.log(`URL: ${fullUrl}`);
-        console.log(`Base URL: ${config.baseURL}`);
-        console.log(`Path: ${config.url}`);
-        console.log(`Headers:`, config.headers);
-        if (config.data) {
-          console.log(`Data:`, config.data);
-        }
-        console.log(`Requires Auth: ${requiresAuth(config)}`);
-        console.log(`Has Token: ${!!TokenManager.getAccessToken()}`);
-        console.groupEnd();
-      }
-
       return config;
     },
     (error) => {
-      console.error('❌ Request Error:', error);
+      console.error('❌ [API] Request Error:', error); // ✅ 유지
       return Promise.reject(error);
     }
   );
 
-  // 응답 인터셉터 개선 - 더 상세한 로깅
+  // 응답 인터셉터
   client.interceptors.response.use(
     (response) => {
-      if (env.DEV_MODE) {
-        const fullUrl = `${response.config.baseURL}${response.config.url}`;
-        
-        console.group(`✅ API Response`);
-        console.log(`Method: ${response.config.method?.toUpperCase()}`);
-        console.log(`URL: ${fullUrl}`);
-        console.log(`Status: ${response.status} ${response.statusText}`);
-        console.log(`Data:`, response.data);
-        console.groupEnd();
-      }
       return response;
     },
     async (error: unknown) => {
@@ -162,24 +133,9 @@ const createApiClient = (baseURL: string) => {
         message?: string;
       };
 
-      // 🔥 상세한 에러 로깅
-      if (env.DEV_MODE) {
-        const config = axiosError.config;
-        const fullUrl = config ? `${config.baseURL}${config.url}` : 'Unknown URL';
-        
-        console.group(`❌ API Error`);
-        console.log(`Method: ${config?.method?.toString()?.toUpperCase()}`);
-        console.log(`URL: ${fullUrl}`);
-        console.log(`Status: ${axiosError.response?.status} ${axiosError.response?.statusText}`);
-        console.log(`Error Message: ${axiosError.message}`);
-        console.log(`Response Data:`, axiosError.response?.data);
-        console.log(`Original Request Config:`, config);
-        console.groupEnd();
-      }
-
       const originalRequest = axiosError.config;
 
-      // 401 에러 시 자동 토큰 갱신 시도 (기존 로직 유지)
+      // 401 에러 시 자동 토큰 갱신 시도
       if (axiosError.response?.status === 401 && 
           originalRequest && 
           !originalRequest._retry &&
@@ -188,8 +144,6 @@ const createApiClient = (baseURL: string) => {
         originalRequest._retry = true;
 
         try {
-          console.log('🔄 Access Token 만료, 자동 갱신 시도...');
-
           const refreshResponse = await axios.post(
             `${env.API_URL}/auth/refresh`, 
             {}, 
@@ -213,15 +167,12 @@ const createApiClient = (baseURL: string) => {
             },
           };
           
-          console.log('✅ 토큰 갱신 성공, 원래 요청 재시도');
           return client(retryConfig as unknown as Parameters<typeof client>[0]);
           
         } catch (refreshError) {
-          console.error('❌ 토큰 갱신 실패:', refreshError);
+          console.error('❌ [API] Token refresh failed:', refreshError); // ✅ 유지
           
-          // 토큰 갱신 실패 시 강제 로그아웃 처리 (기존 로직 유지)
-          console.log('🧹 토큰 갱신 실패 - 강제 로그아웃 처리 시작');
-          
+          // 토큰 갱신 실패 시 강제 로그아웃 처리
           TokenManager.clearAllTokens();
           
           try {
@@ -229,25 +180,20 @@ const createApiClient = (baseURL: string) => {
               withCredentials: true,
               timeout: 3000
             });
-            console.log('✅ 서버 로그아웃 API 호출 성공');
           } catch (logoutError) {
-            console.warn('⚠️ 서버 로그아웃 API 호출 실패 (무시):', logoutError);
+            console.warn('⚠️ [API] Logout API failed (ignored):', logoutError); // ✅ 유지
           }
           
           try {
             const { useAuthStore } = await import('@/shared/store/authStore');
             await useAuthStore.getState().logout();
-            console.log('✅ 인증 스토어 초기화 완료');
           } catch (storeError) {
-            console.warn('⚠️ 인증 스토어 초기화 실패:', storeError);
+            console.warn('⚠️ [API] Auth store cleanup failed:', storeError); // ✅ 유지
           }
           
           if (typeof window !== 'undefined') {
-            console.log('🔄 로그인 페이지로 강제 리다이렉트');
-            
             const currentPath = window.location.pathname + window.location.search;
             const redirectUrl = `/auth/login?redirect=${encodeURIComponent(currentPath)}&reason=session_expired`;
-            
             window.location.href = redirectUrl;
           }
           
