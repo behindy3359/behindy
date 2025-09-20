@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -8,7 +6,6 @@ import {
   Heart, 
   Brain, 
   MapPin, 
-  RotateCcw, 
   Home,
   BookOpen
 } from 'lucide-react';
@@ -165,7 +162,7 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
   );
 };
 
-// 🔥 CSS 변수 기반 Styled Components
+// Styled Components
 const Container = styled(motion.div)`
   max-width: 600px;
   width: 100%;
@@ -304,5 +301,3 @@ const ActionButtons = styled.div`
   padding: ${({ theme }) => theme.spacing[8]};
   border-top: 1px solid var(--border-light);
 `;
-
-export default GameCompletion;

@@ -1,5 +1,3 @@
-// frontend/src/features/game/types/gameTypes.ts
-
 // 캐릭터 관련
 export interface Character {
   charId: number;
@@ -120,3 +118,25 @@ export interface GameState {
   // 에러 상태
   error: string | null;
 }
+
+export interface GameData {
+  storyId: number;
+  storyTitle: string;
+  currentPage: GamePage;
+  stationName: string;
+  stationLine: number;
+}
+
+export interface GameCompletionData {
+  completionType: 'success' | 'death';
+  finalCharacter: Character;
+  gameStartTime: string;
+  storyData: GameData;
+}
+
+export type GameFlowState = 
+  | 'LOADING'           
+  | 'CHARACTER_CREATE'  
+  | 'GAME_PLAYING'        
+  | 'GAME_COMPLETED'    
+  | 'ERROR';            

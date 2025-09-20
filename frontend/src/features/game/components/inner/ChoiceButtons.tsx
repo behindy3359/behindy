@@ -1,9 +1,7 @@
-"use client";
-
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Brain, AlertCircle, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { Heart, Brain, AlertCircle, ChevronRight } from 'lucide-react';
 import { GameOption } from '../../types/gameTypes';
 
 interface ChoiceButtonsProps {
@@ -136,7 +134,7 @@ export const ChoiceButtons: React.FC<ChoiceButtonsProps> = ({
   );
 };
 
-// 🔥 CSS 변수 기반 Styled Components
+// Styled Components
 const Container = styled.div`
   margin-top: ${({ theme }) => theme.spacing[6]};
 `;
@@ -288,5 +286,3 @@ const DisabledMessage = styled.div`
   color: var(--text-secondary);
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
-
-export default ChoiceButtons;

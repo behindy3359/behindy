@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -148,7 +146,7 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
   );
 };
 
-// 🔥 수정된 Styled Components (CSS 변수 사용)
+// Styled Components
 const Container = styled(motion.div)<{ $compact?: boolean }>`
   background: var(--bg-primary);
   border-radius: var(--border-radius-xl, 1rem);
@@ -280,5 +278,3 @@ const EmptyState = styled.div`
   padding: 1.5rem;
   color: var(--text-tertiary);
 `;
-
-export default CharacterStatus;

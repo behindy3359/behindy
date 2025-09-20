@@ -1,12 +1,10 @@
-"use client";
-
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { User, Heart, Brain, Sparkles, AlertCircle } from 'lucide-react';
 import { api } from '@/config/axiosConfig';
 import { Button } from '@/shared/components/ui/button/Button';
-import { Character } from '@/features/game/types/gameTypes';
+import { Character } from '../../types/gameTypes';
 
 interface CharacterCreationFormProps {
   stationName: string;
@@ -78,7 +76,6 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
       setIsLoading(true);
       setValidationError('');
 
-      // 🔥 요청 전 로그
       console.log('🎮 [캐릭터 생성] API 요청 시작:', {
         timestamp: new Date().toISOString(),
         stationName,
@@ -87,13 +84,11 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
         requestData: { charName: trimmedName }
       });
 
-      // 🔥 수정: /api 제거 - baseURL에 이미 포함되어 있음
       const response = await api.post<CreateCharacterResponse>(
-        '/characters',  // /api 제거됨
+        '/characters',
         { charName: trimmedName } as CreateCharacterRequest
       );
 
-      // 🔥 성공 응답 로그
       console.log('✅ [캐릭터 생성] API 응답 성공:', {
         timestamp: new Date().toISOString(),
         response: {
@@ -121,11 +116,9 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
 
       console.log('🎯 [캐릭터 생성] 캐릭터 객체 변환 완료:', character);
       
-      // 🔥 캐릭터 생성 완료 후 원래 목적지로 이동
       onCharacterCreated(character);
 
     } catch (error: unknown) {
-      // 🔥 에러 상세 로그
       console.error('❌ [캐릭터 생성] API 요청 실패:', {
         timestamp: new Date().toISOString(),
         error,
@@ -156,7 +149,6 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
 
         errorMessage = axiosError.response?.data?.message || errorMessage;
         
-        // 특정 에러 상황별 추가 로그
         if (axiosError.response?.status === 401) {
           console.error('🚨 [캐릭터 생성] 인증 실패 - 로그인 상태 확인 필요');
         } else if (axiosError.response?.status === 409) {
@@ -183,10 +175,11 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
     }
   };
 
-  // 엔터키 처리
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isLoading) {
-      handleCreateCharacter();
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value.length <= 10) {
+      setCharName(value);
+      if (validationError) setValidationError('');
     }
   };
 
@@ -224,65 +217,63 @@ export const CharacterCreationForm: React.FC<CharacterCreationFormProps> = ({
       </StatsPreview>
 
       {/* 캐릭터 이름 입력 */}
-      <FormSection>
-        <InputLabel>캐릭터 이름</InputLabel>
-        <InputWrapper $hasError={!!validationError}>
-          <CharNameInput
-            type="text"
-            placeholder="예: 용감한모험가, 지하철탐험가"
-            value={charName}
-            onChange={(e) => {
-              setCharName(e.target.value);
-              if (validationError) setValidationError('');
-            }}
-            onKeyPress={handleKeyPress}
-            disabled={isLoading}
-            maxLength={10}
-          />
-          <CharacterCount>
-            {charName.length}/10
-          </CharacterCount>
-        </InputWrapper>
-        
-        {validationError && (
-          <ErrorMessage
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <AlertCircle size={16} />
-            {validationError}
-          </ErrorMessage>
-        )}
-      </FormSection>
-
-      {/* 생성 버튼 */}
-      <ButtonSection>
-        <CreateButton
-          variant="primary"
-          size="lg"
-          onClick={handleCreateCharacter}
-          disabled={isLoading || !charName.trim()}
-          leftIcon={isLoading ? undefined : <User size={18} />}
-        >
-          {isLoading ? (
-            <>
-              <ButtonSpinner />
-              캐릭터 생성 중...
-            </>
-          ) : (
-            '캐릭터 생성하기'
+      <FormSection onSubmit={(e) => { e.preventDefault(); handleCreateCharacter(); }}>
+        <InputGroup>
+          <InputLabel>캐릭터 이름</InputLabel>
+          <InputWrapper $hasError={!!validationError}>
+            <CharNameInput
+              type="text"
+              placeholder="예: 용감한모험가, 지하철탐험가"
+              value={charName}
+              onChange={handleNameChange}
+              disabled={isLoading}
+            />
+            <CharacterCount>
+              {charName.length}/10
+            </CharacterCount>
+          </InputWrapper>
+          
+          {validationError && (
+            <ErrorMessage
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <AlertCircle size={16} />
+              {validationError}
+            </ErrorMessage>
           )}
-        </CreateButton>
+        </InputGroup>
 
-        <HelpText>
-          💡 캐릭터는 한 번에 하나만 생성할 수 있습니다
-        </HelpText>
-      </ButtonSection>
+        <ButtonSection>
+          <CreateButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            disabled={!charName.trim() || isLoading}
+            isLoading={isLoading}
+            leftIcon={isLoading ? undefined : <User size={18} />}
+          >
+            {isLoading ? (
+              <>
+                <ButtonSpinner />
+                캐릭터 생성 중...
+              </>
+            ) : (
+              '캐릭터 생성하기'
+            )}
+          </CreateButton>
+
+          <HelpText>
+            💡 캐릭터는 한 번에 하나만 생성할 수 있습니다
+          </HelpText>
+        </ButtonSection>
+      </FormSection>
     </Container>
   );
 };
 
+// Styled Components
 const Container = styled.div`
   max-width: 500px;
   width: 100%;
@@ -362,9 +353,16 @@ const StatValue = styled.span`
   font-weight: 600;
 `;
 
-const FormSection = styled.div`
+const FormSection = styled.form`
   margin-bottom: ${({ theme }) => theme.spacing[8]};
   text-align: left;
+`;
+
+const InputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
 `;
 
 const InputLabel = styled.label`
@@ -464,5 +462,3 @@ const HelpText = styled.p`
   color: var(--text-tertiary);
   margin: 0;
 `;
-
-export default CharacterCreationForm;
