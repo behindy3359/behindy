@@ -251,7 +251,6 @@ export const StatusBadge = styled.div<{ $status: string }>`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-// 스탯 영역
 export const StatsGrid = styled.div`
   padding: 0 ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[6]};
   display: flex;
@@ -723,4 +722,80 @@ export const EmptyState = styled.div`
     height: 48px;
     margin-bottom: ${({ theme }) => theme.spacing[4]};
   }
+`;
+
+export const CompletionHeader = styled.div`
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing[12]} ${({ theme }) => theme.spacing[8]};
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-bottom: 1px solid var(--border-light);
+`;
+
+export const CompletionEmoji = styled.div`
+  font-size: 4rem;
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
+`;
+
+export const CompletionTitle = styled.h1`
+  font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: ${({ theme }) => theme.spacing[2]};
+`;
+
+export const CompletionSubtitle = styled.p`
+  font-size: ${({ theme }) => theme.typography.fontSize.lg};
+  color: var(--text-secondary);
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+`;
+
+export const GradeBadge = styled.div<{ $color: string }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: ${({ $color }) => $color};
+  color: var(--text-inverse);
+  border-radius: 50%;
+  font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
+  font-weight: 700;
+  box-shadow: var(--shadow-lg);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+`;
+
+export const ResultSummary = styled.div`
+  padding: ${({ theme }) => theme.spacing[8]};
+`;
+
+export const SummaryHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  font-size: ${({ theme }) => theme.typography.fontSize.lg};
+  font-weight: 600;
+  color: var(--text-primary);
+`;
+
+export const StoryInfo = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  text-align: center;
+`;
+
+export const StoryLocation = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  font-size: ${({ theme }) => theme.typography.fontSize.base};
+  color: var(--text-secondary);
+`;
+
+export const ActionButtons = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[3]};
+  padding: ${({ theme }) => theme.spacing[8]};
+  border-top: 1px solid var(--border-light);
 `;

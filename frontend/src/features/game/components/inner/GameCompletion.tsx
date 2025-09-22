@@ -9,6 +9,27 @@ import {
   Home,
   BookOpen
 } from 'lucide-react';
+import{
+  Container,
+  CompletionHeader,
+  CompletionEmoji,
+  CompletionTitle,
+  CompletionSubtitle,
+  GradeBadge,
+  ResultSummary,
+  SummaryHeader,
+  StoryInfo,
+  StoryTitle,
+  StoryLocation,
+  StatsGrid,
+  StatIcon,
+  StatCard,
+  StatInfo,
+  StatLabel,
+  StatValue,
+  ActionButtons,
+}from '@/features/game/styles/gameStyles';
+
 import { Button } from '@/shared/components/ui/button/Button';
 import { Character } from '../../types/gameTypes';
 
@@ -82,9 +103,6 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
 
   return (
     <Container
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
     >
       {/* 완료 헤더 */}
       <CompletionHeader>
@@ -114,9 +132,6 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
 
         <StatsGrid>
           <StatCard>
-            <StatIcon style={{ backgroundColor: 'var(--primary-500)' }}>
-              <Trophy size={20} />
-            </StatIcon>
             <StatInfo>
               <StatLabel>탐험가</StatLabel>
               <StatValue>{character.charName}</StatValue>
@@ -124,9 +139,6 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
           </StatCard>
 
           <StatCard>
-            <StatIcon style={{ backgroundColor: 'var(--game-health)' }}>
-              <Heart size={20} />
-            </StatIcon>
             <StatInfo>
               <StatLabel>최종 체력</StatLabel>
               <StatValue>{character.charHealth}/100</StatValue>
@@ -134,9 +146,6 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
           </StatCard>
 
           <StatCard>
-            <StatIcon style={{ backgroundColor: 'var(--game-sanity)' }}>
-              <Brain size={20} />
-            </StatIcon>
             <StatInfo>
               <StatLabel>최종 정신력</StatLabel>
               <StatValue>{character.charSanity}/100</StatValue>
@@ -161,143 +170,3 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
     </Container>
   );
 };
-
-// Styled Components
-const Container = styled(motion.div)`
-  max-width: 600px;
-  width: 100%;
-  background: var(--bg-primary);
-  border-radius: ${({ theme }) => theme.borderRadius['2xl']};
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-`;
-
-const CompletionHeader = styled.div`
-  text-align: center;
-  padding: ${({ theme }) => theme.spacing[12]} ${({ theme }) => theme.spacing[8]};
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-  border-bottom: 1px solid var(--border-light);
-`;
-
-const CompletionEmoji = styled.div`
-  font-size: 4rem;
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
-`;
-
-const CompletionTitle = styled.h1`
-  font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: ${({ theme }) => theme.spacing[2]};
-`;
-
-const CompletionSubtitle = styled.p`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  color: var(--text-secondary);
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
-`;
-
-const GradeBadge = styled.div<{ $color: string }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  background: ${({ $color }) => $color};
-  color: var(--text-inverse);
-  border-radius: 50%;
-  font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
-  font-weight: 700;
-  box-shadow: var(--shadow-lg);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-`;
-
-const ResultSummary = styled.div`
-  padding: ${({ theme }) => theme.spacing[8]};
-`;
-
-const SummaryHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
-  font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  font-weight: 600;
-  color: var(--text-primary);
-`;
-
-const StoryInfo = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  text-align: center;
-`;
-
-const StoryTitle = styled.h2`
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: ${({ theme }) => theme.spacing[2]};
-`;
-
-const StoryLocation = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  font-size: ${({ theme }) => theme.typography.fontSize.base};
-  color: var(--text-secondary);
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: ${({ theme }) => theme.spacing[4]};
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StatCard = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[3]};
-  padding: ${({ theme }) => theme.spacing[4]};
-  background: var(--bg-secondary);
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  border: 1px solid var(--border-light);
-`;
-
-const StatIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: var(--text-inverse);
-`;
-
-const StatInfo = styled.div`
-  flex: 1;
-`;
-
-const StatLabel = styled.div`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: var(--text-secondary);
-  margin-bottom: ${({ theme }) => theme.spacing[1]};
-`;
-
-const StatValue = styled.div`
-  font-size: ${({ theme }) => theme.typography.fontSize.base};
-  font-weight: 600;
-  color: var(--text-primary);
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[3]};
-  padding: ${({ theme }) => theme.spacing[8]};
-  border-top: 1px solid var(--border-light);
-`;
