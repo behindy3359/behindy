@@ -4,7 +4,7 @@ import { Sidebar } from '../sidebar/Sidebar';
 import { useUIStore } from '@/shared/store/uiStore';
 import { useAutoTheme } from '@/shared/hooks/useAutoTheme';
 import { AppLayoutProps } from './types';
-import { ContentArea, LayoutContainer, MainContent, MobileToggleButton } from './styled';
+import { ContentArea, LayoutContainer, MainContent, MobileToggleButton } from './styles';
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ 
   children, 

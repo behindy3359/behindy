@@ -24,4 +24,6 @@ export interface InputProps {
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  maxLength?: number; // ✅ 추가
+  minLength?: number; // ✅ 추가
 }

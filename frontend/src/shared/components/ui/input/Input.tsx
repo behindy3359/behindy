@@ -29,6 +29,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       rightIcon,
       fullWidth = false,
       size = 'md',
+      maxLength, // ✅ 새로 추가
+      minLength, // ✅ 새로 추가
       ...rest
     },
     ref
@@ -82,6 +84,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             hasLeftIcon={hasLeftIcon}
             hasRightIcon={hasRightIcon}
             size={size}
+            maxLength={maxLength} // ✅ 전달
+            minLength={minLength} // ✅ 전달
             {...rest}
           />
 

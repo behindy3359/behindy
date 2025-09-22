@@ -34,7 +34,6 @@ export const CharacterCreatePageContainer: React.FC = () => {
     lineNumber,
   });
 
-  // 로딩 중
   if (isChecking) {
     return (
       <Container>
@@ -42,6 +41,16 @@ export const CharacterCreatePageContainer: React.FC = () => {
       </Container>
     );
   }
+
+  const handleCharacterCreated = async (character: any) => {
+    console.log('✅ 캐릭터 생성 완료:', character);
+    await handleCreateCharacter();
+  };
+
+  const handleError = (error: string) => {
+    console.error('❌ 캐릭터 생성 에러:', error);
+    setNameError(error);
+  };
 
   return (
     <Container>
@@ -61,6 +70,8 @@ export const CharacterCreatePageContainer: React.FC = () => {
         onAbandonAndCreate={handleAbandonAndCreate}
         onGenerateRandomName={generateRandomName}
         onValidateName={validateName}
+        onCharacterCreated={handleCharacterCreated}
+        onError={handleError}
       />
     </Container>
   );

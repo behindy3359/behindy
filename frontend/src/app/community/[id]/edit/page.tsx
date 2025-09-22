@@ -14,7 +14,7 @@ export default function EditPostPage() {
 
   if (isNaN(postId)) {
     return (
-      <AppLayout> {/* 🔥 DashboardLayout → AppLayout */}
+      <AppLayout>
         <div style={{ 
           textAlign: 'center', 
           padding: '40px', 
@@ -28,7 +28,7 @@ export default function EditPostPage() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppLayout> {/* 🔥 DashboardLayout → AppLayout */}
+      <AppLayout>
         <PostForm mode="edit" postId={postId} />
       </AppLayout>
     </QueryClientProvider>

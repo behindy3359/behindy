@@ -226,7 +226,6 @@ export default function AuthLayout({
 }) {
   const router = useRouter();
   
-  // 🔥 추가: 헤더 클릭 시 홈으로 이동
   const handleHeaderClick = () => {
     router.push('/');
   };

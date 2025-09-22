@@ -10,7 +10,7 @@ const queryClient = new QueryClient();
 export default function WritePostPage() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppLayout> {/* 🔥 DashboardLayout → AppLayout */}
+      <AppLayout>
         <PostForm mode="create" />
       </AppLayout>
     </QueryClientProvider>

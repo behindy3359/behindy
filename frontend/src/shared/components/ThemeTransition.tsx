@@ -24,7 +24,6 @@ const TransitionOverlay = styled(motion.div)`
 `;
 
 export const ThemeTransition: React.FC<ThemeTransitionProps> = ({ 
-  isGameMode, 
   children 
 }) => {
   const [isTransitioning, setIsTransitioning] = useState(false);

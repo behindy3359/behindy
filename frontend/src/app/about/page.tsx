@@ -362,7 +362,6 @@ export default function AboutPage() {
             <h2 className="contact-title">개발자 정보</h2>
             <p className="contact-description">
               이 프로젝트는 웹 개발자 포트폴리오용으로 제작되었습니다.
-              창의적인 아이디어와 기술적 완성도를 동시에 추구하며 개발했습니다.
             </p>
             
             <div className="contact-info">
@@ -370,7 +369,7 @@ export default function AboutPage() {
                 <strong>프로젝트:</strong> Behindy - 지하철 텍스트 어드벤처
               </div>
               <div className="contact-item">
-                <strong>개발 기간:</strong> 2024.08 ~ 2025.09 (진행중)
+                <strong>개발 기간:</strong> 2025.07 ~ 2025.09
               </div>
               <div className="contact-item">
                 <strong>개발 규모:</strong> 풀스택 개인 프로젝트
