@@ -619,3 +619,108 @@ export const DestinationInfo = styled.div`
   font-weight: 500;
   margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
+
+export const StoryHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  padding-bottom: ${({ theme }) => theme.spacing[4]};
+  border-bottom: 1px solid var(--border-light);
+`;
+
+export const StoryTitle = styled.h2`
+  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+`;
+
+export const PageIndicator = styled.span`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+`;
+
+export const StoryContent = styled.div`
+  position: relative;
+`;
+
+export const StoryText = styled.p`
+  font-size: ${({ theme }) => theme.typography.fontSize.base};
+  line-height: 1.8;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: keep-all;
+  margin: 0;
+  min-height: 150px;
+
+  @media (max-width: 768px) {
+    font-size: ${({ theme }) => theme.typography.fontSize.sm};
+    line-height: 1.7;
+    min-height: 120px;
+  }
+`;
+
+export const Cursor = styled.span`
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background: var(--primary-500);
+  margin-left: 2px;
+  animation: blink 1s infinite;
+
+  @keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+`;
+
+export const SkipButton = styled(motion.button)`
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[1]};
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: var(--text-secondary);
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+`;
+
+export const LastPageIndicator = styled(motion.div)`
+  text-align: center;
+  margin-top: ${({ theme }) => theme.spacing[6]};
+  padding-top: ${({ theme }) => theme.spacing[4]};
+  border-top: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-style: italic;
+`;
+
+export const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--text-tertiary);
+
+  .empty-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: ${({ theme }) => theme.spacing[4]};
+  }
+`;
