@@ -1,4 +1,3 @@
-
 export const theme = {
   // 색상 시스템 - CSS 변수 사용으로 변경
   colors: {
