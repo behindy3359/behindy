@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components'; // 🔥 css 추가
 
 // 기본 키프레임 애니메이션
 const spin = keyframes`
@@ -103,7 +103,7 @@ const blink = keyframes`
 
 // 애니메이션 컴포넌트들
 
-// 기본 애니메이션 래퍼
+// 🔥 수정: css 헬퍼 사용
 export const AnimatedContainer = styled(motion.div)<{
   $animation?: 'fadeIn' | 'slideInLeft' | 'slideInRight' | 'scaleIn';
   $duration?: string;
@@ -117,7 +117,7 @@ export const AnimatedContainer = styled(motion.div)<{
       scaleIn,
     };
     
-    return `
+    return css`
       animation: ${animationMap[$animation]} ${$duration} ease-out ${$delay} both;
     `;
   }}
@@ -219,7 +219,7 @@ export const GlowContainer = styled.div<{
       high: '0.6',
     };
     
-    return `
+    return css`
       animation: ${glow} 3s ease-in-out infinite alternate;
       box-shadow: 0 0 10px rgba(139, 92, 246, ${intensityMap[$intensity]});
     `;
@@ -233,8 +233,9 @@ export const TypewriterContainer = styled.div<{
 }>`
   overflow: hidden;
   white-space: nowrap;
-  animation: ${typewriter} ${({ $duration = '2s' }) => $duration} 
-             steps(${({ $steps = 20 }) => $steps}) forwards;
+  ${({ $duration = '2s', $steps = 20 }) => css`
+    animation: ${typewriter} ${$duration} steps(${$steps}) forwards;
+  `}
   
   &::after {
     content: '|';
@@ -254,7 +255,7 @@ export const RealtimeIndicator = styled.div<{
     $active ? theme.colors.success : theme.colors.border.medium
   };
   
-  ${({ $active }) => $active && `
+  ${({ $active }) => $active && css`
     animation: ${pulse} 2s infinite;
   `}
 `;
@@ -330,6 +331,7 @@ export const SkeletonLoader = styled.div<{
   }
 `;
 
+// Framer Motion variants (기존과 동일)
 export const fadeInUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },

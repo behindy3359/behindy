@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ThemeProvider as StyledThemeProvider, createGlobalStyle } from 'styled-components';
-import { theme } from '@/shared/styles/theme';
+import { lightTheme } from '@/shared/styles/themes/light';
 
 // 글로벌 스타일 정의
 const GlobalStyle = createGlobalStyle`
@@ -157,7 +157,7 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   return (
-    <StyledThemeProvider theme={theme}>
+    <StyledThemeProvider theme={lightTheme}>
       <GlobalStyle />
       {children}
     </StyledThemeProvider>

@@ -1,9 +1,10 @@
 import { baseTheme } from './base';
 import { colors } from '../tokens/colors';
 import { shadows } from '../tokens/shadows';
+import type { Theme } from '../styled';
 
-// 라이트 테마 (일상 모드)
-export const lightTheme = {
+// 라이트 테마 (일상 모드) - 완전한 Theme 타입 구현
+export const lightTheme: Theme = {
   ...baseTheme,
   
   colors: {
@@ -34,7 +35,7 @@ export const lightTheme = {
   
   // 라이트 테마 그림자
   shadows: {
-    ...baseTheme.shadows,
+    base: baseTheme.shadows.base,
     card: shadows.light.card,
     button: shadows.light.button,
     buttonHover: shadows.light.buttonHover,

@@ -1,8 +1,6 @@
 import 'styled-components';
 
-// 통합된 테마 타입 정의
 export interface Theme {
-  // 간격 시스템
   spacing: {
     1: string;
     2: string;
@@ -10,7 +8,7 @@ export interface Theme {
     4: string;
     6: string;
     8: string;
-    10: string;
+    10: string;  // 추가됨
     12: string;
     16: string;
     20: string;
