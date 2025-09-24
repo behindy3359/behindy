@@ -3,9 +3,10 @@ import { lightTheme } from './light';
 import { gameVariant } from './variants';
 
 // 테마 시스템 통합 export
-// export { baseTheme, type BaseTheme } from './base';
-// export { lightTheme, type LightTheme } from './light';
-// export { darkTheme, type DarkTheme } from './dark';
+export { baseTheme, type BaseTheme } from './base';
+export { lightTheme, type LightTheme } from './light';
+export { darkTheme, type DarkTheme } from './dark';
+
 export { 
   gameVariant, 
   highContrastVariant, 
