@@ -1,58 +1,71 @@
 import { motion } from "framer-motion";
 import styled from "styled-components";
+import { 
+  BaseForm,
+  FlexContainer,
+  BaseTextarea,
+  BaseButton,
+  ErrorText 
+} from '../../../../shared/styles/components';
 
+// FormContainer - 폼 컨테이너 (BaseForm 활용)
 export const FormContainer = styled(motion.div)`
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing[4]};
+  border: 1px solid ${({ theme }) => theme.colors.border.medium};
 `;
 
-export const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  font-size: 14px;
+// UserInfo - 사용자 정보
+export const UserInfo = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 2 as const,
+})`
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
   
   .avatar {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-weight: 600;
-    font-size: 14px;
+    color: ${({ theme }) => theme.colors.text.inverse};
+    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+    font-size: ${({ theme }) => theme.typography.fontSize.sm};
   }
   
   .name {
-    font-weight: 600;
-    color: #374151;
+    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 `;
 
+// TextareaContainer - 텍스트 영역 컨테이너
 export const TextareaContainer = styled.div`
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
 `;
 
-export const Textarea = styled.textarea<{ $hasError: boolean }>`
+// Textarea - 텍스트 영역 (BaseTextarea 확장)
+export const Textarea = styled(BaseTextarea)<{ $hasError: boolean }>`
   width: 100%;
   min-height: 80px;
-  max-height: 200px;
-  padding: 12px;
-  border: 1px solid ${({ $hasError }) => $hasError ? '#ef4444' : '#d1d5db'};
-  border-radius: 6px;
-  font-size: 14px;
-  line-height: 1.5;
+  max-height: 80px;
+  padding: ${({ theme }) => theme.spacing[3]};
+  border: 1px solid ${({ $hasError, theme }) => $hasError ? theme.colors.error : theme.colors.border.medium};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  line-height: ${({ theme }) => theme.typography.lineHeight.normal};
   font-family: inherit;
   
   resize: none;
   overflow-y: auto;
   
+  /* 스크롤바 스타일링 */
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -73,36 +86,32 @@ export const Textarea = styled.textarea<{ $hasError: boolean }>`
   
   &:focus {
     outline: none;
-    border-color: ${({ $hasError }) => $hasError ? '#ef4444' : '#667eea'};
-    box-shadow: 0 0 0 3px ${({ $hasError }) => 
-      $hasError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(102, 126, 234, 0.1)'
+    border-color: ${({ $hasError, theme }) => $hasError ? theme.colors.error : theme.colors.primary[500]};
+    box-shadow: 0 0 0 3px ${({ $hasError, theme }) => 
+      $hasError ? 'rgba(239, 68, 68, 0.1)' : theme.shadows.focus
     };
   }
   
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `;
 
-
+// CharCount - 글자 수 표시
 export const CharCount = styled.div<{ $isOver: boolean }>`
   position: absolute;
   bottom: 8px;
   right: 12px;
-  font-size: 12px;
-  color: ${({ $isOver }) => $isOver ? '#ef4444' : '#9ca3af'};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  color: ${({ $isOver, theme }) => $isOver ? theme.colors.error : theme.colors.text.tertiary};
   background: rgba(255, 255, 255, 0.9);
   padding: 2px 4px;
-  border-radius: 4px;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
 `;
 
-export const ErrorMessage = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #ef4444;
-  font-size: 14px;
-  margin-bottom: 12px;
+// ErrorMessage - 에러 메시지 (ErrorText 컴포넌트 활용)
+export const ErrorMessage = styled(ErrorText)`
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
   
   svg {
     width: 16px;
@@ -110,31 +119,36 @@ export const ErrorMessage = styled(motion.div)`
   }
 `;
 
-export const Actions = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+// Actions - 액션 버튼들
+export const Actions = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})`
+  /* FlexContainer 설정 활용 */
 `;
 
+// CancelButton - 취소 버튼
 export const CancelButton = styled.button`
-  padding: 6px 12px;
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
   background: none;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  color: #6b7280;
+  border: 1px solid ${({ theme }) => theme.colors.border.medium};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.secondary};
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  transition: ${({ theme }) => theme.transition.fast};
   
   &:hover {
-    background: #f3f4f6;
-    color: #374151;
+    background: ${({ theme }) => theme.colors.background.tertiary};
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 `;
 
+// Tips - 팁 텍스트
 export const Tips = styled.div`
-  font-size: 12px;
-  color: #9ca3af;
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  color: ${({ theme }) => theme.colors.text.tertiary};
   
   .tip-item {
     margin-bottom: 2px;

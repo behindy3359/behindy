@@ -108,7 +108,7 @@ export {
   Badge,
   LoadingSpinner,
   Divider
-} from '../migrated/commonStyles';
+} from '../commonStyles';
 
 // 컴포넌트 생성 헬퍼 함수들
 export const createBaseComponent = <T extends Record<string, any>>(

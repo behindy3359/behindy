@@ -1,6 +1,11 @@
-import { CardContainer } from "@/shared/styles/commonContainers";
 import styled from "styled-components";
+import { 
+  FlexContainer,
+  Badge,
+  BaseCard 
+} from '@/shared/styles/components';
 
+// CardHeader - 카드 헤더
 export const CardHeader = styled.div`
   padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
   background: ${({ theme }) => theme.colors.background.secondary};
@@ -8,19 +13,25 @@ export const CardHeader = styled.div`
   flex-shrink: 0;
 `;
 
-export const AuthorInfo = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+// AuthorInfo - 작성자 정보
+export const AuthorInfo = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})`
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
-export const AuthorLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
+// AuthorLeft - 작성자 왼쪽 영역
+export const AuthorLeft = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 2 as const,
+})`
+  /* FlexContainer 설정으로 간격 조정 */
 `;
 
+// Avatar - 아바타
 export const Avatar = styled.div`
   width: 32px;
   height: 32px;
@@ -30,23 +41,28 @@ export const Avatar = styled.div`
   align-items: center;
   justify-content: center;
   color: ${({ theme }) => theme.colors.text.inverse};
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
+// AuthorName - 작성자 이름
 export const AuthorName = styled.span`
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
-export const PostTime = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[1]};
+// PostTime - 게시 시간
+export const PostTime = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 1 as const,
+})`
   color: ${({ theme }) => theme.colors.text.tertiary};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
 `;
+
+// MetroLine - 지하철 노선 뱃지 (Badge 컴포넌트 활용)
 export const MetroLine = styled.div<{ $lineNumber?: string }>`
   display: inline-flex;
   align-items: center;
@@ -54,7 +70,7 @@ export const MetroLine = styled.div<{ $lineNumber?: string }>`
   padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[2]};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.inverse};
   
   ${({ $lineNumber, theme }) => {
@@ -68,6 +84,7 @@ export const MetroLine = styled.div<{ $lineNumber?: string }>`
   }}
 `;
 
+// CardContent - 카드 내용
 export const CardContent = styled.div`
   padding: ${({ theme }) => theme.spacing[6]};
   flex: 1;
@@ -76,12 +93,13 @@ export const CardContent = styled.div`
   overflow: hidden;
 `;
 
+// PostTitle - 게시글 제목
 export const PostTitle = styled.h3`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing[4]} 0;
-  line-height: 1.4;
+  line-height: ${({ theme }) => theme.typography.lineHeight.normal};
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -89,10 +107,11 @@ export const PostTitle = styled.h3`
   flex-shrink: 0;
 `;
 
+// PostPreview - 게시글 미리보기
 export const PostPreview = styled.p`
   color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  line-height: 1.6;
+  line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -101,10 +120,12 @@ export const PostPreview = styled.p`
   flex: 1;
 `;
 
-export const CardFooter = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+// CardFooter - 카드 푸터
+export const CardFooter = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})`
   padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
   background: ${({ theme }) => theme.colors.background.secondary};
   border-top: 1px solid ${({ theme }) => theme.colors.border.light};
@@ -112,16 +133,21 @@ export const CardFooter = styled.div`
   margin-top: auto;
 `;
 
-export const StatsGroup = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[4]};
-  align-items: center;
+// StatsGroup - 통계 그룹
+export const StatsGroup = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 4 as const,
+})`
+  /* FlexContainer 설정 활용 */
 `;
 
-export const StatItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[1]};
+// StatItem - 개별 통계 항목
+export const StatItem = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 1 as const,
+})`
   color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   
@@ -131,38 +157,44 @@ export const StatItem = styled.div`
   }
   
   .count {
-    font-weight: 500;
+    font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   }
 `;
 
-export const ReadMoreButton = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[1]};
+// ReadMoreButton - 더보기 버튼
+export const ReadMoreButton = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 1 as const,
+})`
   color: ${({ theme }) => theme.colors.primary[500]};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  font-weight: 500;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   
   svg {
     width: 14px;
     height: 14px;
-    transition: transform 0.2s ease;
+    transition: ${({ theme }) => theme.transition.fast};
   }
   
-  ${CardContainer}:hover & svg {
+  /* 부모 카드 호버시 애니메이션 */
+  ${BaseCard}:hover & svg {
     transform: translateX(2px);
   }
 `;
 
-export const HotBadge = styled.div`
+// HotBadge - 인기글 뱃지 (Badge 컴포넌트 활용)
+export const HotBadge = styled(Badge).attrs({
+  $variant: 'error' as const,
+  $size: 'sm' as const,
+})`
   position: absolute;
   top: ${({ theme }) => theme.spacing[4]};
   right: ${({ theme }) => theme.spacing[4]};
+  z-index: 1;
+  
+  /* Badge의 기본 스타일을 오버라이드 */
   background: ${({ theme }) => theme.colors.error};
   color: ${({ theme }) => theme.colors.text.inverse};
-  padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[2]};
-  border-radius: ${({ theme }) => theme.borderRadius.xl};
-  font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  font-weight: 600;
-  z-index: 1;
+  border: none;
 `;

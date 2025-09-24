@@ -1,150 +1,97 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
+import { 
+  PageContainer as BasePageContainer,
+  BaseCard,
+  SectionContainer as BaseSectionContainer,
+  SectionHeader as BaseSectionHeader,
+  GridContainer as BaseGridContainer,
+  FormContainer as BaseFormContainer,
+  FormSection as BaseFormSection,
+  StateContainer as BaseStateContainer,
+  FullWidthContainer
+} from './components';
 
-// 메인 페이지 컨테이너
-export const PageContainer = styled.div`
-  max-width: ${({ theme }) => theme.container.lg}; /* 900px */
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[6]};
-  
-  @media (max-width: 900px) {
-    padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[4]};
-  }
+// PageContainer - 기본 설정으로 재export
+export const PageContainer = styled(BasePageContainer)`
+  /* 추가 커스터마이징 없이 기본 사용 */
 `;
 
-// 커뮤니티/게시판 컨테이너
-export const CommunityContainer = styled.div`
-  max-width: ${({ theme }) => theme.container.lg}; /* 900px */
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing[6]};
-  
-  @media (max-width: 1200px) {
-    padding: ${({ theme }) => theme.spacing[4]};
-  }
+// CommunityContainer - PageContainer의 alias (호환성)
+export const CommunityContainer = styled(BasePageContainer)`
+  /* CommunityContainer는 PageContainer와 동일하게 처리 */
 `;
 
-// 카드 형태 컨테이너
-export const CardContainer = styled(motion.div)`
-  background: ${({ theme }) => theme.colors.background.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.xl};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
+// CardContainer - BaseCard에 추가 스타일 적용
+export const CardContainer = styled(BaseCard).attrs({
+  $variant: 'elevated' as const,
+  $interactive: true,
+})`
   height: 320px;
   display: flex;
   flex-direction: column;
-  box-shadow: ${({ theme }) => theme.shadows.card};
+  cursor: pointer;
+  transition: ${({ theme }) => theme.transition.normal};
   
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary[500]};
-    box-shadow: ${({ theme }) => theme.shadows.lg};
     transform: translateY(-2px);
   }
-`;
-
-// 섹션 컨테이너
-export const SectionContainer = styled.div`
-  background: ${({ theme }) => theme.colors.background.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.xl};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  overflow: hidden;
-  box-shadow: ${({ theme }) => theme.shadows.card};
-`;
-
-// 섹션 헤더
-export const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: ${({ theme }) => theme.spacing[6]};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
-  background: linear-gradient(135deg, ${({ theme }) => theme.colors.background.secondary} 0%, ${({ theme }) => theme.colors.background.tertiary} 100%);
   
-  h2, h3 {
-    font-size: ${({ theme }) => theme.typography.fontSize.xl};
-    font-weight: 700;
-    color: ${({ theme }) => theme.colors.text.primary};
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: ${({ theme }) => theme.spacing[2]};
-  }
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: ${({ theme }) => theme.spacing[4]};
-    align-items: stretch;
+  &:active {
+    transform: translateY(0);
   }
 `;
 
-// 그리드 레이아웃
-export const GridContainer = styled.div<{ $columns?: string }>`
-  display: grid;
-  grid-template-columns: ${({ $columns }) => $columns || 'repeat(auto-fill, minmax(320px, 1fr))'};
-  gap: ${({ theme }) => theme.spacing[6]};
-  padding: ${({ theme }) => theme.spacing[6]};
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: ${({ theme }) => theme.spacing[4]};
-    padding: ${({ theme }) => theme.spacing[4]};
-  }
+// SectionContainer - 기본 설정으로 재export  
+export const SectionContainer = styled(BaseSectionContainer)`
+  /* 추가 커스터마이징 없이 기본 사용 */
 `;
 
-
-// 로딩/에러 상태 컨테이너
-export const StateContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: ${({ theme }) => theme.spacing[20]};
-  text-align: center;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  
-  .state-icon {
-    width: 64px;
-    height: 64px;
-    margin-bottom: ${({ theme }) => theme.spacing[6]};
-    color: ${({ theme }) => theme.colors.border.dark};
-  }
-  
-  .state-title {
-    font-size: ${({ theme }) => theme.typography.fontSize.xl};
-    font-weight: 600;
-    color: ${({ theme }) => theme.colors.text.primary};
-    margin-bottom: ${({ theme }) => theme.spacing[4]};
-  }
-  
-  .state-description {
-    color: ${({ theme }) => theme.colors.text.secondary};
-    font-size: ${({ theme }) => theme.typography.fontSize.base};
-    margin-bottom: ${({ theme }) => theme.spacing[8]};
-    line-height: 1.6;
-    max-width: 400px;
-  }
+// SectionHeader - 기본 설정으로 재export
+export const SectionHeader = styled(BaseSectionHeader)`
+  /* 추가 커스터마이징 없이 기본 사용 */
 `;
 
-// 폼 컨테이너
-export const FormContainer = styled(motion.div)`
-  background: ${({ theme }) => theme.colors.background.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.xl};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  overflow: hidden;
-  box-shadow: ${({ theme }) => theme.shadows.card};
-  position: relative;
+// GridContainer - 기본 설정으로 재export
+export const GridContainer = styled(BaseGridContainer)`
+  /* 추가 커스터마이징 없이 기본 사용 */
 `;
 
-export const FormSection = styled.div`
-  padding: ${({ theme }) => theme.spacing[6]};
-  
-  &:not(:last-child) {
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
-  }
+// StateContainer - variant별 스타일 적용
+export const StateContainer = styled(BaseStateContainer)`
+  /* 기본 StateContainer 사용 */
 `;
 
-export const BasicFullWidthContainer = styled(motion.div)`
-  width: 100%;
+// FormContainer - 기본 설정으로 재export
+export const FormContainer = styled(BaseFormContainer)`
+  /* 추가 커스터마이징 없이 기본 사용 */
+`;
+
+export const FormSection = styled(BaseFormSection)`
+  /* 추가 커스터마이징 없이 기본 사용 */
+`;
+
+// 호환성을 위한 추가 컨테이너들
+export const BasicFullWidthContainer = styled(FullWidthContainer)`
+  /* FullWidthContainer의 alias */
+`;
+
+// 로딩/에러 상태를 위한 특화 컨테이너들
+export const LoadingContainer = styled(BaseStateContainer).attrs({
+  $variant: 'loading' as const,
+})`
+  /* 로딩 전용 상태 컨테이너 */
+`;
+
+export const ErrorContainer = styled(BaseStateContainer).attrs({
+  $variant: 'error' as const,
+})`
+  /* 에러 전용 상태 컨테이너 */
+`;
+
+export const EmptyContainer = styled(BaseStateContainer).attrs({
+  $variant: 'empty' as const,
+})`
+  /* 빈 상태 전용 컨테이너 */
 `;

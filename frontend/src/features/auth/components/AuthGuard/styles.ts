@@ -1,34 +1,36 @@
 import styled, { keyframes } from 'styled-components';
+import { 
+  CenteredContainer,
+  Spinner,
+  AnimatedContainer 
+} from '@/shared/styles/components';
 
+// 스핀 애니메이션 (재사용)
 export const spin = keyframes`
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 `;
 
-export const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+// LoadingContainer - CenteredContainer 활용
+export const LoadingContainer = styled(CenteredContainer)`
   height: 100vh;
-  background-color: var(--bg-tertiary);
+  background-color: ${({ theme }) => theme.colors.background.tertiary};
 `;
 
-export const LoadingContent = styled.div`
+// LoadingContent - 애니메이션 컨테이너 활용
+export const LoadingContent = styled(AnimatedContainer).attrs({
+  $animation: 'fadeIn' as const,
+})`
   text-align: center;
-  color: var(--text-secondary);
+  color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-export const Spinner = styled.div`
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border-light);
-  border-top: 3px solid var(--primary-500);
-  border-radius: 50%;
-  animation: ${spin} 1s linear infinite;
-  margin: 0 auto 16px;
-`;
+// Spinner - 기본 Spinner 컴포넌트 재사용
+export { Spinner } from '../../../../shared/styles/components';
 
+// LoadingText - 텍스트 스타일 적용
 export const LoadingText = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: var(--text-secondary);
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-top: ${({ theme }) => theme.spacing[4]};
 `;
