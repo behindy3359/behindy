@@ -463,7 +463,7 @@ export const CreateCard = styled(motion.div)`
   background: ${({ theme }) => theme.colors.background.primary};
   border-radius: ${({ theme }) => theme.borderRadius['2xl']};
   border: 1px solid ${({ theme }) => theme.colors.border.light};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
+  box-shadow: ${({ theme }) => theme.shadows.base.lg};
   overflow: hidden;
 `;
 
