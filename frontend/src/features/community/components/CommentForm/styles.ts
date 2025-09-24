@@ -6,7 +6,7 @@ import {
   BaseTextarea,
   BaseButton,
   ErrorText 
-} from '../../../../shared/styles/components';
+} from '@/shared/styles/components';
 
 // FormContainer - 폼 컨테이너 (BaseForm 활용)
 export const FormContainer = styled(motion.div)`
