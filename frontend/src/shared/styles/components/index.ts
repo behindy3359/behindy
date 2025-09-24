@@ -59,10 +59,7 @@ export {
   BaseTextarea,
   BaseSelect,
   BaseCheckbox,
-  BaseRadio,
-  InputGroup,
-  SearchInput,
-  FileInput
+  BaseRadio
 } from './inputs';
 
 // 애니메이션 컴포넌트들

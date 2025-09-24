@@ -1,5 +1,8 @@
+// src/shared/components/layout/sidebar/styles.ts - 새 시스템 연동
+
 import { motion } from "framer-motion";
 import styled from "styled-components";
+import { FlexContainer, BaseButton, AnimatedContainer } from '@/shared/styles';
 
 export const SidebarContainer = styled(motion.aside).withConfig({
   shouldForwardProp: (prop) => !['$isOpen', '$isMobile'].includes(prop),
@@ -8,14 +11,15 @@ export const SidebarContainer = styled(motion.aside).withConfig({
   top: 0;
   left: 0;
   height: 100vh;
-  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
-  color: var(--text-inverse);
-  z-index: 1000;
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
+  color: ${({ theme }) => theme.colors.text.inverse};
+  z-index: ${({ theme }) => theme.zIndex.fixed};
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-lg);
+  box-shadow: ${({ theme }) => theme.shadows.dropdown};
   overflow: hidden;
   
+  /* 커스텀 스크롤바 */
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -33,10 +37,7 @@ export const SidebarContainer = styled(motion.aside).withConfig({
     }
   }
   
-  @media (min-width: 768px) {
-  }
-  
-  @media (max-width: 767px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     width: 280px;
   }
 `;
@@ -50,7 +51,7 @@ export const SidebarOverlay = styled(motion.div).withConfig({
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: ${({ theme }) => theme.zIndex.fixed - 1};
   display: ${({ $visible }) => ($visible ? 'block' : 'none')};
   
   @supports (backdrop-filter: blur(4px)) {
@@ -58,45 +59,43 @@ export const SidebarOverlay = styled(motion.div).withConfig({
     background: rgba(0, 0, 0, 0.3);
   }
   
-  @media (min-width: 768px) {
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
     display: none;
   }
 `;
 
-export const HeaderSection = styled.div.withConfig({
+export const HeaderSection = styled(FlexContainer).withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
-  padding: 20px;
+  padding: ${({ theme }) => theme.spacing[6]};
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
   justify-content: ${({ $isOpen }) => ($isOpen ? 'space-between' : 'center')};
+  align-items: center;
   min-height: 80px;
   flex-shrink: 0;
-  
-  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
 `;
 
-export const BrandLogo = styled.div.withConfig({
+export const BrandLogo = styled(FlexContainer).withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   align-items: center;
-  gap: 12px;
-  transition: all 0.3s ease;
+  gap: ${({ theme }) => theme.spacing[3]};
+  transition: ${({ theme }) => theme.transition.normal};
   
   .logo {
     width: 40px;
     height: 40px;
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    font-weight: 800;
+    font-size: ${({ theme }) => theme.typography.fontSize.xl};
+    font-weight: ${({ theme }) => theme.typography.fontWeight.extrabold};
     
-    transition: all 0.2s ease;
+    transition: ${({ theme }) => theme.transition.fast};
     cursor: pointer;
     
     &:hover {
@@ -106,37 +105,38 @@ export const BrandLogo = styled.div.withConfig({
   }
   
   .brand-name {
-    font-size: 20px;
-    font-weight: 700;
+    font-size: ${({ theme }) => theme.typography.fontSize.xl};
+    font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
     letter-spacing: -0.5px;
-    color: var(--text-inverse);
+    color: ${({ theme }) => theme.colors.text.inverse};
   }
   
-  @media (max-width: 767px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     display: flex;
   }
 `;
 
-export const ToggleButton = styled.button`
+export const ToggleButton = styled(BaseButton)`
   background: rgba(255, 255, 255, 0.1);
   border: none;
-  color: var(--text-inverse);
+  color: ${({ theme }) => theme.colors.text.inverse};
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: ${({ theme }) => theme.transition.fast};
   flex-shrink: 0;
+  padding: 0;
   
-  &:hover {
+  &:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.2);
     transform: scale(1.05);
   }
   
-  &:active {
+  &:active:not(:disabled) {
     transform: scale(0.95);
   }
   
@@ -145,9 +145,9 @@ export const ToggleButton = styled.button`
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
   }
   
-  @media (max-width: 767px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     position: absolute;
-    right: 20px;
+    right: ${({ theme }) => theme.spacing[6]};
     top: 22px;
   }
 `;
@@ -156,13 +156,14 @@ export const NavigationSection = styled.nav.withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
   flex: 1;
-  padding: 20px 0;
+  padding: ${({ theme }) => theme.spacing[6]} 0;
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   flex-direction: column;
-  gap: 8px;
+  gap: ${({ theme }) => theme.spacing[2]};
   overflow-y: auto;
   overflow-x: hidden;
   
+  /* 스크롤 마스킹 효과 */
   mask-image: linear-gradient(to bottom, 
     transparent 0px,
     black 20px,
@@ -170,7 +171,7 @@ export const NavigationSection = styled.nav.withConfig({
     transparent 100%
   );
   
-  @media (max-width: 767px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     display: flex;
     mask-image: none;
   }
@@ -179,21 +180,21 @@ export const NavigationSection = styled.nav.withConfig({
 export const StyledNavItem = styled.div.withConfig({
   shouldForwardProp: (prop) => !['$isActive', '$isOpen'].includes(prop),
 })<{ $isActive: boolean; $isOpen: boolean }>`
-  margin: 0 12px;
+  margin: 0 ${({ theme }) => theme.spacing[3]};
   
   a {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
-    color: var(--text-inverse);
+    gap: ${({ theme }) => theme.spacing[4]};
+    padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
+    color: ${({ theme }) => theme.colors.text.inverse};
     text-decoration: none;
-    border-radius: 12px;
-    transition: all 0.2s ease;
+    border-radius: ${({ theme }) => theme.borderRadius.xl};
+    transition: ${({ theme }) => theme.transition.fast};
     position: relative;
     overflow: hidden;
     
-    ${({ $isActive }) =>
+    ${({ $isActive, theme }) =>
       $isActive &&
       `
       background: rgba(255, 255, 255, 0.15);
@@ -206,7 +207,7 @@ export const StyledNavItem = styled.div.withConfig({
         transform: translateY(-50%);
         width: 4px;
         height: 24px;
-        background: var(--text-inverse);
+        background: ${theme.colors.text.inverse};
         border-radius: 0 2px 2px 0;
       }
       
@@ -262,59 +263,58 @@ export const StyledNavItem = styled.div.withConfig({
     }
     
     .nav-label {
-      font-size: 14px;
-      font-weight: 500;
+      font-size: ${({ theme }) => theme.typography.fontSize.sm};
+      font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
       opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
       transition: opacity 0.2s ease;
       white-space: nowrap;
       
-      @media (max-width: 767px) {
+      @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
         opacity: 1;
       }
     }
   }
 `;
 
-export const AccountSection = styled.div.withConfig({
+export const AccountSection = styled(FlexContainer).withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
-  padding: 20px 12px;
+  padding: ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[3]};
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   flex-direction: column;
-  gap: 8px;
+  gap: ${({ theme }) => theme.spacing[2]};
   flex-shrink: 0;
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
   
-  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
-  
-  @media (max-width: 767px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     display: flex;
   }
 `;
 
-export const BottomSection = styled.div.withConfig({
+export const BottomSection = styled(FlexContainer).withConfig({
   shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
 })<{ $isOpen: boolean }>`
-  padding: 20px 12px;
+  padding: ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[3]};
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
   flex-shrink: 0;
   
-  @media (max-width: 767px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     display: block;
   }
   
   .theme-toggle {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
+    gap: ${({ theme }) => theme.spacing[4]};
+    padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
     background: rgba(255, 255, 255, 0.1);
     border: none;
-    color: var(--text-inverse);
-    border-radius: 12px;
+    color: ${({ theme }) => theme.colors.text.inverse};
+    border-radius: ${({ theme }) => theme.borderRadius.xl};
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: ${({ theme }) => theme.transition.fast};
     width: 100%;
     justify-content: flex-start;
     
@@ -344,32 +344,20 @@ export const BottomSection = styled.div.withConfig({
     }
     
     .theme-label {
-      font-size: 14px;
-      font-weight: 500;
+      font-size: ${({ theme }) => theme.typography.fontSize.sm};
+      font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
       opacity: 0.9;
     }
   }
 `;
 
-export const SidebarContent = styled.div`
+export const SidebarContent = styled(AnimatedContainer)`
   height: 100%;
   display: flex;
   flex-direction: column;
-  
-  animation: fadeInUp 0.3s ease-out;
-  
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 `;
 
+// Z-Index 및 브레이크포인트 상수
 export const SIDEBAR_BREAKPOINTS = {
   mobile: '767px',
   tablet: '768px',

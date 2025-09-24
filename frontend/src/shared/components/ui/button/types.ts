@@ -14,4 +14,11 @@ export interface ButtonProps {
   className?: string;
   id?: string;
   style?: React.CSSProperties;
+  
+  whileHover?: any;
+  whileTap?: any;
+  transition?: any;
+  initial?: any;
+  animate?: any;
+  exit?: any;
 }

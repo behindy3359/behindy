@@ -1,15 +1,16 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
-// 버튼 베이스 인터페이스
+// 버튼 베이스 인터페이스 - motion.button과 호환되도록 수정
 interface BaseButtonProps {
-  $variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
-  $size?: 'sm' | 'md' | 'lg';
-  $fullWidth?: boolean;
-  $loading?: boolean;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+  size?: 'sm' | 'md' | 'lg';
+  fullWidth?: boolean;
+  isLoading?: boolean;
+  disabled?: boolean;
 }
 
-// BaseButton - 모든 버튼의 기본
+// BaseButton - motion.button을 확장하되 $ 접두사 사용하지 않음
 export const BaseButton = styled(motion.button)<BaseButtonProps>`
   position: relative;
   display: inline-flex;
@@ -27,18 +28,18 @@ export const BaseButton = styled(motion.button)<BaseButtonProps>`
   font-family: inherit;
   
   /* 크기 variants */
-  ${({ $size = 'md', theme }) => {
-    const sizeConfig = theme.componentSpacing.button[$size];
+  ${({ size = 'md', theme }) => {
+    const sizeConfig = theme.componentSpacing.button[size];
     return `
       padding: ${sizeConfig.padding};
-      font-size: ${theme.typography.fontSize[$size === 'lg' ? 'base' : 'sm']};
+      font-size: ${theme.typography.fontSize[size === 'lg' ? 'base' : 'sm']};
       gap: ${sizeConfig.gap};
     `;
   }}
 
   /* 색상 variants */
-  ${({ $variant = 'primary', theme }) => {
-    switch ($variant) {
+  ${({ variant = 'primary', theme }) => {
+    switch (variant) {
       case 'primary':
         return `
           background: linear-gradient(135deg, ${theme.colors.primary[500]} 0%, ${theme.colors.secondary[500]} 100%);
@@ -122,7 +123,7 @@ export const BaseButton = styled(motion.button)<BaseButtonProps>`
   }}
 
   /* 전체 너비 */
-  ${({ $fullWidth }) => $fullWidth && 'width: 100%;'}
+  ${({ fullWidth }) => fullWidth && 'width: 100%;'}
 
   /* 비활성화 상태 */
   &:disabled {
@@ -133,7 +134,7 @@ export const BaseButton = styled(motion.button)<BaseButtonProps>`
   }
 
   /* 로딩 상태 */
-  ${({ $loading }) => $loading && `
+  ${({ isLoading }) => isLoading && `
     cursor: wait;
     
     .button-content {
@@ -201,8 +202,8 @@ export const ButtonGroup = styled.div<{
 export const IconButton = styled(BaseButton)<{
   $round?: boolean;
 }>`
-  padding: ${({ $size = 'md', theme }) => {
-    switch ($size) {
+  padding: ${({ size = 'md', theme }) => {
+    switch (size) {
       case 'sm': return theme.spacing[2];
       case 'lg': return theme.spacing[4];
       default: return theme.spacing[3];
@@ -215,15 +216,15 @@ export const IconButton = styled(BaseButton)<{
   `}
   
   svg {
-    width: ${({ $size = 'md' }) => {
-      switch ($size) {
+    width: ${({ size = 'md' }) => {
+      switch (size) {
         case 'sm': return '16px';
         case 'lg': return '24px';
         default: return '20px';
       }
     }};
-    height: ${({ $size = 'md' }) => {
-      switch ($size) {
+    height: ${({ size = 'md' }) => {
+      switch (size) {
         case 'sm': return '16px';
         case 'lg': return '24px';
         default: return '20px';
@@ -278,9 +279,9 @@ export const LoadingButton = styled(BaseButton)<{
 export const ToggleButton = styled(BaseButton)<{
   $active?: boolean;
 }>`
-  ${({ $active, $variant = 'outline', theme }) => {
+  ${({ $active, variant = 'outline', theme }) => {
     if ($active) {
-      switch ($variant) {
+      switch (variant) {
         case 'outline':
           return `
             background: ${theme.colors.primary[500]};
@@ -368,15 +369,12 @@ export const GameButton = styled(BaseButton)<{
     }
   }}
 `;
-
-// 버튼 내용 래퍼
 export const ButtonContent = styled.span`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
 `;
 
-// 로딩 스피너
 export const ButtonSpinner = styled.div`
   width: 16px;
   height: 16px;

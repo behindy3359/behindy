@@ -22,7 +22,6 @@ export const StyledButton = styled(motion.button).withConfig({
   text-decoration: none;
   font-family: inherit;
   
-  /* Size variants */
   ${({ size, theme }) => {
     switch (size) {
       case 'sm':
@@ -46,7 +45,6 @@ export const StyledButton = styled(motion.button).withConfig({
     }
   }}
 
-  /* Color variants (theme 기반) */
   ${({ variant, theme }) => {
     switch (variant) {
       case 'primary':

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import { GlowContainer, TypewriterContainer } from '@/shared/styles';
 
 interface ThemeTransitionProps {
   isGameMode: boolean;
@@ -13,14 +14,25 @@ const TransitionOverlay = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, #0a0a0a 0%, #1e1b3a 100%);
-  z-index: 9999;
+  background: linear-gradient(45deg, 
+    ${({ theme }) => theme.colors.background.primary} 0%, 
+    ${({ theme }) => theme.colors.background.primary || theme.colors.background.secondary} 100%
+  );
+  z-index: ${({ theme }) => theme.zIndex.modal};
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+`;
+
+const TransitionContent = styled(GlowContainer)`
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing[8]};
+  border-radius: ${({ theme }) => theme.borderRadius.xl};
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
 `;
 
 export const ThemeTransition: React.FC<ThemeTransitionProps> = ({ 
@@ -49,13 +61,11 @@ export const ThemeTransition: React.FC<ThemeTransitionProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-            >
-              ⚡ 미지의 세계로 진입중...
-            </motion.div>
+            <TransitionContent>
+              <TypewriterContainer $duration="1s">
+                ⚡ 미지의 세계로 진입중...
+              </TypewriterContainer>
+            </TransitionContent>
           </TransitionOverlay>
         )}
       </AnimatePresence>
