@@ -249,7 +249,7 @@ export const CenteredContainer = styled.div`
 
 export const FlexContainer = styled.div<{
   $direction?: 'row' | 'column';
-  $align?: 'start' | 'center' | 'end' | 'stretch';
+  $align?: 'start' | 'center' | 'end' | 'stretch' | 'flex-start';
   $justify?: 'start' | 'center' | 'end' | 'between' | 'around';
   $gap?: keyof typeof import('../tokens/spacing').spacing;
   $wrap?: boolean;

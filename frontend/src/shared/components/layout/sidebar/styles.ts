@@ -1,8 +1,10 @@
-// src/shared/components/layout/sidebar/styles.ts - 새 시스템 연동
-
+// frontend/src/shared/components/layout/sidebar/styles.ts
 import { motion } from "framer-motion";
 import styled from "styled-components";
-import { FlexContainer, BaseButton, AnimatedContainer } from '@/shared/styles';
+import { 
+  FlexContainer, 
+  BaseButton 
+} from '@/shared/styles/components';
 
 export const SidebarContainer = styled(motion.aside).withConfig({
   shouldForwardProp: (prop) => !['$isOpen', '$isMobile'].includes(prop),
@@ -19,7 +21,6 @@ export const SidebarContainer = styled(motion.aside).withConfig({
   box-shadow: ${({ theme }) => theme.shadows.dropdown};
   overflow: hidden;
   
-  /* 커스텀 스크롤바 */
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -163,7 +164,6 @@ export const NavigationSection = styled.nav.withConfig({
   overflow-y: auto;
   overflow-x: hidden;
   
-  /* 스크롤 마스킹 효과 */
   mask-image: linear-gradient(to bottom, 
     transparent 0px,
     black 20px,
@@ -350,22 +350,3 @@ export const BottomSection = styled(FlexContainer).withConfig({
     }
   }
 `;
-
-export const SidebarContent = styled(AnimatedContainer)`
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-`;
-
-// Z-Index 및 브레이크포인트 상수
-export const SIDEBAR_BREAKPOINTS = {
-  mobile: '767px',
-  tablet: '768px',
-  desktop: '1024px',
-} as const;
-
-export const SIDEBAR_Z_INDEX = {
-  overlay: 999,
-  sidebar: 1000,
-  dropdown: 1001,
-} as const;

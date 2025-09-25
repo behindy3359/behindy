@@ -1,16 +1,25 @@
 import { motion } from "framer-motion";
 import styled from "styled-components";
+import { 
+  FlexContainer,
+  BaseCard,
+  BaseButton,
+  BaseInput,
+  BaseSelect,
+  AnimatedContainer
+} from '@/shared/styles/components';
 
-export const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+export const Header = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'flex-start' as const,
+})`
   margin-bottom: ${({ theme }) => theme.spacing[8]};
-  gap: 20px;
+  gap: ${({ theme }) => theme.spacing[4]};
   
   @media (max-width: 768px) {
     flex-direction: column;
-    gap: 16px;
+    gap: ${({ theme }) => theme.spacing[4]};
     align-items: stretch;
   }
 `;
@@ -20,36 +29,40 @@ export const HeaderLeft = styled.div`
 `;
 
 export const Title = styled.h1`
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 16px 0;
+  font-size: ${({ theme }) => theme.textStyles.heading.h1.fontSize};
+  font-weight: ${({ theme }) => theme.textStyles.heading.h1.fontWeight};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing[4]} 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: ${({ theme }) => theme.spacing[3]};
+  
+  svg {
+    color: ${({ theme }) => theme.colors.primary[500]};
+  }
   
   @media (max-width: 768px) {
-    font-size: 24px;
+    font-size: ${({ theme }) => theme.textStyles.heading.h2.fontSize};
     text-align: center;
     justify-content: center;
   }
 `;
 
 export const Subtitle = styled.p`
-  color: #6b7280;
-  font-size: 16px;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.base};
   margin: 0;
-  line-height: 1.5;
+  line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
   
   @media (max-width: 768px) {
     text-align: center;
   }
 `;
 
-export const HeaderRight = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+export const HeaderRight = styled(FlexContainer).attrs({
+  $direction: 'column' as const,
+  $gap: 4 as const,
+})`
   align-items: flex-end;
   
   @media (max-width: 768px) {
@@ -57,11 +70,11 @@ export const HeaderRight = styled.div`
   }
 `;
 
-export const ActionBar = styled.div`
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  
+export const ActionBar = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 3 as const,
+})`
   @media (max-width: 768px) {
     flex-direction: column;
     width: 100%;
@@ -70,7 +83,7 @@ export const ActionBar = styled.div`
 
 export const SearchContainer = styled.div`
   display: flex;
-  gap: 8px;
+  gap: ${({ theme }) => theme.spacing[2]};
   align-items: center;
   min-width: 300px;
   
@@ -80,40 +93,37 @@ export const SearchContainer = styled.div`
   }
 `;
 
-export const FilterBar = styled.div`
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 20px 24px;
-  margin-bottom: 24px;
+export const FilterBar = styled(BaseCard).attrs({
+  $variant: 'elevated' as const,
+})`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
   
   @media (max-width: 768px) {
     flex-direction: column;
-    gap: 16px;
+    gap: ${({ theme }) => theme.spacing[4]};
     align-items: stretch;
   }
 `;
 
-export const FilterLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  
+export const FilterLeft = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 4 as const,
+})`
   .filter-title {
-    font-weight: 600;
-    color: #374151;
+    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+    color: ${({ theme }) => theme.colors.text.primary};
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: ${({ theme }) => theme.spacing[2]};
   }
   
   .post-count {
-    color: #6b7280;
-    font-size: 14px;
+    color: ${({ theme }) => theme.colors.text.secondary};
+    font-size: ${({ theme }) => theme.typography.fontSize.sm};
   }
   
   @media (max-width: 768px) {
@@ -121,11 +131,11 @@ export const FilterLeft = styled.div`
   }
 `;
 
-export const FilterRight = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  
+export const FilterRight = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 3 as const,
+})`
   @media (max-width: 768px) {
     justify-content: space-between;
   }
@@ -133,96 +143,90 @@ export const FilterRight = styled.div`
 
 export const ViewToggle = styled.div`
   display: flex;
-  background: #f3f4f6;
-  border-radius: 8px;
-  padding: 4px;
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing[1]};
 `;
 
 export const ViewButton = styled.button<{ $active: boolean }>`
-  padding: 8px 12px;
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
   border: none;
-  background: ${({ $active }) => $active ? 'white' : 'transparent'};
-  color: ${({ $active }) => $active ? '#374151' : '#6b7280'};
-  border-radius: 6px;
+  background: ${({ $active, theme }) => 
+    $active ? theme.colors.background.primary : 'transparent'
+  };
+  color: ${({ $active, theme }) => 
+    $active ? theme.colors.text.primary : theme.colors.text.secondary
+  };
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
   cursor: pointer;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-  box-shadow: ${({ $active }) => $active ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none'};
+  gap: ${({ theme }) => theme.spacing[2]};
+  transition: ${({ theme }) => theme.transition.fast};
+  box-shadow: ${({ $active, theme }) => 
+    $active ? theme.shadows.base.sm : 'none'
+  };
   
   &:hover {
-    color: #374151;
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 `;
 
-export const SortSelect = styled.select`
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
-  font-size: 14px;
-  cursor: pointer;
-  
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
+export const SortSelect = styled(BaseSelect).attrs({
+  size: 'sm' as const,
+})`
+  min-width: 120px;
 `;
 
-export const PostsContainer = styled.div`
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+export const PostsContainer = styled(BaseCard).attrs({
+  $variant: 'elevated' as const,
+})`
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 `;
 
 export const PostGrid = styled.div<{ $viewMode: 'grid' | 'list' }>`
-  padding: 24px;
+  padding: ${({ theme }) => theme.spacing[6]};
   
-  ${({ $viewMode }) => $viewMode === 'grid' ? `
+  ${({ $viewMode, theme }) => $viewMode === 'grid' ? `
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 24px;
+    gap: ${theme.spacing[6]};
     
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
-      gap: 16px;
-      padding: 16px;
+      gap: ${theme.spacing[4]};
+      padding: ${theme.spacing[4]};
     }
   ` : `
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: ${theme.spacing[4]};
   `}
 `;
 
 export const EmptyState = styled.div`
   text-align: center;
-  padding: 80px 20px;
+  padding: ${({ theme }) => theme.spacing[20]};
   
   .empty-icon {
     width: 64px;
     height: 64px;
-    margin: 0 auto 20px;
-    color: #d1d5db;
+    margin: 0 auto ${({ theme }) => theme.spacing[4]};
+    color: ${({ theme }) => theme.colors.border.dark};
   }
   
   .empty-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 12px;
+    font-size: ${({ theme }) => theme.typography.fontSize.xl};
+    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+    color: ${({ theme }) => theme.colors.text.primary};
+    margin-bottom: ${({ theme }) => theme.spacing[3]};
   }
   
   .empty-description {
-    color: #6b7280;
-    margin-bottom: 32px;
-    line-height: 1.6;
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin-bottom: ${({ theme }) => theme.spacing[8]};
+    line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
@@ -234,7 +238,7 @@ export const LoadingContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 80px 20px;
+  padding: ${({ theme }) => theme.spacing[20]};
   
   .loading-content {
     text-align: center;
@@ -242,16 +246,16 @@ export const LoadingContainer = styled.div`
     .loading-spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid #f3f4f6;
-      border-top: 3px solid #667eea;
+      border: 3px solid ${({ theme }) => theme.colors.background.secondary};
+      border-top: 3px solid ${({ theme }) => theme.colors.primary[500]};
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin: 0 auto 16px;
+      margin: 0 auto ${({ theme }) => theme.spacing[4]};
     }
     
     .loading-text {
-      color: #6b7280;
-      font-size: 16px;
+      color: ${({ theme }) => theme.colors.text.secondary};
+      font-size: ${({ theme }) => theme.typography.fontSize.base};
     }
   }
   
@@ -265,41 +269,54 @@ export const Pagination = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  margin-top: 32px;
-  padding: 24px;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin-top: ${({ theme }) => theme.spacing[8]};
+  padding: ${({ theme }) => theme.spacing[6]};
+  background: ${({ theme }) => theme.colors.background.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.xl};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  box-shadow: ${({ theme }) => theme.shadows.base.sm};
   
   @media (max-width: 768px) {
     flex-wrap: wrap;
-    gap: 6px;
-    padding: 16px;
+    gap: ${({ theme }) => theme.spacing[2]};
+    padding: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
-export const PageButton = styled(motion.button)<{ $active?: boolean; $disabled?: boolean }>`
-  padding: 10px 16px;
-  border: 1px solid ${({ $active }) => $active ? '#667eea' : '#d1d5db'};
-  background: ${({ $active }) => $active ? '#667eea' : 'white'};
-  color: ${({ $active }) => $active ? 'white' : '#374151'};
-  border-radius: 8px;
+export const PageButton = styled(motion.button)<{ 
+  $active?: boolean; 
+  $disabled?: boolean;
+}>`
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
+  border: 1px solid ${({ $active, theme }) => 
+    $active ? theme.colors.primary[500] : theme.colors.border.medium
+  };
+  background: ${({ $active, theme }) => 
+    $active ? theme.colors.primary[500] : theme.colors.background.primary
+  };
+  color: ${({ $active, theme }) => 
+    $active ? theme.colors.text.inverse : theme.colors.text.primary
+  };
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   cursor: ${({ $disabled }) => $disabled ? 'not-allowed' : 'pointer'};
-  font-size: 14px;
-  font-weight: 500;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   opacity: ${({ $disabled }) => $disabled ? 0.5 : 1};
   min-width: 44px;
   
   &:hover:not(:disabled) {
-    background: ${({ $active }) => $active ? '#5a67d8' : '#f9fafb'};
-    border-color: ${({ $active }) => $active ? '#5a67d8' : '#9ca3af'};
+    background: ${({ $active, theme }) => 
+      $active ? theme.colors.primary[600] : theme.colors.background.secondary
+    };
+    border-color: ${({ $active, theme }) => 
+      $active ? theme.colors.primary[600] : theme.colors.border.dark
+    };
   }
   
   @media (max-width: 768px) {
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+    font-size: ${({ theme }) => theme.typography.fontSize.xs};
     min-width: 36px;
   }
 `;

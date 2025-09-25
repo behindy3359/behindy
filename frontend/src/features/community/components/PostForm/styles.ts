@@ -1,55 +1,59 @@
+// frontend/src/features/community/components/PostForm/styles.ts
 import { motion } from "framer-motion";
 import styled from "styled-components";
-import { FormSection } from "@/shared/styles/commonContainers";
+import { 
+  FlexContainer,
+  BaseButton,
+  FormSection
+} from '@/shared/styles/components';
 
-export const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+export const Header = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})`
   margin-bottom: ${({ theme }) => theme.spacing[8]};
   padding-bottom: ${({ theme }) => theme.spacing[4]};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
-export const HeaderLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[4]};
+export const HeaderLeft = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 4 as const,
+})`
+  /* FlexContainer 설정 활용 */
 `;
 
-export const BackButton = styled(motion.button)`
+export const BackButton = styled(BaseButton).attrs({
+  variant: 'ghost' as const,
+  size: 'sm' as const,
+})`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
-  background: none;
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: ${({ theme }) => theme.colors.background.secondary};
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
 `;
 
 export const Title = styled.h1`
-  font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
-  font-weight: 700;
+  font-size: ${({ theme }) => theme.textStyles.heading.h2.fontSize};
+  font-weight: ${({ theme }) => theme.textStyles.heading.h2.fontWeight};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
+  
+  svg {
+    color: ${({ theme }) => theme.colors.primary[500]};
+  }
 `;
 
-export const Actions = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[4]};
-  align-items: center;
+export const Actions = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 4 as const,
+  $align: 'center' as const,
+})`
+  /* FlexContainer 설정 활용 */
 `;
 
 export const TitleSection = styled(FormSection)`
@@ -60,7 +64,7 @@ export const TitleSection = styled(FormSection)`
     
     input {
       font-size: ${({ theme }) => theme.typography.fontSize.xl};
-      font-weight: 600;
+      font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
       border: none;
       padding: ${({ theme }) => theme.spacing[4]} 0;
       
@@ -71,7 +75,7 @@ export const TitleSection = styled(FormSection)`
       
       &::placeholder {
         color: ${({ theme }) => theme.colors.text.tertiary};
-        font-weight: 400;
+        font-weight: ${({ theme }) => theme.typography.fontWeight.normal};
       }
     }
   }
@@ -82,38 +86,38 @@ export const TitleSection = styled(FormSection)`
     color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `;
+
 export const ContentSection = styled(FormSection)`
   .content-textarea {
     width: 100%;
     min-height: 400px;
-    max-height: 600px; /* 🔥 최대 높이 제한 */
+    max-height: 600px;
     border: none;
     font-size: ${({ theme }) => theme.typography.fontSize.base};
-    line-height: 1.6;
+    line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
     font-family: inherit;
     padding: 0;
     color: ${({ theme }) => theme.colors.text.primary};
+    background: ${({ theme }) => theme.colors.background.primary};
     
-    /* 🔥 크기 고정 - 사용자가 늘릴 수 없도록 */
     resize: none;
     overflow-y: auto;
     
-    /* 스크롤바 스타일링 */
     &::-webkit-scrollbar {
       width: 8px;
     }
     
     &::-webkit-scrollbar-track {
-      background: #f8f9fa;
-      border-radius: 4px;
+      background: ${({ theme }) => theme.colors.background.secondary};
+      border-radius: ${({ theme }) => theme.borderRadius.sm};
     }
     
     &::-webkit-scrollbar-thumb {
-      background: #dee2e6;
-      border-radius: 4px;
+      background: ${({ theme }) => theme.colors.border.medium};
+      border-radius: ${({ theme }) => theme.borderRadius.sm};
       
       &:hover {
-        background: #adb5bd;
+        background: ${({ theme }) => theme.colors.border.dark};
       }
     }
     
@@ -123,6 +127,11 @@ export const ContentSection = styled(FormSection)`
     
     &::placeholder {
       color: ${({ theme }) => theme.colors.text.tertiary};
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   }
   
@@ -134,28 +143,33 @@ export const ContentSection = styled(FormSection)`
   }
 `;
 
-
 export const PreviewMode = styled.div`
   .preview-content {
-    line-height: 1.8;
+    line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
     color: ${({ theme }) => theme.colors.text.primary};
     word-break: break-word;
     
     h1, h2, h3 {
       margin: 1.5em 0 0.5em 0;
-      font-weight: 600;
+      font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
     }
     
-    h1 { font-size: 1.5em; }
-    h2 { font-size: 1.3em; }
-    h3 { font-size: 1.1em; }
+    h1 { 
+      font-size: ${({ theme }) => theme.typography.fontSize.xl}; 
+    }
+    h2 { 
+      font-size: ${({ theme }) => theme.typography.fontSize.lg}; 
+    }
+    h3 { 
+      font-size: ${({ theme }) => theme.typography.fontSize.base}; 
+    }
     
     p {
       margin: 0 0 1em 0;
     }
     
     strong {
-      font-weight: 600;
+      font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
     }
     
     em {
@@ -163,24 +177,27 @@ export const PreviewMode = styled.div`
     }
     
     br {
-      line-height: 1.8;
+      line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
     }
   }
 `;
 
-export const BottomActions = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+export const BottomActions = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})`
   padding: ${({ theme }) => theme.spacing[6]};
   background: ${({ theme }) => theme.colors.background.secondary};
   border-top: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
-export const ActionGroup = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[4]};
-  align-items: center;
+export const ActionGroup = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 4 as const,
+  $align: 'center' as const,
+})`
+  /* FlexContainer 설정 활용 */
 `;
 
 export const PreviewToggle = styled.button<{ $active: boolean }>`
@@ -196,7 +213,7 @@ export const PreviewToggle = styled.button<{ $active: boolean }>`
   border-radius: ${({ theme }) => theme.borderRadius.md};
   cursor: pointer;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  transition: all 0.2s ease;
+  transition: ${({ theme }) => theme.transition.fast};
   
   &:hover {
     background: ${({ $active, theme }) => 
@@ -209,8 +226,8 @@ export const ErrorMessage = styled(motion.div)`
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
   padding: ${({ theme }) => theme.spacing[4]};
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: ${({ theme }) => theme.borderRadius.md};
   color: ${({ theme }) => theme.colors.error};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
@@ -227,13 +244,14 @@ export const LoadingOverlay = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  z-index: ${({ theme }) => theme.zIndex.modal};
+  backdrop-filter: blur(2px);
   
   .loading-content {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: ${({ theme }) => theme.colors.background.primary};
+    padding: ${({ theme }) => theme.spacing[4]};
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    box-shadow: ${({ theme }) => theme.shadows.dropdown};
     text-align: center;
     color: ${({ theme }) => theme.colors.text.primary};
   }
