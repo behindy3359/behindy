@@ -1,83 +1,86 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
+import {
+  PageContainer,
+  BaseCard,
+  BaseButton,
+  FlexContainer,
+  StateContainer,
+  SkeletonLoader,
+  AnimatedContainer
+} from '@/shared/styles';
 
-// 메인 컨테이너
-export const GameContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1.5rem;
+// 메인 컨테이너 - PageContainer 기반
+export const GameContainer = styled(PageContainer)`
   min-height: 100vh;
-
+  max-width: 1200px;
+  
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
-// 헤더
-export const GameHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-light);
+export const Container = styled(PageContainer)`
+  @media (max-width: 768px) {
+    padding: ${({ theme }) => theme.spacing[4]};
+  }
 `;
 
-export const BackButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: color 0.2s ease;
+// 헤더 - FlexContainer 기반
+export const GameHeader = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})`
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  padding-bottom: ${({ theme }) => theme.spacing[4]};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+`;
 
+export const BackButton = styled(BaseButton).attrs({
+  variant: 'ghost' as const,
+})`
+  gap: ${({ theme }) => theme.spacing[2]};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  
   &:hover {
-    color: var(--text-primary);
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 `;
 
 export const HeaderTitle = styled.h1`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 `;
 
-export const HeaderActions = styled.div`
-  display: flex;
-  gap: 0.75rem;
-`;
+export const HeaderActions = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 3 as const,
+})``;
 
-// 콘텐츠 영역
-export const GameContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+// 콘텐츠 영역 - StateContainer 기반
+export const GameContent = styled(StateContainer)`
   min-height: 60vh;
 `;
 
-// 로딩 섹션
-export const LoadingSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
+// 로딩 섹션 - StateContainer 기반
+export const LoadingSection = styled(StateContainer).attrs({
+  $variant: 'loading' as const,
+})`
+  color: ${({ theme }) => theme.colors.text.secondary};
 
   p {
-    margin-top: 1rem;
+    margin-top: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
 export const Spinner = styled.div`
   width: 48px;
   height: 48px;
-  border: 4px solid var(--border-light);
-  border-top-color: var(--primary-500);
+  border: 4px solid ${({ theme }) => theme.colors.border.light};
+  border-top-color: ${({ theme }) => theme.colors.primary[500]};
   border-radius: 50%;
   animation: spin 1s linear infinite;
 
@@ -87,7 +90,9 @@ export const Spinner = styled.div`
 `;
 
 // 캐릭터 생성 섹션
-export const CharacterCreateSection = styled(motion.div)`
+export const CharacterCreateSection = styled(AnimatedContainer).attrs({
+  $animation: 'fadeIn' as const,
+})`
   text-align: center;
   max-width: 500px;
   width: 100%;
@@ -98,10 +103,11 @@ export const GamePlayingSection = styled.div`
   width: 100%;
   display: grid;
   grid-template-columns: 300px 1fr;
-  gap: 1.5rem;
+  gap: ${({ theme }) => theme.spacing[6]};
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
@@ -118,17 +124,20 @@ export const StorySection = styled.div`
 `;
 
 // 게임 완료 섹션
-export const GameCompletionSection = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+export const GameCompletionSection = styled(FlexContainer).attrs({
+  $direction: 'column' as const,
+  $align: 'center' as const,
+  $justify: 'center' as const,
+})`
   width: 100%;
   min-height: 60vh;
-  padding: 1rem;
+  padding: ${({ theme }) => theme.spacing[4]};
 `;
 
 // 에러 섹션
-export const ErrorSection = styled(motion.div)`
+export const ErrorSection = styled(AnimatedContainer).attrs({
+  $animation: 'fadeIn' as const,
+})`
   text-align: center;
   max-width: 500px;
   width: 100%;
@@ -138,44 +147,33 @@ export const ErrorTitle = styled.h2`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--error);
-  margin-bottom: 1rem;
+  gap: ${({ theme }) => theme.spacing[3]};
+  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.error};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
 
 export const ErrorMessage = styled.p`
-  font-size: 1rem;
-  color: var(--text-secondary);
-  margin-bottom: 1.5rem;
+  font-size: ${({ theme }) => theme.typography.fontSize.base};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
 `;
 
-export const ErrorActions = styled.div`
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-`;
+export const ErrorActions = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 4 as const,
+  $justify: 'center' as const,
+})``;
 
-// 메인 컨테이너
-export const Container = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing[6]};
-
-  @media (max-width: 768px) {
-    padding: ${({ theme }) => theme.spacing[4]};
-  }
-`;
-
-// 헤더
+// 페이지 헤더
 export const PageHeader = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing[8]};
 `;
 
 export const PageTitle = styled.h1`
-  font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
-  font-weight: 700;
+  font-size: ${({ theme }) => theme.textStyles.heading.h1.fontSize};
+  font-weight: ${({ theme }) => theme.textStyles.heading.h1.fontWeight};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 `;
@@ -188,17 +186,15 @@ export const ContentGrid = styled.div`
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
-// 공통 카드
-export const Card = styled(motion.div)`
-  background: ${({ theme }) => theme.colors.background.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.xl};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  box-shadow: ${({ theme }) => theme.shadows.card};
-  overflow: hidden;
-`;
+// 공통 카드 - BaseCard 기반
+export const Card = styled(BaseCard).attrs({
+  $variant: 'elevated' as const,
+  $size: 'md' as const,
+})``;
 
 export const CardHeader = styled.div`
   padding: ${({ theme }) => theme.spacing[6]};
@@ -207,16 +203,17 @@ export const CardHeader = styled.div`
 
 export const CardTitle = styled.h2`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 `;
 
 // 캐릭터 프로필
-export const CharacterProfile = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[4]};
+export const CharacterProfile = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 4 as const,
+})`
   padding: ${({ theme }) => theme.spacing[6]};
 `;
 
@@ -228,7 +225,7 @@ export const ProfileIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: ${({ theme }) => theme.colors.text.inverse};
 `;
 
 export const ProfileInfo = styled.div`
@@ -237,7 +234,7 @@ export const ProfileInfo = styled.div`
 
 export const CharacterName = styled.h3`
   font-size: ${({ theme }) => theme.typography.fontSize.xl};
-  font-weight: 700;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing[2]} 0;
 `;
@@ -251,17 +248,17 @@ export const StatusBadge = styled.div<{ $status: string }>`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-export const StatsGrid = styled.div`
+export const StatsGrid = styled(FlexContainer).attrs({
+  $direction: 'column' as const,
+  $gap: 4 as const,
+})`
   padding: 0 ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[6]};
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[4]};
 `;
 
-export const StatCard = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[3]};
-`;
+export const StatCard = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 3 as const,
+})``;
 
 export const StatIcon = styled.div<{ $type: 'health' | 'sanity' }>`
   width: 40px;
@@ -292,7 +289,7 @@ export const StatLabel = styled.div`
 
 export const StatValue = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
@@ -319,22 +316,22 @@ export const DeathNotice = styled.div`
   color: ${({ theme }) => theme.colors.error};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   text-align: center;
-  font-weight: 500;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
 // 게임 통계
-export const StatsList = styled.div`
+export const StatsList = styled(FlexContainer).attrs({
+  $direction: 'column' as const,
+  $gap: 4 as const,
+})`
   padding: ${({ theme }) => theme.spacing[6]};
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[4]};
 `;
 
-export const StatsItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[3]};
-`;
+export const StatsItem = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 3 as const,
+})``;
 
 export const StatsIcon = styled.div`
   width: 36px;
@@ -347,11 +344,12 @@ export const StatsIcon = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-export const StatsText = styled.div`
+export const StatsText = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})`
   flex: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   
   span {
     font-size: ${({ theme }) => theme.typography.fontSize.sm};
@@ -361,7 +359,7 @@ export const StatsText = styled.div`
   strong {
     font-size: ${({ theme }) => theme.typography.fontSize.base};
     color: ${({ theme }) => theme.colors.text.primary};
-    font-weight: 600;
+    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   }
 `;
 
@@ -372,7 +370,7 @@ export const ActiveGameInfo = styled.div`
 
 export const GameTitle = styled.h3`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
@@ -401,13 +399,15 @@ export const CannotEnterMessage = styled.p`
   border-radius: ${({ theme }) => theme.borderRadius.md};
 `;
 
-export const ButtonGroup = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[3]};
-`;
+export const ButtonGroup = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 3 as const,
+})``;
 
-// Empty State
-export const EmptyStateCard = styled(motion.div)`
+// Empty State - StateContainer 기반
+export const EmptyStateCard = styled(StateContainer).attrs({
+  $variant: 'empty' as const,
+})`
   background: ${({ theme }) => theme.colors.background.primary};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
   border: 1px solid ${({ theme }) => theme.colors.border.light};
@@ -431,8 +431,8 @@ export const EmptyIcon = styled.div`
 `;
 
 export const EmptyTitle = styled.h2`
-  font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
-  font-weight: 700;
+  font-size: ${({ theme }) => theme.textStyles.heading.h2.fontSize};
+  font-weight: ${({ theme }) => theme.textStyles.heading.h2.fontWeight};
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing[3]};
 `;
@@ -444,11 +444,9 @@ export const EmptyDescription = styled.p`
 `;
 
 // 로딩 상태
-export const LoadingState = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+export const LoadingState = styled(StateContainer).attrs({
+  $variant: 'loading' as const,
+})`
   min-height: 400px;
   color: ${({ theme }) => theme.colors.text.secondary};
 
@@ -457,13 +455,14 @@ export const LoadingState = styled.div`
   }
 `;
 
-// 카드 컨테이너
-export const CreateCard = styled(motion.div)`
+// 카드 컨테이너 - BaseCard 기반
+export const CreateCard = styled(BaseCard).attrs({
+  $variant: 'elevated' as const,
+  $size: 'lg' as const,
+})`
   width: 100%;
-  background: ${({ theme }) => theme.colors.background.primary};
-  border-radius: ${({ theme }) => theme.borderRadius['2xl']};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  box-shadow: ${({ theme }) => theme.shadows.base.lg};
+  max-width: 600px;
+  margin: 0 auto;
   overflow: hidden;
 `;
 
@@ -487,10 +486,11 @@ export const FormGroup = styled.div`
   gap: ${({ theme }) => theme.spacing[2]};
 `;
 
-export const NameHelper = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+export const NameHelper = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})`
   padding: 0 ${({ theme }) => theme.spacing[2]};
   
   span {
@@ -510,7 +510,7 @@ export const RandomButton = styled(motion.button)`
   color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: ${({ theme }) => theme.transition.normal};
 
   &:hover {
     background: ${({ theme }) => theme.colors.background.tertiary};
@@ -529,7 +529,7 @@ export const InfoBox = styled.div`
 
 export const InfoTitle = styled.h3`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing[3]};
 `;
@@ -549,16 +549,17 @@ export const InfoItem = styled.li`
 `;
 
 // 기존 캐릭터 정보
-export const ExistingCharacterInfo = styled.div`
+export const ExistingCharacterInfo = styled(FlexContainer).attrs({
+  $direction: 'column' as const,
+  $gap: 6 as const,
+})`
   padding: ${({ theme }) => theme.spacing[8]};
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[6]};
 `;
 
-export const CharacterCard = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[6]};
+export const CharacterCard = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 6 as const,
+})`
   padding: ${({ theme }) => theme.spacing[6]};
   background: ${({ theme }) => theme.colors.background.secondary};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
@@ -573,32 +574,32 @@ export const CharacterIcon = styled.div`
   height: 80px;
   background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
   border-radius: 50%;
-  color: white;
+  color: ${({ theme }) => theme.colors.text.inverse};
   flex-shrink: 0;
 `;
 
-export const CharacterDetails = styled.div`
+export const CharacterDetails = styled(FlexContainer).attrs({
+  $direction: 'column' as const,
+  $gap: 3 as const,
+})`
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[3]};
 `;
 
-export const CharacterStats = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[6]};
-`;
+export const CharacterStats = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 6 as const,
+})``;
 
-export const StatItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[1]};
-`;
+export const StatItem = styled(FlexContainer).attrs({
+  $direction: 'column' as const,
+  $gap: 1 as const,
+})``;
 
-export const InfoMessage = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
+export const InfoMessage = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 2 as const,
+})`
   padding: ${({ theme }) => theme.spacing[4]};
   background: rgba(102, 126, 234, 0.1);
   border-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -606,39 +607,42 @@ export const InfoMessage = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
-export const DestinationInfo = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
+export const DestinationInfo = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $justify: 'center' as const,
+})`
   padding: ${({ theme }) => theme.spacing[3]};
   background: rgba(102, 126, 234, 0.1);
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   color: ${({ theme }) => theme.colors.primary[600]};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-weight: 500;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
 
-export const StoryHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+// 스토리 관련 스타일
+export const StoryHeader = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})`
   margin-bottom: ${({ theme }) => theme.spacing[6]};
   padding-bottom: ${({ theme }) => theme.spacing[4]};
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
 export const StoryTitle = styled.h2`
   font-size: ${({ theme }) => theme.typography.fontSize.xl};
-  font-weight: 700;
-  color: var(--text-primary);
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 `;
 
 export const PageIndicator = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
+  color: ${({ theme }) => theme.colors.text.secondary};
+  background: ${({ theme }) => theme.colors.background.secondary};
   padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
   border-radius: ${({ theme }) => theme.borderRadius.md};
 `;
@@ -649,8 +653,8 @@ export const StoryContent = styled.div`
 
 export const StoryText = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  line-height: 1.8;
-  color: var(--text-primary);
+  line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
+  color: ${({ theme }) => theme.colors.text.primary};
   white-space: pre-wrap;
   word-break: keep-all;
   margin: 0;
@@ -658,7 +662,7 @@ export const StoryText = styled.p`
 
   @media (max-width: 768px) {
     font-size: ${({ theme }) => theme.typography.fontSize.sm};
-    line-height: 1.7;
+    line-height: ${({ theme }) => theme.typography.lineHeight.normal};
     min-height: 120px;
   }
 `;
@@ -667,7 +671,7 @@ export const Cursor = styled.span`
   display: inline-block;
   width: 2px;
   height: 1.2em;
-  background: var(--primary-500);
+  background: ${({ theme }) => theme.colors.primary[500]};
   margin-left: 2px;
   animation: blink 1s infinite;
 
@@ -677,45 +681,31 @@ export const Cursor = styled.span`
   }
 `;
 
-export const SkipButton = styled(motion.button)`
+export const SkipButton = styled(BaseButton).attrs({
+  variant: 'ghost' as const,
+  size: 'sm' as const,
+})`
   position: absolute;
   top: 0;
   right: 0;
-  display: flex;
-  align-items: center;
   gap: ${({ theme }) => theme.spacing[1]};
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-medium);
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: var(--text-secondary);
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-  }
 `;
 
 export const LastPageIndicator = styled(motion.div)`
   text-align: center;
   margin-top: ${({ theme }) => theme.spacing[6]};
   padding-top: ${({ theme }) => theme.spacing[4]};
-  border-top: 1px solid var(--border-light);
-  color: var(--text-secondary);
+  border-top: 1px solid ${({ theme }) => theme.colors.border.light};
+  color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-style: italic;
 `;
 
-export const EmptyState = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+export const EmptyState = styled(StateContainer).attrs({
+  $variant: 'empty' as const,
+})`
   min-height: 300px;
-  color: var(--text-tertiary);
+  color: ${({ theme }) => theme.colors.text.tertiary};
 
   .empty-icon {
     width: 48px;
@@ -724,11 +714,12 @@ export const EmptyState = styled.div`
   }
 `;
 
+// 게임 완료 관련
 export const CompletionHeader = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing[12]} ${({ theme }) => theme.spacing[8]};
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-  border-bottom: 1px solid var(--border-light);
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.background.secondary} 0%, ${({ theme }) => theme.colors.background.tertiary} 100%);
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
 export const CompletionEmoji = styled.div`
@@ -737,15 +728,15 @@ export const CompletionEmoji = styled.div`
 `;
 
 export const CompletionTitle = styled.h1`
-  font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: ${({ theme }) => theme.textStyles.heading.h1.fontSize};
+  font-weight: ${({ theme }) => theme.textStyles.heading.h1.fontWeight};
+  color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
 export const CompletionSubtitle = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  color: var(--text-secondary);
+  color: ${({ theme }) => theme.colors.text.secondary};
   margin-bottom: ${({ theme }) => theme.spacing[6]};
 `;
 
@@ -756,11 +747,11 @@ export const GradeBadge = styled.div<{ $color: string }>`
   width: 80px;
   height: 80px;
   background: ${({ $color }) => $color};
-  color: var(--text-inverse);
+  color: ${({ theme }) => theme.colors.text.inverse};
   border-radius: 50%;
   font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
-  font-weight: 700;
-  box-shadow: var(--shadow-lg);
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  box-shadow: ${({ theme }) => theme.shadows.dropdown};
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 `;
 
@@ -768,14 +759,15 @@ export const ResultSummary = styled.div`
   padding: ${({ theme }) => theme.spacing[8]};
 `;
 
-export const SummaryHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
+export const SummaryHeader = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 2 as const,
+})`
   margin-bottom: ${({ theme }) => theme.spacing[6]};
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 export const StoryInfo = styled.div`
@@ -783,19 +775,20 @@ export const StoryInfo = styled.div`
   text-align: center;
 `;
 
-export const StoryLocation = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing[2]};
+export const StoryLocation = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $justify: 'center' as const,
+  $gap: 2 as const,
+})`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
-  color: var(--text-secondary);
+  color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-export const ActionButtons = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[3]};
+export const ActionButtons = styled(FlexContainer).attrs({
+  $direction: 'column' as const,
+  $gap: 3 as const,
+})`
   padding: ${({ theme }) => theme.spacing[8]};
-  border-top: 1px solid var(--border-light);
+  border-top: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
