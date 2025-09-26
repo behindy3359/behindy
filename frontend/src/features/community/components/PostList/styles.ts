@@ -1,67 +1,36 @@
 import { motion } from "framer-motion";
 import styled from "styled-components";
+
+import { 
+  CommonPageHeader,
+  CommonSectionHeader,
+  CommonActionGroup,
+  CommonLoadingState,
+  CommonErrorState
+} from '@/shared/styles/components/common';
+
 import { 
   FlexContainer,
   BaseCard,
-  BaseButton,
-  BaseInput,
-  BaseSelect,
-  AnimatedContainer
-} from '@/shared/styles/components';
+  GridContainer
+} from '@/shared/styles/components/containers';
 
-export const Header = styled(FlexContainer).attrs({
-  $direction: 'row' as const,
-  $justify: 'between' as const,
-  $align: 'flex-start' as const,
+import { 
+  BaseSelect
+} from '@/shared/styles/components/inputs';
+
+export const Header = styled(CommonPageHeader).attrs({
+  $textAlign: 'left' as const,
+  $spacing: 'normal' as const,
 })`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  gap: ${({ theme }) => theme.spacing[4]};
-  
   @media (max-width: 768px) {
-    flex-direction: column;
-    gap: ${({ theme }) => theme.spacing[4]};
     align-items: stretch;
   }
 `;
 
-export const HeaderLeft = styled.div`
-  flex: 1;
-`;
-
-export const Title = styled.h1`
-  font-size: ${({ theme }) => theme.textStyles.heading.h1.fontSize};
-  font-weight: ${({ theme }) => theme.textStyles.heading.h1.fontWeight};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing[4]} 0;
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[3]};
-  
-  svg {
-    color: ${({ theme }) => theme.colors.primary[500]};
-  }
-  
-  @media (max-width: 768px) {
-    font-size: ${({ theme }) => theme.textStyles.heading.h2.fontSize};
-    text-align: center;
-    justify-content: center;
-  }
-`;
-
-export const Subtitle = styled.p`
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: ${({ theme }) => theme.typography.fontSize.base};
-  margin: 0;
-  line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
-  
-  @media (max-width: 768px) {
-    text-align: center;
-  }
-`;
-
-export const HeaderRight = styled(FlexContainer).attrs({
-  $direction: 'column' as const,
-  $gap: 4 as const,
+export const HeaderActions = styled(CommonActionGroup).attrs({
+  $justify: 'end' as const,
+  $responsive: true,
 })`
   align-items: flex-end;
   
@@ -70,21 +39,19 @@ export const HeaderRight = styled(FlexContainer).attrs({
   }
 `;
 
-export const ActionBar = styled(FlexContainer).attrs({
-  $direction: 'row' as const,
-  $align: 'center' as const,
-  $gap: 3 as const,
-})`
-  @media (max-width: 768px) {
-    flex-direction: column;
-    width: 100%;
+export const Title = styled.h1`
+  svg {
+    color: ${({ theme }) => theme.colors.primary[500]};
   }
 `;
 
-export const SearchContainer = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[2]};
-  align-items: center;
+export const Subtitle = styled.p;
+
+export const SearchContainer = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 2 as const,
+  $align: 'center' as const,
+})`
   min-width: 300px;
   
   @media (max-width: 768px) {
@@ -93,12 +60,10 @@ export const SearchContainer = styled.div`
   }
 `;
 
-export const FilterBar = styled(BaseCard).attrs({
-  $variant: 'elevated' as const,
+export const FilterBar = styled(CommonSectionHeader).attrs({
+  $variant: 'default' as const,
+  $spacing: 'normal' as const,
 })`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing[6]};
   
   @media (max-width: 768px) {
@@ -185,18 +150,12 @@ export const PostsContainer = styled(BaseCard).attrs({
   overflow: hidden;
 `;
 
-export const PostGrid = styled.div<{ $viewMode: 'grid' | 'list' }>`
-  padding: ${({ theme }) => theme.spacing[6]};
-  
+export const PostGrid = styled(GridContainer)<{ $viewMode: 'grid' | 'list' }>`
   ${({ $viewMode, theme }) => $viewMode === 'grid' ? `
-    display: grid;
     grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: ${theme.spacing[6]};
     
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
-      gap: ${theme.spacing[4]};
-      padding: ${theme.spacing[4]};
     }
   ` : `
     display: flex;
@@ -205,65 +164,21 @@ export const PostGrid = styled.div<{ $viewMode: 'grid' | 'list' }>`
   `}
 `;
 
-export const EmptyState = styled.div`
-  text-align: center;
-  padding: ${({ theme }) => theme.spacing[20]};
+export const EmptyState = styled(CommonErrorState).attrs({
+  $variant: 'section' as const,
+})`
+  color: ${({ theme }) => theme.colors.text.secondary};
   
-  .empty-icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto ${({ theme }) => theme.spacing[4]};
+  .error-icon {
     color: ${({ theme }) => theme.colors.border.dark};
   }
   
-  .empty-title {
-    font-size: ${({ theme }) => theme.typography.fontSize.xl};
-    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  .error-title {
     color: ${({ theme }) => theme.colors.text.primary};
-    margin-bottom: ${({ theme }) => theme.spacing[3]};
-  }
-  
-  .empty-description {
-    color: ${({ theme }) => theme.colors.text.secondary};
-    margin-bottom: ${({ theme }) => theme.spacing[8]};
-    line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
-    max-width: 400px;
-    margin-left: auto;
-    margin-right: auto;
-    white-space: pre-line;
   }
 `;
 
-export const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: ${({ theme }) => theme.spacing[20]};
-  
-  .loading-content {
-    text-align: center;
-    
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid ${({ theme }) => theme.colors.background.secondary};
-      border-top: 3px solid ${({ theme }) => theme.colors.primary[500]};
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto ${({ theme }) => theme.spacing[4]};
-    }
-    
-    .loading-text {
-      color: ${({ theme }) => theme.colors.text.secondary};
-      font-size: ${({ theme }) => theme.typography.fontSize.base};
-    }
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
+export const LoadingContainer = styled(CommonLoadingState).attrs({$variant: 'section' as const });
 
 export const Pagination = styled.div`
   display: flex;
