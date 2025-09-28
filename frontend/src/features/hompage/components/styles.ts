@@ -3,21 +3,17 @@ import styled from "styled-components";
 import { 
   BaseCard,
   FlexContainer,
-  GridContainer
+  GridContainer,
+  CommonSectionHeader,
+  CommonStatItem,
+  CommonStatusIndicator
 } from '@/shared/styles/components';
 
-export const MetroHeader = styled(FlexContainer).attrs({
-  $direction: 'row' as const,
-  $justify: 'between' as const,
-  $align: 'center' as const,
+// MetroHeader - CommonSectionHeader 재사용
+export const MetroHeader = styled(CommonSectionHeader).attrs({
+  $variant: 'gradient' as const,
+  $spacing: 'normal' as const,
 })`
-  padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
-  background: linear-gradient(135deg, 
-    ${({ theme }) => theme.colors.background.secondary} 0%, 
-    ${({ theme }) => theme.colors.background.tertiary} 100%
-  );
-  
   h2 {
     font-size: ${({ theme }) => theme.typography.fontSize.xl};
     font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
@@ -32,31 +28,9 @@ export const MetroHeader = styled(FlexContainer).attrs({
     }
   }
   
-  .live-indicator,
-  .test-indicator,
-  .loading-indicator,
-  .error-indicator,
-  .closed-indicator,
-  .limited-indicator,
-  .no-data-indicator {
-    display: flex;
-    align-items: center;
-    gap: ${({ theme }) => theme.spacing[2]};
-    font-size: ${({ theme }) => theme.typography.fontSize.sm};
-    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-    padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[2]};
-    border-radius: ${({ theme }) => theme.borderRadius.xl};
-    transition: ${({ theme }) => theme.transition.normal};
-    
-    &::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-  }
-  
+  /* 상태 인디케이터들 - CommonStatusIndicator 활용 */
   .live-indicator {
+    ${CommonStatusIndicator} /* 기본 스타일 상속 */
     color: ${({ theme }) => theme.colors.error};
     background: rgba(239, 68, 68, 0.1);
     
@@ -67,6 +41,7 @@ export const MetroHeader = styled(FlexContainer).attrs({
   }
   
   .test-indicator {
+    ${CommonStatusIndicator}
     color: ${({ theme }) => theme.colors.warning};
     background: rgba(245, 158, 11, 0.1);
     
@@ -77,6 +52,7 @@ export const MetroHeader = styled(FlexContainer).attrs({
   }
   
   .loading-indicator {
+    ${CommonStatusIndicator}
     color: ${({ theme }) => theme.colors.text.secondary};
     background: rgba(107, 114, 128, 0.1);
     
@@ -87,51 +63,22 @@ export const MetroHeader = styled(FlexContainer).attrs({
   }
   
   .error-indicator {
+    ${CommonStatusIndicator}
     color: ${({ theme }) => theme.colors.error};
     background: rgba(239, 68, 68, 0.1);
-    
-    &::before {
-      background: ${({ theme }) => theme.colors.error};
-    }
   }
   
-  .closed-indicator {
-    color: ${({ theme }) => theme.colors.text.secondary};
-    background: rgba(107, 114, 128, 0.1);
-    
-    &::before {
-      background: ${({ theme }) => theme.colors.text.secondary};
-    }
-  }
-  
-  .limited-indicator {
-    color: ${({ theme }) => theme.colors.warning};
-    background: rgba(245, 158, 11, 0.1);
-    
-    &::before {
-      background: ${({ theme }) => theme.colors.warning};
-      animation: slow-pulse 4s infinite;
-    }
-  }
-  
+  .closed-indicator,
+  .limited-indicator,
   .no-data-indicator {
+    ${CommonStatusIndicator}
     color: ${({ theme }) => theme.colors.text.secondary};
     background: rgba(107, 114, 128, 0.1);
-    
-    &::before {
-      background: ${({ theme }) => theme.colors.text.secondary};
-    }
   }
   
   @keyframes pulse {
-    0%, 100% { 
-      opacity: 1; 
-      transform: scale(1); 
-    }
-    50% { 
-      opacity: 0.7; 
-      transform: scale(1.1); 
-    }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
   }
   
   @keyframes blink {
@@ -143,37 +90,9 @@ export const MetroHeader = styled(FlexContainer).attrs({
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
-  
-  @keyframes slow-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-  
-  @media (max-width: 768px) {
-    padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
-    
-    h2 {
-      font-size: ${({ theme }) => theme.typography.fontSize.lg};
-    }
-    
-    .live-indicator,
-    .test-indicator,
-    .loading-indicator,
-    .error-indicator,
-    .closed-indicator,
-    .limited-indicator,
-    .no-data-indicator {
-      font-size: ${({ theme }) => theme.typography.fontSize.xs};
-      padding: ${({ theme }) => theme.spacing[1]};
-      
-      &::before {
-        width: 6px;
-        height: 6px;
-      }
-    }
-  }
 `;
 
+// MetroMapContainer - 지하철 지도 컨테이너
 export const MetroMapContainer = styled.div`
   padding: 0;
   background: none;
@@ -194,20 +113,18 @@ export const MetroMapContainer = styled.div`
   }
 `;
 
+// CommunitySection - BaseCard 재사용
 export const CommunitySection = styled(BaseCard).attrs({
   $variant: 'elevated' as const,
 })`
   overflow: hidden;
 `;
 
-export const CommunityHeader = styled.div`
-  padding: ${({ theme }) => theme.spacing[6]};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
-  background: linear-gradient(135deg, 
-    ${({ theme }) => theme.colors.background.secondary} 0%, 
-    ${({ theme }) => theme.colors.background.tertiary} 100%
-  );
-  
+// CommunityHeader - CommonSectionHeader 재사용
+export const CommunityHeader = styled(CommonSectionHeader).attrs({
+  $variant: 'gradient' as const,
+  $spacing: 'normal' as const,
+})`
   .header-top {
     display: flex;
     justify-content: space-between;
@@ -249,6 +166,7 @@ export const CommunityHeader = styled.div`
   }
 `;
 
+// PostGrid - GridContainer 재사용
 export const PostGrid = styled(GridContainer).attrs({
   $columns: 'repeat(auto-fill, minmax(320px, 1fr))' as const,
 })`
@@ -259,6 +177,7 @@ export const PostGrid = styled(GridContainer).attrs({
   }
 `;
 
+// EmptyState - 빈 상태 표시
 export const EmptyState = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing[16]};
@@ -285,6 +204,7 @@ export const EmptyState = styled.div`
   }
 `;
 
+// ViewAllButton - 모두 보기 버튼
 export const ViewAllButton = styled(motion.div)`
   margin: 0 ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[6]};
   padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
@@ -310,15 +230,10 @@ export const ViewAllButton = styled(motion.div)`
   }
 `;
 
-export const StatItem = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
-  background: ${({ theme }) => theme.colors.background.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  
+// StatItem - CommonStatItem 재사용
+export const StatItem = styled(CommonStatItem).attrs({
+  $variant: 'default' as const,
+})`
   .stat-icon {
     width: 36px;
     height: 36px;

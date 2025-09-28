@@ -1,39 +1,40 @@
-// frontend/src/features/community/components/PostForm/styles.ts
 import { motion } from "framer-motion";
 import styled from "styled-components";
 import { 
   FlexContainer,
   BaseButton,
-  FormSection
+  FormSection,
+  CommonPageHeader,
+  CommonActionGroup,
+  CommonLoadingState,
+  ErrorText
 } from '@/shared/styles/components';
 
-export const Header = styled(FlexContainer).attrs({
-  $direction: 'row' as const,
-  $justify: 'between' as const,
-  $align: 'center' as const,
+// Header - CommonPageHeader 재사용
+export const Header = styled(CommonPageHeader).attrs({
+  $textAlign: 'left' as const,
+  $spacing: 'normal' as const,
 })`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
   padding-bottom: ${({ theme }) => theme.spacing[4]};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
+// HeaderLeft - FlexContainer 재사용
 export const HeaderLeft = styled(FlexContainer).attrs({
   $direction: 'row' as const,
   $align: 'center' as const,
   $gap: 4 as const,
-})`
-  /* FlexContainer 설정 활용 */
-`;
+})``;
 
+// BackButton - BaseButton 재사용
 export const BackButton = styled(BaseButton).attrs({
   variant: 'ghost' as const,
   size: 'sm' as const,
 })`
-  display: flex;
-  align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
 `;
 
+// Title - 페이지 제목
 export const Title = styled.h1`
   font-size: ${({ theme }) => theme.textStyles.heading.h2.fontSize};
   font-weight: ${({ theme }) => theme.textStyles.heading.h2.fontWeight};
@@ -48,14 +49,13 @@ export const Title = styled.h1`
   }
 `;
 
-export const Actions = styled(FlexContainer).attrs({
-  $direction: 'row' as const,
-  $gap: 4 as const,
-  $align: 'center' as const,
-})`
-  /* FlexContainer 설정 활용 */
-`;
+// Actions - CommonActionGroup 재사용
+export const Actions = styled(CommonActionGroup).attrs({
+  $justify: 'end' as const,
+  $responsive: true,
+})``;
 
+// TitleSection - FormSection 재사용
 export const TitleSection = styled(FormSection)`
   .title-input {
     .input-wrapper {
@@ -87,6 +87,7 @@ export const TitleSection = styled(FormSection)`
   }
 `;
 
+// ContentSection - FormSection 재사용
 export const ContentSection = styled(FormSection)`
   .content-textarea {
     width: 100%;
@@ -143,6 +144,7 @@ export const ContentSection = styled(FormSection)`
   }
 `;
 
+// PreviewMode - 미리보기 모드
 export const PreviewMode = styled.div`
   .preview-content {
     line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
@@ -154,52 +156,35 @@ export const PreviewMode = styled.div`
       font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
     }
     
-    h1 { 
-      font-size: ${({ theme }) => theme.typography.fontSize.xl}; 
-    }
-    h2 { 
-      font-size: ${({ theme }) => theme.typography.fontSize.lg}; 
-    }
-    h3 { 
-      font-size: ${({ theme }) => theme.typography.fontSize.base}; 
-    }
+    h1 { font-size: ${({ theme }) => theme.typography.fontSize.xl}; }
+    h2 { font-size: ${({ theme }) => theme.typography.fontSize.lg}; }
+    h3 { font-size: ${({ theme }) => theme.typography.fontSize.base}; }
     
-    p {
-      margin: 0 0 1em 0;
-    }
+    p { margin: 0 0 1em 0; }
     
-    strong {
-      font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-    }
+    strong { font-weight: ${({ theme }) => theme.typography.fontWeight.semibold}; }
+    em { font-style: italic; }
     
-    em {
-      font-style: italic;
-    }
-    
-    br {
-      line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
-    }
+    br { line-height: ${({ theme }) => theme.typography.lineHeight.relaxed}; }
   }
 `;
 
-export const BottomActions = styled(FlexContainer).attrs({
-  $direction: 'row' as const,
+// BottomActions - CommonActionGroup 재사용
+export const BottomActions = styled(CommonActionGroup).attrs({
   $justify: 'between' as const,
-  $align: 'center' as const,
 })`
   padding: ${({ theme }) => theme.spacing[6]};
   background: ${({ theme }) => theme.colors.background.secondary};
   border-top: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
-export const ActionGroup = styled(FlexContainer).attrs({
-  $direction: 'row' as const,
-  $gap: 4 as const,
-  $align: 'center' as const,
-})`
-  /* FlexContainer 설정 활용 */
-`;
+// ActionGroup - CommonActionGroup 재사용
+export const ActionGroup = styled(CommonActionGroup).attrs({
+  $justify: 'end' as const,
+  $responsive: true,
+})``;
 
+// PreviewToggle - 토글 버튼
 export const PreviewToggle = styled.button<{ $active: boolean }>`
   display: flex;
   align-items: center;
@@ -221,19 +206,16 @@ export const PreviewToggle = styled.button<{ $active: boolean }>`
   }
 `;
 
-export const ErrorMessage = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
+// ErrorMessage - ErrorText 재사용
+export const ErrorMessage = styled(ErrorText)`
   padding: ${({ theme }) => theme.spacing[4]};
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.error};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
   margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
 
+// LoadingOverlay - CommonLoadingState 기반
 export const LoadingOverlay = styled(motion.div)`
   position: absolute;
   top: 0;

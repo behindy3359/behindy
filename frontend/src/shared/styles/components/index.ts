@@ -1,5 +1,3 @@
-// 컴포넌트 통합 export
-
 import styled from 'styled-components';
 
 // 컨테이너 컴포넌트들
@@ -104,8 +102,24 @@ export {
   SuccessText,
   Badge,
   LoadingSpinner,
-  Divider
+  Divider,
 } from '../commonStyles';
+
+export {
+  CommonSectionHeader,
+  CommonPageHeader,
+  CommonCardHeader,
+  CommonCardFooter,
+  CommonLoadingState,
+  CommonErrorState,
+  CommonStatusIndicator,
+  CommonSkeleton,
+  CommonActionGroup,
+  CommonStatItem,
+  commonKeyframes,
+  SkeletonLine,
+  CommonTextSkeleton
+} from './common';
 
 // 컴포넌트 생성 헬퍼 함수들
 export const createBaseComponent = <T extends Record<string, any>>(

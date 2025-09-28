@@ -1,20 +1,28 @@
 import { motion } from "framer-motion";
 import styled from "styled-components";
+import { 
+  BaseCard,
+  FlexContainer,
+  BaseButton,
+  CommonActionGroup
+} from '@/shared/styles/components';
 
+// CommentContainer - 각 댓글 컨테이너
 export const CommentContainer = styled(motion.div)`
   & + & {
     margin-top: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
-export const CommentItem = styled.div<{ $isReply?: boolean }>`
-  padding: ${({ theme }) => theme.spacing[4]};
-  background: ${({ $isReply, theme }) => 
-    $isReply ? theme.colors.background.secondary : theme.colors.background.primary};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
+// CommentItem - BaseCard 기반
+export const CommentItem = styled(BaseCard).attrs({
+  $variant: 'outlined' as const,
+  $size: 'sm' as const,
+})<{ $isReply?: boolean }>`
   margin-left: ${({ $isReply }) => $isReply ? '32px' : '0'};
   position: relative;
+  background: ${({ $isReply, theme }) => 
+    $isReply ? theme.colors.background.secondary : theme.colors.background.primary};
   
   ${({ $isReply, theme }) => $isReply && `
     &::before {
@@ -31,11 +39,12 @@ export const CommentItem = styled.div<{ $isReply?: boolean }>`
   `}
 `;
 
-export const StyledCommentMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[4]};
-  
+// StyledCommentMeta - FlexContainer 재사용
+export const StyledCommentMeta = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $gap: 4 as const,
+})`
   .user-info {
     display: flex;
     align-items: center;
@@ -70,10 +79,12 @@ export const StyledCommentMeta = styled.div`
   }
 `;
 
+// StyledCommentActions - 액션 컨테이너
 export const StyledCommentActions = styled.div`
   position: relative;
 `;
 
+// CommentContent - 댓글 내용
 export const CommentContent = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
@@ -83,18 +94,19 @@ export const CommentContent = styled.div`
   word-break: break-word;
 `;
 
-export const StyledCommentFooter = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
+// StyledCommentFooter - CommonActionGroup 재사용
+export const StyledCommentFooter = styled(CommonActionGroup).attrs({
+  $justify: 'between' as const,
+})``;
 
-export const FooterActions = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[4]};
-  align-items: center;
-`;
+// FooterActions - FlexContainer 재사용
+export const FooterActions = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 4 as const,
+  $align: 'center' as const,
+})``;
 
+// FooterButton - 공통 액션 버튼
 export const FooterButton = styled(motion.button)<{ $active?: boolean }>`
   display: flex;
   align-items: center;
@@ -120,11 +132,13 @@ export const FooterButton = styled(motion.button)<{ $active?: boolean }>`
   }
 `;
 
+// CommentTime - 시간 표시
 export const CommentTime = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   color: ${({ theme }) => theme.colors.text.tertiary};
 `;
 
+// EditingContainer - 편집 모드 컨테이너
 export const EditingContainer = styled.div`
   margin-top: ${({ theme }) => theme.spacing[4]};
   padding: ${({ theme }) => theme.spacing[4]};
@@ -133,23 +147,21 @@ export const EditingContainer = styled.div`
   border: 1px solid #c7d2fe;
 `;
 
-export const MenuButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
+// MenuButton - BaseButton 재사용
+export const MenuButton = styled(BaseButton).attrs({
+  variant: 'ghost' as const,
+  size: 'sm' as const,
+})`
   padding: 4px;
   color: ${({ theme }) => theme.colors.text.tertiary};
-  display: flex;
-  align-items: center;
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  transition: all 0.2s ease;
-
+  
   &:hover {
     color: ${({ theme }) => theme.colors.text.primary};
     background: ${({ theme }) => theme.colors.background.secondary};
   }
 `;
 
+// DropdownMenu - 공통 드롭다운 패턴
 export const DropdownMenu = styled(motion.div)`
   position: absolute;
   top: 100%;
@@ -164,6 +176,7 @@ export const DropdownMenu = styled(motion.div)`
   min-width: 120px;
 `;
 
+// MenuItem - 드롭다운 메뉴 아이템
 export const MenuItem = styled.button`
   width: 100%;
   padding: 8px 12px;

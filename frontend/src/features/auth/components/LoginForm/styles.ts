@@ -4,10 +4,11 @@ import {
   FlexContainer,
   LinkButton,
   BaseButton,
-  BaseCheckbox 
+  BaseCheckbox,
+  CommonActionGroup 
 } from '@/shared/styles/components';
 
-// SignupPrompt - 회원가입 유도 텍스트
+// SignupPrompt - 기존과 동일 (특수한 스타일이라 유지)
 export const SignupPrompt = styled(motion.div)`
   text-align: center;
   
@@ -40,15 +41,14 @@ export const SignupPrompt = styled(motion.div)`
   }
 `;
 
-// OptionsContainer - 로그인 옵션 컨테이너
-export const OptionsContainer = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+// OptionsContainer - CommonActionGroup 활용
+export const OptionsContainer = styled(CommonActionGroup).attrs({
+  $justify: 'between' as const,
+})`
   margin-top: ${({ theme }) => theme.spacing[2]};
 `;
 
-// RememberMeWrapper - 로그인 상태 유지 체크박스
+// RememberMeWrapper - 체크박스 공통 패턴 적용
 export const RememberMeWrapper = styled.label`
   display: flex;
   align-items: center;
@@ -81,12 +81,12 @@ export const RememberMeWrapper = styled.label`
   }
 `;
 
-// ForgotPasswordLink - LinkButton 활용
+// ForgotPasswordLink - LinkButton 재사용
 export const ForgotPasswordLink = styled(LinkButton)`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
-// PasswordToggleButton - 비밀번호 표시/숨김 버튼
+// PasswordToggleButton - 공통 아이콘 버튼 패턴
 export const PasswordToggleButton = styled.button`
   color: ${({ theme }) => theme.colors.text.secondary};
   background: none;
@@ -108,7 +108,7 @@ export const PasswordToggleButton = styled.button`
   }
 `;
 
-// DemoContainer - 데모 로그인 컨테이너
+// DemoContainer - 공통 알림 패턴 적용
 export const DemoContainer = styled(motion.div)`
   margin-bottom: ${({ theme }) => theme.spacing[6]};
   padding: ${({ theme }) => theme.spacing[4]};
@@ -117,7 +117,7 @@ export const DemoContainer = styled(motion.div)`
   border-radius: ${({ theme }) => theme.borderRadius.md};
 `;
 
-// DemoContent - 데모 로그인 내용
+// DemoContent - 중앙 정렬 패턴
 export const DemoContent = styled.div`
   text-align: center;
 `;

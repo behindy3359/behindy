@@ -4,14 +4,16 @@ import {
   FlexContainer,
   BaseButton,
   LinkButton,
-  BaseCheckbox
+  BaseCheckbox,
+  CommonActionGroup,
+  ErrorText as SharedErrorText, // 🔥 이름 변경으로 충돌 해결
+  FormContainer
 } from '@/shared/styles/components';
 
-// SignupContainer - 회원가입 메인 컨테이너
+// SignupContainer - 기본 폼 컨테이너
 export const SignupContainer = styled.div`
   width: 100%;
   
-  /* 컴팩트한 간격 조정 */
   > * + * {
     margin-top: ${({ theme }) => theme.spacing[4]};
   }
@@ -23,11 +25,12 @@ export const SignupContainer = styled.div`
   }
 `;
 
-// ActionsContainer - 액션 버튼 컨테이너
-export const ActionsContainer = styled(motion.div)`
-  display: flex;
+// ActionsContainer - CommonActionGroup 재사용
+export const ActionsContainer = styled(CommonActionGroup).attrs({
+  $justify: 'center' as const,
+  $responsive: true,
+})`
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[3]};
   padding-top: ${({ theme }) => theme.spacing[4]};
   
   @media ${({ theme }) => `(max-height: 600px)`} {
@@ -36,7 +39,7 @@ export const ActionsContainer = styled(motion.div)`
   }
 `;
 
-// LoginPrompt - 로그인 유도 텍스트
+// LoginPrompt - 기존과 유사하지만 로그인 유도용
 export const LoginPrompt = styled(motion.div)`
   text-align: center;
   
@@ -73,7 +76,7 @@ export const LoginPrompt = styled(motion.div)`
   }
 `;
 
-// PasswordToggleButton - 비밀번호 표시 토글
+// PasswordToggleButton - 공통 토글 버튼
 export const PasswordToggleButton = styled.button`
   color: ${({ theme }) => theme.colors.text.secondary};
   background: none;
@@ -110,18 +113,15 @@ export const PasswordMatchIndicator = styled(motion.div)<{ $isMatch: boolean }>`
   }
 `;
 
-// StrengthMeterContainer - 비밀번호 강도 미터 컨테이너
-export const StrengthMeterContainer = styled.div<{ className?: string }>`
+// StrengthMeterContainer - 비밀번호 강도 미터
+export const StrengthMeterContainer = styled.div`
   margin-top: ${({ theme }) => theme.spacing[3]};
-  ${({ className }) => className || ''}
 `;
 
-// StrengthBarSection - 강도 바 섹션
 export const StrengthBarSection = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
-// StrengthHeader - 강도 헤더
 export const StrengthHeader = styled(FlexContainer).attrs({
   $direction: 'row' as const,
   $justify: 'between' as const,
@@ -130,21 +130,18 @@ export const StrengthHeader = styled(FlexContainer).attrs({
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
-// StrengthLabel - 강도 라벨
 export const StrengthLabel = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-// StrengthText - 강도 텍스트
 export const StrengthText = styled.span<{ $color: string }>`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ $color }) => $color};
 `;
 
-// StrengthBarTrack - 강도 바 트랙
 export const StrengthBarTrack = styled.div`
   width: 100%;
   background: ${({ theme }) => theme.colors.background.secondary};
@@ -153,7 +150,6 @@ export const StrengthBarTrack = styled.div`
   overflow: hidden;
 `;
 
-// StrengthBarFill - 강도 바 채우기
 export const StrengthBarFill = styled(motion.div)<{ $color: string }>`
   height: 100%;
   border-radius: ${({ theme }) => theme.borderRadius.xl};
@@ -161,7 +157,7 @@ export const StrengthBarFill = styled(motion.div)<{ $color: string }>`
   transition: ${({ theme }) => theme.transition.normal};
 `;
 
-// RequirementsContainer - 요구사항 컨테이너
+// 요구사항 컨테이너들
 export const RequirementsContainer = styled.div`
   padding: ${({ theme }) => theme.spacing[3]};
   background: ${({ theme }) => theme.colors.background.secondary};
@@ -169,7 +165,6 @@ export const RequirementsContainer = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
-// RequirementsHeader - 요구사항 헤더
 export const RequirementsHeader = styled(FlexContainer).attrs({
   $direction: 'row' as const,
   $align: 'center' as const,
@@ -178,22 +173,17 @@ export const RequirementsHeader = styled(FlexContainer).attrs({
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
-// RequirementsTitle - 요구사항 제목
 export const RequirementsTitle = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-// RequirementsList - 요구사항 목록
 export const RequirementsList = styled(FlexContainer).attrs({
   $direction: 'column' as const,
   $gap: 2 as const,
-})`
-  /* FlexContainer로 세로 배치 */
-`;
+})``;
 
-// RequirementItem - 개별 요구사항 항목
 export const RequirementItem = styled(motion.div)<{ $met: boolean }>`
   display: flex;
   align-items: center;
@@ -212,14 +202,12 @@ export const RequirementItem = styled(motion.div)<{ $met: boolean }>`
   }
 `;
 
-// HintsContainer - 힌트 컨테이너
 export const HintsContainer = styled.div`
   margin-top: ${({ theme }) => theme.spacing[2]};
   padding-top: ${({ theme }) => theme.spacing[2]};
   border-top: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
 
-// HintItem - 개별 힌트 항목
 export const HintItem = styled(motion.div)`
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   color: ${({ theme }) => theme.colors.text.secondary};
@@ -230,9 +218,7 @@ export const HintItem = styled(motion.div)`
   }
 `;
 
-// 약관 동의 관련 컴포넌트들
-
-// AgreementContainer - 약관 동의 컨테이너
+// 약관 동의 관련
 export const AgreementContainer = styled(motion.div)`
   border: 1px solid ${({ theme }) => theme.colors.border.medium};
   border-radius: ${({ theme }) => theme.borderRadius.md};
@@ -244,7 +230,6 @@ export const AgreementContainer = styled(motion.div)`
   }
 `;
 
-// AgreementTitle - 약관 동의 제목
 export const AgreementTitle = styled.h3`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
@@ -257,7 +242,6 @@ export const AgreementTitle = styled.h3`
   }
 `;
 
-// AgreementsList - 약관 목록
 export const AgreementsList = styled(FlexContainer).attrs({
   $direction: 'column' as const,
   $gap: 3 as const,
@@ -267,12 +251,8 @@ export const AgreementsList = styled(FlexContainer).attrs({
   }
 `;
 
-// AgreementItem - 개별 약관 항목
-export const AgreementItem = styled.div`
-  /* 기본 스타일 */
-`;
+export const AgreementItem = styled.div``;
 
-// AgreementLabel - 약관 라벨
 export const AgreementLabel = styled.label`
   display: flex;
   align-items: flex-start;
@@ -286,7 +266,6 @@ export const AgreementLabel = styled.label`
   }
 `;
 
-// CheckboxWrapper - 체크박스 래퍼
 export const CheckboxWrapper = styled.div<{ $required?: boolean; $checked?: boolean }>`
   display: flex;
   align-items: center;
@@ -308,6 +287,14 @@ export const CheckboxWrapper = styled.div<{ $required?: boolean; $checked?: bool
       background-color: ${({ theme }) => theme.colors.primary[500]};
       border-color: ${({ theme }) => theme.colors.primary[500]};
       background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-8 8-.5-.5 8-8 .5.5z'/%3e%3cpath d='m6.854 7.146-2-2-.5.5 2 2 .5-.5z'/%3e%3c/svg%3e");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: ${({ theme }) => theme.shadows.focus};
     }
     
     &:disabled {
@@ -317,12 +304,10 @@ export const CheckboxWrapper = styled.div<{ $required?: boolean; $checked?: bool
   }
 `;
 
-// AgreementContent - 약관 내용
 export const AgreementContent = styled.div`
   flex: 1;
 `;
 
-// AgreementText - 약관 텍스트
 export const AgreementText = styled(FlexContainer).attrs({
   $direction: 'row' as const,
   $align: 'center' as const,
@@ -338,18 +323,15 @@ export const AgreementText = styled(FlexContainer).attrs({
   }
 `;
 
-// RequiredMark - 필수 표시
 export const RequiredMark = styled.span`
   color: ${({ theme }) => theme.colors.error};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
 `;
 
-// AgreementLink - 약관 링크
 export const AgreementLink = styled(LinkButton)`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
-// ExternalLinkIcon - 외부 링크 아이콘
 export const ExternalLinkIcon = styled.span`
   color: ${({ theme }) => theme.colors.text.tertiary};
   
@@ -359,31 +341,22 @@ export const ExternalLinkIcon = styled.span`
   }
 `;
 
-// AgreementDescription - 약관 설명
 export const AgreementDescription = styled.div`
   margin-top: ${({ theme }) => theme.spacing[1]};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   color: ${({ theme }) => theme.colors.text.secondary};
-  
-  @media ${({ theme }) => `(max-height: 600px)`} {
-    font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  }
 `;
 
-// OptionalText - 선택 사항 텍스트
 export const OptionalText = styled.span`
   color: ${({ theme }) => theme.colors.text.secondary};
   margin-left: ${({ theme }) => theme.spacing[1]};
 `;
 
-// ErrorText - 에러 텍스트 (약관용)
-export const ErrorText = styled(motion.p)`
-  color: ${({ theme }) => theme.colors.error};
-  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+// 🔥 ErrorText 이름 충돌 해결 - 로컬 컴포넌트로 정의
+export const AgreementErrorText = styled(SharedErrorText)`
   margin: ${({ theme }) => theme.spacing[1]} 0 0 ${({ theme }) => theme.spacing[6]};
 `;
 
-// RequiredNotice - 필수 동의 안내
 export const RequiredNotice = styled.div`
   margin-top: ${({ theme }) => theme.spacing[3]};
   padding-top: ${({ theme }) => theme.spacing[3]};
@@ -393,10 +366,6 @@ export const RequiredNotice = styled.div`
     font-size: ${({ theme }) => theme.typography.fontSize.xs};
     color: ${({ theme }) => theme.colors.text.secondary};
     margin: 0;
-    
-    @media ${({ theme }) => `(max-height: 600px)`} {
-      font-size: ${({ theme }) => theme.typography.fontSize.xs};
-    }
   }
   
   .required-mark {

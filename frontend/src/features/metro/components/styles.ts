@@ -1,15 +1,22 @@
 import styled from 'styled-components';
+import { 
+  FlexContainer,
+  Badge,
+  CommonStatusIndicator
+} from '@/shared/styles/components';
 
-// 컨트롤 패널
-export const Controls = styled.div`
-  display: flex;
-  gap: 16px;
+// 컨트롤 패널 - FlexContainer 재사용
+export const Controls = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 4 as const,
+  $wrap: true,
+  $align: 'center' as const,
+})`
   margin-bottom: 16px;
-  flex-wrap: wrap;
-  align-items: center;
   padding: 16px 0;
 `;
 
+// CheckboxItem - Badge 기반으로 단순화
 export const CheckboxItem = styled.label<{ $color?: string }>`
   display: flex;
   align-items: center;
@@ -38,8 +45,9 @@ export const CheckboxItem = styled.label<{ $color?: string }>`
     background: ${({ $color }) => $color || '#666'};
     border: 1px solid rgba(255,255,255,0.8);
   }
+  
   @media (max-width: 800px) {
-    display : none;
+    display: none;
   }
 `;
 
@@ -72,11 +80,11 @@ export const SVGContainer = styled.div`
   }
 `;
 
-// 상태 표시
-export const StatusIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
+// 상태 표시 - CommonStatusIndicator 재사용
+export const StatusIndicator = styled(CommonStatusIndicator).attrs({
+  $status: 'live' as const,
+  $size: 'sm' as const,
+})`
   font-size: 12px;
   color: #6b7280;
   margin-left: auto;
@@ -95,37 +103,44 @@ export const StatusIndicator = styled.div`
   }
 `;
 
-// 통계 스타일
-export const TrainCountBadge = styled.span`
-  fontSize: 12px;
-  color: #ff6b35;
-  fontWeight: 700;
-  marginLeft: 4px;
-  background: rgba(255, 107, 53, 0.1);
-  padding: 2px 6px;
-  borderRadius: 8px;
+// 통계 스타일들 - Badge 기반으로 단순화
+export const TrainCountBadge = styled(Badge).attrs({
+  $variant: 'warning' as const,
+  $size: 'sm' as const,
+})`
+  font-size: 12px;
+  color: #ff6b35 !important;
+  background: rgba(255, 107, 53, 0.1) !important;
+  border-color: rgba(255, 107, 53, 0.2) !important;
+  margin-left: 4px;
 `;
 
-export const NoTrainBadge = styled.span`
-  fontSize: 11px;
-  color: #9ca3af;
-  fontWeight: 500;
-  marginLeft: 4px;
+export const NoTrainBadge = styled(Badge).attrs({
+  $variant: 'default' as const,
+  $size: 'sm' as const,
+})`
+  font-size: 11px;
+  color: #9ca3af !important;
+  margin-left: 4px;
 `;
 
-export const ArrivalStationInfo = styled.span`
-  fontSize: 11px;
-  color: #ff6b35;
-  fontWeight: 500;
-  marginLeft: 4px;
+export const ArrivalStationInfo = styled(Badge).attrs({
+  $variant: 'warning' as const,
+  $size: 'sm' as const,
+})`
+  font-size: 11px;
+  color: #ff6b35 !important;
+  margin-left: 4px;
 `;
 
+// 에러 텍스트
 export const ErrorText = styled.span`
   color: #ef4444;
 `;
 
+// 실시간 상태
 export const RealtimeStatus = styled.span`
-  marginLeft: 8px;
-  fontWeight: 600;
+  margin-left: 8px;
+  font-weight: 600;
   color: #ff6b35;
 `;

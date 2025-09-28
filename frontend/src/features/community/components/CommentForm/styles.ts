@@ -1,22 +1,23 @@
 import { motion } from "framer-motion";
 import styled from "styled-components";
 import { 
-  BaseForm,
+  BaseCard,
   FlexContainer,
   BaseTextarea,
   BaseButton,
-  ErrorText 
+  ErrorText,
+  CommonActionGroup
 } from '@/shared/styles/components';
 
-// FormContainer - 폼 컨테이너 (BaseForm 활용)
-export const FormContainer = styled(motion.div)`
+// FormContainer - BaseCard 재사용
+export const FormContainer = styled(BaseCard).attrs({
+  $variant: 'outlined' as const,
+  $size: 'md' as const,
+})`
   background: ${({ theme }) => theme.colors.background.secondary};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  padding: ${({ theme }) => theme.spacing[4]};
-  border: 1px solid ${({ theme }) => theme.colors.border.medium};
 `;
 
-// UserInfo - 사용자 정보
+// UserInfo - FlexContainer 재사용
 export const UserInfo = styled(FlexContainer).attrs({
   $direction: 'row' as const,
   $align: 'center' as const,
@@ -44,26 +45,32 @@ export const UserInfo = styled(FlexContainer).attrs({
   }
 `;
 
-// TextareaContainer - 텍스트 영역 컨테이너
+// TextareaContainer - 기본 컨테이너
 export const TextareaContainer = styled.div`
   position: relative;
   margin-bottom: ${({ theme }) => theme.spacing[3]};
 `;
 
-// Textarea - 텍스트 영역 (BaseTextarea 확장)
+// Textarea - BaseTextarea 확장
 export const Textarea = styled(BaseTextarea)<{ $hasError: boolean }>`
   width: 100%;
   min-height: 80px;
   max-height: 80px;
-  padding: ${({ theme }) => theme.spacing[3]};
-  border: 1px solid ${({ $hasError, theme }) => $hasError ? theme.colors.error : theme.colors.border.medium};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  line-height: ${({ theme }) => theme.typography.lineHeight.normal};
-  font-family: inherit;
-  
   resize: none;
   overflow-y: auto;
+  
+  border-color: ${({ $hasError, theme }) => 
+    $hasError ? theme.colors.error : theme.colors.border.medium
+  };
+  
+  &:focus {
+    border-color: ${({ $hasError, theme }) => 
+      $hasError ? theme.colors.error : theme.colors.primary[500]
+    };
+    box-shadow: 0 0 0 3px ${({ $hasError, theme }) => 
+      $hasError ? 'rgba(239, 68, 68, 0.1)' : theme.shadows.focus
+    };
+  }
   
   /* 스크롤바 스타일링 */
   &::-webkit-scrollbar {
@@ -83,18 +90,6 @@ export const Textarea = styled(BaseTextarea)<{ $hasError: boolean }>`
       background: #a8a8a8;
     }
   }
-  
-  &:focus {
-    outline: none;
-    border-color: ${({ $hasError, theme }) => $hasError ? theme.colors.error : theme.colors.primary[500]};
-    box-shadow: 0 0 0 3px ${({ $hasError, theme }) => 
-      $hasError ? 'rgba(239, 68, 68, 0.1)' : theme.shadows.focus
-    };
-  }
-  
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.tertiary};
-  }
 `;
 
 // CharCount - 글자 수 표시
@@ -109,43 +104,27 @@ export const CharCount = styled.div<{ $isOver: boolean }>`
   border-radius: ${({ theme }) => theme.borderRadius.sm};
 `;
 
-// ErrorMessage - 에러 메시지 (ErrorText 컴포넌트 활용)
+// ErrorMessage - ErrorText 재사용
 export const ErrorMessage = styled(ErrorText)`
   margin-bottom: ${({ theme }) => theme.spacing[3]};
-  
-  svg {
-    width: 16px;
-    height: 16px;
-  }
 `;
 
-// Actions - 액션 버튼들
-export const Actions = styled(FlexContainer).attrs({
-  $direction: 'row' as const,
+// Actions - CommonActionGroup 재사용  
+export const Actions = styled(CommonActionGroup).attrs({
   $justify: 'between' as const,
-  $align: 'center' as const,
 })`
-  /* FlexContainer 설정 활용 */
+  /* CommonActionGroup 설정 활용 */
 `;
 
-// CancelButton - 취소 버튼
-export const CancelButton = styled.button`
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
-  background: none;
-  border: 1px solid ${({ theme }) => theme.colors.border.medium};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  transition: ${({ theme }) => theme.transition.fast};
-  
-  &:hover {
-    background: ${({ theme }) => theme.colors.background.tertiary};
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
+// CancelButton - BaseButton 기반
+export const CancelButton = styled(BaseButton).attrs({
+  variant: 'secondary' as const,
+  size: 'sm' as const,
+})`
+  /* BaseButton 기본 스타일 활용 */
 `;
 
-// Tips - 팁 텍스트
+// Tips - 도움말 텍스트
 export const Tips = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   color: ${({ theme }) => theme.colors.text.tertiary};

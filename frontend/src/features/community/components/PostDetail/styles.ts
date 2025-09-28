@@ -3,22 +3,26 @@ import styled from "styled-components";
 import { 
   BaseCard,
   BaseButton,
-  FlexContainer
+  FlexContainer,
+  CommonCardHeader,
+  CommonCardFooter,
+  CommonErrorState,
 } from '@/shared/styles/components';
 
+// BackButton - BaseButton 재사용
 export const BackButton = styled(BaseButton).attrs({
   variant: 'ghost' as const,
   size: 'sm' as const,
 })`
-  display: flex;
-  align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
 `;
 
+// ActionMenu - 기본 컨테이너
 export const ActionMenu = styled.div`
   position: relative;
 `;
 
+// MenuButton - BaseButton 재사용
 export const MenuButton = styled(BaseButton).attrs({
   variant: 'ghost' as const,
   size: 'sm' as const,
@@ -26,6 +30,7 @@ export const MenuButton = styled(BaseButton).attrs({
   padding: ${({ theme }) => theme.spacing[2]};
 `;
 
+// MenuDropdown - 공통 드롭다운 패턴
 export const MenuDropdown = styled(motion.div)`
   position: absolute;
   top: 100%;
@@ -40,6 +45,7 @@ export const MenuDropdown = styled(motion.div)`
   overflow: hidden;
 `;
 
+// MenuItem - 드롭다운 메뉴 아이템
 export const MenuItem = styled.button<{ $danger?: boolean }>`
   width: 100%;
   display: flex;
@@ -67,6 +73,7 @@ export const MenuItem = styled.button<{ $danger?: boolean }>`
   }
 `;
 
+// PostContainer - BaseCard 재사용
 export const PostContainer = styled(BaseCard).attrs({
   $variant: 'elevated' as const,
 })`
@@ -74,11 +81,15 @@ export const PostContainer = styled(BaseCard).attrs({
   margin-bottom: ${({ theme }) => theme.spacing[6]};
 `;
 
-export const PostHeader = styled.div`
-  padding: ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+// PostHeader - CommonCardHeader 재사용
+export const PostHeader = styled(CommonCardHeader).attrs({
+  $variant: 'default' as const,
+  $padding: 'lg' as const,
+})`
+  /* CommonCardHeader 스타일 활용 */
 `;
 
+// PostMeta - FlexContainer 재사용
 export const PostMeta = styled(FlexContainer).attrs({
   $direction: 'row' as const,
   $align: 'center' as const,
@@ -101,6 +112,7 @@ export const PostMeta = styled(FlexContainer).attrs({
   }
 `;
 
+// PostTitle - 헤딩 스타일
 export const PostTitle = styled.h1`
   font-size: ${({ theme }) => theme.textStyles.heading.h1.fontSize};
   font-weight: ${({ theme }) => theme.textStyles.heading.h1.fontWeight};
@@ -109,6 +121,7 @@ export const PostTitle = styled.h1`
   line-height: ${({ theme }) => theme.textStyles.heading.h1.lineHeight};
 `;
 
+// PostContent - 본문 스타일
 export const PostContent = styled.div`
   padding: ${({ theme }) => theme.spacing[6]};
   font-size: ${({ theme }) => theme.typography.fontSize.base};
@@ -122,27 +135,14 @@ export const PostContent = styled.div`
     font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   }
   
-  h1 { 
-    font-size: ${({ theme }) => theme.typography.fontSize.xl}; 
-  }
-  h2 { 
-    font-size: ${({ theme }) => theme.typography.fontSize.lg}; 
-  }
-  h3 { 
-    font-size: ${({ theme }) => theme.typography.fontSize.base}; 
-  }
+  h1 { font-size: ${({ theme }) => theme.typography.fontSize.xl}; }
+  h2 { font-size: ${({ theme }) => theme.typography.fontSize.lg}; }
+  h3 { font-size: ${({ theme }) => theme.typography.fontSize.base}; }
   
-  p {
-    margin: 0 0 1em 0;
-  }
+  p { margin: 0 0 1em 0; }
   
-  strong {
-    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  }
-  
-  em {
-    font-style: italic;
-  }
+  strong { font-weight: ${({ theme }) => theme.typography.fontWeight.semibold}; }
+  em { font-style: italic; }
   
   blockquote {
     border-left: 4px solid ${({ theme }) => theme.colors.border.medium};
@@ -161,16 +161,14 @@ export const PostContent = styled.div`
   }
 `;
 
-export const PostActions = styled(FlexContainer).attrs({
-  $direction: 'row' as const,
-  $justify: 'between' as const,
-  $align: 'center' as const,
+// PostActions - CommonCardFooter 재사용
+export const PostActions = styled(CommonCardFooter).attrs({
+  $padding: 'md' as const,
 })`
-  padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
-  background: ${({ theme }) => theme.colors.background.secondary};
-  border-top: 1px solid ${({ theme }) => theme.colors.border.light};
+  /* CommonCardFooter 스타일 활용 */
 `;
 
+// ActionButton - 액션 버튼
 export const ActionButton = styled(motion.button)<{ $active?: boolean }>`
   display: flex;
   align-items: center;
@@ -204,17 +202,18 @@ export const ActionButton = styled(motion.button)<{ $active?: boolean }>`
   }
 `;
 
+// CommentsSection - BaseCard 재사용
 export const CommentsSection = styled(BaseCard).attrs({
   $variant: 'elevated' as const,
 })`
   overflow: hidden;
 `;
 
-export const CommentsSectionHeader = styled.div`
-  padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
-  background: ${({ theme }) => theme.colors.background.secondary};
-  
+// CommentsSectionHeader - CommonCardHeader 재사용
+export const CommentsSectionHeader = styled(CommonCardHeader).attrs({
+  $variant: 'default' as const,
+  $padding: 'md' as const,
+})`
   h3 {
     font-size: ${({ theme }) => theme.typography.fontSize.lg};
     font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
@@ -226,29 +225,10 @@ export const CommentsSectionHeader = styled.div`
   }
 `;
 
-export const ErrorState = styled.div`
-  text-align: center;
-  padding: ${({ theme }) => theme.spacing[10]};
-  
-  .error-icon {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto ${({ theme }) => theme.spacing[4]};
-    color: ${({ theme }) => theme.colors.error};
-  }
-  
-  .error-title {
-    font-size: ${({ theme }) => theme.typography.fontSize.lg};
-    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-    color: ${({ theme }) => theme.colors.text.primary};
-    margin-bottom: ${({ theme }) => theme.spacing[2]};
-  }
-  
-  .error-message {
-    color: ${({ theme }) => theme.colors.text.secondary};
-    margin-bottom: ${({ theme }) => theme.spacing[6]};
-  }
-  
+// ErrorState - CommonErrorState 재사용
+export const ErrorState = styled(CommonErrorState).attrs({
+  $variant: 'section' as const,
+})`
   .error-actions {
     display: flex;
     gap: ${({ theme }) => theme.spacing[3]};
