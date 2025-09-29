@@ -13,6 +13,7 @@ import com.example.backend.security.user.CustomUserDetails;
 import com.example.backend.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -52,12 +53,11 @@ public class AuthService {
 
         String sanitizedName = htmlSanitizer.sanitize(request.getName());
         String sanitizedEmail = htmlSanitizer.sanitize(request.getEmail());
-        String sanitizedPassword = htmlSanitizer.sanitize(request.getPassword());
 
         User user = User.builder()
                 .userName(sanitizedName)
                 .userEmail(sanitizedEmail)
-                .userPassword(passwordEncoder.encode(sanitizedPassword))
+                .userPassword(passwordEncoder.encode(request.getPassword()))
                 .build();
 
         return userRepository.save(user);
@@ -66,7 +66,14 @@ public class AuthService {
     @Transactional(readOnly = true)
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        if (!isAuthenticatedUser(authentication)) {
+            throw new IllegalStateException("인증 정보가 존재하지 않습니다.");
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof CustomUserDetails userDetails)) {
+            throw new IllegalStateException("인증 사용자 정보를 확인할 수 없습니다.");
+        }
 
         return userRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userDetails.getId()));
@@ -258,5 +265,11 @@ public class AuthService {
         cookie.setMaxAge(0); // 즉시 만료
 
         response.addCookie(cookie);
+    }
+
+    private boolean isAuthenticatedUser(Authentication authentication) {
+        return authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken);
     }
 }

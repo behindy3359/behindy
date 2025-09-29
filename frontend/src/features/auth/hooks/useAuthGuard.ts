@@ -3,6 +3,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/shared/store/authStore';
 import { requiresAuth, isPublicRoute } from '@/shared/utils/navigation/navigationUtils';
 import { TokenManager } from '@/config/axiosConfig';
+import { env } from '@/config/env';
 
 export interface UseAuthGuardReturn {
   isLoading: boolean;
@@ -26,12 +27,17 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
   const validateServerSession = useCallback(async (): Promise<boolean> => {
     try {
       console.log('🔍 [AuthGuard] 서버 세션 상태 검증 시작');
-      
-      const response = await fetch('/api/auth/me', {
+
+      const accessToken = TokenManager.getAccessToken();
+      const headers: Record<string, string> = {};
+
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
+      const response = await fetch(`${env.API_URL}/auth/me`, {
         credentials: 'include',
-        headers: {
-          'Authorization': `Bearer ${TokenManager.getAccessToken()}`
-        }
+        headers,
       });
 
       if (response.ok) {
