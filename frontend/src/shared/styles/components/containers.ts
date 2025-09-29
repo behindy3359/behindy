@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
 // BaseContainer - 모든 컨테이너의 기본
-const BaseContainer = styled.div<{
+const BaseContainer = styled(motion.div)<{
   $padding?: keyof typeof import('../tokens/spacing').spacing | 'none';
   $margin?: keyof typeof import('../tokens/spacing').spacing | 'none';
   $maxWidth?: keyof typeof import('./containers').containerSizes;
@@ -120,7 +120,7 @@ export const SectionContainer = styled(BaseCard).attrs({
 `;
 
 // 섹션 헤더
-export const SectionHeader = styled.div`
+export const SectionHeader = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -149,7 +149,7 @@ export const SectionHeader = styled.div`
 `;
 
 // 그리드 컨테이너
-export const GridContainer = styled.div<{ 
+export const GridContainer = styled(motion.div)<{ 
   $columns?: string; 
   $gap?: keyof typeof import('../tokens/spacing').spacing;
 }>`
@@ -184,7 +184,7 @@ export const FormSection = styled.div`
 `;
 
 // 상태 표시 컨테이너
-export const StateContainer = styled.div<{ $variant?: 'loading' | 'error' | 'empty' }>`
+export const StateContainer = styled(motion.div)<{ $variant?: 'loading' | 'error' | 'empty' }>`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -240,14 +240,14 @@ export const FullWidthContainer = styled(motion.div)`
   width: 100%;
 `;
 
-export const CenteredContainer = styled.div`
+export const CenteredContainer = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
 `;
 
-export const FlexContainer = styled.div<{
+export const FlexContainer = styled(motion.div)<{
   $direction?: 'row' | 'column';
   $align?: 'start' | 'center' | 'end' | 'stretch' | 'flex-start';
   $justify?: 'start' | 'center' | 'end' | 'between' | 'around';
