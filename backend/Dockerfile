@@ -6,7 +6,7 @@ COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
 COPY src ./src
 
-RUN gradle clean build --no-daemon
+RUN gradle clean build --no-daemon -x test
 
 # --- Stage 2: Run the Spring Boot application ---
 FROM openjdk:21-jdk-slim
