@@ -1,5 +1,4 @@
-
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import '@/shared/styles/globalTheme.css';
 import { AppShell } from '@/shared/providers/AppShell';
 
@@ -30,11 +29,12 @@ export const metadata: Metadata = {
     title: 'Behindy',
     description: '포트폴리오용 페이지',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({ 

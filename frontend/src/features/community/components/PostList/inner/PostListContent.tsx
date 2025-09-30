@@ -20,7 +20,8 @@ export const PostListContent = React.memo<PostListContentProps>(
     if (isLoading) {
       return (
         <PostsContainer>
-          <LoadingContainer>
+          <LoadingContainer
+          >
             <div className="loading-content">
               <div className="loading-spinner"></div>
               <div className="loading-text">

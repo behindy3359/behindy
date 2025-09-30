@@ -2,7 +2,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
 import { PostListSearch } from './PostListSearch';
-import { HeaderRight } from '../styles';
+import { Header } from '../styles';
 import type { PostListSearchProps } from '../../../types/postListTypes';
 
 interface PostListActionBarProps extends PostListSearchProps {
@@ -20,7 +20,7 @@ export const PostListActionBar = React.memo<PostListActionBarProps>(
     onWritePost 
   }) {
     return (
-      <HeaderRight>
+      <Header>
         <PostListSearch
           searchQuery={searchQuery}
           showSearch={showSearch}
@@ -37,7 +37,7 @@ export const PostListActionBar = React.memo<PostListActionBarProps>(
         >
           글쓰기
         </Button>
-      </HeaderRight>
+      </Header>
     );
   }
 );

@@ -6,7 +6,6 @@ import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
 import { useToast } from '@/shared/store/uiStore';
 import { useSearchParams } from 'next/navigation';
 
-// 로딩 폴백 컴포넌트
 function LoginLoadingFallback() {
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -18,13 +17,11 @@ function LoginLoadingFallback() {
   );
 }
 
-// 메인 페이지 컴포넌트 - 단순히 조합만 담당
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams();
   const toast = useToast();
   
   useEffect(() => {
-    // URL 파라미터에서 세션 만료 이유 확인
     const reason = searchParams.get('reason');
     
     if (reason === 'session_expired') {
@@ -34,9 +31,13 @@ export default function LoginPage() {
     }
   }, [searchParams, toast]);
   
+  return <LoginForm />;
+}
+
+export default function LoginPage() {
   return (
     <Suspense fallback={<LoginLoadingFallback />}>
-      <LoginForm />
+      <LoginContent />
     </Suspense>
   );
 }
