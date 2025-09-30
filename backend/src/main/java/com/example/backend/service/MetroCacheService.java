@@ -14,30 +14,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 지하철 캐시 서비스 (최종 버전)
- * 위치 정보만 캐싱하는 단순화된 구조
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MetroCacheService {
 
+    @Qualifier("cacheRedisTemplate")
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
     @Value("${seoul.metro.cache.ttl:180}")
     private int cacheTtlSeconds;
 
-    // Redis 키 패턴 (단순화)
     private static final String METRO_POSITIONS_KEY = "metro:positions:line:";
     private static final String METRO_ALL_POSITIONS_KEY = "metro:all_positions";
     private static final String METRO_HEALTH_KEY = "metro:health";
     private static final String METRO_LAST_UPDATE_KEY = "metro:last_update";
 
-    /**
-     * 특정 노선의 위치 데이터 캐시 저장
-     */
     public void cacheLinePositions(String lineNumber, List<TrainPosition> positions) {
         try {
             String key = METRO_POSITIONS_KEY + lineNumber;
@@ -61,9 +54,6 @@ public class MetroCacheService {
         }
     }
 
-    /**
-     * 특정 노선의 위치 데이터 캐시 조회
-     */
     public PositionCacheData getLinePositions(String lineNumber) {
         try {
             String key = METRO_POSITIONS_KEY + lineNumber;
