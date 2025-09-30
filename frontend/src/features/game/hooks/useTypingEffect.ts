@@ -91,7 +91,6 @@ export function useTypingEffect(
     };
   }, [text, displayedText, isTyping, speed, enabled, onComplete]);
 
-  // 텍스트 변경 시 자동 시작
   useEffect(() => {
     startTyping();
   }, [text]); // startTyping은 의존성에서 제외 (무한 루프 방지)
