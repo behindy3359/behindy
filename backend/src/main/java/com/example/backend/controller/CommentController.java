@@ -6,15 +6,19 @@ import com.example.backend.dto.comment.CommentResponse;
 import com.example.backend.dto.comment.CommentUpdateRequest;
 import com.example.backend.service.CommentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/comments")
 @RequiredArgsConstructor
+@Validated
 public class CommentController {
 
     private final CommentService commentService;
@@ -41,13 +45,13 @@ public class CommentController {
     }
 
     /**
-     * 특정 게시글의 댓글 목록 조회 (페이지네이션)
+     * 특정 게시글의 댓글 목록 조회 (페이지네이션 크기 제한 추가)
      */
     @GetMapping("/posts/{postId}")
     public ResponseEntity<CommentListResponse> getCommentsByPost(
             @PathVariable Long postId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
 
         CommentListResponse response = commentService.getCommentsByPost(postId, page, size);
         return ResponseEntity.ok(response);

@@ -3,7 +3,9 @@ package com.example.backend.repository;
 import com.example.backend.entity.Character;
 import com.example.backend.entity.Now;
 import com.example.backend.entity.Page;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,6 +22,14 @@ public interface NowRepository extends JpaRepository<Now, Long> {
      * 특정 캐릭터의 현재 위치 조회
      */
     Optional<Now> findByCharacter(Character character);
+
+    /**
+     * 특정 캐릭터의 현재 위치 조회 (비관적 락 - Race Condition 방지)
+     * 게임 세션 생성/수정 시 동시성 문제를 방지하기 위해 사용
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT n FROM Now n WHERE n.character = :character")
+    Optional<Now> findByCharacterForUpdate(@Param("character") Character character);
 
     /**
      * 캐릭터 ID로 현재 위치 조회

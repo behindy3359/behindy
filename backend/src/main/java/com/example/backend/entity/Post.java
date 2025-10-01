@@ -13,7 +13,14 @@ import java.util.List;
 @Entity
 @Getter@Setter@Builder @NoArgsConstructor@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "POST")
+@Table(
+    name = "POST",
+    indexes = {
+        @Index(name = "idx_post_user_id", columnList = "user_id"),
+        @Index(name = "idx_post_deleted_at", columnList = "deleted_at"),
+        @Index(name = "idx_post_created_at", columnList = "created_at")
+    }
+)
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +28,7 @@ public class Post {
     private Long postId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name="post_title")

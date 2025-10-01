@@ -160,8 +160,9 @@ public class GameService {
         log.info("   스토리 정보: title={}, length={}, station={}",
                 story.getStoTitle(), story.getStoLength(), story.getStation().getStaName());
 
-        log.info("   기존 게임 세션 확인 중...");
-        Optional<Now> existingGame = nowRepository.findByCharacter(character);
+        log.info("   기존 게임 세션 확인 중 (비관적 락 사용)...");
+        // Race Condition 방지: 비관적 락으로 동시 요청 차단
+        Optional<Now> existingGame = nowRepository.findByCharacterForUpdate(character);
         if (existingGame.isPresent()) {
             log.warn("⚠️ 이미 진행 중인 게임 존재: pageId={}", existingGame.get().getPage().getPageId());
             throw new IllegalStateException("이미 진행 중인 게임이 있습니다.");

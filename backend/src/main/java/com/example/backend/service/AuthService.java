@@ -51,6 +51,8 @@ public class AuthService {
             throw new RuntimeException("이미 사용 중인 이메일입니다.");
         }
 
+        // 비밀번호는 sanitize하지 않고 그대로 해시 처리
+        // Name과 Email만 XSS 방지를 위해 sanitize
         String sanitizedName = htmlSanitizer.sanitize(request.getName());
         String sanitizedEmail = htmlSanitizer.sanitize(request.getEmail());
 
