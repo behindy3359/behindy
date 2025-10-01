@@ -109,6 +109,16 @@ const createApiClient = (baseURL: string) => {
         }
       }
 
+      // CSRF 토큰 추가 (상태 변경 요청에만)
+      if (config.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(config.method.toUpperCase())) {
+        if (typeof window !== 'undefined') {
+          const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+          if (csrfToken && config.headers) {
+            config.headers['X-CSRF-Token'] = csrfToken;
+          }
+        }
+      }
+
       return config;
     },
     (error) => {

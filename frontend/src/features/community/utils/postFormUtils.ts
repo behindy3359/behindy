@@ -1,6 +1,8 @@
 import * as yup from 'yup';
 import { INPUT_LIMITS } from '@/shared/utils/common/constants';
 import { validators } from '@/shared/utils/common/validation';
+import DOMPurify from 'dompurify';
+import { marked } from 'marked';
 
 export const postFormSchema = yup.object({
   title: yup
@@ -64,15 +66,33 @@ export const isOverLimit = (text: string, limit: number): boolean => {
   return text.length > limit;
 };
 
+/**
+ * 안전한 마크다운 미리보기 생성 (XSS 방지)
+ * DOMPurify를 사용하여 위험한 HTML/JavaScript 제거
+ */
 export const createPostPreview = (content: string): string => {
   if (!content) return '내용을 입력하세요';
-  
-  // 기본적인 마크다운 렌더링 시뮬레이션
-  return content
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/\n/g, '<br>');
+
+  try {
+    // marked로 마크다운을 HTML로 변환
+    const rawHtml = marked.parse(content, { async: false }) as string;
+
+    // DOMPurify로 안전한 HTML만 허용
+    const sanitizedHtml = DOMPurify.sanitize(rawHtml, {
+      ALLOWED_TAGS: [
+        'p', 'br', 'strong', 'em', 'b', 'i', 'u',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'ul', 'ol', 'li', 'blockquote', 'code', 'pre',
+        'a', 'img'
+      ],
+      ALLOWED_ATTR: ['href', 'src', 'alt', 'title'],
+      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+    });
+
+    return sanitizedHtml;
+  } catch (error) {
+    console.error('마크다운 렌더링 오류:', error);
+    // 에러 발생 시 텍스트만 반환
+    return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
 };
