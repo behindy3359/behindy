@@ -5,6 +5,8 @@ from typing import Optional, List, Dict, Any
 import os
 import logging
 from datetime import datetime
+import uuid
+from contextvars import ContextVar
 
 from providers.llm_provider import LLMProviderFactory
 from services.story_service import StoryService
@@ -20,6 +22,9 @@ if not INTERNAL_API_KEY:
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Request ID 컨텍스트 변수
+request_id_var = ContextVar("request_id", default=None)
 
 app = FastAPI(
     title="Behindy AI Server",
@@ -46,7 +51,29 @@ logger.info(" RateLimiter 초기화 중...")
 rate_limiter = RateLimiter()
 logger.info(f" RateLimiter 초기화 완료: {rate_limiter}")
 
+# Provider 전역 인스턴스 (세션 재사용용)
+_provider_instance = None
+
+def get_provider_instance():
+    """Get singleton provider instance for session reuse"""
+    global _provider_instance
+    if _provider_instance is None:
+        _provider_instance = LLMProviderFactory.get_provider()
+        logger.info(f"Created provider instance: {_provider_instance.get_provider_name()}")
+    return _provider_instance
+
 MAX_REQUEST_SIZE = int(os.getenv("MAX_REQUEST_SIZE", "1048576"))  # 1MB
+
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    """Request ID 추적 미들웨어"""
+    request_id = str(uuid.uuid4())
+    request_id_var.set(request_id)
+
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+
+    return response
 
 @app.middleware("http")
 async def limit_request_size(request: Request, call_next):
@@ -61,21 +88,38 @@ async def limit_request_size(request: Request, call_next):
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    logger.info(f" 들어오는 요청: {request.method} {request.url}")
-    logger.info(f" 클라이언트 IP: {request.client.host}")
-    logger.info(f" 헤더: {dict(request.headers)}")
+    request_id = request_id_var.get()
+    logger.info(f"[{request_id}] 들어오는 요청: {request.method} {request.url}")
+    logger.info(f"[{request_id}] 클라이언트 IP: {request.client.host}")
+    logger.info(f"[{request_id}] 헤더: {dict(request.headers)}")
 
     response = await call_next(request)
 
-    logger.info(f"응답 상태: {response.status_code}")
+    logger.info(f"[{request_id}] 응답 상태: {response.status_code}")
     return response
 
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize provider on startup"""
+    logger.info("Starting up AI server...")
+    provider = get_provider_instance()
+    logger.info(f"Provider ready: {provider.get_provider_name()}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    logger.info("Shutting down AI server...")
+    global _provider_instance
+    if _provider_instance and hasattr(_provider_instance, 'close'):
+        await _provider_instance.close()
+        logger.info("Provider session closed")
 
 @app.get("/")
 async def root():
     """기본 헬스 체크"""
-    provider = LLMProviderFactory.get_provider()
-    
+    provider = get_provider_instance()
+
     return {
         "message": "Behindy AI Server (Simplified)",
         "status": "healthy",
@@ -87,18 +131,49 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """상세 헬스 체크"""
-    provider = LLMProviderFactory.get_provider()
-    available_providers = LLMProviderFactory.get_available_providers()
-    
-    return {
-        "status": "healthy",
-        "current_provider": provider.get_provider_name(),
-        "available_providers": available_providers,
-        "total_requests": rate_limiter.get_total_requests(),
-        "timestamp": datetime.now().isoformat(),
-        "simplified_mode": True
-    }
+    """Enhanced health check with detailed system status"""
+    try:
+        provider = get_provider_instance()
+        available_providers = LLMProviderFactory.get_available_providers()
+
+        # Check provider connection health
+        provider_health = "healthy"
+        try:
+            if hasattr(provider, '_session') and provider._session:
+                if provider._session.closed:
+                    provider_health = "session_closed"
+                    logger.warning("Provider session is closed, will recreate on next request")
+        except Exception as e:
+            logger.error(f"Error checking provider health: {e}")
+            provider_health = "unknown"
+
+        health_status = {
+            "status": "healthy",
+            "current_provider": provider.get_provider_name(),
+            "provider_health": provider_health,
+            "available_providers": available_providers,
+            "connection_pooling": {
+                "enabled": hasattr(provider, '_session'),
+                "session_active": hasattr(provider, '_session') and provider._session and not provider._session.closed
+            },
+            "rate_limiter": {
+                "total_requests": rate_limiter.get_total_requests(),
+                "status": "active"
+            },
+            "timestamp": datetime.now().isoformat(),
+            "uptime_check": "ok",
+            "version": "3.0.0"
+        }
+
+        return health_status
+
+    except Exception as e:
+        logger.error(f"Health check failed: {e}", exc_info=True)
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 @app.get("/providers")
 async def get_providers_status():
@@ -127,20 +202,21 @@ async def generate_complete_story(request: BatchStoryRequest, http_request: Requ
             logger.info(" 일반 API 호출")
             request_mode = "PUBLIC"
         
-        logger.info("=" * 80)
-        
+        request_id = request_id_var.get()
+        logger.info(f"[{request_id}] " + "=" * 40)
+
         if request_mode == "PUBLIC":
             client_ip = http_request.client.host
-            logger.info(f" Rate Limiting 체크 시작 (IP: {client_ip})")
+            logger.info(f"[{request_id}] Rate Limiting 체크 시작 (IP: {client_ip})")
             rate_limiter.check_rate_limit(client_ip)
-            logger.info(" Rate Limiting 통과")
+            logger.info(f"[{request_id}] Rate Limiting 통과")
         else:
-            logger.info(" Rate Limiting 건너뜀")
-        
+            logger.info(f"[{request_id}] Rate Limiting 건너뜀")
+
         response = await batch_story_service.generate_complete_story(request)
-        
-        logger.info(f"스토리 생성 완료: {response.story_title}")
-        logger.info("=" * 80)
+
+        logger.info(f"[{request_id}] 스토리 생성 완료: {response.story_title}")
+        logger.info(f"[{request_id}] " + "=" * 40)
         
         return response
         
@@ -209,8 +285,8 @@ async def validate_story_structure(validation_request: Dict[str, Any], http_requ
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"구조 검증 실패: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"검증 중 오류: {str(e)}")
+        logger.error(f"구조 검증 실패: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="스토리 구조 검증 실패")
 
 @app.get("/batch/system-status")
 async def get_batch_system_status(http_request: Request):
@@ -245,8 +321,8 @@ async def get_batch_system_status(http_request: Request):
         return status
         
     except Exception as e:
-        logger.error(f"배치 시스템 상태 조회 실패: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"상태 조회 중 오류: {str(e)}")
+        logger.error(f"배치 시스템 상태 조회 실패: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="시스템 상태 조회 실패")
 
 # ===== 테스트 API =====
 

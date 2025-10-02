@@ -1,9 +1,9 @@
-// 🧹 정리된 Axios 설정 - 개발 로그 제거
 // frontend/src/config/axiosConfig.ts
 
 import axios from 'axios';
 import { env } from '@/config/env';
 import { SECURITY_CONFIG, validateSecurityConfig } from '@/shared/utils/common/constants';
+import { logger } from '@/shared/utils/common/logger';
 
 // 보안 설정 검증
 if (typeof window !== 'undefined') {
@@ -122,7 +122,7 @@ const createApiClient = (baseURL: string) => {
       return config;
     },
     (error) => {
-      console.error('❌ [API] Request Error:', error); // ✅ 유지
+      logger.error('[API] Request Error', error);
       return Promise.reject(error);
     }
   );
@@ -178,27 +178,27 @@ const createApiClient = (baseURL: string) => {
           };
           
           return client(retryConfig as unknown as Parameters<typeof client>[0]);
-          
+
         } catch (refreshError) {
-          console.error('❌ [API] Token refresh failed:', refreshError); // ✅ 유지
-          
+          logger.error('[API] Token refresh failed', refreshError);
+
           // 토큰 갱신 실패 시 강제 로그아웃 처리
           TokenManager.clearAllTokens();
-          
+
           try {
-            await axios.post(`${env.API_URL}/auth/logout`, {}, { 
+            await axios.post(`${env.API_URL}/auth/logout`, {}, {
               withCredentials: true,
               timeout: 3000
             });
           } catch (logoutError) {
-            console.warn('⚠️ [API] Logout API failed (ignored):', logoutError); // ✅ 유지
+            logger.warn('[API] Logout API failed (ignored)', { error: logoutError });
           }
-          
+
           try {
             const { useAuthStore } = await import('@/shared/store/authStore');
             await useAuthStore.getState().logout();
           } catch (storeError) {
-            console.warn('⚠️ [API] Auth store cleanup failed:', storeError); // ✅ 유지
+            logger.warn('[API] Auth store cleanup failed', { error: storeError });
           }
           
           if (typeof window !== 'undefined') {

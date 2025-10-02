@@ -2,6 +2,8 @@ package com.example.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -20,6 +22,8 @@ import java.time.LocalDateTime;
         @Index(name = "idx_comment_created_at", columnList = "created_at")
     }
 )
+@Where(clause = "deleted_at IS NULL")
+@SQLDelete(sql = "UPDATE COMMENT SET deleted_at = NOW() WHERE cmt_id = ?")
 public class Comment {
     // 서비스영역
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

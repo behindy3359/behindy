@@ -3,6 +3,8 @@ package com.example.backend.entity;
 import com.example.backend.security.crypto.TableCryptoConverter;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -13,7 +15,16 @@ import java.util.List;
 
 @Entity(name = "User")
 @Getter@Setter @NoArgsConstructor @AllArgsConstructor @Builder @EntityListeners(AuditingEntityListener.class)
-@Table(name = "users") // postgre에서 user 는 예약어;
+@Table(
+    name = "users", // postgre에서 user 는 예약어
+    indexes = {
+        @Index(name = "idx_user_email", columnList = "user_email"),
+        @Index(name = "idx_user_deleted_at", columnList = "deleted_at"),
+        @Index(name = "idx_user_created_at", columnList = "created_at")
+    }
+)
+@Where(clause = "deleted_at IS NULL")
+@SQLDelete(sql = "UPDATE users SET deleted_at = NOW() WHERE user_id = ?")
 public class User {
 
     // 서비스 영역

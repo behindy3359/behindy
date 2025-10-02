@@ -48,19 +48,42 @@ class LLMProvider(ABC):
         pass
 
 class OpenAIProvider(LLMProvider):
-    """OpenAI GPT Provider"""
-    
+    """OpenAI GPT Provider with connection pooling"""
+
     def __init__(self, api_key: str, model: str = "gpt-4o-mini", max_tokens: int = 1000):
         super().__init__()
         self.api_key = api_key
         self.model = model
         self.max_tokens = max_tokens
         self.base_url = "https://api.openai.com/v1/chat/completions"
-        
-        logger.info(f"OpenAI Provider initialized: {model}")
+        self._session: Optional[aiohttp.ClientSession] = None
+
+        logger.info(f"OpenAI Provider initialized: {model} (with connection pooling)")
     
     def is_available(self) -> bool:
         return bool(self.api_key and self.api_key != "" and aiohttp is not None)
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """Get or create reusable aiohttp session"""
+        if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(
+                limit=100,  # Max concurrent connections
+                limit_per_host=30,  # Max connections per host
+                ttl_dns_cache=300  # DNS cache TTL (5 min)
+            )
+            timeout = aiohttp.ClientTimeout(total=30)
+            self._session = aiohttp.ClientSession(
+                connector=connector,
+                timeout=timeout
+            )
+            logger.debug("Created new aiohttp session with connection pooling")
+        return self._session
+
+    async def close(self):
+        """Close the session when shutting down"""
+        if self._session and not self._session.closed:
+            await self._session.close()
+            logger.debug("Closed aiohttp session")
 
     async def generate_story(self, prompt: str, **kwargs) -> Dict[str, Any]:
         if not self.is_available():
@@ -86,8 +109,8 @@ class OpenAIProvider(LLMProvider):
         try:
             start_time = time.time()
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.base_url, headers=headers, json=payload, timeout=30) as response:
+            session = await self._get_session()
+            async with session.post(self.base_url, headers=headers, json=payload) as response:
                     response_time = time.time() - start_time
 
                     if response.status == 200:
@@ -108,7 +131,7 @@ class OpenAIProvider(LLMProvider):
                             logger.error(f"Auth failed with key: {mask_api_key(self.api_key)}")
                         raise Exception(f"OpenAI API 오류: {response.status}")
 
-        except asyncio.TimeoutError:
+        except (asyncio.TimeoutError, aiohttp.ServerTimeoutError):
             logger.error("OpenAI API timeout (30s)")
             raise Exception("OpenAI API 요청 시간 초과")
         except aiohttp.ClientError as e:

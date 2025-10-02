@@ -3,6 +3,8 @@ package com.example.backend.entity;
 import com.example.backend.security.crypto.FieldCryptoConverter;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -14,7 +16,16 @@ import java.util.List;
 @Entity(name = "Character")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "char")
+@Table(
+    name = "char",
+    indexes = {
+        @Index(name = "idx_char_user_id", columnList = "user_id"),
+        @Index(name = "idx_char_deleted_at", columnList = "deleted_at"),
+        @Index(name = "idx_char_created_at", columnList = "created_at")
+    }
+)
+@Where(clause = "deleted_at IS NULL")
+@SQLDelete(sql = "UPDATE char SET deleted_at = NOW() WHERE char_id = ?")
 public class Character {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { ThemeProvider } from '@/shared/providers/ThemeProvider';
+import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { AuthGuard } from '@/features/auth/components/AuthGuard/AuthGuard';
 import { requiresAuth } from '@/shared/utils/navigation/navigationUtils';
 
@@ -23,9 +24,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   );
 
   return (
-    <ThemeProvider>
-      {content}
-    </ThemeProvider>
+    <QueryProvider>
+      <ThemeProvider>
+        {content}
+      </ThemeProvider>
+    </QueryProvider>
   );
 };
 
