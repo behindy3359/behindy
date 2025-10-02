@@ -3,16 +3,21 @@ Spring Boot 배치 시스템용 모델들
 AIStoryScheduler와 완벽 호환
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import List, Optional
+from utils.input_sanitizer import sanitize_station_name
 
 class BatchStoryRequest(BaseModel):
     """Spring Boot에서 보내는 배치 스토리 생성 요청"""
-    station_name: str = Field(..., description="역 이름")
+    station_name: str = Field(..., description="역 이름", max_length=50)
     line_number: int = Field(..., ge=1, le=4, description="노선 번호")
     character_health: int = Field(80, ge=0, le=100, description="기본 캐릭터 체력")
     character_sanity: int = Field(80, ge=0, le=100, description="기본 캐릭터 정신력")
-    story_type: str = Field("BATCH_GENERATION", description="스토리 타입")
+    story_type: str = Field("BATCH_GENERATION", description="스토리 타입", max_length=50)
+
+    @validator('station_name')
+    def sanitize_station(cls, v):
+        return sanitize_station_name(v)
 
 class BatchOptionData(BaseModel):
     """배치용 선택지 데이터 (Spring Boot Options 엔티티와 매핑)"""
