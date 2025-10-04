@@ -20,8 +20,19 @@ INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
 if not INTERNAL_API_KEY:
     raise RuntimeError("INTERNAL_API_KEY 환경변수가 설정되지 않았습니다.")
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# 구조화 로깅 설정
+USE_JSON_LOGGING = os.getenv("USE_JSON_LOGGING", "false").lower() == "true"
+
+if USE_JSON_LOGGING:
+    from utils.json_logger import setup_json_logging
+    logger = setup_json_logging("behindy-ai-server", logging.INFO)
+    logger.info("JSON 구조화 로깅 활성화")
+else:
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger(__name__)
 
 # Request ID 컨텍스트 변수
 request_id_var = ContextVar("request_id", default=None)

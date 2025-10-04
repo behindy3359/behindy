@@ -2,6 +2,36 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
+  // 번들 최적화
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // vendor 청크 (node_modules)
+            vendor: {
+              name: 'vendors',
+              test: /[\\/]node_modules[\\/]/,
+              priority: 10,
+              reuseExistingChunk: true,
+            },
+            // 공통 청크
+            common: {
+              name: 'common',
+              minChunks: 2,
+              priority: 5,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+      };
+    }
+    return config;
+  },
   async headers() {
     return [
       {

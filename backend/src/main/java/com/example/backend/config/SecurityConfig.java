@@ -110,6 +110,11 @@ public class SecurityConfig {
                         // 개발용: AI API 헬스체크만 공개
                         .requestMatchers(HttpMethod.GET, "/api/ai-stories/health").permitAll()
 
+                        // Actuator 엔드포인트 보안 (ADMIN 권한 필요)
+                        .requestMatchers("/actuator/health").permitAll()  // health는 공개
+                        .requestMatchers("/actuator/info").permitAll()    // info는 공개
+                        .requestMatchers("/actuator/**").hasRole("ADMIN") // 나머지는 ADMIN만
+
                         // CORS preflight 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 

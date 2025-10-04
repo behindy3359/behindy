@@ -71,6 +71,8 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
   useEffect(() => {
     if (!isHydrated) return;
 
+    let cancelled = false;
+
     const initializeAuth = async () => {
       logger.debug('[AuthGuard] Initializing auth', {
         pathname,
@@ -82,6 +84,7 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
 
       // 1. 퍼블릭 라우트는 즉시 허용
       if (isPublicRoute(pathname)) {
+        if (cancelled) return;
         logger.debug('[AuthGuard] Public route - access granted', { pathname });
         setIsLoading(false);
         return;
@@ -95,8 +98,10 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
         const hasClientAuth = isAuthenticated();
 
         if (!hasClientToken || !hasClientAuth) {
+          if (cancelled) return;
           logger.warn('[AuthGuard] No client token/auth - redirecting to login');
           await cleanupClientState();
+          if (cancelled) return;
           router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
           setIsLoading(false);
           return;
@@ -106,11 +111,13 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
         logger.debug('[AuthGuard] Client token found - validating server session');
 
         const isServerSessionValid = await validateServerSession();
+        if (cancelled) return;
 
         if (!isServerSessionValid) {
           logger.warn('[AuthGuard] Invalid server session - cleaning up and redirecting');
 
           await cleanupClientState();
+          if (cancelled) return;
           router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
           setIsLoading(false);
           return;
@@ -121,34 +128,34 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
           logger.debug('[AuthGuard] Valid server session - re-checking user info');
           try {
             await checkAuthStatus();
+            if (cancelled) return;
             logger.debug('[AuthGuard] Auth status check completed');
           } catch (error) {
+            if (cancelled) return;
             logger.error('[AuthGuard] Auth status check failed', error);
             await cleanupClientState();
+            if (cancelled) return;
             router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
             setIsLoading(false);
             return;
           }
         }
 
+        if (cancelled) return;
         logger.debug('[AuthGuard] Authentication successful - access granted');
       }
 
-      setIsLoading(false);
+      if (!cancelled) {
+        setIsLoading(false);
+      }
     };
 
     initializeAuth();
-  }, [
-    pathname, 
-    checkAuthStatus, 
-    isAuthenticated, 
-    status, 
-    router, 
-    isHydrated, 
-    logout,
-    validateServerSession,
-    cleanupClientState
-  ]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   const shouldRender = isHydrated && !isLoading && status !== 'loading';
 
