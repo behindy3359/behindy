@@ -39,8 +39,9 @@ public class PostController {
     public ResponseEntity<PostResponse> createPost(
             @Valid @RequestBody PostCreateRequest request) {
 
-        // 🔥 임시 디버깅 로그
-        log.info("📝 게시글 작성 요청 수신: {}", request.getTitle());
+        log.info("========================================");
+        log.info("📝 [API 요청 진입] POST /api/posts - 제목: {}", request.getTitle());
+        log.info("========================================");
 
         try {
             // 현재 인증된 사용자 확인
@@ -65,6 +66,10 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<PostResponse> getPostById(
             @PathVariable Long postId) {
+        log.info("========================================");
+        log.info("📖 [API 요청 진입] GET /api/posts/{}", postId);
+        log.info("========================================");
+
         PostResponse response = postService.getPostById(postId);
         return ResponseEntity.ok(response);
     }
@@ -76,6 +81,10 @@ public class PostController {
     public ResponseEntity<PostListResponse> getAllPosts(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
+
+        log.info("========================================");
+        log.info("📋 [API 요청 진입] GET /api/posts?page={}&size={}", page, size);
+        log.info("========================================");
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 

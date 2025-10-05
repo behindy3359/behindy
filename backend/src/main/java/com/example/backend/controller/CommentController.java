@@ -9,12 +9,14 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/comments")
 @RequiredArgsConstructor
@@ -30,6 +32,10 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CommentResponse> createComment(
             @Valid @RequestBody CommentCreateRequest request) {
+        log.info("========================================");
+        log.info("💬 [API 요청 진입] POST /api/comments - postId: {}", request.getPostId());
+        log.info("========================================");
+
         CommentResponse response = commentService.createComment(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -52,6 +58,10 @@ public class CommentController {
             @PathVariable Long postId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
+
+        log.info("========================================");
+        log.info("💬 [API 요청 진입] GET /api/comments/posts/{}?page={}&size={}", postId, page, size);
+        log.info("========================================");
 
         CommentListResponse response = commentService.getCommentsByPost(postId, page, size);
         return ResponseEntity.ok(response);
