@@ -2,6 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
 
 // 순수 HTML/CSS 로딩 컴포넌트 (SSR 안전)
 function GameLoadingFallback() {
@@ -27,20 +28,8 @@ function GameLoadingFallback() {
   );
 }
 
-// Dynamic import로 SSR 완전 비활성화
-const GamePage = dynamic(
-  () => import('@/features/game/components/GamePageContainer').then(mod => {
-    const AppLayout = require('@/shared/components/layout/applayout/AppLayout').AppLayout;
-    const GamePageContainer = mod.GamePageContainer;
-
-    return {
-      default: () => (
-        <AppLayout>
-          <GamePageContainer />
-        </AppLayout>
-      )
-    };
-  }),
+const GamePageContainer = dynamic(
+  () => import('@/features/game/components/GamePageContainer').then(mod => mod.GamePageContainer),
   {
     ssr: false,
     loading: () => <GameLoadingFallback />
@@ -48,5 +37,9 @@ const GamePage = dynamic(
 );
 
 export default function GameRoute() {
-  return <GamePage />;
+  return (
+    <AppLayout>
+      <GamePageContainer />
+    </AppLayout>
+  );
 }
