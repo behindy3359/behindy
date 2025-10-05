@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/config/axiosConfig';
 import { useAuthStore } from '@/shared/store/authStore';
 import { useToast } from '@/shared/store/uiStore';
+import { API_ENDPOINTS } from '@/shared/utils/common/api';
 import { Character } from '../types/gameTypes';
 
 // 랜덤 이름 생성용 데이터
@@ -39,13 +40,13 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
     try {
       setIsChecking(true);
       
-      console.log('📡 [Character Create] API 요청: /characters/exists');
-      
+      console.log('📡 [Character Create] API 요청:', API_ENDPOINTS.CHARACTERS.EXISTS);
+
       const response = await api.get<{
         success: boolean;
         message: string;
         data: Character | null;
-      }>('/characters/exists');
+      }>(API_ENDPOINTS.CHARACTERS.EXISTS);
 
       console.log('✅ [Character Create] Character exists response:', {
         success: response.success,
@@ -118,7 +119,7 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
         originalDestination: { stationName, lineNumber, returnUrl }
       });
 
-      const response = await api.post<Character>('/characters', {
+      const response = await api.post<Character>(API_ENDPOINTS.CHARACTERS.BASE, {
         charName: charName.trim()
       });
 
@@ -211,7 +212,7 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
       setIsLoading(true);
       console.log('🚪 [Character Create] 게임 포기 시도...');
       
-      await api.post('/game/quit');
+      await api.post(API_ENDPOINTS.GAME.QUIT);
       
       console.log('✅ [Character Create] 게임 포기 성공');
       

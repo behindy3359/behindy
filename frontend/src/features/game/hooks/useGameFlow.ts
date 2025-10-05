@@ -4,6 +4,7 @@ import { api } from '@/config/axiosConfig';
 import { useAuthStore } from '@/shared/store/authStore';
 import { useToast } from '@/shared/store/uiStore';
 import { gameThemeControls } from '@/shared/hooks/useAutoTheme';
+import { API_ENDPOINTS } from '@/shared/utils/common/api';
 import {
   GameFlowState,
   Character,
@@ -112,7 +113,7 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
       if (characterStatus && characterStatus.charId) {
         setCharacter(characterStatus);
 
-        const gameEnterUrl = `/game/enter/station/${encodeURIComponent(stationName)}/line/${lineNumber}`;
+        const gameEnterUrl = API_ENDPOINTS.GAME.ENTER_BY_STATION(stationName, parseInt(lineNumber));
         const gameResponse = await api.post<GameEnterResponse>(gameEnterUrl);
 
         if (gameResponse.character) {
@@ -330,7 +331,7 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
   const handleQuitGame = async () => {
     if (confirm('정말로 게임을 포기하시겠습니까?')) {
       try {
-        await api.post('/game/quit');
+        await api.post(API_ENDPOINTS.GAME.QUIT);
         gameThemeControls.disableGameMode();
         toast.info('게임을 포기했습니다');
         router.push('/');

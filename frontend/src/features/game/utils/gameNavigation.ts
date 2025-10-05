@@ -1,5 +1,6 @@
 import { api } from '@/config/axiosConfig';
 import { useAuthStore } from '@/shared/store/authStore';
+import { API_ENDPOINTS } from '@/shared/utils/common/api';
 
 interface NavigateToGameParams {
   stationName: string;
@@ -68,7 +69,7 @@ export async function quitGame(
   onError?: (error: string) => void
 ): Promise<void> {
   try {
-    await api.post('/game/quit');
+    await api.post(API_ENDPOINTS.GAME.QUIT);
     console.log('🏁 게임 종료됨');
     
     document.documentElement.setAttribute('data-theme', 'light');
