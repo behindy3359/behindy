@@ -1,6 +1,8 @@
 // frontend/src/features/community/components/PostList/styles.ts
 // 🔥 완전 마이그레이션 버전 - inner 컴포넌트들까지 모두 포함
 
+"use client";
+
 import { motion } from "framer-motion";
 import styled from "styled-components";
 
@@ -13,11 +15,11 @@ import {
   CommonErrorState
 } from '@/shared/styles/components/common';
 
-import { 
+import {
   FlexContainer,
   BaseCard,
   GridContainer
-} from '@/shared/styles/components/containers';
+} from '@/shared/styles/components/containers-animated';
 
 import { 
   BaseSelect

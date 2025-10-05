@@ -1,3 +1,5 @@
+"use client";
+
 import { CommonLoadingState } from '@/shared/styles/components/common';
 
 export default function Loading() {

@@ -2,6 +2,7 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
+  transpilePackages: ['styled-components', 'framer-motion'],
   // 번들 최적화
   webpack: (config: any, { isServer }: { isServer: boolean }) => {
     if (!isServer) {

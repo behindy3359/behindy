@@ -1,11 +1,12 @@
+"use client";
+
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { 
+import {
   FlexContainer,
   BaseButton,
   LinkButton,
   BaseCheckbox,
-  CommonActionGroup,
   ErrorText as SharedErrorText, // 🔥 이름 변경으로 충돌 해결
   FormContainer
 } from '@/shared/styles/components';
@@ -25,14 +26,23 @@ export const SignupContainer = styled.div`
   }
 `;
 
-// ActionsContainer - CommonActionGroup 재사용
-export const ActionsContainer = styled(CommonActionGroup).attrs({
-  $justify: 'center' as const,
-  $responsive: true,
-})`
+// ActionsContainer - motion.div 기반
+export const ActionsContainer = styled(motion.div)`
+  display: flex;
   flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[3]};
+  align-items: center;
+  justify-content: center;
   padding-top: ${({ theme }) => theme.spacing[4]};
-  
+
+  @media ${({ theme }) => `(max-width: 768px)`} {
+    width: 100%;
+
+    button {
+      width: 100%;
+    }
+  }
+
   @media ${({ theme }) => `(max-height: 600px)`} {
     gap: ${({ theme }) => theme.spacing[2]};
     padding-top: ${({ theme }) => theme.spacing[3]};

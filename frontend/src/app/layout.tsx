@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import '@/shared/styles/globalTheme.css';
 import { AppShell } from '@/shared/providers/AppShell';
+import StyledComponentsRegistry from '@/shared/lib/registry';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: {
@@ -37,17 +40,19 @@ export const viewport: Viewport = {
   maximumScale: 1,
 }
 
-export default function RootLayout({ 
-  children 
-}: { 
-  children: React.ReactNode 
+export default function RootLayout({
+  children
+}: {
+  children: React.ReactNode
 }) {
   return (
     <html lang="ko">
       <body>
-        <AppShell>
-          {children}
-        </AppShell>
+        <StyledComponentsRegistry>
+          <AppShell>
+            {children}
+          </AppShell>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );
