@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
-import dynamic from 'next/dynamic';
+import React, { Suspense } from 'react';
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
+import { GamePageContainer } from '@/features/game/components/GamePageContainer';
 
-// 순수 HTML/CSS 로딩 컴포넌트 (SSR 안전)
 function GameLoadingFallback() {
   return (
     <div style={{
@@ -11,42 +11,30 @@ function GameLoadingFallback() {
       justifyContent: 'center',
       alignItems: 'center',
       minHeight: '100vh',
-      flexDirection: 'column',
-      gap: '1rem'
+      color: 'var(--text-secondary)'
     }}>
-      <div style={{
-        width: '48px',
-        height: '48px',
-        border: '4px solid #e5e7eb',
-        borderTopColor: '#3b82f6',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }} />
-      <p style={{ color: '#6b7280' }}>게임을 준비하는 중...</p>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          width: '48px',
+          height: '48px',
+          border: '4px solid var(--border-light)',
+          borderTopColor: 'var(--primary-500)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto 1rem'
+        }} />
+        <p>게임을 준비하는 중...</p>
+      </div>
     </div>
   );
 }
 
-// Dynamic import로 SSR 완전 비활성화
-const GamePage = dynamic(
-  () => import('@/features/game/components/GamePageContainer').then(mod => {
-    const AppLayout = require('@/shared/components/layout/applayout/AppLayout').AppLayout;
-    const GamePageContainer = mod.GamePageContainer;
-
-    return {
-      default: () => (
-        <AppLayout>
-          <GamePageContainer />
-        </AppLayout>
-      )
-    };
-  }),
-  {
-    ssr: false,
-    loading: () => <GameLoadingFallback />
-  }
-);
-
 export default function GameRoute() {
-  return <GamePage />;
+  return (
+    <AppLayout>
+      <Suspense fallback={<GameLoadingFallback />}>
+        <GamePageContainer />
+      </Suspense>
+    </AppLayout>
+  );
 }
