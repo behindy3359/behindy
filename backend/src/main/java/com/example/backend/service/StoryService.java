@@ -13,6 +13,8 @@ import com.example.backend.repository.StoryRepository;
 import com.example.backend.service.mapper.EntityDtoMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -163,9 +165,12 @@ public class StoryService {
 
     /**
      * 특정 역 + 노선의 스토리 조회
+     * 캐싱: key = stationName + lineNumber, TTL = 1시간
      */
+    @Cacheable(value = "stories", key = "#stationName + '_' + #lineNumber")
     @Transactional(readOnly = true)
     public StoryListResponse getStoriesByStationAndLine(String stationName, Integer lineNumber) {
+        log.debug("📚 DB에서 스토리 조회: {}역 {}호선", stationName, lineNumber);
         List<Story> stories = storyRepository.findByStationNameAndLine(stationName, lineNumber);
 
         if (stories.isEmpty()) {
@@ -196,9 +201,12 @@ public class StoryService {
 
     /**
      * 단일 스토리 상세 조회
+     * 캐싱: key = storyId, TTL = 1시간
      */
+    @Cacheable(value = "stories", key = "'story_' + #storyId")
     @Transactional(readOnly = true)
     public StoryResponse getStoryById(Long storyId) {
+        log.debug("📚 DB에서 스토리 조회: storyId={}", storyId);
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story", "id", storyId));
 
@@ -303,7 +311,9 @@ public class StoryService {
 
     /**
      * 스토리 생성 (관리자용)
+     * 캐시 무효화: 해당 역+노선의 스토리 목록 캐시 삭제
      */
+    @CacheEvict(value = "stories", key = "#stationName + '_' + #lineNumber")
     @Transactional
     public Story createStory(String title, String stationName, Integer lineNumber, Integer length) {
         Station station = stationRepository.findByStaNameAndStaLine(stationName, lineNumber)
@@ -318,6 +328,7 @@ public class StoryService {
         Story savedStory = storyRepository.save(story);
         log.info("새 스토리 생성: storyId={}, title={}, station={}-{}",
                 savedStory.getStoId(), title, stationName, lineNumber);
+        log.info("🗑️ 캐시 무효화: {}역 {}호선", stationName, lineNumber);
 
         return savedStory;
     }

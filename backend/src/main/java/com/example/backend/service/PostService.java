@@ -11,6 +11,10 @@ import com.example.backend.repository.PostRepository;
 import com.example.backend.service.mapper.EntityDtoMapper;
 import com.example.backend.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -20,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -31,7 +36,9 @@ public class PostService {
 
     /**
      * 게시글 생성
+     * 캐시 무효화: 게시글 목록 캐시 전체 삭제
      */
+    @CacheEvict(value = "postList", allEntries = true)
     @Transactional
     public PostResponse createPost(PostCreateRequest request) {
         User currentUser = authService.getCurrentUser();
@@ -47,6 +54,7 @@ public class PostService {
                 .build();
 
         Post savedPost = postRepository.save(post);
+        log.info("게시글 생성: postId={}, 캐시 무효화 완료", savedPost.getPostId());
 
         // 🔄 공통 Mapper 사용
         return entityDtoMapper.toPostResponse(savedPost);
@@ -54,9 +62,12 @@ public class PostService {
 
     /**
      * 단일 게시글 조회
+     * 캐싱: key = postId, TTL = 5분
      */
+    @Cacheable(value = "postDetail", key = "#postId")
     @Transactional(readOnly = true)
     public PostResponse getPostById(Long postId) {
+        log.debug("📚 DB에서 게시글 조회: postId={}", postId);
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
@@ -88,7 +99,12 @@ public class PostService {
 
     /**
      * 게시글 수정
+     * 캐시 무효화: 해당 게시글 상세 캐시 및 게시글 목록 캐시 삭제
      */
+    @Caching(evict = {
+            @CacheEvict(value = "postDetail", key = "#postId"),
+            @CacheEvict(value = "postList", allEntries = true)
+    })
     @Transactional
     public PostResponse updatePost(Long postId, PostUpdateRequest request) {
         // 게시글 조회
@@ -114,6 +130,7 @@ public class PostService {
 
         // 수정된 게시글 저장
         Post updatedPost = postRepository.save(post);
+        log.info("게시글 수정: postId={}, 캐시 무효화 완료", postId);
 
         // 🔄 공통 Mapper 사용
         return entityDtoMapper.toPostResponse(updatedPost);
@@ -121,7 +138,12 @@ public class PostService {
 
     /**
      * 게시글 삭제
+     * 캐시 무효화: 해당 게시글 상세 캐시 및 게시글 목록 캐시 삭제
      */
+    @Caching(evict = {
+            @CacheEvict(value = "postDetail", key = "#postId"),
+            @CacheEvict(value = "postList", allEntries = true)
+    })
     @Transactional
     public void deletePost(Long postId) {
         // 게시글 조회
@@ -140,5 +162,6 @@ public class PostService {
         // 게시글 삭제
         post.delete();
         postRepository.save(post);
+        log.info("게시글 삭제: postId={}, 캐시 무효화 완료", postId);
     }
 }
