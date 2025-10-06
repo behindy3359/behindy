@@ -15,24 +15,21 @@ import java.util.Optional;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     /**
-     * 특정 게시글의 삭제되지 않은 댓글들을 최신순으로 조회 (N+1 문제 해결)
-     * JOIN FETCH로 user 정보를 함께 로드
+     * 특정 게시글의 삭제되지 않은 댓글들을 최신순으로 조회
      */
-    @Query("SELECT DISTINCT c FROM Comment c JOIN FETCH c.user WHERE c.post.postId = :postId AND c.deletedAt IS NULL ORDER BY c.createdAt DESC")
+    @Query("SELECT c FROM Comment c WHERE c.post.postId = :postId AND c.deletedAt IS NULL ORDER BY c.createdAt DESC")
     Page<Comment> findByPostIdAndNotDeleted(@Param("postId") Long postId, Pageable pageable);
 
     /**
-     * 삭제되지 않은 모든 댓글 조회 (관리자용, N+1 문제 해결)
-     * JOIN FETCH로 user와 post 정보를 함께 로드
+     * 삭제되지 않은 모든 댓글 조회 (관리자용)
      */
-    @Query("SELECT DISTINCT c FROM Comment c JOIN FETCH c.user JOIN FETCH c.post WHERE c.deletedAt IS NULL ORDER BY c.createdAt DESC")
+    @Query("SELECT c FROM Comment c WHERE c.deletedAt IS NULL ORDER BY c.createdAt DESC")
     Page<Comment> findAllActive(Pageable pageable);
 
     /**
-     * 특정 사용자의 삭제되지 않은 댓글 조회 (N+1 문제 해결)
-     * JOIN FETCH로 user와 post 정보를 함께 로드
+     * 특정 사용자의 삭제되지 않은 댓글 조회
      */
-    @Query("SELECT DISTINCT c FROM Comment c JOIN FETCH c.user JOIN FETCH c.post WHERE c.user = :user AND c.deletedAt IS NULL ORDER BY c.createdAt DESC")
+    @Query("SELECT c FROM Comment c WHERE c.user = :user AND c.deletedAt IS NULL ORDER BY c.createdAt DESC")
     Page<Comment> findByUserAndNotDeleted(@Param("user") User user, Pageable pageable);
 
     /**

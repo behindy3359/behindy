@@ -26,7 +26,7 @@
 ### 🤖 AI Server (FastAPI)
 - **Framework**: FastAPI + Python 3.11 + Pydantic
 - **LLM 통합**: Multi-Provider (OpenAI, Claude, Mock)
-- **배치 시스템**: 자동 스케줄링 + 역별 스토리 관리
+- **배치 시스템**: 자동 스케줄링 + 역별 스토리 관리(동적 생성기능은 구현계획 없음)
 - **통신**: Spring Boot와 RESTful API 연동
 
 ### 🛠️ 인프라 & 보안

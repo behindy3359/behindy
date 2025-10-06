@@ -1,23 +1,25 @@
 "use client";
 
 import React from 'react';
-import dynamic from 'next/dynamic';
-import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
-import { PostListLoadingFallback } from '@/shared/components/LoadingFallback';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PostList } from '@/features/community/components/PostList/PostList';
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout'; // 🔥 수정
 
-// Dynamic import로 SSR 비활성화
-const PostList = dynamic(
-  () => import('@/features/community/components/PostList/PostList').then(mod => ({ default: mod.PostList })),
-  {
-    ssr: false,
-    loading: () => <PostListLoadingFallback />
-  }
-);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+    },
+  },
+});
 
 export default function CommunityPage() {
   return (
-    <AppLayout>
-      <PostList />
-    </AppLayout>
+    <QueryClientProvider client={queryClient}>
+      <AppLayout>
+        <PostList />
+      </AppLayout>
+    </QueryClientProvider>
   );
 }

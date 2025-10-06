@@ -131,12 +131,10 @@ export const API_ENDPOINTS = {
     ELIGIBILITY: '/game/eligibility',
     STATUS: '/game/status',
     START: (storyId: number) => `/game/start/${storyId}`,
-    ENTER_BY_STATION: (stationName: string, lineNumber: number) =>
-      `/game/enter/station/${encodeURIComponent(stationName)}/line/${lineNumber}`,
     RESUME: '/game/resume',
     CHOICE: (optionId: number) => `/game/choice/${optionId}`,
     QUIT: '/game/quit',
-
+    
     // 관리자용
     ADMIN: {
       SESSIONS: '/game/admin/sessions',

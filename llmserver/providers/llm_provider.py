@@ -13,12 +13,6 @@ import time
 
 logger = logging.getLogger(__name__)
 
-def mask_api_key(api_key: str) -> str:
-    """API 키를 안전하게 마스킹"""
-    if not api_key or len(api_key) < 8:
-        return "***"
-    return f"{api_key[:4]}...{api_key[-4:]}"
-
 @dataclass
 class StoryPromptContext:
     """스토리 생성용 프롬프트 컨텍스트"""
@@ -48,48 +42,50 @@ class LLMProvider(ABC):
         pass
 
 class OpenAIProvider(LLMProvider):
-    """OpenAI GPT Provider with connection pooling"""
-
+    """OpenAI GPT Provider"""
+    
     def __init__(self, api_key: str, model: str = "gpt-4o-mini", max_tokens: int = 1000):
         super().__init__()
         self.api_key = api_key
         self.model = model
         self.max_tokens = max_tokens
         self.base_url = "https://api.openai.com/v1/chat/completions"
-        self._session: Optional[aiohttp.ClientSession] = None
-
-        logger.info(f"OpenAI Provider initialized: {model} (with connection pooling)")
+        
+        # 🆕 초기화 로그
+        logger.info("🔧 OpenAIProvider 초기화")
+        logger.info(f"  API 키 마스킹: {api_key[:10]}...{api_key[-5:] if len(api_key) > 15 else '짧음'}")
+        logger.info(f"  모델: {model}")
+        logger.info(f"  최대 토큰: {max_tokens}")
+        logger.info(f"  Base URL: {self.base_url}")
     
     def is_available(self) -> bool:
-        return bool(self.api_key and self.api_key != "" and aiohttp is not None)
-
-    async def _get_session(self) -> aiohttp.ClientSession:
-        """Get or create reusable aiohttp session"""
-        if self._session is None or self._session.closed:
-            connector = aiohttp.TCPConnector(
-                limit=100,  # Max concurrent connections
-                limit_per_host=30,  # Max connections per host
-                ttl_dns_cache=300  # DNS cache TTL (5 min)
-            )
-            timeout = aiohttp.ClientTimeout(total=30)
-            self._session = aiohttp.ClientSession(
-                connector=connector,
-                timeout=timeout
-            )
-            logger.debug("Created new aiohttp session with connection pooling")
-        return self._session
-
-    async def close(self):
-        """Close the session when shutting down"""
-        if self._session and not self._session.closed:
-            await self._session.close()
-            logger.debug("Closed aiohttp session")
+        available = bool(self.api_key and self.api_key != "" and aiohttp is not None)
+        logger.info(f"🔍 OpenAI Provider 사용 가능 체크: {available}")
+        logger.info(f"  API 키 존재: {bool(self.api_key)}")
+        logger.info(f"  API 키 길이: {len(self.api_key) if self.api_key else 0}")
+        logger.info(f"  aiohttp 사용 가능: {aiohttp is not None}")
+        return available
 
     async def generate_story(self, prompt: str, **kwargs) -> Dict[str, Any]:
+        # 🆕 메서드 진입 확인 로그 (최상단에)
+        logger.info("🎯 OpenAIProvider.generate_story 메서드 진입")
+        logger.info(f"  프롬프트 길이: {len(prompt)}")
+        logger.info(f"  kwargs: {kwargs}")
+        
         if not self.is_available():
+            logger.error("❌ OpenAIProvider 사용 불가")
+            logger.error(f"  API 키 존재: {bool(self.api_key)}")
+            logger.error(f"  API 키 길이: {len(self.api_key) if self.api_key else 0}")
+            logger.error(f"  aiohttp 사용 가능: {aiohttp is not None}")
             raise ValueError("OpenAI API 키가 설정되지 않았거나 aiohttp가 설치되지 않았습니다.")
-
-        logger.debug(f"OpenAI API call: model={self.model}, prompt_length={len(prompt)}")
+        
+        # 🆕 요청 전 로그
+        logger.info("🔥 OpenAI API 호출 시작")
+        logger.info(f"  모델: {self.model}")
+        logger.info(f"  최대 토큰: {self.max_tokens}")
+        logger.info(f"  프롬프트 길이: {len(prompt)}자")
+        logger.info(f"  컨텍스트: {kwargs}")
+        logger.info(f"  프롬프트 미리보기: {prompt[:300]}...")
         
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -106,60 +102,108 @@ class OpenAIProvider(LLMProvider):
             "response_format": {"type": "json_object"}
         }
         
+        logger.info(f"📤 OpenAI 요청 페이로드:")
+        logger.info(f"  모델: {payload['model']}")
+        logger.info(f"  temperature: {payload['temperature']}")
+        logger.info(f"  response_format: {payload['response_format']}")
+        logger.info(f"  Authorization 헤더: Bearer {self.api_key[:20]}...")
+        
         try:
             start_time = time.time()
-
-            session = await self._get_session()
-            async with session.post(self.base_url, headers=headers, json=payload) as response:
+            
+            logger.info("📡 aiohttp 세션 생성 및 POST 요청 시작")
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.base_url, headers=headers, json=payload, timeout=30) as response:
+                    
+                    # 🆕 응답 수신 로그
                     response_time = time.time() - start_time
-
+                    logger.info(f"📥 OpenAI API 응답 수신:")
+                    logger.info(f"  HTTP 상태: {response.status}")
+                    logger.info(f"  응답 시간: {response_time:.2f}초")
+                    logger.info(f"  응답 헤더: {dict(response.headers)}")
+                    
                     if response.status == 200:
                         result = await response.json()
-                        logger.info(f"OpenAI success: {response_time:.2f}s, tokens={result.get('usage', {})}")
-
+                        
+                        # 🆕 응답 내용 상세 로그
+                        logger.info("✅ OpenAI 응답 성공:")
+                        logger.info(f"  응답 ID: {result.get('id', 'N/A')}")
+                        logger.info(f"  생성된 시간: {result.get('created', 'N/A')}")
+                        logger.info(f"  사용된 토큰: {result.get('usage', {})}")
+                        
                         if 'choices' in result and len(result['choices']) > 0:
                             content = result["choices"][0]["message"]["content"]
+                            logger.info(f"  생성된 콘텐츠 길이: {len(content)}자")
+                            logger.info(f"  콘텐츠 미리보기: {content[:500]}...")
+                            
+                            # JSON 파싱 시도
+                            try:
+                                parsed_content = json.loads(content)
+                                logger.info(f"  JSON 파싱 성공: {list(parsed_content.keys())}")
+                            except json.JSONDecodeError as e:
+                                logger.error(f"  ❌ JSON 파싱 실패: {e}")
+                                logger.error(f"  원본 콘텐츠: {content}")
+                            
                             return self._parse_response(content, kwargs)
                         else:
-                            logger.error("OpenAI response missing choices")
+                            logger.error("❌ OpenAI 응답에 choices가 없음")
+                            logger.error(f"  전체 응답: {result}")
                             return self._fallback_response(kwargs)
-
+                            
                     else:
                         error_text = await response.text()
-                        logger.error(f"OpenAI API error [{response.status}]: {error_text[:200]}")
+                        logger.error(f"❌ OpenAI API 오류:")
+                        logger.error(f"  상태코드: {response.status}")
+                        logger.error(f"  오류 내용: {error_text}")
+                        
+                        # 401 오류 특별 처리
                         if response.status == 401:
-                            logger.error(f"Auth failed with key: {mask_api_key(self.api_key)}")
+                            logger.error("❌ 인증 실패 - API 키 문제")
+                            logger.error(f"  사용된 API 키: {self.api_key[:20]}...")
+                        
                         raise Exception(f"OpenAI API 오류: {response.status}")
-
-        except (asyncio.TimeoutError, aiohttp.ServerTimeoutError):
-            logger.error("OpenAI API timeout (30s)")
+        
+        except asyncio.TimeoutError:
+            logger.error("❌ OpenAI API 타임아웃 (30초 초과)")
             raise Exception("OpenAI API 요청 시간 초과")
         except aiohttp.ClientError as e:
-            logger.error(f"HTTP client error: {type(e).__name__} - {str(e)}")
+            logger.error(f"❌ HTTP 클라이언트 오류:")
+            logger.error(f"  오류 타입: {type(e).__name__}")
+            logger.error(f"  오류 메시지: {str(e)}")
             raise Exception(f"HTTP 클라이언트 오류: {str(e)}")
         except Exception as e:
-            logger.error(f"OpenAI API call failed: {type(e).__name__} - {str(e)}", exc_info=True)
+            logger.error(f"❌ OpenAI API 호출 실패:")
+            logger.error(f"  오류 타입: {type(e).__name__}")
+            logger.error(f"  오류 메시지: {str(e)}")
+            logger.error(f"  스택 트레이스:", exc_info=True)
             raise Exception(f"OpenAI API 호출 실패: {str(e)}")
     
     def _parse_response(self, content: str, context: Dict) -> Dict[str, Any]:
         """OpenAI 응답 파싱"""
+        logger.info("🔄 OpenAI 응답 파싱 시작")
         try:
             data = json.loads(content)
-
+            logger.info(f"✅ JSON 파싱 성공: {list(data.keys())}")
+            
             # 필수 필드 보완
             if "station_name" not in data:
                 data["station_name"] = context.get('station_name', '강남')
+                logger.info(f"  station_name 보완: {data['station_name']}")
             if "line_number" not in data:
                 data["line_number"] = context.get('line_number', 2)
-
+                logger.info(f"  line_number 보완: {data['line_number']}")
+            
+            logger.info("✅ OpenAI 응답 파싱 완료")
             return data
         except json.JSONDecodeError as e:
-            logger.error(f"JSON parse error: {str(e)}, content: {content[:200]}")
+            logger.error(f"❌ OpenAI 응답 파싱 실패: {e}")
+            logger.error(f"  원본 콘텐츠: {content}")
             return self._fallback_response(context)
     
     def _fallback_response(self, context: Dict) -> Dict[str, Any]:
         """파싱 실패시 기본 응답"""
-        logger.warning("Using fallback response")
+        logger.warning("⚠️ OpenAI Provider Fallback 응답 생성")
         return {
             "story_title": f"{context.get('station_name', '강남')}역의 모험",
             "page_content": "예상치 못한 상황이 발생했습니다. 어떻게 대처하시겠습니까?",
@@ -186,17 +230,28 @@ class ClaudeProvider(LLMProvider):
         self.model = model
         self.base_url = "https://api.anthropic.com/v1/messages"
         
-        logger.info(f"Claude Provider initialized: {model}")
+        # 🆕 초기화 로그
+        logger.info("🔧 ClaudeProvider 초기화")
+        logger.info(f"  API 키 마스킹: {api_key[:10]}...{api_key[-5:] if len(api_key) > 15 else '짧음'}")
+        logger.info(f"  모델: {model}")
     
     def is_available(self) -> bool:
-        return bool(self.api_key and self.api_key != "" and aiohttp is not None)
+        available = bool(self.api_key and self.api_key != "" and aiohttp is not None)
+        logger.info(f"🔍 Claude Provider 사용 가능 체크: {available}")
+        return available
     
     async def generate_story(self, prompt: str, **kwargs) -> Dict[str, Any]:
+        logger.info("🎯 ClaudeProvider.generate_story 메서드 진입")
+        logger.info(f"  프롬프트 길이: {len(prompt)}")
+        logger.info(f"  kwargs: {kwargs}")
+        
         if not self.is_available():
+            logger.error("❌ ClaudeProvider 사용 불가")
             raise ValueError("Claude API 키가 설정되지 않았거나 aiohttp가 설치되지 않았습니다.")
-
-        logger.debug(f"Claude API call: model={self.model}, prompt_length={len(prompt)}")
-        logger.warning("Claude API not fully implemented, using fallback")
+        
+        # Claude API 구현은 여기에...
+        # 현재는 Mock 데이터 반환
+        logger.warning("⚠️ Claude API 구현 미완성, Mock 데이터 반환")
         return self._fallback_response(kwargs)
     
     def _parse_response(self, content: str, context: Dict) -> Dict[str, Any]:
@@ -220,12 +275,12 @@ class ClaudeProvider(LLMProvider):
                 raise ValueError("JSON 형식을 찾을 수 없습니다.")
         
         except (json.JSONDecodeError, ValueError) as e:
-            logger.error(f"Claude parse error: {str(e)}, content: {content[:100]}")
+            logger.error(f"Claude 응답 파싱 실패: {content[:100]}...")
             return self._fallback_response(context)
     
     def _fallback_response(self, context: Dict) -> Dict[str, Any]:
         """파싱 실패시 기본 응답"""
-        logger.warning("Using Claude fallback response")
+        logger.warning("⚠️ Claude Provider Fallback 응답 생성")
         return {
             "story_title": f"{context.get('station_name', '강남')}역의 모험",
             "page_content": "예상치 못한 상황이 발생했습니다. 어떻게 대처하시겠습니까?",
@@ -311,54 +366,79 @@ class LLMProviderFactory:
     
     @staticmethod
     def get_provider() -> LLMProvider:
+        logger.info("🏭 LLMProviderFactory.get_provider 시작")
+        
         try:
             from config.settings import Settings
             settings = Settings()
-        except ImportError:
+            logger.info("✅ Settings 로드 성공")
+        except ImportError as e:
+            logger.warning(f"⚠️ Settings import 실패: {e}, 환경변수로 직접 읽기")
             import os
             provider_name = os.getenv("AI_PROVIDER", "mock").lower()
-
+            logger.info(f"📊 환경변수 AI_PROVIDER: {provider_name}")
+            
             if provider_name == "openai" and os.getenv("OPENAI_API_KEY"):
+                logger.info("🚀 환경변수로 OpenAI Provider 생성")
                 return OpenAIProvider(
                     api_key=os.getenv("OPENAI_API_KEY"),
                     model=os.getenv("OPENAI_MODEL", "gpt-4o-mini")
                 )
             elif provider_name == "claude" and os.getenv("CLAUDE_API_KEY"):
+                logger.info("🚀 환경변수로 Claude Provider 생성")
                 return ClaudeProvider(
                     api_key=os.getenv("CLAUDE_API_KEY"),
                     model=os.getenv("CLAUDE_MODEL", "claude-3-haiku-20240307")
                 )
             else:
-                logger.info(f"Using MockProvider (AI_PROVIDER={provider_name})")
+                logger.warning("⚠️ 환경변수로 Mock Provider 사용")
                 return MockProvider()
-
+        
         provider_name = settings.AI_PROVIDER.lower()
-
+        logger.info(f"📊 Settings AI_PROVIDER: {provider_name}")
+        
+        # 실제 API Provider 우선 시도
         if provider_name == "openai" and settings.OPENAI_API_KEY:
+            logger.info(f"✅ OpenAI Provider phase1, apikey : {settings.OPENAI_API_KEY[:15]}")
+            logger.info(f"🔑 API 키 전체 길이: {len(settings.OPENAI_API_KEY)}")
+            
             provider = OpenAIProvider(
                 api_key=settings.OPENAI_API_KEY,
                 model=settings.OPENAI_MODEL,
                 max_tokens=settings.OPENAI_MAX_TOKENS
             )
-
+            
             if provider.is_available():
-                logger.info(f"OpenAI Provider active: {settings.OPENAI_MODEL}")
+                logger.info(f"✅ OpenAI Provider 활성화: {settings.OPENAI_MODEL}")
+                logger.info("🎯 OpenAI Provider 반환")
                 return provider
             else:
-                logger.error("OpenAI Provider unavailable despite API key")
-
+                # 🆕 사용 불가 시 로그
+                logger.error("❌ OpenAI Provider 생성했으나 사용 불가")
+                logger.error(f"  API 키 상태: {bool(settings.OPENAI_API_KEY)}")
+                logger.error(f"  API 키 길이: {len(settings.OPENAI_API_KEY)}")
+                logger.error(f"  aiohttp 상태: {aiohttp is not None}")
+        
         elif provider_name == "claude" and settings.CLAUDE_API_KEY:
+            logger.info(f"✅ Claude Provider 시도")
             provider = ClaudeProvider(
                 api_key=settings.CLAUDE_API_KEY,
                 model=settings.CLAUDE_MODEL
             )
             if provider.is_available():
-                logger.info(f"Claude Provider active: {settings.CLAUDE_MODEL}")
+                logger.info(f"✅ Claude Provider 활성화: {settings.CLAUDE_MODEL}")
                 return provider
             else:
-                logger.error("Claude Provider unavailable despite API key")
-
-        logger.warning(f"Falling back to MockProvider (requested: {provider_name})")
+                logger.error("❌ Claude Provider 생성했으나 사용 불가")
+        
+        # 모든 실제 Provider가 실패하면 Mock 사용
+        logger.warning(f"⚠️ 실제 LLM Provider 사용 불가, Mock Provider로 전환 (요청: {provider_name})")
+        logger.warning("⚠️ 이 지점에서 Mock 데이터 사용이 결정됨")
+        logger.warning(f"⚠️ Mock Provider 반환 이유:")
+        logger.warning(f"  - AI_PROVIDER: {provider_name}")
+        logger.warning(f"  - OpenAI 키 존재: {bool(settings.OPENAI_API_KEY) if 'settings' in locals() else 'N/A'}")
+        logger.warning(f"  - Claude 키 존재: {bool(settings.CLAUDE_API_KEY) if 'settings' in locals() else 'N/A'}")
+        
         return MockProvider()
     
     @staticmethod

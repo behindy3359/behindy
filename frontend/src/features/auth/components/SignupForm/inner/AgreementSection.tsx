@@ -14,11 +14,10 @@ import {
   ExternalLinkIcon,
   AgreementDescription,
   OptionalText,
+  ErrorText,
   RequiredNotice
 } from '../styles';
-
 import type { AgreementSectionProps } from '../../../types/types';
-import { ErrorText } from '@/shared/styles';
 
 export const AgreementSection: React.FC<AgreementSectionProps> = ({
   agreements,
@@ -76,7 +75,11 @@ export const AgreementSection: React.FC<AgreementSectionProps> = ({
                 <span>에 동의합니다</span>
               </AgreementText>
               {errors.agreeToTerms && (
-                <ErrorText>
+                <ErrorText
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  transition={{ duration: 0.2 }}
+                >
                   {errors.agreeToTerms}
                 </ErrorText>
               )}
@@ -115,7 +118,11 @@ export const AgreementSection: React.FC<AgreementSectionProps> = ({
                 <span>에 동의합니다</span>
               </AgreementText>
               {errors.agreeToPrivacy && (
-                <ErrorText>
+                <ErrorText
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  transition={{ duration: 0.2 }}
+                >
                   {errors.agreeToPrivacy}
                 </ErrorText>
               )}

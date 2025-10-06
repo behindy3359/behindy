@@ -12,24 +12,14 @@ import java.time.LocalDateTime;
 @Entity
 @Getter@Setter @Builder @NoArgsConstructor@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(
-    name="NOW",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uk_now_character",
-        columnNames = "char_id"
-    ),
-    indexes = {
-        @Index(name = "idx_now_character", columnList = "char_id"),
-        @Index(name = "idx_now_page", columnList = "page_id")
-    }
-)
+@Table(name="NOW")
 public class Now {
     @Id@GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "now_id")
     private Long nowId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "char_id", nullable = false)
+    @JoinColumn(name = "char_id")
     private Character character;
 
     @ManyToOne(fetch = FetchType.LAZY)

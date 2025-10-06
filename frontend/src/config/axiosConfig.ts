@@ -1,9 +1,9 @@
+// 🧹 정리된 Axios 설정 - 개발 로그 제거
 // frontend/src/config/axiosConfig.ts
 
 import axios from 'axios';
 import { env } from '@/config/env';
 import { SECURITY_CONFIG, validateSecurityConfig } from '@/shared/utils/common/constants';
-import { logger } from '@/shared/utils/common/logger';
 
 // 보안 설정 검증
 if (typeof window !== 'undefined') {
@@ -109,20 +109,10 @@ const createApiClient = (baseURL: string) => {
         }
       }
 
-      // CSRF 토큰 추가 (상태 변경 요청에만)
-      if (config.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(config.method.toUpperCase())) {
-        if (typeof window !== 'undefined') {
-          const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-          if (csrfToken && config.headers) {
-            config.headers['X-CSRF-Token'] = csrfToken;
-          }
-        }
-      }
-
       return config;
     },
     (error) => {
-      logger.error('[API] Request Error', error);
+      console.error('❌ [API] Request Error:', error); // ✅ 유지
       return Promise.reject(error);
     }
   );
@@ -178,27 +168,27 @@ const createApiClient = (baseURL: string) => {
           };
           
           return client(retryConfig as unknown as Parameters<typeof client>[0]);
-
+          
         } catch (refreshError) {
-          logger.error('[API] Token refresh failed', refreshError);
-
+          console.error('❌ [API] Token refresh failed:', refreshError); // ✅ 유지
+          
           // 토큰 갱신 실패 시 강제 로그아웃 처리
           TokenManager.clearAllTokens();
-
+          
           try {
-            await axios.post(`${env.API_URL}/auth/logout`, {}, {
+            await axios.post(`${env.API_URL}/auth/logout`, {}, { 
               withCredentials: true,
               timeout: 3000
             });
           } catch (logoutError) {
-            logger.warn('[API] Logout API failed (ignored)', { error: logoutError });
+            console.warn('⚠️ [API] Logout API failed (ignored):', logoutError); // ✅ 유지
           }
-
+          
           try {
             const { useAuthStore } = await import('@/shared/store/authStore');
             await useAuthStore.getState().logout();
           } catch (storeError) {
-            logger.warn('[API] Auth store cleanup failed', { error: storeError });
+            console.warn('⚠️ [API] Auth store cleanup failed:', storeError); // ✅ 유지
           }
           
           if (typeof window !== 'undefined') {

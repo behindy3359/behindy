@@ -654,7 +654,7 @@ export const StoryContent = styled.div`
 export const StoryText = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
   line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
-  color: ${({ theme }) => theme.colors.text.inverse};
+  color: ${({ theme }) => theme.colors.text.primary};
   white-space: pre-wrap;
   word-break: keep-all;
   margin: 0;

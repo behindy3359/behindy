@@ -1,23 +1,18 @@
 "use client";
 
 import React from 'react';
-import dynamic from 'next/dynamic';
-import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
-import { EditorLoadingFallback } from '@/shared/components/LoadingFallback';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PostForm } from '@/features/community/components/PostForm/PostForm';
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout'; // 🔥 수정
 
-// Dynamic import로 SSR 비활성화
-const PostForm = dynamic(
-  () => import('@/features/community/components/PostForm/PostForm').then(mod => ({ default: mod.PostForm })),
-  {
-    ssr: false,
-    loading: () => <EditorLoadingFallback />
-  }
-);
+const queryClient = new QueryClient();
 
 export default function WritePostPage() {
   return (
-    <AppLayout>
-      <PostForm mode="create" />
-    </AppLayout>
+    <QueryClientProvider client={queryClient}>
+      <AppLayout>
+        <PostForm mode="create" />
+      </AppLayout>
+    </QueryClientProvider>
   );
 }

@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -23,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret}")
+    @Value("${JWT_SECRET}")
     private String secretKey;
 
     @Value("${JWT_ACCESS_VALIDITY:900000}")
@@ -34,40 +33,10 @@ public class JwtTokenProvider {
 
     private Key key;
     private final SecureRandom secureRandom = new SecureRandom();
-    private static final int MIN_HS512_KEY_BYTES = 64;
 
     @PostConstruct
     public void init() {
-        if (secretKey == null || secretKey.isBlank()) {
-            throw new IllegalStateException("JWT secret key must be provided");
-        }
-
-        byte[] keyBytes = resolveKeyBytes(secretKey);
-
-        if (keyBytes.length < MIN_HS512_KEY_BYTES) {
-            throw new IllegalStateException("JWT secret key must be at least " + MIN_HS512_KEY_BYTES + " bytes after decoding");
-        }
-
-        this.key = Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    private byte[] resolveKeyBytes(String candidate) {
-        byte[] rawBytes = candidate.getBytes(StandardCharsets.UTF_8);
-        byte[] decodedBytes = decodeBase64(candidate);
-
-        if (decodedBytes.length >= MIN_HS512_KEY_BYTES) {
-            return decodedBytes;
-        }
-
-        return rawBytes;
-    }
-
-    private byte[] decodeBase64(String candidate) {
-        try {
-            return Base64.getDecoder().decode(candidate);
-        } catch (IllegalArgumentException ignored) {
-            return new byte[0];
-        }
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
     /**

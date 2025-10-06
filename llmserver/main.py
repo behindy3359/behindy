@@ -5,132 +5,64 @@ from typing import Optional, List, Dict, Any
 import os
 import logging
 from datetime import datetime
-import uuid
-from contextvars import ContextVar
 
 from providers.llm_provider import LLMProviderFactory
 from services.story_service import StoryService
 from utils.rate_limiter import RateLimiter
-from utils.api_auth import verify_internal_api_key, is_internal_request
 
 from models.batch_models import BatchStoryRequest, BatchStoryResponse
 from services.batch_story_service import BatchStoryService
 
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
-if not INTERNAL_API_KEY:
-    raise RuntimeError("INTERNAL_API_KEY 환경변수가 설정되지 않았습니다.")
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# 구조화 로깅 설정
-USE_JSON_LOGGING = os.getenv("USE_JSON_LOGGING", "false").lower() == "true"
-
-if USE_JSON_LOGGING:
-    from utils.json_logger import setup_json_logging
-    logger = setup_json_logging("behindy-ai-server", logging.INFO)
-    logger.info("JSON 구조화 로깅 활성화")
-else:
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    logger = logging.getLogger(__name__)
-
-# Request ID 컨텍스트 변수
-request_id_var = ContextVar("request_id", default=None)
-
+# FastAPI 앱
 app = FastAPI(
     title="Behindy AI Server",
-    description="스토리 생성 서버",
+    description="지하철 스토리 생성 서비스 (단일 엔드포인트)",
     version="3.0.0"
 )
 
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "X-Internal-API-Key"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-logger.info(" FastAPI 서비스 초기화")
+# 서비스 초기화
+logger.info("🚀 FastAPI 서비스 초기화")
 
-logger.info(" BatchStoryService 초기화 중...")
+logger.info("📚 BatchStoryService 초기화 중...")
 batch_story_service = BatchStoryService()
-logger.info(f" BatchStoryService 초기화 완료: {batch_story_service}")
+logger.info(f"✅ BatchStoryService 초기화 완료: {batch_story_service}")
 
-logger.info(" RateLimiter 초기화 중...")
+logger.info("🚦 RateLimiter 초기화 중...")
 rate_limiter = RateLimiter()
-logger.info(f" RateLimiter 초기화 완료: {rate_limiter}")
+logger.info(f"✅ RateLimiter 초기화 완료: {rate_limiter}")
 
-# Provider 전역 인스턴스 (세션 재사용용)
-_provider_instance = None
-
-def get_provider_instance():
-    """Get singleton provider instance for session reuse"""
-    global _provider_instance
-    if _provider_instance is None:
-        _provider_instance = LLMProviderFactory.get_provider()
-        logger.info(f"Created provider instance: {_provider_instance.get_provider_name()}")
-    return _provider_instance
-
-MAX_REQUEST_SIZE = int(os.getenv("MAX_REQUEST_SIZE", "1048576"))  # 1MB
-
-@app.middleware("http")
-async def add_request_id(request: Request, call_next):
-    """Request ID 추적 미들웨어"""
-    request_id = str(uuid.uuid4())
-    request_id_var.set(request_id)
-
-    response = await call_next(request)
-    response.headers["X-Request-ID"] = request_id
-
-    return response
-
-@app.middleware("http")
-async def limit_request_size(request: Request, call_next):
-    content_length = request.headers.get("content-length")
-
-    if content_length and int(content_length) > MAX_REQUEST_SIZE:
-        logger.warning(f" 요청 크기 초과: {content_length} > {MAX_REQUEST_SIZE}")
-        return {"error": "요청 크기가 너무 큽니다.", "status_code": 413}
-
-    response = await call_next(request)
-    return response
-
+# FastAPI 미들웨어로 모든 요청 로그
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    request_id = request_id_var.get()
-    logger.info(f"[{request_id}] 들어오는 요청: {request.method} {request.url}")
-    logger.info(f"[{request_id}] 클라이언트 IP: {request.client.host}")
-    logger.info(f"[{request_id}] 헤더: {dict(request.headers)}")
-
+    logger.info(f"🌐 들어오는 요청: {request.method} {request.url}")
+    logger.info(f"🔗 클라이언트 IP: {request.client.host}")
+    logger.info(f"📋 헤더: {dict(request.headers)}")
+    
     response = await call_next(request)
-
-    logger.info(f"[{request_id}] 응답 상태: {response.status_code}")
+    
+    logger.info(f"📤 응답 상태: {response.status_code}")
     return response
 
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize provider on startup"""
-    logger.info("Starting up AI server...")
-    provider = get_provider_instance()
-    logger.info(f"Provider ready: {provider.get_provider_name()}")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    logger.info("Shutting down AI server...")
-    global _provider_instance
-    if _provider_instance and hasattr(_provider_instance, 'close'):
-        await _provider_instance.close()
-        logger.info("Provider session closed")
+# ===== 헬스체크 및 상태 =====
 
 @app.get("/")
 async def root():
     """기본 헬스 체크"""
-    provider = get_provider_instance()
-
+    provider = LLMProviderFactory.get_provider()
+    
     return {
         "message": "Behindy AI Server (Simplified)",
         "status": "healthy",
@@ -142,49 +74,18 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Enhanced health check with detailed system status"""
-    try:
-        provider = get_provider_instance()
-        available_providers = LLMProviderFactory.get_available_providers()
-
-        # Check provider connection health
-        provider_health = "healthy"
-        try:
-            if hasattr(provider, '_session') and provider._session:
-                if provider._session.closed:
-                    provider_health = "session_closed"
-                    logger.warning("Provider session is closed, will recreate on next request")
-        except Exception as e:
-            logger.error(f"Error checking provider health: {e}")
-            provider_health = "unknown"
-
-        health_status = {
-            "status": "healthy",
-            "current_provider": provider.get_provider_name(),
-            "provider_health": provider_health,
-            "available_providers": available_providers,
-            "connection_pooling": {
-                "enabled": hasattr(provider, '_session'),
-                "session_active": hasattr(provider, '_session') and provider._session and not provider._session.closed
-            },
-            "rate_limiter": {
-                "total_requests": rate_limiter.get_total_requests(),
-                "status": "active"
-            },
-            "timestamp": datetime.now().isoformat(),
-            "uptime_check": "ok",
-            "version": "3.0.0"
-        }
-
-        return health_status
-
-    except Exception as e:
-        logger.error(f"Health check failed: {e}", exc_info=True)
-        return {
-            "status": "unhealthy",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }
+    """상세 헬스 체크"""
+    provider = LLMProviderFactory.get_provider()
+    available_providers = LLMProviderFactory.get_available_providers()
+    
+    return {
+        "status": "healthy",
+        "current_provider": provider.get_provider_name(),
+        "available_providers": available_providers,
+        "total_requests": rate_limiter.get_total_requests(),
+        "timestamp": datetime.now().isoformat(),
+        "simplified_mode": True
+    }
 
 @app.get("/providers")
 async def get_providers_status():
@@ -204,40 +105,81 @@ async def get_providers_status():
 
 @app.post("/generate-complete-story", response_model=BatchStoryResponse)
 async def generate_complete_story(request: BatchStoryRequest, http_request: Request):
+    """
+    🆕 통합 스토리 생성 엔드포인트
+    - 일반 스토리 생성 (Spring Boot AIStoryService 호출)
+    - 배치 스토리 생성 (Spring Boot AIStoryScheduler 호출)
+    - 모든 스토리 생성 요청을 이 엔드포인트로 처리
+    """
     try:
+        # 🆕 요청 진입 로그
+        logger.info("=" * 80)
+        logger.info("🎬 FastAPI /generate-complete-story 엔드포인트 진입")
+        logger.info(f"📋 요청 데이터:")
+        logger.info(f"  station_name: {request.station_name}")
+        logger.info(f"  line_number: {request.line_number}")
+        logger.info(f"  character_health: {request.character_health}")
+        logger.info(f"  character_sanity: {request.character_sanity}")
+        logger.info(f"  story_type: {request.story_type}")
+        logger.info(f"🌐 HTTP 요청 정보:")
+        logger.info(f"  클라이언트 IP: {http_request.client.host}")
+        logger.info(f"  User-Agent: {http_request.headers.get('user-agent', 'N/A')}")
+        logger.info(f"  Content-Type: {http_request.headers.get('content-type', 'N/A')}")
+        
+        # 내부 API 키 검증 (배치 요청인 경우)
         api_key = http_request.headers.get("X-Internal-API-Key")
-        if api_key == INTERNAL_API_KEY:
-            logger.info(" 내부 API 키 인증 성공")
+        if api_key == "behindy-internal-2025-secret-key":
+            logger.info("🔑 내부 API 키 인증 성공 (배치 모드)")
             request_mode = "BATCH"
         else:
-            logger.info(" 일반 API 호출")
+            logger.info("🔓 일반 API 호출 (공개 모드)")
             request_mode = "PUBLIC"
         
-        request_id = request_id_var.get()
-        logger.info(f"[{request_id}] " + "=" * 40)
-
+        logger.info(f"📊 요청 모드: {request_mode}")
+        logger.info("=" * 80)
+        
+        # Rate Limiting (공개 모드만 적용)
         if request_mode == "PUBLIC":
             client_ip = http_request.client.host
-            logger.info(f"[{request_id}] Rate Limiting 체크 시작 (IP: {client_ip})")
+            logger.info(f"🚦 Rate Limiting 체크 시작 (IP: {client_ip})")
             rate_limiter.check_rate_limit(client_ip)
-            logger.info(f"[{request_id}] Rate Limiting 통과")
+            logger.info("✅ Rate Limiting 통과")
         else:
-            logger.info(f"[{request_id}] Rate Limiting 건너뜀")
-
+            logger.info("🚦 Rate Limiting 건너뜀 (배치 모드)")
+        
+        logger.info(f"🤖 현재 Provider: {LLMProviderFactory.get_provider().get_provider_name()}")
+        
+        # 🆕 BatchStoryService 호출 직전 로그
+        logger.info("🎬 BatchStoryService.generate_complete_story 호출 시작")
+        logger.info(f"  BatchStoryService 인스턴스: {batch_story_service}")
+        logger.info(f"  BatchStoryService 타입: {type(batch_story_service)}")
+        
+        # 완전한 스토리 생성
         response = await batch_story_service.generate_complete_story(request)
-
-        logger.info(f"[{request_id}] 스토리 생성 완료: {response.story_title}")
-        logger.info(f"[{request_id}] " + "=" * 40)
+        
+        # 🆕 BatchStoryService 호출 완료 로그
+        logger.info("✅ BatchStoryService.generate_complete_story 호출 완료")
+        logger.info(f"📤 응답 데이터:")
+        logger.info(f"  story_title: {response.story_title}")
+        logger.info(f"  theme: {response.theme}")
+        logger.info(f"  pages_count: {len(response.pages)}")
+        logger.info(f"  station_name: {response.station_name}")
+        logger.info(f"  line_number: {response.line_number}")
+        logger.info(f"  difficulty: {response.difficulty}")
+        logger.info(f"  estimated_length: {response.estimated_length}")
+        
+        logger.info(f"🎉 스토리 생성 완료: {response.story_title}")
+        logger.info("=" * 80)
         
         return response
         
     except HTTPException as e:
-        logger.error(f" HTTPException 발생:")
+        logger.error(f"❌ HTTPException 발생:")
         logger.error(f"  상태코드: {e.status_code}")
         logger.error(f"  상세 내용: {e.detail}")
         raise  # Rate limit 오류는 그대로 전달
     except Exception as e:
-        logger.error(f" 스토리 생성 실패:")
+        logger.error(f"❌ 스토리 생성 실패:")
         logger.error(f"  오류 타입: {type(e).__name__}")
         logger.error(f"  오류 메시지: {str(e)}")
         logger.error(f"  스택 트레이스:", exc_info=True)
@@ -282,10 +224,10 @@ async def validate_story_structure(validation_request: Dict[str, Any], http_requ
     try:
         # 내부 API 키 검증
         api_key = http_request.headers.get("X-Internal-API-Key")
-        if api_key != INTERNAL_API_KEY:
+        if api_key != "behindy-internal-2025-secret-key":
             raise HTTPException(status_code=403, detail="Unauthorized internal API access")
         
-        logger.info("스토리 구조 검증 요청")
+        logger.info("🔍 스토리 구조 검증 요청")
         
         validation_result = await batch_story_service.validate_story_structure(
             validation_request.get("story_data", {})
@@ -296,8 +238,8 @@ async def validate_story_structure(validation_request: Dict[str, Any], http_requ
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"구조 검증 실패: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="스토리 구조 검증 실패")
+        logger.error(f"구조 검증 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"검증 중 오류: {str(e)}")
 
 @app.get("/batch/system-status")
 async def get_batch_system_status(http_request: Request):
@@ -305,7 +247,7 @@ async def get_batch_system_status(http_request: Request):
     try:
         # 내부 API 키 확인 (선택적)
         api_key = http_request.headers.get("X-Internal-API-Key")
-        is_internal = api_key == INTERNAL_API_KEY
+        is_internal = api_key == "behindy-internal-2025-secret-key"
         
         provider = LLMProviderFactory.get_provider()
         available_providers = LLMProviderFactory.get_available_providers()
@@ -332,8 +274,8 @@ async def get_batch_system_status(http_request: Request):
         return status
         
     except Exception as e:
-        logger.error(f"배치 시스템 상태 조회 실패: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="시스템 상태 조회 실패")
+        logger.error(f"배치 시스템 상태 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"상태 조회 중 오류: {str(e)}")
 
 # ===== 테스트 API =====
 
@@ -343,7 +285,7 @@ async def test_provider(test_request: Dict[str, Any]):
     try:
         provider = LLMProviderFactory.get_provider()
         
-        logger.info(" Provider 테스트 시작")
+        logger.info("🧪 Provider 테스트 시작")
         logger.info(f"  현재 Provider: {provider.get_provider_name()}")
         logger.info(f"  테스트 요청: {test_request}")
         
@@ -431,14 +373,17 @@ if __name__ == "__main__":
         available = LLMProviderFactory.get_available_providers()
         
         logger.info("=" * 60)
-        logger.info(" Behindy AI Server 시작 (Simplified)")
-        logger.info(f" 현재 Provider: {provider.get_provider_name()}")
-        logger.info(f" 사용 가능한 Providers: {available}")
-        logger.info(" 활성화된 엔드포인트:")
+        logger.info("🚀 Behindy AI Server 시작 (Simplified)")
+        logger.info(f"📡 현재 Provider: {provider.get_provider_name()}")
+        logger.info(f"🔧 사용 가능한 Providers: {available}")
+        logger.info("🎯 활성화된 엔드포인트:")
         logger.info("  - POST /generate-complete-story (통합 스토리 생성)")
         logger.info("  - GET  /health (헬스체크)")
         logger.info("  - GET  /providers (Provider 상태)")
         logger.info("  - GET  /batch/system-status (시스템 상태)")
+        logger.info("🗑️  제거된 엔드포인트:")
+        logger.info("  - POST /generate-story (삭제됨)")
+        logger.info("  - POST /continue-story (삭제됨)")
         logger.info("=" * 60)
         
     except Exception as e:

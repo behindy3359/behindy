@@ -149,6 +149,10 @@ export const usePostForm = ({
       console.log('1️⃣ 제출 데이터:', data);
       console.log('2️⃣ 현재 사용자:', user);
       console.log('3️⃣ 인증 상태:', isAuthenticated());
+      console.log('4️⃣ 토큰 상태:', {
+        accessToken: !!localStorage.getItem('behindy_access_token'),
+        refreshToken: !!localStorage.getItem('behindy_refresh_token')
+      });
       
       setSubmitError('');
       

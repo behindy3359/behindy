@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
+import { FlexContainer, BaseCard } from './containers';
 
 // ========================================
 // 1. 통합 애니메이션 키프레임
@@ -93,17 +95,20 @@ interface CommonActionGroupProps {
   $responsive?: boolean;
 }
 
+interface CommonStatItemProps {
+  $variant?: 'default' | 'card' | 'inline';
+}
 
 // ========================================
 // 3. 헤더 컴포넌트들
 // ========================================
 
 // 기본 섹션 헤더
-export const CommonSectionHeader = styled.div<CommonSectionHeaderProps>`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+export const CommonSectionHeader = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})<CommonSectionHeaderProps>`
   padding: ${({ theme }) => theme.spacing[6]};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
   
@@ -244,12 +249,11 @@ export const CommonCardHeader = styled.div<CommonCardHeaderProps>`
   }}
 `;
 
-export const CommonCardFooter = styled.div<CommonCardFooterProps>`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-
+export const CommonCardFooter = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $justify: 'between' as const,
+  $align: 'center' as const,
+})<CommonCardFooterProps>`
   ${({ $padding = 'md', theme }) => {
     switch ($padding) {
       case 'sm':
@@ -539,12 +543,11 @@ export const CommonTextSkeleton = styled.div`
 // 8. 액션 그룹
 // ========================================
 
-export const CommonActionGroup = styled.div<CommonActionGroupProps>`
-  display: flex;
-  flex-direction: row;
-  gap: ${({ theme }) => theme.spacing[3]};
-  align-items: center;
-
+export const CommonActionGroup = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $gap: 3 as const,
+  $align: 'center' as const,
+})<CommonActionGroupProps>`
   ${({ $justify = 'end' }) => {
     switch ($justify) {
       case 'start': return 'justify-content: flex-start;';
@@ -569,4 +572,62 @@ export const CommonActionGroup = styled.div<CommonActionGroupProps>`
 // ========================================
 // 9. 통계 표시 컴포넌트
 // ========================================
-// CommonStatItem은 common-animated.ts로 이동했습니다 (framer-motion 사용)
+
+export const CommonStatItem = styled(motion.div)<CommonStatItemProps>`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  
+  ${({ $variant, theme }) => {
+    switch ($variant) {
+      case 'card':
+        return `
+          padding: ${theme.spacing[4]};
+          background: ${theme.colors.background.primary};
+          border-radius: ${theme.borderRadius.lg};
+          border: 1px solid ${theme.colors.border.light};
+          box-shadow: ${theme.shadows.card};
+        `;
+      case 'inline':
+        return `
+          padding: ${theme.spacing[2]} ${theme.spacing[3]};
+          background: ${theme.colors.background.secondary};
+          border-radius: ${theme.borderRadius.md};
+        `;
+      default:
+        return `
+          padding: ${theme.spacing[3]} ${theme.spacing[4]};
+          background: ${theme.colors.background.primary};
+          border-radius: ${theme.borderRadius.lg};
+          border: 1px solid ${theme.colors.border.light};
+        `;
+    }
+  }}
+  
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: ${({ theme }) => theme.borderRadius.md};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
+    color: ${({ theme }) => theme.colors.text.inverse};
+  }
+  
+  .stat-content {
+    .stat-number {
+      font-size: ${({ theme }) => theme.typography.fontSize.lg};
+      font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+      color: ${({ theme }) => theme.colors.text.primary};
+      line-height: 1;
+      margin-bottom: ${({ theme }) => theme.spacing[1]};
+    }
+    
+    .stat-label {
+      font-size: ${({ theme }) => theme.typography.fontSize.xs};
+      color: ${({ theme }) => theme.colors.text.secondary};
+      font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+    }
+  }
+`;

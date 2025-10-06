@@ -2,8 +2,6 @@ package com.example.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -13,17 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter@Setter @Builder@NoArgsConstructor@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(
-    name = "COMMENT",
-    indexes = {
-        @Index(name = "idx_comment_post_id", columnList = "post_id"),
-        @Index(name = "idx_comment_user_id", columnList = "user_id"),
-        @Index(name = "idx_comment_deleted_at", columnList = "deleted_at"),
-        @Index(name = "idx_comment_created_at", columnList = "created_at")
-    }
-)
-@Where(clause = "deleted_at IS NULL")
-@SQLDelete(sql = "UPDATE COMMENT SET deleted_at = NOW() WHERE cmt_id = ?")
+@Table(name = "COMMENT") // comment -> cmt 로 축약
 public class Comment {
     // 서비스영역
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,11 +19,11 @@ public class Comment {
     private Long cmtId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "post_id")
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @Column(name="cmt_contents",columnDefinition = "TEXT")

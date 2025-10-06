@@ -149,6 +149,3 @@ export const formatters = {
   getUserInitial: userUtils.getInitial,
   createPostPreview: textUtils.createPreview,
 };
-
-// 로거 유틸리티 export
-export { logger } from './logger';

@@ -1,9 +1,8 @@
-import type { Metadata, Viewport } from 'next'
-import '@/shared/styles/globalTheme.css';
-import { AppShell } from '@/shared/providers/AppShell';
-import StyledComponentsRegistry from '@/shared/lib/registry';
 
-export const dynamic = 'force-dynamic';
+import { AuthGuard } from '@/features/auth/components/AuthGuard/AuthGuard';
+import type { Metadata } from 'next'
+import { ThemeProvider } from '@/shared/providers/ThemeProvider';
+import '@/shared/styles/globalTheme.css';
 
 export const metadata: Metadata = {
   title: {
@@ -32,28 +31,28 @@ export const metadata: Metadata = {
     title: 'Behindy',
     description: '포트폴리오용 페이지',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
 }
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-}
-
-export default function RootLayout({
-  children
-}: {
-  children: React.ReactNode
+export default function RootLayout({ 
+  children 
+}: { 
+  children: React.ReactNode 
 }) {
   return (
     <html lang="ko">
       <body>
-        <StyledComponentsRegistry>
-          <AppShell>
+        <ThemeProvider>
+          <AuthGuard>
             {children}
-          </AppShell>
-        </StyledComponentsRegistry>
+          </AuthGuard>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+

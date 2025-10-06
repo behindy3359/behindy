@@ -119,9 +119,7 @@ public class GameController {
             @PathVariable String stationName,
             @PathVariable Integer lineNumber) {
 
-        log.info("========================================");
-        log.info("🚇 [API 요청 진입] POST /api/game/enter/station/{}/line/{}", stationName, lineNumber);
-        log.info("========================================");
+        log.info("🚇 역 기반 게임 진입 요청: station={}, line={}", stationName, lineNumber);
 
         try {
             GameEnterResponse response = gameService.enterGameByStation(stationName, lineNumber);
@@ -180,9 +178,7 @@ public class GameController {
     @PostMapping("/choice/{optionId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ChoiceResultResponse> makeChoice(@PathVariable Long optionId) {
-        log.info("========================================");
-        log.info("🎯 [API 요청 진입] POST /api/game/choice/{}", optionId);
-        log.info("========================================");
+        log.info("🎯 선택지 선택 요청: optionId={}", optionId);
 
         try {
             ChoiceResultResponse response = gameService.makeChoice(optionId);

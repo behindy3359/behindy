@@ -41,6 +41,7 @@ export const SignupPrompt = styled(motion.div)`
   }
 `;
 
+// OptionsContainer - CommonActionGroup 활용
 export const OptionsContainer = styled(CommonActionGroup).attrs({
   $justify: 'between' as const,
 })`

@@ -12,16 +12,16 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
     /**
-     * 삭제되지 않은 모든 게시글 조회 (N+1 문제 해결)
-     * JOIN FETCH로 user 정보를 함께 로드하여 추가 쿼리 방지
+     * 삭제되지 않은 모든 게시글 조회
+     * ✅ 이미 @Query 사용 - 그대로 유지
      */
-    @Query("SELECT DISTINCT p FROM Post p JOIN FETCH p.user WHERE p.deletedAt IS NULL ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL")
     Page<Post> findAllActive(Pageable pageable);
 
     /**
-     * 특정 사용자의 게시글 조회 (N+1 문제 해결)
-     * JOIN FETCH로 user 정보를 함께 로드
+     * 특정 사용자의 게시글 조회
+     * ✅ @Query로 변경
      */
-    @Query("SELECT DISTINCT p FROM Post p JOIN FETCH p.user WHERE p.user = :user AND p.deletedAt IS NULL ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.deletedAt IS NULL")
     Page<Post> findByUserAndDeletedAtIsNull(@Param("user") User user, Pageable pageable);
 }

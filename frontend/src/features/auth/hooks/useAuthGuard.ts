@@ -3,8 +3,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/shared/store/authStore';
 import { requiresAuth, isPublicRoute } from '@/shared/utils/navigation/navigationUtils';
 import { TokenManager } from '@/config/axiosConfig';
-import { env } from '@/config/env';
-import { logger } from '@/shared/utils/common/logger';
 
 export interface UseAuthGuardReturn {
   isLoading: boolean;
@@ -27,43 +25,38 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
   // 서버 상태 검증
   const validateServerSession = useCallback(async (): Promise<boolean> => {
     try {
-      logger.debug('[AuthGuard] Validating server session');
-
-      const accessToken = TokenManager.getAccessToken();
-      const headers: Record<string, string> = {};
-
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
-      }
-
-      const response = await fetch(`${env.API_URL}/auth/me`, {
+      console.log('🔍 [AuthGuard] 서버 세션 상태 검증 시작');
+      
+      const response = await fetch('/api/auth/me', {
         credentials: 'include',
-        headers,
+        headers: {
+          'Authorization': `Bearer ${TokenManager.getAccessToken()}`
+        }
       });
 
       if (response.ok) {
-        logger.debug('[AuthGuard] Server session valid');
+        console.log('✅ [AuthGuard] 서버 세션 유효');
         return true;
       } else {
-        logger.warn('[AuthGuard] Server session invalid', { status: response.status });
+        console.warn('⚠️ [AuthGuard] 서버 세션 무효:', response.status);
         return false;
       }
     } catch (error) {
-      logger.error('[AuthGuard] Server session validation failed', error);
+      console.error('❌ [AuthGuard] 서버 세션 검증 실패:', error);
       return false;
     }
   }, []);
 
   // 클라이언트 상태 정리
   const cleanupClientState = useCallback(async () => {
-    logger.debug('[AuthGuard] Cleaning up client state');
-
+    console.log('🧹 [AuthGuard] 클라이언트 상태 정리 시작');
+    
     try {
       await logout();
       TokenManager.clearAllTokens();
-      logger.debug('[AuthGuard] Client state cleanup completed');
+      console.log('✅ [AuthGuard] 클라이언트 상태 정리 완료');
     } catch (error) {
-      logger.error('[AuthGuard] Client state cleanup failed', error);
+      console.error('❌ [AuthGuard] 클라이언트 상태 정리 실패:', error);
     }
   }, [logout]);
 
@@ -71,10 +64,8 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
   useEffect(() => {
     if (!isHydrated) return;
 
-    let cancelled = false;
-
     const initializeAuth = async () => {
-      logger.debug('[AuthGuard] Initializing auth', {
+      console.log('🔍 AuthGuard 초기화 시작:', {
         pathname,
         status,
         hasToken: !!TokenManager.getAccessToken(),
@@ -84,40 +75,35 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
 
       // 1. 퍼블릭 라우트는 즉시 허용
       if (isPublicRoute(pathname)) {
-        if (cancelled) return;
-        logger.debug('[AuthGuard] Public route - access granted', { pathname });
+        console.log('✅ 퍼블릭 라우트 - 접근 허용:', pathname);
         setIsLoading(false);
         return;
       }
 
       // 2. 보호된 라우트 접근 체크
       if (requiresAuth(pathname)) {
-        logger.debug('[AuthGuard] Protected route - checking auth', { pathname });
-
+        console.log('🔐 보호된 라우트 - 인증 확인 필요:', pathname);
+        
         const hasClientToken = !!TokenManager.getAccessToken();
         const hasClientAuth = isAuthenticated();
-
+        
         if (!hasClientToken || !hasClientAuth) {
-          if (cancelled) return;
-          logger.warn('[AuthGuard] No client token/auth - redirecting to login');
+          console.warn('❌ 클라이언트 토큰/인증 없음 - 로그인 페이지로 리다이렉트');
           await cleanupClientState();
-          if (cancelled) return;
           router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
           setIsLoading(false);
           return;
         }
 
         // 서버 상태 검증
-        logger.debug('[AuthGuard] Client token found - validating server session');
-
+        console.log('🔐 클라이언트 토큰 발견 - 서버 세션 검증 중...');
+        
         const isServerSessionValid = await validateServerSession();
-        if (cancelled) return;
-
+        
         if (!isServerSessionValid) {
-          logger.warn('[AuthGuard] Invalid server session - cleaning up and redirecting');
-
+          console.warn('⚠️ [AuthGuard] 서버 세션 무효 - 클라이언트 상태 정리 후 로그인 페이지로 이동');
+          
           await cleanupClientState();
-          if (cancelled) return;
           router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
           setIsLoading(false);
           return;
@@ -125,37 +111,37 @@ export const useAuthGuard = (): UseAuthGuardReturn => {
 
         // 서버 세션이 유효하면 사용자 정보 재확인
         if (status === 'idle' || !isAuthenticated()) {
-          logger.debug('[AuthGuard] Valid server session - re-checking user info');
+          console.log('🔐 서버 세션 유효 - 사용자 정보 재확인 중...');
           try {
             await checkAuthStatus();
-            if (cancelled) return;
-            logger.debug('[AuthGuard] Auth status check completed');
+            console.log('✅ 인증 상태 확인 완료');
           } catch (error) {
-            if (cancelled) return;
-            logger.error('[AuthGuard] Auth status check failed', error);
+            console.error('❌ 인증 상태 확인 실패:', error);
             await cleanupClientState();
-            if (cancelled) return;
             router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
             setIsLoading(false);
             return;
           }
         }
-
-        if (cancelled) return;
-        logger.debug('[AuthGuard] Authentication successful - access granted');
+        
+        console.log('✅ 인증 성공 - 접근 허용');
       }
 
-      if (!cancelled) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     };
 
     initializeAuth();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
+  }, [
+    pathname, 
+    checkAuthStatus, 
+    isAuthenticated, 
+    status, 
+    router, 
+    isHydrated, 
+    logout,
+    validateServerSession,
+    cleanupClientState
+  ]);
 
   const shouldRender = isHydrated && !isLoading && status !== 'loading';
 

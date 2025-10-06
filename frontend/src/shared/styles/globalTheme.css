@@ -127,9 +127,3 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-dark);
 }
-/* 스피너 애니메이션 */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}

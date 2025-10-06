@@ -1,12 +1,6 @@
 import styled from 'styled-components';
 
-// 컨테이너 컴포넌트들 (정적)
-export {
-  FormSection,
-  containerSizes
-} from './containers';
-
-// 컨테이너 컴포넌트들 (애니메이션 - framer-motion 사용)
+// 컨테이너 컴포넌트들
 export {
   PageContainer,
   BaseCard,
@@ -14,11 +8,13 @@ export {
   SectionHeader,
   GridContainer,
   FormContainer,
+  FormSection,
   StateContainer,
   FullWidthContainer,
   CenteredContainer,
-  FlexContainer
-} from './containers-animated';
+  FlexContainer,
+  containerSizes
+} from './containers';
 
 // 폼 컴포넌트들
 export {
@@ -119,15 +115,11 @@ export {
   CommonStatusIndicator,
   CommonSkeleton,
   CommonActionGroup,
+  CommonStatItem,
   commonKeyframes,
   SkeletonLine,
   CommonTextSkeleton
 } from './common';
-
-// 애니메이션 스타일 컴포넌트 (framer-motion 사용)
-export {
-  CommonStatItem
-} from './common-animated';
 
 // 컴포넌트 생성 헬퍼 함수들
 export const createBaseComponent = <T extends Record<string, any>>(
