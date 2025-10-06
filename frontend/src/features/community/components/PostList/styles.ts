@@ -178,7 +178,9 @@ export const EmptyState = styled(CommonErrorState).attrs({
   }
 `;
 
-export const LoadingContainer = styled(CommonLoadingState).attrs({$variant: 'section' as const });
+export const LoadingContainer = styled(CommonLoadingState).attrs({
+  $variant: 'section',
+})``;
 
 export const Pagination = styled.div`
   display: flex;
@@ -233,5 +235,23 @@ export const PageButton = styled(motion.button)<{
     padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
     font-size: ${({ theme }) => theme.typography.fontSize.xs};
     min-width: 36px;
+  }
+`;
+
+export const ActionBar = styled(FlexContainer).attrs({
+  $direction: 'row' as const,
+  $align: 'center' as const,
+  $justify: 'between' as const,
+  $gap: 4 as const,
+})`
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing[4]} 0;
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: ${({ theme }) => theme.spacing[3]};
   }
 `;

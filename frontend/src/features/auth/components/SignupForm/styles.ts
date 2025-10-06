@@ -352,7 +352,6 @@ export const OptionalText = styled.span`
   margin-left: ${({ theme }) => theme.spacing[1]};
 `;
 
-// 🔥 ErrorText 이름 충돌 해결 - 로컬 컴포넌트로 정의
 export const AgreementErrorText = styled(SharedErrorText)`
   margin: ${({ theme }) => theme.spacing[1]} 0 0 ${({ theme }) => theme.spacing[6]};
 `;

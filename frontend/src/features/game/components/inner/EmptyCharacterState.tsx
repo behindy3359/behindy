@@ -16,11 +16,7 @@ export const EmptyCharacterState: React.FC<EmptyCharacterStateProps> = ({
   onCreateCharacter,
 }) => {
   return (
-    <EmptyStateCard
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <EmptyStateCard>
       <EmptyIcon>
         <User size={64} />
       </EmptyIcon>
