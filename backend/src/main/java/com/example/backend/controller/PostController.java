@@ -35,14 +35,10 @@ public class PostController {
     public ResponseEntity<PostResponse> createPost(
             @Valid @RequestBody PostCreateRequest request) {
 
-        // 🔥 임시 디버깅 로그
-        log.info("📝 게시글 작성 요청 수신: {}", request.getTitle());
-
         try {
-            // 현재 인증된 사용자 확인
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            log.info("👤 현재 인증 사용자: {}", auth != null ? auth.getName() : "null");
-            log.info("🔐 인증 여부: {}", auth != null && auth.isAuthenticated());
+            log.info("현재 인증 사용자: {}", auth != null ? auth.getName() : "null");
+            log.info("인증 여부: {}", auth != null && auth.isAuthenticated());
 
             PostResponse response = postService.createPost(request);
 

@@ -96,14 +96,14 @@ export const PostDetail: React.FC<PostDetailProps> = ({
       <PostContent post={post} />
 
       {/* 게시글 액션 */}
-      <PostActions
+      {/* <PostActions
         enableInteractions={enableInteractions}
         isLiked={isLiked}
         likeCount={likeCount}
         commentsData={commentsData}
         onLike={handleLike}
         onShare={handleShare}
-      />
+      /> */}
 
       {/* 댓글 섹션 */}
       {showComments && (

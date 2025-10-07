@@ -40,6 +40,11 @@ public class CacheConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // 타입 정보 포함 설정 추가
+        objectMapper.activateDefaultTyping(
+                objectMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL
+        );
 
         // 기본 캐시 설정
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
