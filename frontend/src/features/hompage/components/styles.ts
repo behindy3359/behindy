@@ -28,9 +28,8 @@ export const MetroHeader = styled(CommonSectionHeader).attrs({
     }
   }
   
-  /* 상태 인디케이터들 - CommonStatusIndicator 활용 */
   .live-indicator {
-    ${CommonStatusIndicator} /* 기본 스타일 상속 */
+    ${CommonStatusIndicator}
     color: ${({ theme }) => theme.colors.error};
     background: rgba(239, 68, 68, 0.1);
     
@@ -125,11 +124,15 @@ export const CommunityHeader = styled(CommonSectionHeader).attrs({
   $variant: 'gradient' as const,
   $spacing: 'normal' as const,
 })`
+  flex-direction: column;
+  align-items: stretch;
+  gap: ${({ theme }) => theme.spacing[6]};
+  
   .header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: ${({ theme }) => theme.spacing[4]};
+    width: 100%;
   }
   
   .section-title {
@@ -148,19 +151,22 @@ export const CommunityHeader = styled(CommonSectionHeader).attrs({
   
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: ${({ theme }) => theme.spacing[4]};
+    width: 100%;
   }
   
   @media (max-width: 768px) {
+    gap: ${({ theme }) => theme.spacing[4]};
+    
     .header-top {
       flex-direction: column;
-      gap: ${({ theme }) => theme.spacing[4]};
+      gap: ${({ theme }) => theme.spacing[3]};
       align-items: stretch;
     }
     
     .stats-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr;
       gap: ${({ theme }) => theme.spacing[3]};
     }
   }
