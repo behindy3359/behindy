@@ -1,8 +1,6 @@
 "use client";
 
 import React from 'react';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
 import { BookOpen, FastForward } from 'lucide-react';
 import { useTypingEffect } from '../../hooks/useTypingEffect';
 import { GamePage } from '../../types/gameTypes';
@@ -69,11 +67,7 @@ export const StoryDisplay: React.FC<StoryDisplayProps> = ({
   }
 
   return (
-    <Container
-      // initial={{ opacity: 0, y: 20 }}
-      // animate={{ opacity: 1, y: 0 }}
-      // transition={{ duration: 0.5 }}
-    >
+    <Container>
       {storyTitle && (
         <StoryHeader>
           <StoryTitle>{storyTitle}</StoryTitle>

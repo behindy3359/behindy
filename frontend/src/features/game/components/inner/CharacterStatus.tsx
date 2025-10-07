@@ -34,7 +34,6 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
     );
   }
 
-  // 실시간 상태 계산
   const isAlive = isCharacterAlive(character.charHealth, character.charSanity);
   const isDying = isCharacterDying(character.charHealth, character.charSanity);
   const statusMessage = getCharacterStatusMessage(character.charHealth, character.charSanity);
@@ -120,7 +119,6 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
         </StatBar>
       </StatsContainer>
 
-      {/* 실시간 계산된 상태로 조건부 렌더링 */}
       {isDying && isAlive && (
         <WarningMessage
           initial={{ opacity: 0 }}
@@ -146,13 +144,13 @@ export const CharacterStatus: React.FC<CharacterStatusProps> = ({
   );
 };
 
-// Styled Components
 const Container = styled(motion.div)<{ $compact?: boolean }>`
-  background: var(--bg-primary);
-  border-radius: var(--border-radius-xl, 1rem);
-  border: 1px solid var(--border-light);
+  background: var(--game-bg-card);
+  border-radius: var(--border-radius-xl);
+  border: 1px solid var(--game-border);
   padding: ${({ $compact }) => $compact ? '1rem' : '1.5rem'};
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(10px);
 `;
 
 const Header = styled.div`
@@ -168,7 +166,7 @@ const CharacterName = styled.h3`
   gap: 0.5rem;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--game-text-header);
   margin: 0;
 `;
 
@@ -179,12 +177,12 @@ const StatusBadge = styled.div<{ $status: string }>`
   padding: 0.5rem 0.75rem;
   background: ${({ $status }) => {
     if ($status.includes('위험') || $status.includes('사망')) {
-      return 'rgba(239, 68, 68, 0.1)';
+      return 'rgba(239, 68, 68, 0.2)';
     }
     if ($status.includes('주의')) {
-      return 'rgba(245, 158, 11, 0.1)';
+      return 'rgba(245, 158, 11, 0.2)';
     }
-    return 'var(--bg-secondary)';
+    return 'var(--game-bg-overlay)';
   }};
   color: ${({ $status }) => {
     if ($status.includes('위험') || $status.includes('사망')) {
@@ -193,9 +191,9 @@ const StatusBadge = styled.div<{ $status: string }>`
     if ($status.includes('주의')) {
       return 'var(--warning)';
     }
-    return 'var(--text-secondary)';
+    return 'var(--game-text-status)';
   }};
-  border-radius: 0.5rem;
+  border-radius: var(--border-radius-md);
   font-size: 0.875rem;
   font-weight: 500;
 `;
@@ -220,20 +218,20 @@ const StatLabel = styled.span`
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--game-text-status);
   font-weight: 500;
 `;
 
 const StatValue = styled.span<{ $type: 'health' | 'sanity' }>`
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--game-text-story);
   font-weight: 600;
 `;
 
 const ProgressBar = styled.div`
   width: 100%;
   height: 8px;
-  background: var(--bg-tertiary);
+  background: var(--game-bg-overlay);
   border-radius: 4px;
   overflow: hidden;
 `;
@@ -250,9 +248,9 @@ const WarningMessage = styled(motion.div)`
   gap: 0.5rem;
   margin-top: 1rem;
   padding: 0.75rem;
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(245, 158, 11, 0.2);
   color: var(--warning);
-  border-radius: 0.5rem;
+  border-radius: var(--border-radius-md);
   font-size: 0.875rem;
   font-weight: 500;
 `;
@@ -263,9 +261,9 @@ const DeathMessage = styled(motion.div)`
   gap: 0.5rem;
   margin-top: 1rem;
   padding: 0.75rem;
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.2);
   color: var(--error);
-  border-radius: 0.5rem;
+  border-radius: var(--border-radius-md);
   font-size: 0.875rem;
   font-weight: 500;
 `;
@@ -276,5 +274,5 @@ const EmptyState = styled.div`
   justify-content: center;
   gap: 0.5rem;
   padding: 1.5rem;
-  color: var(--text-tertiary);
+  color: var(--game-text-muted);
 `;

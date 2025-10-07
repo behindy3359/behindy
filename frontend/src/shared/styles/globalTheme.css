@@ -1,4 +1,4 @@
-/* ☀️ 라이트 테마 (기본/일상 모드) */
+/* 라이트 테마*/
 :root {
   /* 배경색 */
   --bg-primary: #ffffff;
@@ -47,9 +47,16 @@
   --border-radius-lg: 0.75rem;
   --border-radius-xl: 1rem;
   --border-radius-2xl: 1.25rem;
+  
+  /* 게임 모드 텍스트 (라이트에서는 사용 안 함) */
+  --game-text-header: #111827;
+  --game-text-story: #111827;
+  --game-text-choice: #374151;
+  --game-text-status: #6b7280;
+  --game-text-muted: #9ca3af;
 }
 
-/* 🌙 다크 테마 (게임 모드) */
+/* 다크 테마 */
 [data-theme="dark"] {
   /* 배경색 - 깊고 신비로운 어둠 */
   --bg-primary: #0a0a0a;
@@ -79,13 +86,25 @@
   --warning: #d97706;
   --error: #dc2626;
   
+  /* 게임 모드 텍스트 계층 */
+  --game-text-header: #ffffff;      /* 헤더 (역 이름) - 최대 가독성 */
+  --game-text-story: #e2e8f0;       /* 스토리 본문 - 밝은 회색 */
+  --game-text-choice: #cbd5e1;      /* 선택지 - 중간 밝기 */
+  --game-text-status: #94a3b8;      /* 상태 라벨 - 은은한 회색 */
+  --game-text-muted: #64748b;       /* 보조 텍스트 - 어두운 회색 */
+  
+  /* 게임 모드 배경 */
+  --game-bg-card: rgba(26, 26, 26, 0.8);
+  --game-bg-overlay: rgba(42, 42, 42, 0.6);
+  --game-border: rgba(64, 64, 64, 0.6);
+  
   /* 그림자 - 어둠 속에서 더 깊은 그림자 */
   --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);
   --shadow-button: 0 2px 10px rgba(139, 92, 246, 0.3);
   --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
 }
 
-/* 🎮 게임 모드 추가 스타일 */
+/* 게임 모드 추가 스타일 */
 .game-mode {
   background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
 }
@@ -94,7 +113,7 @@
   background: var(--bg-primary);
 }
 
-/* 🌟 테마 전환 애니메이션 */
+/* 테마 전환 애니메이션 */
 .theme-transitioning * {
   transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease !important;
 }
@@ -104,7 +123,7 @@
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-/* 🎭 게임 모드 특별 효과 */
+/* 게임 모드 특별 효과 */
 [data-theme="dark"] .game-mode {
   /* 미묘한 그라데이션 오버레이 */
   background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.05) 0%, transparent 70%);

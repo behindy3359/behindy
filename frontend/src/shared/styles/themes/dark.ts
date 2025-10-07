@@ -33,7 +33,7 @@ export const darkTheme = {
     
     // 다크 테마에서 브랜드 색상 조정
     primary: {
-      500: '#8b5cf6',  // 보라색으로 변경
+      500: '#8b5cf6',
       600: '#7c3aed',
     },
     

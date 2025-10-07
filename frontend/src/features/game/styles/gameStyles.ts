@@ -41,17 +41,18 @@ export const BackButton = styled(BaseButton).attrs({
   variant: 'ghost' as const,
 })`
   gap: ${({ theme }) => theme.spacing[2]};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: var(--game-text-choice);
   
   &:hover {
-    color: ${({ theme }) => theme.colors.text.primary};
+    color: var(--game-text-header);
+    background: rgba(255, 255, 255, 0.1);
   }
 `;
 
 export const HeaderTitle = styled.h1`
   font-size: ${({ theme }) => theme.typography.fontSize.xl};
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--game-text-header);
   margin: 0;
 `;
 
@@ -447,8 +448,7 @@ export const EmptyDescription = styled.p`
 export const LoadingState = styled(StateContainer).attrs({
   $variant: 'loading' as const,
 })`
-  min-height: 400px;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: var(--game-text-status);
 
   p {
     margin-top: ${({ theme }) => theme.spacing[4]};
@@ -635,14 +635,14 @@ export const StoryHeader = styled(FlexContainer).attrs({
 export const StoryTitle = styled.h2`
   font-size: ${({ theme }) => theme.typography.fontSize.xl};
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--game-text-header);
   margin: 0;
 `;
 
 export const PageIndicator = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  background: ${({ theme }) => theme.colors.background.secondary};
+  color: var(--game-text-status);
+  background: var(--game-bg-overlay);
   padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
   border-radius: ${({ theme }) => theme.borderRadius.md};
 `;
@@ -654,7 +654,7 @@ export const StoryContent = styled.div`
 export const StoryText = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
   line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: var(--game-text-story);
   white-space: pre-wrap;
   word-break: keep-all;
   margin: 0;
@@ -695,8 +695,8 @@ export const LastPageIndicator = styled(motion.div)`
   text-align: center;
   margin-top: ${({ theme }) => theme.spacing[6]};
   padding-top: ${({ theme }) => theme.spacing[4]};
-  border-top: 1px solid ${({ theme }) => theme.colors.border.light};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  border-top: 1px solid var(--game-border);
+  color: var(--game-text-status);
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-style: italic;
 `;
@@ -705,7 +705,7 @@ export const EmptyState = styled(StateContainer).attrs({
   $variant: 'empty' as const,
 })`
   min-height: 300px;
-  color: ${({ theme }) => theme.colors.text.tertiary};
+  color: var(--game-text-muted);
 
   .empty-icon {
     width: 48px;

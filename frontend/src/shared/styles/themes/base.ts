@@ -88,17 +88,14 @@ export const baseTheme = {
     warning: colors.warning,
     error: colors.error,
     
-    // 게임 색상
     game: colors.game,
     
-    // 기본 배경 (라이트 테마 기본값, 다크 테마에서 오버라이드)
     background: {
       primary: colors.background.light.primary,
       secondary: colors.background.light.secondary,
       tertiary: colors.background.light.tertiary,
     },
     
-    // 기본 텍스트 (라이트 테마 기본값, 다크 테마에서 오버라이드)
     text: {
       primary: colors.text.light.primary,
       secondary: colors.text.light.secondary,
@@ -106,7 +103,6 @@ export const baseTheme = {
       inverse: colors.text.light.inverse,
     },
     
-    // 기본 보더 (라이트 테마 기본값, 다크 테마에서 오버라이드)
     border: {
       light: colors.border.light.light,
       medium: colors.border.light.medium,
