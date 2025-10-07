@@ -163,7 +163,7 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
             break;
 
           default:
-            console.error('❌ [Game] Unknown game action:', gameResponse.action);
+            console.error('Unknown game action:', gameResponse.action);
             throw new Error('알 수 없는 게임 상태');
         }
       } else {
@@ -172,7 +172,7 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
 
       setHasInitialized(true);
     } catch (error: any) {
-      console.error('❌ [Game] Initialization failed:', error.message);
+      console.error('Game initialization failed:', error.message);
       const errorMessage = error.response?.data?.message || error.message || '게임을 시작할 수 없습니다';
       setError(errorMessage);
       setGameState('ERROR');
@@ -271,7 +271,6 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
         return;
       }
 
-      console.warn('⚠️ [Game] Unexpected game end state');
       toast.warning('게임이 예상치 못하게 종료되었습니다');
 
       if (gameData && gameStartTime) {
@@ -285,7 +284,7 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
 
       setGameState('GAME_COMPLETED');
     } catch (error: unknown) {
-      console.error('❌ [Game] Choice failed:', error instanceof Error ? error.message : 'Unknown');
+      console.error('Game choice failed:', error instanceof Error ? error.message : 'Unknown');
 
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as {
@@ -299,13 +298,13 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
 
         switch (axiosError.response?.status) {
           case 404:
-            console.error('❌ [Game] Session not found');
+            console.error('Game session not found');
             toast.error('게임 세션을 찾을 수 없습니다. 게임을 다시 시작해주세요.');
             setGameState('ERROR');
             setError('게임 세션이 만료되었습니다');
             break;
           case 401:
-            console.error('❌ [Game] Authentication failed');
+            console.error('Authentication failed');
             toast.error('로그인이 필요합니다');
             router.push('/auth/login');
             break;
@@ -313,7 +312,7 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
             toast.error('잘못된 선택입니다. 다시 시도해주세요.');
             break;
           case 500:
-            console.error('❌ [Game] Server error');
+            console.error('Server error');
             toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
             break;
           default:
@@ -335,7 +334,7 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
         toast.info('게임을 포기했습니다');
         router.push('/');
       } catch (error: any) {
-        console.error('❌ [Game] Quit failed:', error.message);
+        console.error('Game quit failed:', error.message);
         toast.error('게임 종료 중 오류가 발생했습니다');
       }
     }

@@ -22,11 +22,11 @@ export const getInitialSidebarState = (): boolean => {
 // 사이드바 상태 저장
 export const saveSidebarState = (isOpen: boolean): void => {
   if (typeof window === 'undefined') return;
-  
+
   try {
     localStorage.setItem('sidebar-state', JSON.stringify(isOpen));
   } catch (error) {
-    console.warn('Failed to save sidebar state:', error);
+    // Silent failure
   }
 };
 
@@ -90,27 +90,27 @@ export const themeUtils = {
     try {
       localStorage.setItem('theme-preference', theme);
     } catch (error) {
-      console.warn('Failed to save theme preference:', error);
+      // Silent failure
     }
   },
-  
+
   load: (): 'light' | 'dark' => {
     if (typeof window === 'undefined') return 'light';
-    
+
     try {
       const saved = localStorage.getItem('theme-preference');
       if (saved === 'dark' || saved === 'light') {
         return saved;
       }
     } catch (error) {
-      console.warn('Failed to load theme preference:', error);
+      // Silent failure
     }
-    
+
     // 시스템 테마 감지
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
-    
+
     return 'light';
   },
   

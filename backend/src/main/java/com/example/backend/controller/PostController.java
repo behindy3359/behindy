@@ -8,18 +8,16 @@ import com.example.backend.dto.post.PostUpdateRequest;
 import com.example.backend.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j; // 🔥 추가
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication; // 🔥 추가
-import org.springframework.security.core.context.SecurityContextHolder; // 🔥 추가
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j // 🔥 추가
+@Slf4j
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -34,21 +32,8 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostResponse> createPost(
             @Valid @RequestBody PostCreateRequest request) {
-
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            log.info("현재 인증 사용자: {}", auth != null ? auth.getName() : "null");
-            log.info("인증 여부: {}", auth != null && auth.isAuthenticated());
-
-            PostResponse response = postService.createPost(request);
-
-            log.info("✅ 게시글 작성 성공: ID={}", response.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
-        } catch (Exception e) {
-            log.error("❌ 게시글 작성 실패: {}", e.getMessage(), e);
-            throw e;
-        }
+        PostResponse response = postService.createPost(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**

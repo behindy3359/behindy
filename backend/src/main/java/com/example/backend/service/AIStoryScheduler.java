@@ -75,29 +75,20 @@ public class AIStoryScheduler {
         log.info("=== LLM 스토리 배치 생성 시작 ===");
 
         try {
-            // 1. 스토리가 부족한 역 선택
             Station selectedStation = selectStationForGeneration();
             if (selectedStation == null) {
-                log.info("✅ 모든 역에 충분한 스토리가 있습니다.");
                 return;
             }
 
-            // 2. LLM 서버에서 완성된 스토리 요청
             CompleteStoryResponse llmResponse = requestFromLLMServer(selectedStation);
             if (llmResponse == null || !validateLLMResponse(llmResponse)) {
-                log.warn("❌ LLM 응답 없음 또는 검증 실패: {}역", selectedStation.getStaName());
                 return;
             }
 
-            // 3. DB에 저장
             boolean saved = saveStoryToDB(selectedStation, llmResponse);
             if (saved) {
                 dailyGeneratedCount.incrementAndGet();
                 lastSuccessfulGeneration = LocalDateTime.now();
-                log.info("✅ 스토리 생성 성공: {}역, 일일 생성: {}/{}",
-                        selectedStation.getStaName(),
-                        dailyGeneratedCount.get(),
-                        dailyGenerationLimit != null ? dailyGenerationLimit : 0);
             }
 
         } catch (Exception e) {
@@ -125,8 +116,6 @@ public class AIStoryScheduler {
             }
 
             Station selected = needyStations.get(new Random().nextInt(needyStations.size()));
-            log.info("🎯 선택된 역: {}역 ({}호선), 부족한 역: {}개",
-                    selected.getStaName(), selected.getStaLine(), needyStations.size());
 
             return selected;
         } catch (Exception e) {
@@ -158,60 +147,38 @@ public class AIStoryScheduler {
             headers.set("X-Internal-API-Key", internalApiKey != null ? internalApiKey : "default-key");
             HttpEntity<CompleteStoryRequest> entity = new HttpEntity<>(request, headers);
 
-            log.info("🤖 LLM 서버 요청 시작: {} → {}역", url, station.getStaName());
-
-            long startTime = System.currentTimeMillis();
-
-            // 🔥 String으로 응답 받아서 수동 파싱
             ResponseEntity<String> rawResponse = aiServerRestTemplate.exchange(
                     url, HttpMethod.POST, entity, String.class);
-
-            long responseTime = System.currentTimeMillis() - startTime;
-            log.info("⏱️ LLM 서버 응답 시간: {}ms", responseTime);
 
             if (rawResponse.getStatusCode() == HttpStatus.OK && rawResponse.getBody() != null) {
                 String jsonResponse = rawResponse.getBody();
 
-                log.info("🔍 LLM 서버 원본 응답:");
-                log.info("---start---");
-                log.info(jsonResponse);
-                log.info("---end---");
-
-                // 🔥 수동 JSON 파싱 및 매핑
                 CompleteStoryResponse parsedResponse = parseJsonManually(jsonResponse);
 
                 if (parsedResponse != null) {
-                    log.info("✅ 수동 파싱 성공:");
-                    log.info("  story_title: {}", parsedResponse.getStoryTitle());
-                    log.info("  description: {}", parsedResponse.getDescription());
-                    log.info("  theme: {}", parsedResponse.getTheme());
-                    log.info("  pages 개수: {}", parsedResponse.getPages() != null ? parsedResponse.getPages().size() : "null");
-
                     return parsedResponse;
                 } else {
-                    log.error("❌ 수동 파싱 실패");
+                    log.error("수동 파싱 실패");
                     return null;
                 }
             }
 
-            log.warn("❌ LLM 서버 응답 오류: {}", rawResponse.getStatusCode());
             return null;
 
         } catch (Exception e) {
-            log.error("❌ LLM 서버 통신 실패: {}", e.getMessage());
+            log.error("LLM 서버 통신 실패: {}", e.getMessage());
             if (e.getCause() != null) {
-                log.error("❌ 원인: {}", e.getCause().getMessage());
+                log.error("원인: {}", e.getCause().getMessage());
             }
             return null;
         }
     }
 
     /**
-     * 🔥 수동 JSON 파싱 메서드 (Jackson 문제 우회)
+     * 수동 JSON 파싱 메서드
      */
     private CompleteStoryResponse parseJsonManually(String jsonString) {
         try {
-            log.info("🔧 수동 JSON 파싱 시작");
 
             // Jackson ObjectMapper 사용
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -274,15 +241,10 @@ public class AIStoryScheduler {
                     .line_number(lineNumber)
                     .build();
 
-            log.info("✅ 수동 파싱 완료:");
-            log.info("  파싱된 story_title: {}", result.getStoryTitle());
-            log.info("  파싱된 pages 개수: {}", result.getPages().size());
-
             return result;
 
         } catch (Exception e) {
-            log.error("❌ 수동 JSON 파싱 실패: {}", e.getMessage());
-            log.error("원본 JSON: {}", jsonString);
+            log.error("수동 JSON 파싱 실패: {}", e.getMessage());
             return null;
         }
     }
@@ -317,7 +279,6 @@ public class AIStoryScheduler {
             }
         }
 
-        log.info("✅ LLM 응답 검증 통과: {}페이지", response.getPages().size());
         return true;
     }
 
@@ -332,7 +293,6 @@ public class AIStoryScheduler {
         }
 
         try {
-            log.info("💾 DB 저장 시작: {}", llmResponse.getStoryTitle());
 
             // Story 저장
             Story story = Story.builder()
@@ -392,12 +352,10 @@ public class AIStoryScheduler {
                 }
             }
 
-            log.info("✅ DB 저장 완료: Story ID={}, {}페이지, {}개 역 처리",
-                    savedStory.getStoId(), savedPages.size(), station.getStaName());
             return true;
 
         } catch (Exception e) {
-            log.error("❌ DB 저장 실패: {}", e.getMessage());
+            log.error("DB 저장 실패: {}", e.getMessage());
             return false;
         }
     }

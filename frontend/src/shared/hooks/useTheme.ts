@@ -74,7 +74,7 @@ export const useTheme = () => {
         try {
           localStorage.setItem('theme-mode', mode);
         } catch (error) {
-          console.warn('테마 설정 저장 실패:', error);
+          // Silent failure
         }
       }
       
@@ -111,7 +111,7 @@ export const useTheme = () => {
       try {
         savedMode = (localStorage.getItem('theme-mode') as ThemeMode) || 'auto';
       } catch (error) {
-        console.warn('테마 설정 로드 실패:', error);
+        // Silent failure
       }
     }
 

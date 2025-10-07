@@ -208,35 +208,19 @@ export const SECURITY_CONFIG = {
 // 보안 검증 함수
 export const validateSecurityConfig = (): void => {
   const isProd = process.env.NODE_ENV === 'production';
-  
+
   if (isProd) {
-    // 프로덕션에서 기본값 사용 경고
-    if (!process.env.NEXT_PUBLIC_TOKEN_KEY) {
-      console.warn('⚠️ 프로덕션에서 NEXT_PUBLIC_TOKEN_KEY 환경변수 설정을 권장합니다.');
-    }
-    
     // HTTPS 검증
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     if (apiUrl && !apiUrl.startsWith('https://')) {
-      console.error('🚨 프로덕션에서는 HTTPS API URL이 필요합니다:', apiUrl);
+      console.error('Production requires HTTPS API URL:', apiUrl);
     }
-    
+
     // withCredentials 확인
     if (!SECURITY_CONFIG.API.WITH_CREDENTIALS) {
-      console.error('🚨 HttpOnly Cookie 사용을 위해 withCredentials가 필요합니다.');
+      console.error('HttpOnly Cookie requires withCredentials to be enabled');
     }
   }
-  
-  // 개발 환경에서 보안 설정 안내
-  if (!isProd) {
-    console.log('🔒 보안 설정 정보:');
-    console.log('  - Access Token: sessionStorage (15분)');
-    console.log('  - Refresh Token: HttpOnly Cookie (7일)');
-    console.log('  - withCredentials: enabled');
-    console.log('  - CORS: 사전 승인된 origin만 허용');
-  }
-  
-  console.log('🔒 보안 설정 검증 완료');
 };
 
 // 토큰 상태 확인 유틸리티

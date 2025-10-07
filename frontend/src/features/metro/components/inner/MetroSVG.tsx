@@ -19,13 +19,10 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
   const toast = useToast();
   const [hoveredStation, setHoveredStation] = useState<string | null>(null);
 
-  // 단순화된 역 클릭 핸들러 - 로그인 시에만 게임 진입
+  // 역 클릭 핸들러 - 로그인 시에만 게임 진입
   const handleStationClick = async (stationName: string) => {
-    console.log(`🚉 역 클릭: ${stationName}, 로그인 상태: ${isAuthenticated()}`);
-    
     if (!isAuthenticated()) {
       // 비로그인: 아무 동작 안 함
-      console.log('🔓 비로그인 상태 - 클릭 무시');
       return;
     }
 
@@ -38,13 +35,12 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
       }
 
       const lineNumber = station.lines[0];
-      console.log(`🎮 게임 진입: ${stationName}역 ${lineNumber}호선`);
-      
+
       const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
       await router.push(gameUrl);
-      
+
     } catch (error) {
-      console.error('❌ 게임 진입 실패:', error);
+      console.error('Game entry failed:', error);
       toast.error('게임 진입에 실패했습니다');
     }
   };

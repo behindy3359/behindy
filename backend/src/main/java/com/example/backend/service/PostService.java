@@ -54,9 +54,6 @@ public class PostService {
                 .build();
 
         Post savedPost = postRepository.save(post);
-        log.info("게시글 생성: postId={}, 캐시 무효화 완료", savedPost.getPostId());
-
-        // 🔄 공통 Mapper 사용
         return entityDtoMapper.toPostResponse(savedPost);
     }
 
@@ -67,12 +64,10 @@ public class PostService {
     @Cacheable(value = "postDetail", key = "#postId")
     @Transactional(readOnly = true)
     public PostResponse getPostById(Long postId) {
-        log.debug("📚 DB에서 게시글 조회: postId={}", postId);
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
-        // 🔄 공통 Mapper 사용
         return entityDtoMapper.toPostResponse(post);
     }
 
@@ -83,7 +78,6 @@ public class PostService {
     public PostListResponse getAllPosts(Pageable pageable) {
         Page<Post> postsPage = postRepository.findAllActive(pageable);
 
-        // 🔄 공통 Mapper 사용 (Stream 변환)
         List<PostResponse> posts = postsPage.getContent().stream()
                 .map(entityDtoMapper::toPostResponse)
                 .collect(Collectors.toList());
@@ -130,9 +124,6 @@ public class PostService {
 
         // 수정된 게시글 저장
         Post updatedPost = postRepository.save(post);
-        log.info("게시글 수정: postId={}, 캐시 무효화 완료", postId);
-
-        // 🔄 공통 Mapper 사용
         return entityDtoMapper.toPostResponse(updatedPost);
     }
 
@@ -162,6 +153,5 @@ public class PostService {
         // 게시글 삭제
         post.delete();
         postRepository.save(post);
-        log.info("게시글 삭제: postId={}, 캐시 무효화 완료", postId);
     }
 }

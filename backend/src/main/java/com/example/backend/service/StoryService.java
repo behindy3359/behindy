@@ -170,7 +170,6 @@ public class StoryService {
     @Cacheable(value = "stories", key = "#stationName + '_' + #lineNumber")
     @Transactional(readOnly = true)
     public StoryListResponse getStoriesByStationAndLine(String stationName, Integer lineNumber) {
-        log.debug("📚 DB에서 스토리 조회: {}역 {}호선", stationName, lineNumber);
         List<Story> stories = storyRepository.findByStationNameAndLine(stationName, lineNumber);
 
         if (stories.isEmpty()) {
@@ -206,7 +205,6 @@ public class StoryService {
     @Cacheable(value = "stories", key = "'story_' + #storyId")
     @Transactional(readOnly = true)
     public StoryResponse getStoryById(Long storyId) {
-        log.debug("📚 DB에서 스토리 조회: storyId={}", storyId);
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story", "id", storyId));
 
@@ -326,9 +324,6 @@ public class StoryService {
                 .build();
 
         Story savedStory = storyRepository.save(story);
-        log.info("새 스토리 생성: storyId={}, title={}, station={}-{}",
-                savedStory.getStoId(), title, stationName, lineNumber);
-        log.info("🗑️ 캐시 무효화: {}역 {}호선", stationName, lineNumber);
 
         return savedStory;
     }

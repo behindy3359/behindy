@@ -66,22 +66,16 @@ const initialState: AuthState = {
   isLoading: false,
 };
 
-// 🔒 SessionStorage 기반 상태 복원 헬퍼
+// SessionStorage 기반 상태 복원 헬퍼
 const restoreAuthState = (): Partial<AuthState> => {
   if (typeof window === 'undefined') return {};
 
   try {
     const accessToken = TokenManager.getAccessToken();
     const storedUser = sessionStorage.getItem('behindy_user');
-    
+
     if (accessToken && TokenManager.isTokenValid() && storedUser) {
       const user: CurrentUser = JSON.parse(storedUser);
-      
-      console.log('🔄 [AuthStore] 세션에서 인증 상태 복원:', {
-        hasToken: !!accessToken,
-        userName: user.name,
-        userEmail: user.email
-      });
 
       return {
         status: 'authenticated',
@@ -94,7 +88,6 @@ const restoreAuthState = (): Partial<AuthState> => {
       };
     }
   } catch (error) {
-    console.warn('⚠️ [AuthStore] 세션 복원 실패:', error);
     // 복원 실패 시 정리
     TokenManager.clearAllTokens();
     sessionStorage.removeItem('behindy_user');
@@ -103,20 +96,18 @@ const restoreAuthState = (): Partial<AuthState> => {
   return {};
 };
 
-// 🔒 SessionStorage에 사용자 정보 저장
+// SessionStorage에 사용자 정보 저장
 const saveUserToSession = (user: CurrentUser | null): void => {
   if (typeof window === 'undefined') return;
 
   try {
     if (user) {
       sessionStorage.setItem('behindy_user', JSON.stringify(user));
-      console.log('💾 [AuthStore] 사용자 정보 세션 저장:', user.name);
     } else {
       sessionStorage.removeItem('behindy_user');
-      console.log('🗑️ [AuthStore] 사용자 정보 세션 제거');
     }
   } catch (error) {
-    console.warn('⚠️ [AuthStore] 사용자 정보 저장 실패:', error);
+    // Silent failure - session storage not critical
   }
 };
 
@@ -132,11 +123,6 @@ export const useAuthStore = create<AuthStore>()(
       login: async (credentials: LoginRequest): Promise<AuthResult> => {
         try {
           set({ isLoading: true, error: null }, false, 'auth/login/start');
-    
-          console.log('🔐 [AuthStore] 로그인 시도:', {
-            email: credentials.email,
-            timestamp: new Date().toISOString()
-          });
 
           const response = await api.post<JwtAuthResponse>(
             API_ENDPOINTS.AUTH.LOGIN,
@@ -146,12 +132,6 @@ export const useAuthStore = create<AuthStore>()(
             }
           );
 
-          console.log('✅ [AuthStore] 로그인 API 성공:', {
-            userId: response.userId,
-            name: response.name,
-            tokenType: response.tokenType
-          });
-    
           // Access Token sessionStorage에 저장
           TokenManager.setAccessToken(response.accessToken);
 
@@ -169,9 +149,9 @@ export const useAuthStore = create<AuthStore>()(
             tokenType: response.tokenType || 'Bearer',
           };
 
-          // 🔥 세션에 사용자 정보 저장
+          // 세션에 사용자 정보 저장
           saveUserToSession(user);
-    
+
           set(
             {
               status: 'authenticated',
@@ -185,11 +165,9 @@ export const useAuthStore = create<AuthStore>()(
             'auth/login/success'
           );
 
-          console.log('🎉 [AuthStore] 로그인 완료:', user.name);
-    
           return { success: true, data: user };
         } catch (error: unknown) {
-          console.error('❌ [AuthStore] 로그인 실패:', error);
+          console.error('Login failed:', error);
           
           const errorInfo = apiErrorHandler.parseError(error);
           
@@ -220,12 +198,6 @@ export const useAuthStore = create<AuthStore>()(
         try {
           set({ isLoading: true, error: null }, false, 'auth/signup/start');
 
-          console.log('📝 [AuthStore] 회원가입 시도:', {
-            name: userData.name,
-            email: userData.email,
-            timestamp: new Date().toISOString()
-          });
-    
           const response = await api.post<ApiResponse<number>>(
             API_ENDPOINTS.AUTH.SIGNUP,
             {
@@ -234,11 +206,6 @@ export const useAuthStore = create<AuthStore>()(
               password: userData.password,
             }
           );
-
-          console.log('✅ [AuthStore] 회원가입 성공:', {
-            userId: response.data,
-            message: response.message
-          });
     
           set(
             {
@@ -250,15 +217,15 @@ export const useAuthStore = create<AuthStore>()(
             'auth/signup/success'
           );
     
-          return { 
-            success: true, 
-            data: { 
+          return {
+            success: true,
+            data: {
               userId: response.data,
               message: response.message || '회원가입이 완료되었습니다.'
             }
           };
         } catch (error: unknown) {
-          console.error('❌ [AuthStore] 회원가입 실패:', error);
+          console.error('Signup failed:', error);
           
           const errorInfo = apiErrorHandler.parseError(error);
           
@@ -284,14 +251,11 @@ export const useAuthStore = create<AuthStore>()(
 
       // 사용자 로그아웃
       logout: async (): Promise<void> => {
-        console.log('🚪 [AuthStore] 로그아웃 시작');
-
         try {
           // 서버에 로그아웃 요청 (Cookie 정리)
           await api.post<ApiResponse>(API_ENDPOINTS.AUTH.LOGOUT, {});
-          console.log('✅ [AuthStore] 서버 로그아웃 완료');
         } catch (error) {
-          console.warn('⚠️ [AuthStore] 서버 로그아웃 실패:', error);
+          // Ignore server logout errors
         } finally {
           // 클라이언트 정리
           TokenManager.clearAllTokens();
@@ -312,26 +276,20 @@ export const useAuthStore = create<AuthStore>()(
             false,
             'auth/logout'
           );
-
-          console.log('🧹 [AuthStore] 클라이언트 정리 완료');
         }
       },
 
-      // 🔄 토큰 갱신
+      // 토큰 갱신
       refreshToken: async (): Promise<boolean> => {
         try {
-          console.log('🔄 [AuthStore] 토큰 갱신 시작');
-          
           const response = await api.post<JwtAuthResponse>(
             API_ENDPOINTS.AUTH.REFRESH,
             {} // Refresh Token은 Cookie에 있음
           );
 
-          console.log('✅ [AuthStore] 토큰 갱신 성공');
-    
           // 새 Access Token 저장
           TokenManager.setAccessToken(response.accessToken);
-          
+
           // 토큰 정보 업데이트
           set(
             (state) => ({
@@ -343,13 +301,13 @@ export const useAuthStore = create<AuthStore>()(
             false,
             'auth/refreshToken/success'
           );
-    
+
           // 사용자 정보도 다시 조회
           await get().fetchCurrentUser();
-    
+
           return true;
         } catch (error: unknown) {
-          console.error('❌ [AuthStore] 토큰 갱신 실패:', error);
+          console.error('Token refresh failed:', error);
           // 갱신 실패 시 로그아웃
           await get().logout();
           return false;
@@ -358,7 +316,6 @@ export const useAuthStore = create<AuthStore>()(
 
       // 토큰 클리어
       clearTokens: (): void => {
-        console.log('🗑️ [AuthStore] 토큰 클리어');
         TokenManager.clearAllTokens();
         saveUserToSession(null);
         set(
@@ -374,20 +331,17 @@ export const useAuthStore = create<AuthStore>()(
         );
       },
 
-      // 🔥 인증 상태 확인 (개선된 버전)
+      // 인증 상태 확인
       checkAuthStatus: async (): Promise<void> => {
         try {
           set({ isLoading: true }, false, 'auth/check/start');
-
-          console.log('🔍 [AuthStore] 인증 상태 확인 시작');
 
           const accessToken = TokenManager.getAccessToken();
 
           if (!accessToken) {
             // Access Token이 없으면 Refresh 시도
-            console.log('🔄 [AuthStore] Access Token 없음, Refresh 시도');
             const refreshSuccess = await get().refreshToken();
-            
+
             if (!refreshSuccess) {
               set(
                 {
@@ -403,9 +357,8 @@ export const useAuthStore = create<AuthStore>()(
           } else {
             // Access Token이 있으면 유효성 검증
             if (!TokenManager.isTokenValid()) {
-              console.log('🔄 [AuthStore] Access Token 만료, 갱신 시도');
               const refreshSuccess = await get().refreshToken();
-              
+
               if (!refreshSuccess) {
                 set(
                   {
@@ -424,7 +377,7 @@ export const useAuthStore = create<AuthStore>()(
             }
           }
         } catch (error) {
-          console.error('❌ [AuthStore] 인증 상태 확인 실패:', error);
+          console.error('Auth status check failed:', error);
           await get().logout();
         }
       },
@@ -432,10 +385,8 @@ export const useAuthStore = create<AuthStore>()(
       // 현재 사용자 정보 가져오기
       fetchCurrentUser: async (): Promise<void> => {
         try {
-          console.log('👤 [AuthStore] 사용자 정보 조회 시작');
-
           const userResponse = await api.get<ApiResponse<CurrentUser>>(API_ENDPOINTS.AUTH.ME);
-          
+
           const user: CurrentUser = {
             id: userResponse.data.id,
             name: userResponse.data.name,
@@ -444,15 +395,9 @@ export const useAuthStore = create<AuthStore>()(
             permissions: userResponse.data.permissions || [],
           };
 
-          console.log('✅ [AuthStore] 사용자 정보 조회 성공:', {
-            id: user.id,
-            name: user.name,
-            email: user.email
-          });
-
           const accessToken = TokenManager.getAccessToken();
 
-          // 🔥 세션에 사용자 정보 저장
+          // 세션에 사용자 정보 저장
           saveUserToSession(user);
 
           set(
@@ -470,7 +415,7 @@ export const useAuthStore = create<AuthStore>()(
             'auth/fetchUser/success'
           );
         } catch (error) {
-          console.error('❌ [AuthStore] 사용자 정보 조회 실패:', error);
+          console.error('Fetch current user failed:', error);
           // 사용자 정보 조회 실패 시 로그아웃
           await get().logout();
         }
@@ -481,8 +426,8 @@ export const useAuthStore = create<AuthStore>()(
         const { user } = get();
         if (user) {
           const updatedUser = { ...user, ...userUpdate };
-          
-          // 🔥 세션에도 업데이트된 정보 저장
+
+          // 세션에도 업데이트된 정보 저장
           saveUserToSession(updatedUser);
 
           set(
@@ -492,8 +437,6 @@ export const useAuthStore = create<AuthStore>()(
             false,
             'auth/updateUser'
           );
-
-          console.log('📝 [AuthStore] 사용자 정보 업데이트:', userUpdate);
         }
       },
 
@@ -514,7 +457,6 @@ export const useAuthStore = create<AuthStore>()(
 
       // 상태 리셋
       reset: (): void => {
-        console.log('🔄 [AuthStore] 상태 리셋');
         TokenManager.clearAllTokens();
         saveUserToSession(null);
         set(initialState, false, 'auth/reset');

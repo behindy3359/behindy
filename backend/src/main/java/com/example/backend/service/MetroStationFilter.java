@@ -228,19 +228,6 @@ public class MetroStationFilter {
                 })
                 .collect(Collectors.toList());
 
-        // 필터링 결과 로깅
-        if (allPositions.size() != filteredPositions.size()) {
-            log.info("🎯 위치 데이터 필터링: {}대 → {}대 (-{}대, {:.1f}% 감소)",
-                    allPositions.size(),
-                    filteredPositions.size(),
-                    allPositions.size() - filteredPositions.size(),
-                    (double)(allPositions.size() - filteredPositions.size()) / allPositions.size() * 100
-            );
-
-            // 노선별 필터링 통계
-            logFilteringStatsByLine(allPositions, filteredPositions);
-        }
-
         return filteredPositions;
     }
 

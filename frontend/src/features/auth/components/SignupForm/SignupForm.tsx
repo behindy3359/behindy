@@ -79,12 +79,8 @@ export const SignupForm: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* 🔥 수정: 명시적으로 form 태그 사용 */}
-      <form 
-        onSubmit={(e) => {
-          console.log('🔥 Form submit 이벤트 발생!');
-          handleSubmit(e);
-        }}
+      <form
+        onSubmit={handleSubmit}
         style={{
           width: '100%',
           opacity: 0,
@@ -109,12 +105,6 @@ export const SignupForm: React.FC = () => {
             isLoading={isLoading}
             disabled={!isFormValid || isLoading}
             leftIcon={<UserPlus size={20} />}
-            onClick={(e) => {
-              console.log('🔥 Button onClick 호출!');
-              console.log('isFormValid:', isFormValid);
-              console.log('isLoading:', isLoading);
-              // type="submit"이므로 onClick에서 특별한 처리는 안함
-            }}
           >
             {isLoading ? '계정 생성 중...' : '계정 만들기'}
           </Button>

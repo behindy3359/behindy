@@ -38,35 +38,20 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
 
     try {
       setIsChecking(true);
-      
-      console.log('📡 [Character Create] API 요청: /characters/exists');
-      
+
       const response = await api.get<{
         success: boolean;
         message: string;
         data: Character | null;
       }>('/characters/exists');
 
-      console.log('✅ [Character Create] Character exists response:', {
-        success: response.success,
-        message: response.message,
-        hasData: !!response.data,
-        charName: response.data?.charName
-      });
-
       if (response.success && response.data) {
         setExistingCharacter(response.data);
       }
     } catch (error: any) {
-      console.log('⚠️ [Character Create] Character check error:', {
-        status: error.response?.status,
-        message: error.response?.data?.message,
-        isNotFound: error.response?.status === 404
-      });
-      
       // 404는 정상 (캐릭터 없음)
       if (error.response?.status !== 404) {
-        console.error('❌ [Character Create] Unexpected error:', error);
+        console.error('Character check error:', error);
       }
     } finally {
       setIsChecking(false);
@@ -111,49 +96,24 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
 
     try {
       setIsLoading(true);
-      
-      console.log('🎮 [캐릭터 생성] API 요청 시작:', {
-        timestamp: new Date().toISOString(),
-        charName: charName.trim(),
-        originalDestination: { stationName, lineNumber, returnUrl }
-      });
 
       const response = await api.post<Character>('/characters', {
         charName: charName.trim()
       });
 
-      console.log('✅ [캐릭터 생성] API 응답 성공:', {
-        timestamp: new Date().toISOString(),
-        response: {
-          charId: response.charId,
-          charName: response.charName,
-          charHealth: response.charHealth,
-          charSanity: response.charSanity,
-          isAlive: response.isAlive,
-          statusMessage: response.statusMessage
-        }
-      });
-
       toast.success(`캐릭터 '${response.charName}'이 생성되었습니다!`);
-      
+
       // 원래 목적지로 이동
       if (stationName && lineNumber) {
-        console.log('🎯 [캐릭터 생성] 게임으로 복귀:', { stationName, lineNumber });
         const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
         router.push(gameUrl);
       } else if (returnUrl && returnUrl !== '/') {
-        console.log('🎯 [캐릭터 생성] 원래 페이지로 복귀:', returnUrl);
         router.push(returnUrl);
       } else {
-        console.log('🎯 [캐릭터 생성] 홈으로 이동');
         router.push('/');
       }
     } catch (error: any) {
-      console.error('❌ [캐릭터 생성] API 요청 실패:', {
-        timestamp: new Date().toISOString(),
-        error,
-        charName: charName.trim()
-      });
+      console.error('Character creation failed:', error);
 
       let errorMessage = '캐릭터 생성에 실패했습니다';
 
@@ -184,7 +144,6 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
   // 기존 캐릭터로 계속하기
   const handleContinueWithExisting = () => {
     if (stationName && lineNumber) {
-      console.log('🎯 [기존 캐릭터] 게임으로 진입:', { stationName, lineNumber });
       const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
       router.push(gameUrl);
     } else if (returnUrl && returnUrl !== '/') {
@@ -209,16 +168,13 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
 
     try {
       setIsLoading(true);
-      console.log('🚪 [Character Create] 게임 포기 시도...');
-      
+
       await api.post('/game/quit');
-      
-      console.log('✅ [Character Create] 게임 포기 성공');
-      
+
       setExistingCharacter(null);
       toast.info('이전 캐릭터를 포기했습니다. 새로운 캐릭터를 만들어주세요.');
     } catch (error: any) {
-      console.error('❌ [Character Create] 캐릭터 포기 실패:', error);
+      console.error('Character abandon failed:', error);
       toast.error('캐릭터 포기에 실패했습니다');
     } finally {
       setIsLoading(false);

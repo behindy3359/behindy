@@ -14,20 +14,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const { sidebar, toggleSidebar } = useUIStore();
   const [isMobile, setIsMobile] = React.useState(false);
   
-  // 🎨 자동 테마 적용 - 강제로 호출
+  // 자동 테마 적용
   const { isGameMode } = useAutoTheme();
 
-  // 🔥 추가 안전장치: 컴포넌트 마운트 시에도 테마 확인
+  // 컴포넌트 마운트 시 테마 확인
   React.useEffect(() => {
     const pathname = window.location.pathname;
     const shouldBeGameMode = pathname.startsWith('/game') || pathname.startsWith('/character');
-    
-    console.log('🔍 [AppLayout] 마운트 시 테마 확인:', {
-      pathname,
-      shouldBeGameMode,
-      currentTheme: document.documentElement.getAttribute('data-theme')
-    });
-    
+
     if (shouldBeGameMode) {
       document.documentElement.setAttribute('data-theme', 'dark');
       document.body.setAttribute('data-theme', 'dark');

@@ -35,35 +35,19 @@ public class GameService {
 
     @Transactional
     public GameEnterResponse enterGameByStation(String stationName, Integer lineNumber) {
-        log.info("🚇 역 기반 게임 진입 서비스 시작: station={}, line={}", stationName, lineNumber);
-
         User currentUser = authService.getCurrentUser();
-        log.info("   현재 사용자: userId={}", currentUser.getUserId());
-
         Character character = getAliveCharacter(currentUser);
-        log.info("   캐릭터 정보: charId={}, charName={}, health={}, sanity={}",
-                character.getCharId(), character.getCharName(), character.getCharHealth(), character.getCharSanity());
 
-        // 1. 진행 중인 게임이 있는지 확인
-        log.info("   진행 중인 게임 확인 중...");
         Optional<Now> existingGame = nowRepository.findByCharacter(character);
 
         if (existingGame.isPresent()) {
-            log.info("   기존 게임 발견: pageId={}, 기존 게임 처리로 전환", existingGame.get().getPage().getPageId());
             return handleExistingGame(existingGame.get(), character, stationName, lineNumber);
         }
 
-        log.info("   진행 중인 게임 없음, 새 게임 준비");
-
-        // 2. 해당 역의 미완료 스토리 조회
-        log.info("   미완료 스토리 조회 중: station={}, line={}, charId={}", stationName, lineNumber, character.getCharId());
         List<StoryResponse> uncompletedStories = storyService.getUncompletedStoriesByStation(
                 stationName, lineNumber, character.getCharId());
 
-        log.info("   미완료 스토리 수: {}", uncompletedStories.size());
-
         if (uncompletedStories.isEmpty()) {
-            log.warn("⚠️ 플레이 가능한 스토리가 없음: station={}, line={}", stationName, lineNumber);
             return GameEnterResponse.builder()
                     .success(false)
                     .action("NO_STORIES")
@@ -74,15 +58,9 @@ public class GameService {
                     .build();
         }
 
-        // 3. 적절한 스토리 선택 (첫 번째 미완료 스토리)
         StoryResponse selectedStory = uncompletedStories.get(0);
-        log.info("   선택된 스토리: storyId={}, title={}", selectedStory.getStoryId(), selectedStory.getStoryTitle());
-
-        // 4. 새 게임 시작
-        log.info("   새 게임 시작 중...");
         GameStartResponse startResponse = startGame(selectedStory.getStoryId());
 
-        log.info("✅ 역 기반 게임 진입 완료: action=START_NEW, storyId={}", selectedStory.getStoryId());
         return GameEnterResponse.builder()
                 .success(true)
                 .action("START_NEW")
@@ -145,49 +123,28 @@ public class GameService {
 
     @Transactional
     public GameStartResponse startGame(Long storyId) {
-        log.info("🎮 게임 시작 서비스: storyId={}", storyId);
-
         User currentUser = authService.getCurrentUser();
         Character character = getAliveCharacter(currentUser);
-        log.info("   캐릭터: charId={}, charName={}", character.getCharId(), character.getCharName());
 
-        log.info("   스토리 조회 중: storyId={}", storyId);
         Story story = storyRepository.findById(storyId)
-                .orElseThrow(() -> {
-                    log.warn("⚠️ 스토리를 찾을 수 없음: storyId={}", storyId);
-                    return new ResourceNotFoundException("Story", "id", storyId);
-                });
-        log.info("   스토리 정보: title={}, length={}, station={}",
-                story.getStoTitle(), story.getStoLength(), story.getStation().getStaName());
+                .orElseThrow(() -> new ResourceNotFoundException("Story", "id", storyId));
 
-        log.info("   기존 게임 세션 확인 중...");
         Optional<Now> existingGame = nowRepository.findByCharacter(character);
         if (existingGame.isPresent()) {
-            log.warn("⚠️ 이미 진행 중인 게임 존재: pageId={}", existingGame.get().getPage().getPageId());
             throw new IllegalStateException("이미 진행 중인 게임이 있습니다.");
         }
 
-        log.info("   첫 번째 페이지 조회 중: storyId={}", storyId);
         Page firstPage = pageRepository.findFirstPageByStoryId(storyId)
-                .orElseThrow(() -> {
-                    log.warn("⚠️ 첫 번째 페이지를 찾을 수 없음: storyId={}", storyId);
-                    return new ResourceNotFoundException("First Page", "storyId", storyId);
-                });
-        log.info("   첫 번째 페이지: pageId={}, pageNumber={}", firstPage.getPageId(), firstPage.getPageNumber());
+                .orElseThrow(() -> new ResourceNotFoundException("First Page", "storyId", storyId));
 
-        log.info("   게임 세션 생성 중...");
         Now gameSession = Now.builder()
                 .character(character)
                 .page(firstPage)
                 .build();
-        Now savedSession = nowRepository.save(gameSession);
-        log.info("   게임 세션 저장 완료: nowId={}, createdAt={}", savedSession.getNowId(), savedSession.getCreatedAt());
+        nowRepository.save(gameSession);
 
         PageResponse pageResponse = entityDtoMapper.toPageResponse(firstPage);
         CharacterResponse characterResponse = entityDtoMapper.toCharacterResponse(character);
-
-        log.info("✅ 게임 시작 완료: storyId={}, charId={}, firstPageId={}",
-                storyId, character.getCharId(), firstPage.getPageId());
 
         return GameStartResponse.builder()
                 .storyId(storyId)
@@ -264,79 +221,41 @@ public class GameService {
 
     @Transactional
     public ChoiceResultResponse makeChoice(Long optionId) {
-        log.info("🎯 선택지 처리 서비스 시작: optionId={}", optionId);
-
         User currentUser = authService.getCurrentUser();
         Character character = getAliveCharacter(currentUser);
-        log.info("   캐릭터: charId={}, health={}, sanity={}",
-                character.getCharId(), character.getCharHealth(), character.getCharSanity());
 
-        log.info("   현재 게임 세션 조회 중...");
         Now gameSession = nowRepository.findByCharacterIdWithPage(character.getCharId())
-                .orElseThrow(() -> {
-                    log.warn("⚠️ 활성 게임을 찾을 수 없음: charId={}", character.getCharId());
-                    return new ResourceNotFoundException("Active Game", "characterId", character.getCharId());
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Active Game", "characterId", character.getCharId()));
 
         Page currentPage = gameSession.getPage();
-        log.info("   현재 페이지: pageId={}, pageNumber={}", currentPage.getPageId(), currentPage.getPageNumber());
 
-        log.info("   선택지 조회 중: optionId={}", optionId);
         Options selectedOption = optionsRepository.findById(optionId)
-                .orElseThrow(() -> {
-                    log.warn("⚠️ 선택지를 찾을 수 없음: optionId={}", optionId);
-                    return new ResourceNotFoundException("Option", "id", optionId);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Option", "id", optionId));
 
-        log.info("   선택지 정보: content={}, effect={}, amount={}",
-                selectedOption.getOptContents(), selectedOption.getOptEffect(), selectedOption.getOptAmount());
-
-        // 선택지 유효성 검증
         if (selectedOption.getPageId() != currentPage.getPageId()) {
-            log.warn("⚠️ 잘못된 선택지: optionPageId={}, currentPageId={}",
-                    selectedOption.getPageId(), currentPage.getPageId());
             throw new IllegalArgumentException("잘못된 선택지입니다.");
         }
 
-        // 선택지 효과 적용
-        log.info("   선택지 효과 적용 중...");
         ChoiceEffect effect = applyChoiceEffect(character, selectedOption);
-        log.info("   효과 적용 결과: {}", effect.getEffectDescription());
-
-        log.info("   캐릭터 상태 저장 중: health={}, sanity={}",
-                character.getCharHealth(), character.getCharSanity());
         characterRepository.save(character);
 
-        // 게임 종료 조건 확인
         if (character.getCharHealth() <= 0 || character.getCharSanity() <= 0) {
-            log.warn("💀 캐릭터 사망으로 게임 종료: health={}, sanity={}",
-                    character.getCharHealth(), character.getCharSanity());
             return handleGameOver(character, gameSession, selectedOption, effect, "캐릭터 사망");
         }
 
-        // 다음 페이지 결정
-        log.info("   다음 페이지 결정 중...");
         Optional<Page> nextPage = determineNextPage(currentPage, selectedOption);
 
         if (nextPage.isEmpty()) {
-            log.info("🏁 스토리 완료");
             return handleStoryComplete(character, gameSession, selectedOption, effect);
         }
 
-        // 다음 페이지로 이동
-        log.info("   다음 페이지로 이동: pageId={}, pageNumber={}",
-                nextPage.get().getPageId(), nextPage.get().getPageNumber());
         gameSession.setPage(nextPage.get());
         nowRepository.save(gameSession);
 
-        // 선택 로그 기록
         recordChoice(character, selectedOption);
 
         PageResponse nextPageResponse = entityDtoMapper.toPageResponse(nextPage.get());
         CharacterResponse updatedCharacter = entityDtoMapper.toCharacterResponse(character);
-
-        log.info("✅ 선택지 처리 완료: optionId={}, nextPage={}, health={}, sanity={}",
-                optionId, nextPage.get().getPageNumber(), character.getCharHealth(), character.getCharSanity());
 
         return ChoiceResultResponse.builder()
                 .success(true)
@@ -384,10 +303,7 @@ public class GameService {
         String effectType = option.getOptEffect();
         int amount = option.getOptAmount();
 
-        log.info("   선택지 효과 분석: type={}, amount={}", effectType, amount);
-
         if (effectType == null || amount == 0) {
-            log.info("   효과 없음");
             return ChoiceEffect.builder()
                     .effectType("none")
                     .amount(0)
@@ -406,7 +322,6 @@ public class GameService {
                 description = amount > 0 ?
                         String.format("체력이 %d 회복되었습니다. (%d → %d)", amount, oldHealth, newHealth) :
                         String.format("체력이 %d 감소했습니다. (%d → %d)", Math.abs(amount), oldHealth, newHealth);
-                log.info("   체력 변경: {} → {}", oldHealth, newHealth);
                 break;
 
             case "sanity":
@@ -415,12 +330,10 @@ public class GameService {
                 description = amount > 0 ?
                         String.format("정신력이 %d 회복되었습니다. (%d → %d)", amount, oldSanity, newSanity) :
                         String.format("정신력이 %d 감소했습니다. (%d → %d)", Math.abs(amount), oldSanity, newSanity);
-                log.info("   정신력 변경: {} → {}", oldSanity, newSanity);
                 break;
 
             default:
                 description = "알 수 없는 효과";
-                log.warn("   알 수 없는 효과 타입: {}", effectType);
         }
 
         return ChoiceEffect.builder()
@@ -481,13 +394,8 @@ public class GameService {
 
 
     private Character getAliveCharacter(User user) {
-        log.info("   살아있는 캐릭터 조회: userId={}", user.getUserId());
-
         return characterRepository.findByUserAndDeletedAtIsNull(user)
-                .orElseThrow(() -> {
-                    log.warn("⚠️ 살아있는 캐릭터를 찾을 수 없음: userId={}", user.getUserId());
-                    return new ResourceNotFoundException("Living Character", "userId", user.getUserId());
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Living Character", "userId", user.getUserId()));
     }
 
     /**
@@ -502,12 +410,8 @@ public class GameService {
 
             // LogO Repository가 있다면 저장
             // logORepository.save(choiceLog);
-
-            log.debug("선택 로그 기록: charId={}, optionId={}",
-                    character.getCharId(), selectedOption.getOptId());
         } catch (Exception e) {
             log.error("선택 로그 기록 실패", e);
-            // 로그 기록 실패는 게임 진행에 영향을 주지 않음
         }
     }
 
@@ -516,7 +420,6 @@ public class GameService {
      */
     private void recordGameEnd(Character character, Page lastPage, String endType, String reason) {
         try {
-            // Story 조회
             Story story = storyRepository.findById(lastPage.getStoId())
                     .orElse(null);
 
@@ -525,13 +428,10 @@ public class GameService {
                         .character(character)
                         .story(story)
                         .logeResult(reason)
-                        .logeEnding(endType.equals("COMPLETE") ? 1 : 0) // 1: 성공, 0: 실패
+                        .logeEnding(endType.equals("COMPLETE") ? 1 : 0)
                         .build();
 
-                logERepository.save(endLog); // ✅ 실제 저장 활성화
-
-                log.info("게임 종료 로그 기록: charId={}, storyId={}, endType={}, reason={}",
-                        character.getCharId(), story.getStoId(), endType, reason);
+                logERepository.save(endLog);
             }
         } catch (Exception e) {
             log.error("게임 종료 로그 기록 실패", e);
