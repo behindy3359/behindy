@@ -31,28 +31,32 @@ describe('passwordUtils', () => {
     });
 
     it('should calculate correct score for each requirement', () => {
-      // Only length
-      expect(passwordUtils.calculateStrength('testtest').score).toBe(1);
+      // Length + lowercase (2 requirements met)
+      expect(passwordUtils.calculateStrength('testtest').score).toBe(2);
 
-      // Length + lowercase
-      expect(passwordUtils.calculateStrength('testtest').score).toBe(1);
+      // Length + lowercase + uppercase (3 requirements met)
+      expect(passwordUtils.calculateStrength('testTest').score).toBe(3);
 
-      // Length + lowercase + uppercase
-      expect(passwordUtils.calculateStrength('testTest').score).toBe(2);
+      // Length + lowercase + uppercase + number (4 requirements met)
+      expect(passwordUtils.calculateStrength('testTest1').score).toBe(4);
 
-      // Length + lowercase + uppercase + number
-      expect(passwordUtils.calculateStrength('testTest1').score).toBe(3);
-
-      // Length + lowercase + uppercase + number + special
-      expect(passwordUtils.calculateStrength('testTest1!').score).toBe(4);
+      // All 5 requirements met
+      expect(passwordUtils.calculateStrength('testTest1!').score).toBe(5);
     });
 
     it('should correctly identify strength levels', () => {
-      expect(passwordUtils.calculateStrength('t').level).toBe('very-weak'); // score 1
+      // score <= 1: very-weak
+      expect(passwordUtils.calculateStrength('t').level).toBe('very-weak'); // score 0
       expect(passwordUtils.calculateStrength('test').level).toBe('very-weak'); // score 1
-      expect(passwordUtils.calculateStrength('testTest').level).toBe('weak'); // score 2
-      expect(passwordUtils.calculateStrength('testTest1').level).toBe('medium'); // score 3
-      expect(passwordUtils.calculateStrength('testTest1!').level).toBe('strong'); // score 4
+
+      // score <= 3: medium (testTest has 3 requirements)
+      expect(passwordUtils.calculateStrength('testTest').level).toBe('medium'); // score 3
+
+      // score <= 4: strong
+      expect(passwordUtils.calculateStrength('testTest1').level).toBe('strong'); // score 4
+
+      // score == 5: very-strong
+      expect(passwordUtils.calculateStrength('testTest1!').level).toBe('very-strong'); // score 5
       expect(passwordUtils.calculateStrength('TestTest1!').level).toBe('very-strong'); // score 5
     });
   });

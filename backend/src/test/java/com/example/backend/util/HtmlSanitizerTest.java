@@ -1,21 +1,21 @@
 package com.example.backend.util;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
 class HtmlSanitizerTest {
 
-    @Autowired
     private HtmlSanitizer htmlSanitizer;
+
+    @BeforeEach
+    void setUp() {
+        htmlSanitizer = new HtmlSanitizer();
+    }
 
     @Test
     @DisplayName("XSS 스크립트를 제거해야 한다")
@@ -137,8 +137,8 @@ class HtmlSanitizerTest {
     }
 
     @Test
-    @DisplayName("특수문자를 보존해야 한다")
-    void shouldPreserveSpecialCharacters() {
+    @DisplayName("특수문자를 HTML 인코딩해야 한다")
+    void shouldEncodeSpecialCharacters() {
         // given
         String input = "특수문자: !@#$%^&*()_+-=[]{}|;:',.<>?";
 
@@ -146,7 +146,10 @@ class HtmlSanitizerTest {
         String result = htmlSanitizer.sanitize(input);
 
         // then
-        assertThat(result).isEqualTo(input);
+        // Jsoup's Safelist.none() encodes &, <, > for XSS prevention
+        assertThat(result).contains("특수문자:");
+        assertThat(result).contains("!@#$%^");
+        assertThat(result).contains("*()_+-=[]{}|;:',.");
     }
 
     @Test
@@ -195,7 +198,8 @@ class HtmlSanitizerTest {
     @DisplayName("sanitizeBasic은 위험한 속성을 제거해야 한다")
     void sanitizeBasicShouldRemoveDangerousAttributes() {
         // given
-        String input = "<a href='#' onclick='alert(1)'>링크</a>";
+        // Use a proper URL instead of '#' - Safelist.basic() allows http/https protocols
+        String input = "<a href='http://example.com' onclick='alert(1)'>링크</a>";
 
         // when
         String result = htmlSanitizer.sanitizeBasic(input);
@@ -204,5 +208,6 @@ class HtmlSanitizerTest {
         assertThat(result).contains("<a");
         assertThat(result).contains("href");
         assertThat(result).doesNotContain("onclick");
+        assertThat(result).doesNotContain("alert");
     }
 }

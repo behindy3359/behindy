@@ -47,6 +47,8 @@ describe('validators', () => {
       const result = validators.password('Test123!@#');
       expect(result.isValid).toBe(true);
       expect(result.score).toBe(5);
+      // Note: validation.ts uses different thresholds than passwordUtils.ts
+      // validation.ts: score 5 → 'strong', passwordUtils.ts: score 5 → 'very-strong'
       expect(result.strength).toBe('strong');
     });
 
@@ -84,10 +86,23 @@ describe('validators', () => {
     });
 
     it('should calculate correct strength level', () => {
+      // Note: validation.ts strength thresholds differ from passwordUtils.ts:
+      // validation.ts: score<=2:'very-weak', <=3:'weak', <=4:'medium', 5:'strong'
+      // passwordUtils.ts: score<=1:'very-weak', <=2:'weak', <=3:'medium', <=4:'strong', 5:'very-strong'
+
+      // 'test' → only lowercase, no length (score 1) → very-weak
       expect(validators.password('test').strength).toBe('very-weak');
+
+      // 'test12' → only 6 chars (no length), lowercase + number (score 2) → very-weak
       expect(validators.password('test12').strength).toBe('very-weak');
+
+      // 'test12A' → only 7 chars (no length), lowercase + uppercase + number (score 3) → weak
       expect(validators.password('test12A').strength).toBe('weak');
-      expect(validators.password('test12A!').strength).toBe('medium');
+
+      // 'test12A!' → all 5 requirements (score 5) → strong (in validation.ts, not very-strong)
+      expect(validators.password('test12A!').strength).toBe('strong');
+
+      // 'Test12!@' → all 5 requirements (score 5) → strong
       expect(validators.password('Test12!@').strength).toBe('strong');
     });
   });
