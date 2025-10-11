@@ -30,6 +30,9 @@ RUN npm install
 # 소스 코드 복사
 COPY . .
 
+# Node.js 힙 메모리 증가 (4GB) - Next.js 15 빌드를 위해 필수
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 # 환경변수가 설정된 상태에서 빌드
 RUN npm run build
 
