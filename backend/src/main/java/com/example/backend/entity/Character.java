@@ -54,7 +54,7 @@ public class Character {
         return this.deletedAt != null;
     }
 
-    // ✅ 수정: user -> user 필드명 통일
+    // 수정: user -> user 필드명 통일
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

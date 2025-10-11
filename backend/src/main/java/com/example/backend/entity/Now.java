@@ -7,8 +7,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-// 플레이어가 현재 진행하고 있는 공간, 세션과 별도로 운영
-
 @Entity
 @Getter@Setter @Builder @NoArgsConstructor@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
