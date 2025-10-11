@@ -78,7 +78,7 @@ jobs:
         run: |
           cd ~/behindy
           echo "🏗️ 컨테이너 빌드 및 시작 중..."
-          
+
           if [ -f .env ]; then
             echo "📋 환경변수 파일 로드 중..."
             set -a
@@ -87,16 +87,21 @@ jobs:
           else
             echo "⚠️ .env 파일이 없습니다. Docker Compose 기본 설정을 사용합니다."
           fi
-          
-          echo "📦 프론트엔드 이미지 새로 빌드 중..."
-          docker-compose build --no-cache frontend
-          
+
+          # Docker BuildKit 활성화 및 빌드 메모리 최적화
+          export DOCKER_BUILDKIT=1
+          export COMPOSE_DOCKER_CLI_BUILD=1
+
+          echo "📦 프론트엔드 이미지 빌드 중 (캐시 활용)..."
+          # --no-cache 제거하여 캐시 활용, 메모리 사용량 감소
+          docker-compose build frontend
+
           echo "📦 다른 서비스들 빌드 중..."
           docker-compose build backend llmserver
-          
+
           echo "🚀 모든 서비스 시작 중..."
           docker-compose up -d
-          
+
           echo "✅ 컨테이너 시작 완료"
 
       - name: Wait for services

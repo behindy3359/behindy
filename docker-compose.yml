@@ -1,6 +1,6 @@
 services:
   frontend:
-    build: 
+    build:
       context: ./frontend
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
@@ -11,8 +11,15 @@ services:
         - NEXT_PUBLIC_REFRESH_TOKEN_KEY=${NEXT_PUBLIC_REFRESH_TOKEN_KEY}
         - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
         - NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
+      shm_size: '2gb'  # 빌드 시 공유 메모리 증가
     container_name: frontend
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G  # 런타임 메모리 제한
+        reservations:
+          memory: 1G  # 최소 메모리 보장
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - NEXT_PUBLIC_AI_URL=${NEXT_PUBLIC_AI_URL}

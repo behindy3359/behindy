@@ -23,9 +23,9 @@ ENV NEXT_PUBLIC_REFRESH_TOKEN_KEY=$NEXT_PUBLIC_REFRESH_TOKEN_KEY
 ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
 ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
 
-# 의존성 설치
+# 의존성 설치 (npm ci는 더 빠르고 메모리 효율적)
 COPY package*.json ./
-RUN npm install
+RUN npm ci --prefer-offline --no-audit
 
 # 소스 코드 복사
 COPY . .
