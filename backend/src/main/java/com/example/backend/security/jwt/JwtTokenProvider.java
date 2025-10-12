@@ -22,13 +22,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    @Value("${JWT_SECRET}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${JWT_ACCESS_VALIDITY:900000}")
+    @Value("${jwt.access-validity:900000}")
     private long accessTokenValidity;
 
-    @Value("${JWT_REFRESH_VALIDITY:604800000}")
+    @Value("${jwt.refresh-validity:604800000}")
     private long refreshTokenValidity;
 
     private Key key;
