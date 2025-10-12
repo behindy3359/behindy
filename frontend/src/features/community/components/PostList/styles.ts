@@ -45,7 +45,7 @@ export const Title = styled.h1`
   }
 `;
 
-export const Subtitle = styled.p;
+export const Subtitle = styled.p``;
 
 export const SearchContainer = styled(FlexContainer).attrs({
   $direction: 'row' as const,
