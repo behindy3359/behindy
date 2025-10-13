@@ -3,12 +3,13 @@ package com.example.backend.service;
 import com.example.backend.dto.game.StoryResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 
 @Slf4j
@@ -16,76 +17,53 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AIStoryService {
 
-    private final RestTemplate restTemplate;
+    @Qualifier("llmWebClient")
+    private final WebClient llmWebClient;
 
-    @Value("${ai.server.url:http://llmserver:8000}")
-    private String aiServerUrl;
-
-    @Value("${behindy.internal.api-key:behindy-internal-2025-secret-key}")
-    private String internalApiKey;
+    @Value("${ai.server.timeout:900000}")
+    private int aiServerTimeout;
 
     /**
-     * LLM 서버에서 생성된 스토리 데이터 요청
+     * LLM 서버에서 생성된 스토리 데이터 요청 (비동기)
      */
-    public StoryResponse generateStory(String stationName, Integer lineNumber,
-                                       Integer characterHealth, Integer characterSanity) {
+    public Mono<StoryResponse> generateStory(String stationName, Integer lineNumber,
+                                              Integer characterHealth, Integer characterSanity) {
         log.info("LLM 서버에 스토리 생성 요청: {}역 {}호선", stationName, lineNumber);
 
-        try {
-            AIStoryRequest request = AIStoryRequest.builder()
-                    .stationName(stationName)
-                    .lineNumber(lineNumber)
-                    .characterHealth(characterHealth)
-                    .characterSanity(characterSanity)
-                    .build();
+        AIStoryRequest request = AIStoryRequest.builder()
+                .stationName(stationName)
+                .lineNumber(lineNumber)
+                .characterHealth(characterHealth)
+                .characterSanity(characterSanity)
+                .build();
 
-            // LLM 서버 호출
-            AIStoryResponse aiResponse = callLLMServer(request);
-
-            if (aiResponse != null) {
-                log.info("LLM 서버 응답 성공: {}", aiResponse.getStoryTitle());
-                return convertToStoryResponse(aiResponse, stationName, lineNumber);
-            } else {
-                log.warn("LLM 서버 응답 없음, 기본 응답 반환");
-                return createDefaultResponse(stationName, lineNumber);
-            }
-
-        } catch (Exception e) {
-            log.error("LLM 서버 통신 실패: {}", e.getMessage());
-            return createDefaultResponse(stationName, lineNumber);
-        }
+        // LLM 서버 호출 (비동기)
+        return callLLMServer(request)
+                .map(aiResponse -> {
+                    log.info("LLM 서버 응답 성공: {}", aiResponse.getStoryTitle());
+                    return convertToStoryResponse(aiResponse, stationName, lineNumber);
+                })
+                .doOnError(e -> log.error("LLM 서버 통신 실패: {}", e.getMessage()))
+                .onErrorResume(e -> {
+                    log.warn("LLM 서버 응답 없음, 기본 응답 반환");
+                    return Mono.just(createDefaultResponse(stationName, lineNumber));
+                });
     }
 
     /**
-     * LLM 서버 호출
+     * LLM 서버 호출 (비동기)
      */
-    private AIStoryResponse callLLMServer(AIStoryRequest request) {
-        try {
-            String url = aiServerUrl + "/generate-story";
+    private Mono<AIStoryResponse> callLLMServer(AIStoryRequest request) {
+        log.debug("LLM 서버 비동기 호출: /generate-story");
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-Internal-API-Key", internalApiKey);
-
-            HttpEntity<AIStoryRequest> entity = new HttpEntity<>(request, headers);
-
-            log.debug("LLM 서버 호출: {}", url);
-
-            ResponseEntity<AIStoryResponse> response = restTemplate.exchange(
-                    url, HttpMethod.POST, entity,
-                    new ParameterizedTypeReference<AIStoryResponse>() {});
-
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                return response.getBody();
-            }
-
-            log.warn("LLM 서버 응답 오류: {}", response.getStatusCode());
-            return null;
-
-        } catch (Exception e) {
-            log.error("LLM 서버 호출 예외: {}", e.getMessage());
-            return null;
-        }
+        return llmWebClient.post()
+                .uri("/generate-story")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(AIStoryResponse.class)
+                .timeout(Duration.ofMillis(aiServerTimeout))
+                .doOnSuccess(response -> log.debug("LLM 서버 응답 수신 완료"))
+                .doOnError(e -> log.error("LLM 서버 호출 실패: {}", e.getMessage()));
     }
 
     /**
@@ -130,13 +108,25 @@ public class AIStoryService {
     }
 
     /**
-     * LLM 서버 상태 확인
+     * LLM 서버 상태 확인 (비동기)
      */
-    public boolean isLLMServerHealthy() {
+    public Mono<Boolean> isLLMServerHealthy() {
+        return llmWebClient.get()
+                .uri("/health")
+                .retrieve()
+                .bodyToMono(String.class)
+                .map(response -> true)
+                .timeout(Duration.ofSeconds(30))
+                .doOnError(e -> log.debug("LLM 서버 헬스체크 실패: {}", e.getMessage()))
+                .onErrorReturn(false);
+    }
+
+    /**
+     * LLM 서버 상태 확인 (동기 - 레거시 호환)
+     */
+    public boolean isLLMServerHealthySync() {
         try {
-            String healthUrl = aiServerUrl + "/health";
-            ResponseEntity<String> response = restTemplate.getForEntity(healthUrl, String.class);
-            return response.getStatusCode() == HttpStatus.OK;
+            return isLLMServerHealthy().block(Duration.ofSeconds(30));
         } catch (Exception e) {
             log.debug("LLM 서버 헬스체크 실패: {}", e.getMessage());
             return false;

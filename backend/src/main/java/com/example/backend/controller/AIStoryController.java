@@ -26,7 +26,8 @@ public class AIStoryController {
      */
     @GetMapping("/health")
     public ResponseEntity<ApiResponse> checkLLMServerHealth() {
-        boolean isHealthy = aiStoryService.isLLMServerHealthy();
+        // 동기 버전 사용 (레거시 호환)
+        boolean isHealthy = aiStoryService.isLLMServerHealthySync();
 
         return ResponseEntity.ok(ApiResponse.builder()
                 .success(isHealthy)
