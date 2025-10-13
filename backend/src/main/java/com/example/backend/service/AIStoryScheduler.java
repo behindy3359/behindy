@@ -16,10 +16,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.http.*;
-import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,11 +37,8 @@ public class AIStoryScheduler {
     private final PageRepository pageRepository;
     private final OptionsRepository optionsRepository;
 
-    @Qualifier("aiServerRestTemplate")
-    private final RestTemplate aiServerRestTemplate;
-
-    @Value("${ai.server.url:http://llmserver:8000}")
-    private String aiServerUrl;
+    @Qualifier("llmWebClient")
+    private final WebClient llmWebClient;
 
     @Value("${ai.story.generation.enabled:true}")
     private Boolean storyGenerationEnabled;
@@ -49,8 +46,8 @@ public class AIStoryScheduler {
     @Value("${ai.story.generation.daily-limit:5}")
     private Integer dailyGenerationLimit;
 
-    @Value("${behindy.internal.api-key:behindy-internal-2025-secret-key}")
-    private String internalApiKey;
+    @Value("${ai.server.timeout:900000}")
+    private int aiServerTimeout;
 
     private final AtomicInteger dailyGeneratedCount = new AtomicInteger(0);
     private LocalDateTime lastSuccessfulGeneration = null;
@@ -80,16 +77,22 @@ public class AIStoryScheduler {
                 return;
             }
 
-            CompleteStoryResponse llmResponse = requestFromLLMServer(selectedStation);
-            if (llmResponse == null || !validateLLMResponse(llmResponse)) {
-                return;
-            }
-
-            boolean saved = saveStoryToDB(selectedStation, llmResponse);
-            if (saved) {
-                dailyGeneratedCount.incrementAndGet();
-                lastSuccessfulGeneration = LocalDateTime.now();
-            }
+            // 비동기 호출 후 구독
+            requestFromLLMServer(selectedStation)
+                    .doOnNext(llmResponse -> {
+                        if (validateLLMResponse(llmResponse)) {
+                            boolean saved = saveStoryToDB(selectedStation, llmResponse);
+                            if (saved) {
+                                dailyGeneratedCount.incrementAndGet();
+                                lastSuccessfulGeneration = LocalDateTime.now();
+                                log.info("✅ 스토리 저장 완료: {}", llmResponse.getStoryTitle());
+                            }
+                        } else {
+                            log.warn("⚠️ LLM 응답 검증 실패");
+                        }
+                    })
+                    .doOnError(e -> log.error("❌ 스토리 생성 중 오류: {}", e.getMessage()))
+                    .subscribe(); // 비동기 실행
 
         } catch (Exception e) {
             log.error("스토리 생성 중 오류: {}", e.getMessage());
@@ -124,54 +127,43 @@ public class AIStoryScheduler {
         }
     }
     /**
-     * LLM 서버 통신 - 수동 JSON 파싱으로 확실한 매핑
+     * LLM 서버 통신 (비동기) - 수동 JSON 파싱으로 확실한 매핑
      */
-    private CompleteStoryResponse requestFromLLMServer(Station station) {
-        if (aiServerUrl == null || station == null) {
-            log.error("LLM 서버 URL 또는 역 정보가 null입니다.");
-            return null;
+    private Mono<CompleteStoryResponse> requestFromLLMServer(Station station) {
+        if (station == null) {
+            log.error("역 정보가 null입니다.");
+            return Mono.empty();
         }
 
-        try {
-            String url = aiServerUrl + "/generate-complete-story";
+        CompleteStoryRequest request = CompleteStoryRequest.builder()
+                .station_name(station.getStaName())
+                .line_number(station.getStaLine())
+                .character_health(80)
+                .character_sanity(80)
+                .build();
 
-            CompleteStoryRequest request = CompleteStoryRequest.builder()
-                    .station_name(station.getStaName())
-                    .line_number(station.getStaLine())
-                    .character_health(80)
-                    .character_sanity(80)
-                    .build();
+        log.info("🚀 LLM 서버 비동기 요청: {}역 {}호선", station.getStaName(), station.getStaLine());
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-Internal-API-Key", internalApiKey != null ? internalApiKey : "default-key");
-            HttpEntity<CompleteStoryRequest> entity = new HttpEntity<>(request, headers);
-
-            ResponseEntity<String> rawResponse = aiServerRestTemplate.exchange(
-                    url, HttpMethod.POST, entity, String.class);
-
-            if (rawResponse.getStatusCode() == HttpStatus.OK && rawResponse.getBody() != null) {
-                String jsonResponse = rawResponse.getBody();
-
-                CompleteStoryResponse parsedResponse = parseJsonManually(jsonResponse);
-
-                if (parsedResponse != null) {
-                    return parsedResponse;
-                } else {
-                    log.error("수동 파싱 실패");
-                    return null;
-                }
-            }
-
-            return null;
-
-        } catch (Exception e) {
-            log.error("LLM 서버 통신 실패: {}", e.getMessage());
-            if (e.getCause() != null) {
-                log.error("원인: {}", e.getCause().getMessage());
-            }
-            return null;
-        }
+        return llmWebClient.post()
+                .uri("/generate-complete-story")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(String.class)
+                .timeout(Duration.ofMillis(aiServerTimeout))
+                .map(this::parseJsonManually)
+                .doOnSuccess(response -> {
+                    if (response != null) {
+                        log.info("✅ LLM 서버 응답 수신: {}", response.getStoryTitle());
+                    } else {
+                        log.error("❌ JSON 파싱 실패");
+                    }
+                })
+                .doOnError(e -> {
+                    log.error("❌ LLM 서버 통신 실패: {}", e.getMessage());
+                    if (e.getCause() != null) {
+                        log.error("   원인: {}", e.getCause().getMessage());
+                    }
+                });
     }
 
     /**
@@ -380,7 +372,8 @@ public class AIStoryScheduler {
         status.put("dailyCount", dailyGeneratedCount.get());
         status.put("dailyLimit", dailyGenerationLimit != null ? dailyGenerationLimit : 0);
         status.put("lastSuccess", lastSuccessfulGeneration);
-        status.put("llmServerUrl", aiServerUrl != null ? aiServerUrl : "NOT_SET");
+        status.put("timeout", aiServerTimeout);
+        status.put("mode", "WebClient (Async)");
         return status;
     }
 
