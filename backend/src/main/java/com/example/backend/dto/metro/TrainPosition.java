@@ -66,7 +66,7 @@ public class TrainPosition {
     /**
      * 실시간 데이터 여부
      */
-    private Boolean isRealtime;
+    private Boolean realtime;
 
     // === 편의 메서드들 ===
 

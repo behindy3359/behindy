@@ -162,12 +162,12 @@ public class MetroPositionService {
                     .lastUpdated(LocalDateTime.now())
                     .nextUpdate(LocalDateTime.now().plusMinutes(2))
                     .dataSource(apiEnabled ? "FILTERED_MOCK" : "MOCK")
-                    .isRealtime(false)
+                    .realtime(false)
                     .systemStatus("HEALTHY")
                     .build();
 
             log.info("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] 응답 생성 완료 - dataSource: {}, isRealtime: {}",
-                response.getDataSource(), response.isRealtime());
+                response.getDataSource(), response.getRealtime());
             log.info("전체 위치 정보 조회 완료 (필터링 적용): {}개 노선, {}대 열차 (필터링 전: {}대)",
                     enabledLines != null ? enabledLines.size() : 0,
                     filteredPositions != null ? filteredPositions.size() : 0,
@@ -234,7 +234,7 @@ public class MetroPositionService {
                     .lastUpdated(LocalDateTime.now())
                     .nextUpdate(LocalDateTime.now().plusMinutes(2))
                     .dataSource("FILTERED_MOCK")
-                    .isRealtime(false)
+                    .realtime(false)
                     .systemStatus("HEALTHY")
                     .build();
 
@@ -284,7 +284,7 @@ public class MetroPositionService {
                     .direction(direction)
                     .lastUpdated(LocalDateTime.now().minusSeconds(random.nextInt(120)))
                     .dataSource("CLEAN_MOCK")
-                    .isRealtime(false)
+                    .realtime(false)
                     .build();
 
             positions.add(position);
@@ -374,7 +374,7 @@ public class MetroPositionService {
                 .lineStatistics(new HashMap<>())
                 .lastUpdated(LocalDateTime.now())
                 .dataSource("NONE")
-                .isRealtime(false)
+                .realtime(false)
                 .systemStatus("WARNING")
                 .build();
     }
@@ -391,7 +391,7 @@ public class MetroPositionService {
                 .lineStatistics(new HashMap<>())
                 .lastUpdated(LocalDateTime.now())
                 .dataSource("ERROR")
-                .isRealtime(false)
+                .realtime(false)
                 .systemStatus("ERROR")
                 .build();
     }

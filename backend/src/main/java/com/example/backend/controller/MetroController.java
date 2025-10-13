@@ -41,7 +41,7 @@ public class MetroController {
             log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] 응답 데이터 - 열차 수: {}, dataSource: {}, isRealtime: {}",
                 positions != null ? positions.getTotalTrains() : 0,
                 positions != null ? positions.getDataSource() : "null",
-                positions != null ? positions.isRealtime() : false);
+                positions != null ? positions.getRealtime() : false);
 
             log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] ⚠️ 프론트엔드로 전송하는 dataSource: {}",
                 positions != null ? positions.getDataSource() : "null");
@@ -238,7 +238,7 @@ public class MetroController {
                 .lineStatistics(Map.of())
                 .lastUpdated(LocalDateTime.now())
                 .dataSource("ERROR")
-                .isRealtime(false)
+                .realtime(false)
                 .systemStatus("ERROR")
                 .build();
     }

@@ -170,7 +170,7 @@ public class MetroApiService {
                     .direction(convertApiDirection(apiData.getUpdnLine()))
                     .lastUpdated(LocalDateTime.now())
                     .dataSource("SEOUL_OPENAPI")
-                    .isRealtime(true)
+                    .realtime(true)
                     .build();
         } catch (Exception e) {
             log.error("OpenAPI 데이터 변환 실패: {}", e.getMessage());
@@ -223,7 +223,7 @@ public class MetroApiService {
                     .direction(random.nextBoolean() ? "up" : "down")
                     .lastUpdated(LocalDateTime.now().minusSeconds(random.nextInt(300)))
                     .dataSource("MOCK_REALISTIC")
-                    .isRealtime(false)
+                    .realtime(false)
                     .build();
 
             mockData.add(position);

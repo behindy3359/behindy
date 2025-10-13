@@ -51,7 +51,7 @@ public class MetroPositionResponse {
     /**
      * 실시간 데이터 여부
      */
-    private Boolean isRealtime;
+    private Boolean realtime;
 
     /**
      * 시스템 상태 ("HEALTHY", "WARNING", "ERROR")
