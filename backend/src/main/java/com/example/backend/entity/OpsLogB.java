@@ -19,8 +19,12 @@ public class OpsLogB {
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "loge_id")
+    @JoinColumn(name = "loge_id", nullable = true)
     private LogE loge;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "char_id", nullable = true)
+    private Character character;
 
     @Column(name = "logb_page")
     private long logbPage;

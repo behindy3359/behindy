@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +29,8 @@ public class GameService {
     private final NowRepository nowRepository;
     private final CharacterRepository characterRepository;
     private final LogERepository logERepository;
+    private final LogORepository logORepository;
+    private final OpsLogBRepository opsLogBRepository;
     private final CharacterService characterService;
     private final AuthService authService;
     private final StoryService storyService;
@@ -140,6 +143,7 @@ public class GameService {
         Now gameSession = Now.builder()
                 .character(character)
                 .page(firstPage)
+                .pageEnteredAt(LocalDateTime.now())
                 .build();
         nowRepository.save(gameSession);
 
@@ -236,8 +240,20 @@ public class GameService {
             throw new IllegalArgumentException("잘못된 선택지입니다.");
         }
 
+        // 페이지 체류 시간 계산
+        long durationMs = 0;
+        if (gameSession.getPageEnteredAt() != null) {
+            durationMs = java.time.Duration.between(
+                    gameSession.getPageEnteredAt(),
+                    LocalDateTime.now()
+            ).toMillis();
+        }
+
         ChoiceEffect effect = applyChoiceEffect(character, selectedOption);
         characterRepository.save(character);
+
+        // 플레이 로그 기록 (체류 시간 포함)
+        recordPlayLog(currentPage, selectedOption, durationMs);
 
         if (character.getCharHealth() <= 0 || character.getCharSanity() <= 0) {
             return handleGameOver(character, gameSession, selectedOption, effect, "캐릭터 사망");
@@ -249,7 +265,9 @@ public class GameService {
             return handleStoryComplete(character, gameSession, selectedOption, effect);
         }
 
+        // 다음 페이지로 이동 및 진입 시간 업데이트
         gameSession.setPage(nextPage.get());
+        gameSession.setPageEnteredAt(LocalDateTime.now());
         nowRepository.save(gameSession);
 
         recordChoice(character, selectedOption);
@@ -408,15 +426,46 @@ public class GameService {
                     .options(selectedOption)
                     .build();
 
-            // LogO Repository가 있다면 저장
-            // logORepository.save(choiceLog);
+            logORepository.save(choiceLog);
+            log.debug("선택 로그 기록 완료: charId={}, optionId={}",
+                    character.getCharId(), selectedOption.getOptId());
         } catch (Exception e) {
-            log.error("선택 로그 기록 실패", e);
+            log.error("선택 로그 기록 실패: charId={}, optionId={}",
+                    character.getCharId(), selectedOption.getOptId(), e);
+            // 로그 저장 실패가 게임 진행에 영향을 주지 않도록 예외를 삼킴
         }
     }
 
     /**
-     * 게임 종료 로그 기록
+     * 플레이 분석 로그 기록 (페이지 체류 시간 포함)
+     */
+    private void recordPlayLog(Page currentPage, Options selectedOption, long durationMs) {
+        try {
+            // 현재는 캐릭터를 직접 가져올 수 없으므로 makeChoice에서 전달받도록 수정 필요
+            // 임시로 현재 사용자의 캐릭터 조회
+            User currentUser = authService.getCurrentUser();
+            Character character = getAliveCharacter(currentUser);
+
+            OpsLogB playLog = OpsLogB.builder()
+                    .character(character)
+                    .loge(null)  // 게임 종료 시 연결 예정
+                    .logbPage(currentPage.getPageId())
+                    .logbOpt(selectedOption.getOptId())
+                    .logbDur(durationMs)
+                    .build();
+
+            opsLogBRepository.save(playLog);
+            log.debug("플레이 로그 기록 완료: charId={}, pageId={}, optionId={}, duration={}ms",
+                    character.getCharId(), currentPage.getPageId(), selectedOption.getOptId(), durationMs);
+        } catch (Exception e) {
+            log.error("플레이 로그 기록 실패: pageId={}, optionId={}",
+                    currentPage.getPageId(), selectedOption.getOptId(), e);
+            // 로그 저장 실패가 게임 진행에 영향을 주지 않도록 예외를 삼킴
+        }
+    }
+
+    /**
+     * 게임 종료 로그 기록 및 플레이 로그 연결
      */
     private void recordGameEnd(Character character, Page lastPage, String endType, String reason) {
         try {
@@ -424,6 +473,7 @@ public class GameService {
                     .orElse(null);
 
             if (story != null) {
+                // LogE 생성 및 저장
                 LogE endLog = LogE.builder()
                         .character(character)
                         .story(story)
@@ -432,9 +482,23 @@ public class GameService {
                         .build();
 
                 logERepository.save(endLog);
+                log.info("게임 종료 로그 저장 완료: charId={}, storyId={}, result={}",
+                        character.getCharId(), story.getStoId(), endType);
+
+                // 해당 캐릭터의 미연결 플레이 로그 찾아서 LogE와 연결
+                List<OpsLogB> unlinkedPlayLogs = opsLogBRepository.findUnlinkedPlayLogsByCharacter(character.getCharId());
+                if (!unlinkedPlayLogs.isEmpty()) {
+                    for (OpsLogB playLog : unlinkedPlayLogs) {
+                        playLog.setLoge(endLog);
+                    }
+                    opsLogBRepository.saveAll(unlinkedPlayLogs);
+                    log.info("플레이 로그 연결 완료: charId={}, logeId={}, count={}",
+                            character.getCharId(), endLog.getLogeId(), unlinkedPlayLogs.size());
+                }
             }
         } catch (Exception e) {
-            log.error("게임 종료 로그 기록 실패", e);
+            log.error("게임 종료 로그 기록 실패: charId={}", character.getCharId(), e);
+            // 로그 저장 실패가 게임 종료에 영향을 주지 않도록 예외를 삼킴
         }
     }
 
