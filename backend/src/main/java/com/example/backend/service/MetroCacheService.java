@@ -39,6 +39,9 @@ public class MetroCacheService {
      * 특정 노선의 위치 데이터 캐시 저장
      */
     public void cacheLinePositions(String lineNumber, List<TrainPosition> positions) {
+        log.info("🚇 DEBUG_LOG: [MetroCacheService.cacheLinePositions] 캐시 저장 시작 - 노선: {}, 열차 수: {}",
+            lineNumber, positions != null ? positions.size() : 0);
+
         try {
             String key = METRO_POSITIONS_KEY + lineNumber;
 
@@ -54,9 +57,12 @@ public class MetroCacheService {
             String jsonData = objectMapper.writeValueAsString(cacheData);
             redisTemplate.opsForValue().set(key, jsonData, cacheTtlSeconds, TimeUnit.SECONDS);
 
+            log.info("🚇 DEBUG_LOG: [MetroCacheService.cacheLinePositions] 캐시 저장 성공 - key: {}, TTL: {}초",
+                key, cacheTtlSeconds);
             log.debug("{}호선 위치 데이터 캐시 저장: {}대 열차", lineNumber, positions.size());
 
         } catch (Exception e) {
+            log.error("🚇 DEBUG_LOG: [MetroCacheService.cacheLinePositions] 캐시 저장 실패: {}", e.getMessage());
             log.error("{}호선 위치 데이터 캐시 저장 실패: {}", lineNumber, e.getMessage(), e);
         }
     }
@@ -65,22 +71,29 @@ public class MetroCacheService {
      * 특정 노선의 위치 데이터 캐시 조회
      */
     public PositionCacheData getLinePositions(String lineNumber) {
+        log.info("🚇 DEBUG_LOG: [MetroCacheService.getLinePositions] 캐시 조회 시작 - 노선: {}", lineNumber);
+
         try {
             String key = METRO_POSITIONS_KEY + lineNumber;
             Object cachedData = redisTemplate.opsForValue().get(key);
 
             if (cachedData == null) {
+                log.warn("🚇 DEBUG_LOG: [MetroCacheService.getLinePositions] 캐시 없음 - key: {}", key);
                 log.debug("{}호선 위치 데이터 캐시 없음", lineNumber);
                 return null;
             }
 
             PositionCacheData result = objectMapper.readValue(cachedData.toString(), PositionCacheData.class);
+            log.info("🚇 DEBUG_LOG: [MetroCacheService.getLinePositions] 캐시 조회 성공 - {}대 열차, 마지막 업데이트: {}",
+                result.getPositions() != null ? result.getPositions().size() : 0,
+                result.getLastUpdated());
             log.debug("{}호선 위치 데이터 캐시 조회: {}대 열차", lineNumber,
                     result.getPositions() != null ? result.getPositions().size() : 0);
 
             return result;
 
         } catch (Exception e) {
+            log.error("🚇 DEBUG_LOG: [MetroCacheService.getLinePositions] 캐시 조회 실패: {}", e.getMessage());
             log.error("{}호선 위치 데이터 캐시 조회 실패: {}", lineNumber, e.getMessage(), e);
             return null;
         }
@@ -90,6 +103,9 @@ public class MetroCacheService {
      * 전체 노선 위치 데이터 캐시 저장
      */
     public void cacheAllPositions(List<TrainPosition> allPositions) {
+        log.info("🚇 DEBUG_LOG: [MetroCacheService.cacheAllPositions] 전체 캐시 저장 시작 - 열차 수: {}",
+            allPositions != null ? allPositions.size() : 0);
+
         try {
             PositionCacheData cacheData = PositionCacheData.builder()
                     .lineNumber("ALL")
@@ -103,9 +119,12 @@ public class MetroCacheService {
             String jsonData = objectMapper.writeValueAsString(cacheData);
             redisTemplate.opsForValue().set(METRO_ALL_POSITIONS_KEY, jsonData, cacheTtlSeconds, TimeUnit.SECONDS);
 
+            log.info("🚇 DEBUG_LOG: [MetroCacheService.cacheAllPositions] 전체 캐시 저장 성공 - key: {}, TTL: {}초",
+                METRO_ALL_POSITIONS_KEY, cacheTtlSeconds);
             log.info("전체 노선 위치 데이터 캐시 저장: {}대 열차", allPositions.size());
 
         } catch (Exception e) {
+            log.error("🚇 DEBUG_LOG: [MetroCacheService.cacheAllPositions] 전체 캐시 저장 실패: {}", e.getMessage());
             log.error("전체 노선 위치 데이터 캐시 저장 실패: {}", e.getMessage(), e);
         }
     }
@@ -114,21 +133,29 @@ public class MetroCacheService {
      * 전체 노선 위치 데이터 캐시 조회
      */
     public PositionCacheData getAllPositions() {
+        log.info("🚇 DEBUG_LOG: [MetroCacheService.getAllPositions] 전체 캐시 조회 시작");
+
         try {
             Object cachedData = redisTemplate.opsForValue().get(METRO_ALL_POSITIONS_KEY);
 
             if (cachedData == null) {
+                log.warn("🚇 DEBUG_LOG: [MetroCacheService.getAllPositions] 전체 캐시 없음 - key: {}",
+                    METRO_ALL_POSITIONS_KEY);
                 log.debug("전체 노선 위치 데이터 캐시 없음");
                 return null;
             }
 
             PositionCacheData result = objectMapper.readValue(cachedData.toString(), PositionCacheData.class);
+            log.info("🚇 DEBUG_LOG: [MetroCacheService.getAllPositions] 전체 캐시 조회 성공 - {}대 열차, 마지막 업데이트: {}",
+                result.getPositions() != null ? result.getPositions().size() : 0,
+                result.getLastUpdated());
             log.debug("전체 노선 위치 데이터 캐시 조회: {}대 열차",
                     result.getPositions() != null ? result.getPositions().size() : 0);
 
             return result;
 
         } catch (Exception e) {
+            log.error("🚇 DEBUG_LOG: [MetroCacheService.getAllPositions] 전체 캐시 조회 실패: {}", e.getMessage());
             log.error("전체 노선 위치 데이터 캐시 조회 실패: {}", e.getMessage(), e);
             return null;
         }

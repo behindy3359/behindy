@@ -32,8 +32,19 @@ public class MetroController {
      */
     @GetMapping("/positions")
     public ResponseEntity<ApiResponse> getAllPositions() {
+        log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] ========== 프론트엔드 요청 수신: /api/metro/positions ==========");
+
         try {
+            log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] MetroPositionService.getAllPositions() 호출");
             MetroPositionResponse positions = metroPositionService.getAllPositions();
+
+            log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] 응답 데이터 - 열차 수: {}, dataSource: {}, isRealtime: {}",
+                positions != null ? positions.getTotalTrains() : 0,
+                positions != null ? positions.getDataSource() : "null",
+                positions != null ? positions.isRealtime() : false);
+
+            log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] ⚠️ 프론트엔드로 전송하는 dataSource: {}",
+                positions != null ? positions.getDataSource() : "null");
 
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
@@ -42,6 +53,7 @@ public class MetroController {
                     .build());
 
         } catch (Exception e) {
+            log.error("🚇 DEBUG_LOG: [MetroController.getAllPositions] 예외 발생: {}", e.getMessage());
             log.error("전체 위치 정보 조회 API 실패: {}", e.getMessage(), e);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(false)
@@ -52,20 +64,30 @@ public class MetroController {
     }
 
     /**
-     * 특정 노선 열차 위치 정보 조회 
+     * 특정 노선 열차 위치 정보 조회
      */
     @GetMapping("/positions/{lineNumber}")
     public ResponseEntity<ApiResponse> getLinePositions(@PathVariable Integer lineNumber) {
+        log.info("🚇 DEBUG_LOG: [MetroController.getLinePositions] ========== 프론트엔드 요청 수신: /api/metro/positions/{} ==========",
+            lineNumber);
+
         try {
             // 노선 번호 유효성 검사
             if (!isValidLineNumber(lineNumber)) {
+                log.warn("🚇 DEBUG_LOG: [MetroController.getLinePositions] 유효하지 않은 노선 번호: {}", lineNumber);
                 return ResponseEntity.badRequest().body(ApiResponse.builder()
                         .success(false)
                         .message("유효하지 않은 노선 번호입니다: " + lineNumber)
                         .build());
             }
 
+            log.info("🚇 DEBUG_LOG: [MetroController.getLinePositions] MetroPositionService.getLinePositions({}) 호출",
+                lineNumber);
             MetroPositionResponse positions = metroPositionService.getLinePositions(lineNumber);
+
+            log.info("🚇 DEBUG_LOG: [MetroController.getLinePositions] 응답 데이터 - 열차 수: {}, dataSource: {}",
+                positions != null ? positions.getTotalTrains() : 0,
+                positions != null ? positions.getDataSource() : "null");
 
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
@@ -74,6 +96,7 @@ public class MetroController {
                     .build());
 
         } catch (Exception e) {
+            log.error("🚇 DEBUG_LOG: [MetroController.getLinePositions] 예외 발생: {}", e.getMessage());
             log.error("{}호선 위치 정보 조회 API 실패: {}", lineNumber, e.getMessage(), e);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(false)
