@@ -1,5 +1,6 @@
 package com.example.backend.dto.metro;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -66,6 +67,7 @@ public class TrainPosition {
     /**
      * 실시간 데이터 여부
      */
+    @JsonProperty("isRealtime")
     private Boolean realtime;
 
     // === 편의 메서드들 ===
