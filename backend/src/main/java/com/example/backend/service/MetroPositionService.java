@@ -167,7 +167,7 @@ public class MetroPositionService {
                     .build();
 
             log.info("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] 응답 생성 완료 - dataSource: {}, isRealtime: {}",
-                response.getDataSource(), response.getRealtime());
+                response.getDataSource(), response.isRealtime());
             log.info("전체 위치 정보 조회 완료 (필터링 적용): {}개 노선, {}대 열차 (필터링 전: {}대)",
                     enabledLines != null ? enabledLines.size() : 0,
                     filteredPositions != null ? filteredPositions.size() : 0,

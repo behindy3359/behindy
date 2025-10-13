@@ -68,7 +68,7 @@ public class TrainPosition {
      * 실시간 데이터 여부
      */
     @JsonProperty("isRealtime")
-    private Boolean realtime;
+    private boolean realtime;
 
     // === 편의 메서드들 ===
 

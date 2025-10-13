@@ -53,7 +53,7 @@ public class MetroPositionResponse {
      * 실시간 데이터 여부
      */
     @JsonProperty("isRealtime")
-    private Boolean realtime;
+    private boolean realtime;
 
     /**
      * 시스템 상태 ("HEALTHY", "WARNING", "ERROR")
