@@ -3,6 +3,7 @@ package com.example.backend.service;
 import com.example.backend.dto.metro.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MetroApiService {
 
     @Value("${seoul.metro.api.key}")
@@ -43,6 +43,11 @@ public class MetroApiService {
     private final WebClient webClient;
     private final AtomicInteger dailyCallCount = new AtomicInteger(0);
     private List<String> enabledLines;
+
+    // 명시적 생성자로 @Qualifier 지정
+    public MetroApiService(@Qualifier("metroWebClient") WebClient webClient) {
+        this.webClient = webClient;
+    }
 
     @PostConstruct
     public void init() {
