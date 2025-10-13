@@ -61,7 +61,6 @@ public interface LogORepository extends JpaRepository<LogO, Long> {
      * 특정 페이지의 옵션별 선택 분포
      */
     @Query("SELECT l.options, COUNT(l) FROM LogO l " +
-            "WHERE l.options.pageId = :pageId " +
             "GROUP BY l.options")
     List<Object[]> findOptionDistributionByPage(@Param("pageId") Long pageId);
 }
