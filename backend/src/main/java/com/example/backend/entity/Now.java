@@ -27,4 +27,8 @@ public class Now {
     @CreatedDate
     @Column(name="created_at")
     private LocalDateTime createdAt;
+
+    // 현재 페이지 진입 시간 (체류 시간 계산용)
+    @Column(name="page_entered_at")
+    private LocalDateTime pageEnteredAt;
 }
