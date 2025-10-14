@@ -1,0 +1,5 @@
+# 로컬 개발 환경용 오버라이드
+services:
+  nginx:
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
