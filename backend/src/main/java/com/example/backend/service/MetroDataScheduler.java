@@ -70,7 +70,6 @@ public class MetroDataScheduler {
 
         if (!apiEnabled) {
             log.warn("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] API 비활성화 상태");
-            log.debug("API 비활성화 - 업데이트 건너뛰기");
             return;
         }
 

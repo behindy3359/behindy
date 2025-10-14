@@ -105,8 +105,6 @@ public class MetroApiService {
     private Mono<List<TrainPosition>> callSeoulMetroAPI(String lineNumber) {
         String url = buildOpenApiUrl(lineNumber);
 
-        log.debug("OpenAPI 요청: {}", url);
-
         return webClient.get()
                 .uri(url)
                 .retrieve()

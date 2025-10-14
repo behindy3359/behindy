@@ -20,7 +20,6 @@ public class RedisService {
     public void setWithExpiration(String key, String value, long expirationMs) {
         try {
             redisTemplate.opsForValue().set(key, value, expirationMs, TimeUnit.MILLISECONDS);
-            log.debug("Redis 저장 성공: key={}, ttl={}ms", key, expirationMs);
         } catch (Exception e) {
             log.error("Redis 저장 실패: key={}, error={}", key, e.getMessage());
             throw new RuntimeException("Redis 저장 중 오류가 발생했습니다.", e);
@@ -45,7 +44,6 @@ public class RedisService {
     public void delete(String key) {
         try {
             redisTemplate.delete(key);
-            log.debug("Redis 삭제 성공: key={}", key);
         } catch (Exception e) {
             log.error("Redis 삭제 실패: key={}, error={}", key, e.getMessage());
         }

@@ -59,7 +59,6 @@ public class MetroCacheService {
 
             log.info("🚇 DEBUG_LOG: [MetroCacheService.cacheLinePositions] 캐시 저장 성공 - key: {}, TTL: {}초",
                 key, cacheTtlSeconds);
-            log.debug("{}호선 위치 데이터 캐시 저장: {}대 열차", lineNumber, positions.size());
 
         } catch (Exception e) {
             log.error("🚇 DEBUG_LOG: [MetroCacheService.cacheLinePositions] 캐시 저장 실패: {}", e.getMessage());
@@ -79,7 +78,6 @@ public class MetroCacheService {
 
             if (cachedData == null) {
                 log.warn("🚇 DEBUG_LOG: [MetroCacheService.getLinePositions] 캐시 없음 - key: {}", key);
-                log.debug("{}호선 위치 데이터 캐시 없음", lineNumber);
                 return null;
             }
 
@@ -87,8 +85,6 @@ public class MetroCacheService {
             log.info("🚇 DEBUG_LOG: [MetroCacheService.getLinePositions] 캐시 조회 성공 - {}대 열차, 마지막 업데이트: {}",
                 result.getPositions() != null ? result.getPositions().size() : 0,
                 result.getLastUpdated());
-            log.debug("{}호선 위치 데이터 캐시 조회: {}대 열차", lineNumber,
-                    result.getPositions() != null ? result.getPositions().size() : 0);
 
             return result;
 
@@ -141,7 +137,6 @@ public class MetroCacheService {
             if (cachedData == null) {
                 log.warn("🚇 DEBUG_LOG: [MetroCacheService.getAllPositions] 전체 캐시 없음 - key: {}",
                     METRO_ALL_POSITIONS_KEY);
-                log.debug("전체 노선 위치 데이터 캐시 없음");
                 return null;
             }
 
@@ -149,8 +144,6 @@ public class MetroCacheService {
             log.info("🚇 DEBUG_LOG: [MetroCacheService.getAllPositions] 전체 캐시 조회 성공 - {}대 열차, 마지막 업데이트: {}",
                 result.getPositions() != null ? result.getPositions().size() : 0,
                 result.getLastUpdated());
-            log.debug("전체 노선 위치 데이터 캐시 조회: {}대 열차",
-                    result.getPositions() != null ? result.getPositions().size() : 0);
 
             return result;
 
@@ -236,10 +229,6 @@ public class MetroCacheService {
         LocalDateTime expireTime = cacheData.getLastUpdated().plusSeconds(cacheTtlSeconds);
         boolean isValid = LocalDateTime.now().isBefore(expireTime);
 
-        if (!isValid) {
-            log.debug("캐시 데이터 만료: 마지막 업데이트 {}", cacheData.getLastUpdated());
-        }
-
         return isValid;
     }
 
@@ -250,7 +239,6 @@ public class MetroCacheService {
         try {
             String key = METRO_POSITIONS_KEY + lineNumber;
             redisTemplate.delete(key);
-            log.debug("{}호선 캐시 삭제", lineNumber);
 
         } catch (Exception e) {
             log.error("{}호선 캐시 삭제 실패: {}", lineNumber, e.getMessage(), e);
