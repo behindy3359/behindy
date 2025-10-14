@@ -16,9 +16,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 /**
  * 지하철 위치 정보 API 컨트롤러
  */
+@Tag(name = "지하철 API", description = "서울시 실시간 지하철 위치 정보 조회 API (Open API 연동)")
 @Slf4j
 @RestController
 @RequestMapping("/api/metro")
