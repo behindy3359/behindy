@@ -17,8 +17,8 @@ public class SchedulingConfig implements SchedulingConfigurer {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 
         // 스레드풀 설정
-        scheduler.setPoolSize(5); // 동시 실행 가능한 스케줄 작업 수
-        scheduler.setThreadNamePrefix("metro-scheduler-");
+        scheduler.setPoolSize(10); // 동시 실행 가능한 스케줄 작업 수 증가 (지하철 + 통계)
+        scheduler.setThreadNamePrefix("scheduled-task-");
         scheduler.setAwaitTerminationSeconds(30);
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
 
@@ -30,6 +30,6 @@ public class SchedulingConfig implements SchedulingConfigurer {
         scheduler.initialize();
         taskRegistrar.setScheduler(scheduler);
 
-        log.info("지하철 데이터 스케줄러 초기화 완료: 스레드풀 크기 {}", scheduler.getPoolSize());
+        log.info("스케줄러 초기화 완료: 스레드풀 크기 {} (지하철 데이터 수집, 일일 통계 생성 등)", scheduler.getPoolSize());
     }
 }
