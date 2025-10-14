@@ -85,7 +85,6 @@ public class AccessLoggingFilter extends OncePerRequestFilter {
                     .build();
 
             opsLogARepository.save(accessLog);
-            log.debug("접속 로그 저장: {} {} - {} ({})", method, path, statusCode, ipAddress);
 
         } catch (Exception e) {
             // 로그 저장 실패가 애플리케이션 동작에 영향을 주지 않도록 예외를 삼킴
@@ -167,7 +166,7 @@ public class AccessLoggingFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            log.debug("현재 사용자 정보 가져오기 실패: {}", e.getMessage());
+            // Silently handle authentication context errors
         }
 
         return null;

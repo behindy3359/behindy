@@ -214,14 +214,12 @@ public class MetroStationFilter {
      */
     public List<TrainPosition> filterFrontendStations(List<TrainPosition> allPositions) {
         if (allPositions == null || allPositions.isEmpty()) {
-            log.debug("필터링할 위치 데이터가 없습니다.");
             return new ArrayList<>();
         }
 
         List<TrainPosition> filteredPositions = allPositions.stream()
                 .filter(position -> {
                     if (position.getStationId() == null) {
-                        log.debug("역 ID가 null인 열차 데이터: {}", position.getTrainId());
                         return false;
                     }
                     return FRONTEND_STATION_IDS.contains(position.getStationId());
@@ -248,8 +246,6 @@ public class MetroStationFilter {
                             FRONTEND_STATION_IDS.contains(position.getStationId());
                 })
                 .collect(Collectors.toList());
-
-        log.debug("{}호선 필터링: {}대 → {}대", lineNumber, allPositions.size(), filteredPositions.size());
 
         return filteredPositions;
     }

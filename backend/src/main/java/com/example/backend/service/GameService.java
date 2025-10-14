@@ -427,8 +427,6 @@ public class GameService {
                     .build();
 
             logORepository.save(choiceLog);
-            log.debug("선택 로그 기록 완료: charId={}, optionId={}",
-                    character.getCharId(), selectedOption.getOptId());
         } catch (Exception e) {
             log.error("선택 로그 기록 실패: charId={}, optionId={}",
                     character.getCharId(), selectedOption.getOptId(), e);
@@ -455,8 +453,6 @@ public class GameService {
                     .build();
 
             opsLogBRepository.save(playLog);
-            log.debug("플레이 로그 기록 완료: charId={}, pageId={}, optionId={}, duration={}ms",
-                    character.getCharId(), currentPage.getPageId(), selectedOption.getOptId(), durationMs);
         } catch (Exception e) {
             log.error("플레이 로그 기록 실패: pageId={}, optionId={}",
                     currentPage.getPageId(), selectedOption.getOptId(), e);

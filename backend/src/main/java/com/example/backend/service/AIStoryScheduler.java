@@ -58,7 +58,6 @@ public class AIStoryScheduler {
     @Scheduled(fixedRateString = "${ai.story.generation.test-interval:86400000}")
     public void generateStoryBatch() {
         if (storyGenerationEnabled == null || !storyGenerationEnabled) {
-            log.debug("스토리 생성 비활성화 상태");
             return;
         }
 

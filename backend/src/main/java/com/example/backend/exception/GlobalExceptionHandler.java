@@ -106,7 +106,6 @@ public class GlobalExceptionHandler {
                     .build();
 
             opsLogXRepository.save(errorLog);
-            log.debug("에러 로그 저장 완료: service={}, message={}", serviceName, message);
         } catch (Exception e) {
             // 에러 로그 저장 실패가 원래 요청 처리를 방해하지 않도록 예외를 삼킴
             log.error("에러 로그 저장 실패", e);

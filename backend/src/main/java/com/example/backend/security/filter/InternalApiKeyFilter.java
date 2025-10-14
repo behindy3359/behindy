@@ -40,8 +40,6 @@ public class InternalApiKeyFilter extends OncePerRequestFilter {
             return;
         }
 
-        log.debug("내부 API 인증 확인: {}", requestURI);
-
         // API Key 헤더 추출
         String providedApiKey = request.getHeader(API_KEY_HEADER);
 
@@ -57,8 +55,6 @@ public class InternalApiKeyFilter extends OncePerRequestFilter {
             sendUnauthorizedResponse(response, "Invalid API Key");
             return;
         }
-
-        log.debug("내부 API 인증 성공: {}", requestURI);
 
         // 인증 성공 - 다음 필터로 진행
         filterChain.doFilter(request, response);

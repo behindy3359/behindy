@@ -121,7 +121,7 @@ public class EntityDtoMapper {
                 currentStoryId = gameProgress.get().getPage().getStoId();
             }
         } catch (Exception e) {
-            log.debug("게임 진행 상태 확인 중 오류: {}", e.getMessage());
+            // Silently handle game progress check errors
         }
 
         return CharacterResponse.builder()
@@ -241,7 +241,7 @@ public class EntityDtoMapper {
                 return user;
             }
         } catch (Exception e) {
-            log.debug("현재 사용자 조회 실패: {}", e.getMessage());
+            // Silently handle user retrieval errors
         }
         return null;
     }

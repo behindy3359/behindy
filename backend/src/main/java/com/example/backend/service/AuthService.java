@@ -211,7 +211,6 @@ public class AuthService {
             String redisKey = "RT:" + userId + ":" + jti;
             redisService.setWithExpiration(redisKey, token, ttlMillis);
 
-            log.debug("Redis에 Refresh Token 저장: key={}, ttl={}ms", redisKey, ttlMillis);
         } catch (Exception e) {
             log.error("Refresh Token Redis 저장 실패: {}", e.getMessage());
             throw new RuntimeException("리프레시 토큰 저장 중 오류가 발생했습니다.", e);

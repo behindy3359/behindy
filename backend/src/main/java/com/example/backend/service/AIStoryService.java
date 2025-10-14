@@ -54,15 +54,12 @@ public class AIStoryService {
      * LLM 서버 호출 (비동기)
      */
     private Mono<AIStoryResponse> callLLMServer(AIStoryRequest request) {
-        log.debug("LLM 서버 비동기 호출: /generate-story");
-
         return llmWebClient.post()
                 .uri("/generate-story")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(AIStoryResponse.class)
                 .timeout(Duration.ofMillis(aiServerTimeout))
-                .doOnSuccess(response -> log.debug("LLM 서버 응답 수신 완료"))
                 .doOnError(e -> log.error("LLM 서버 호출 실패: {}", e.getMessage()));
     }
 
@@ -117,7 +114,6 @@ public class AIStoryService {
                 .bodyToMono(String.class)
                 .map(response -> true)
                 .timeout(Duration.ofSeconds(30))
-                .doOnError(e -> log.debug("LLM 서버 헬스체크 실패: {}", e.getMessage()))
                 .onErrorReturn(false);
     }
 
@@ -128,7 +124,6 @@ public class AIStoryService {
         try {
             return isLLMServerHealthy().block(Duration.ofSeconds(30));
         } catch (Exception e) {
-            log.debug("LLM 서버 헬스체크 실패: {}", e.getMessage());
             return false;
         }
     }

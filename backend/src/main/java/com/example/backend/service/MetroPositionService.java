@@ -290,7 +290,6 @@ public class MetroPositionService {
             positions.add(position);
         }
 
-        log.debug("{}호선 위치 데이터 생성: {}대 열차", lineNumber, positions.size());
         return positions;
     }
 

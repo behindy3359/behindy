@@ -74,8 +74,6 @@ public class DailyStatisticsService {
         LocalDateTime startOfDay = date.with(LocalTime.of(0, 0, 0));
         LocalDateTime endOfDay = date.with(LocalTime.of(23, 59, 59));
 
-        log.debug("통계 계산 기간: {} ~ {}", startOfDay, endOfDay);
-
         // 1. 총 방문자 수 (인증 + 비인증)
         Long totalVisitors = opsLogARepository.countTotalVisitorsByDate(startOfDay);
         if (totalVisitors == null) totalVisitors = 0L;
