@@ -16,16 +16,12 @@ export interface LineConnection {
   color: string;
 }
 
-/**
- * 두 점 사이의 SVG path 생성 (직선)
- */
+// 두 점 사이의 SVG path
 const createStraightPath = (x1: number, y1: number, x2: number, y2: number): string => {
   return `M ${x1} ${y1} L ${x2} ${y2}`;
 };
 
-/**
- * 두 점 사이의 SVG path 생성 (곡선)
- */
+// 두 점 사이의 SVG path
 const createCurvedPath = (
   x1: number, y1: number, 
   x2: number, y2: number, 
@@ -80,16 +76,12 @@ const SPECIAL_CONNECTIONS = {
   ]
 };
 
-/**
- * 역명으로 Station 객체 찾기
- */
+// 역명으로 Station 객체 찾기
 const getStationByName = (stationName: string) => {
   return METRO_STATIONS.find(s => s.id === stationName);
 };
 
-/**
- * 노선별 연결 경로 생성
- */
+// 노선별 연결 경로 생성
 export const generateLineConnections = (): LineConnection[] => {
   const connections: LineConnection[] = [];
 
@@ -126,7 +118,7 @@ export const generateLineConnections = (): LineConnection[] => {
       }
     }
 
-    // 특수 연결 처리 (분기선 등)
+    // 분기선 등
     const specialConnections = SPECIAL_CONNECTIONS[lineNumber as keyof typeof SPECIAL_CONNECTIONS];
     if (specialConnections) {
       specialConnections.forEach(conn => {
@@ -164,9 +156,7 @@ export const generateLineConnections = (): LineConnection[] => {
   return connections;
 };
 
-/**
- * 보이는 노선들의 연결만 가져오기
- */
+// 보이는 노선들의 연결만 가져오기
 export const getVisibleLineConnections = (visibleLines: number[]): LineConnection[] => {
   const allConnections = generateLineConnections();
   return allConnections.filter(conn => visibleLines.includes(conn.lineNumber));

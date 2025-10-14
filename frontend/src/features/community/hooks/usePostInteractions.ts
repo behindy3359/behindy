@@ -36,7 +36,7 @@ export const usePostInteractions = (post: Post | undefined) => {
           url: window.location.href,
         });
       } catch (error) {
-        console.log('Share cancelled or failed');
+        // Share cancelled or failed - silently handle
       }
     } else {
       const success = await domUtils.clipboard.writeText(window.location.href);

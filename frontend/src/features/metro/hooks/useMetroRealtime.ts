@@ -42,10 +42,6 @@ export const useMetroRealtime = (intervalMs: number = 30000): UseMetroRealtimeRe
         details: errorInfo.details
       });
       
-      if (errorInfo.code === 'NETWORK_ERROR') {
-        console.log('Network error detected. Consider implementing retry logic.');
-      }
-      
     } finally {
       setIsLoading(false);
     }

@@ -21,8 +21,8 @@ function getEnvVar(key: string, defaultValue?: string): string {
   if (defaultValue !== undefined) return defaultValue;
   
   // 환경변수가 없으면 명확한 에러 메시지 출력
-  console.error(`❌ Missing required environment variable: ${key}`);
-  console.error(`🔍 Available NEXT_PUBLIC_ variables:`, 
+  console.error(`Missing required environment variable: ${key}`);
+  console.error(`Available NEXT_PUBLIC_ variables:`, 
     Object.keys(process.env)
       .filter(k => k.startsWith('NEXT_PUBLIC_'))
       .reduce((acc, key) => ({ ...acc, [key]: process.env[key] || 'undefined' }), {})
@@ -56,46 +56,14 @@ export const env: EnvConfig = (() => {
     
     return config;
   } catch (error) {
-    console.error('💥 Failed to load environment configuration:', error);
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.group('🔍 Environment Debug Information');
-      console.log('Current working directory:', process.cwd());
-      console.log('NODE_ENV:', process.env.NODE_ENV);
-      console.log('NEXT_PUBLIC_ variables only:', 
-        Object.entries(process.env)
-          .filter(([key]) => key.startsWith('NEXT_PUBLIC_'))
-          .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
-      );
-      console.groupEnd();
-    }
-    
+    console.error('Failed to load environment configuration:', error);
     throw error;
   }
 })();
 
-// 런타임 환경변수 체크 함수
+// 런타임 환경변수 체크 함수 (개발용)
 export const debugEnvironment = () => {
-  if (typeof window !== 'undefined') {
-    console.group('🔍 Client-side Environment Debug');
-    console.log('window.location:', window.location.href);
-    console.log('Available NEXT_PUBLIC_ vars:', 
-      Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_'))
-    );
-    Object.entries(process.env)
-      .filter(([key]) => key.startsWith('NEXT_PUBLIC_'))
-      .forEach(([key, value]) => {
-        console.log(`${key}:`, value || '❌ undefined');
-      });
-    console.groupEnd();
-  } else {
-    console.log('🖥️ Server-side environment check - all variables available');
-  }
+  // Removed for production security
 };
-
-// 개발용 환경변수 출력
-if (env.DEV_MODE && typeof window !== 'undefined') {
-  debugEnvironment();
-}
 
 export default env;
