@@ -14,7 +14,6 @@ import java.io.IOException;
 
 /**
  * 내부 API 전용 API Key 인증 필터
- * /api/ai-stories/internal/** 경로에 대해서만 동작
  */
 @Slf4j
 @Component
@@ -33,9 +32,11 @@ public class InternalApiKeyFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String requestURI = request.getRequestURI();
+        log.info("🔑 [InternalApiKeyFilter] 요청 확인: {}", requestURI);
 
         // /api/ai-stories/internal/** 경로가 아니면 통과
         if (!requestURI.startsWith(INTERNAL_API_PATH)) {
+            log.info("✅ [InternalApiKeyFilter] 내부 API 경로 아님 - 통과: {}", requestURI);
             filterChain.doFilter(request, response);
             return;
         }
