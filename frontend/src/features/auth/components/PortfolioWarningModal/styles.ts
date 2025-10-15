@@ -1,4 +1,3 @@
-// frontend/src/features/auth/components/PortfolioWarningModal/styles.ts
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 
