@@ -117,6 +117,24 @@ public class RedisService {
     }
 
     /**
+     * 사용자의 모든 Refresh Token 조회
+     */
+    public java.util.Set<String> getAllRefreshTokensForUser(String userId) {
+        try {
+            String pattern = "RT:" + userId + ":*";
+            var keys = redisTemplate.keys(pattern);
+            if (keys != null && !keys.isEmpty()) {
+                log.debug("사용자 {}의 활성 Refresh Token: {} 개", userId, keys.size());
+                return keys;
+            }
+            return java.util.Collections.emptySet();
+        } catch (Exception e) {
+            log.error("사용자 {}의 Refresh Token 조회 실패: {}", userId, e.getMessage());
+            return java.util.Collections.emptySet();
+        }
+    }
+
+    /**
      * 사용자의 모든 Refresh Token 삭제 (보안 강화)
      */
     public void deleteAllRefreshTokensForUser(String userId) {
