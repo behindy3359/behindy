@@ -48,7 +48,10 @@ export const PostCard = React.memo<PostCardProps>(function PostCard({
         preview={postPreview}
       />
 
-      <PostCardFooter />
+      <PostCardFooter
+        viewCount={post.viewCount}
+        commentCount={post.commentCount}
+      />
     </CardContainer>
   );
 }, (prevProps, nextProps) => {

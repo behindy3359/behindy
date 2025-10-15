@@ -30,6 +30,10 @@ public class Post {
     @Column(name="post_contents",columnDefinition = "TEXT")
     private String postContents;
 
+    @Column(name="view_count")
+    @Builder.Default
+    private Long viewCount = 0L;
+
 //    @Column(name="post_xcord")
 //    @Builder.Default
 //    private long postX = 0;
@@ -37,6 +41,11 @@ public class Post {
 //    @Column(name="post_ycord")
 //    @Builder.Default
 //    private long postY = 0;
+
+    // 조회수 증가 메서드
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
 
     // 관리 영역
     @CreatedDate

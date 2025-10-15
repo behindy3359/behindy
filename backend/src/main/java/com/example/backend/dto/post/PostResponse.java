@@ -18,6 +18,9 @@ public class PostResponse {
     private String authorName;
     private Long authorId;
 
+    private Long viewCount; // 조회수
+    private Integer commentCount; // 댓글 개수
+
 //    private Long postX;
 //    private Long postY;
 

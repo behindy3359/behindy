@@ -1,21 +1,13 @@
 import React from 'react';
 import { Plus, MessageSquare } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
-import { StatCard } from './StatCard';
 import { CommunityHeader as StyledCommunityHeader } from '../styles';
 
 interface CommunityHeaderProps {
-  statItems: Array<{
-    icon: React.ComponentType<{ size?: number }>;
-    title: string;
-    value: string;
-    change: string;
-  }>;
   onWritePost: () => void;
 }
 
 export const CommunityHeader: React.FC<CommunityHeaderProps> = ({
-  statItems,
   onWritePost,
 }) => {
   return (
@@ -34,16 +26,6 @@ export const CommunityHeader: React.FC<CommunityHeaderProps> = ({
         >
           글쓰기
         </Button>
-      </div>
-
-      <div className="stats-grid">
-        {statItems.map((stat, index) => (
-          <StatCard
-            key={stat.title}
-            stat={stat}
-            index={index}
-          />
-        ))}
       </div>
     </StyledCommunityHeader>
   );

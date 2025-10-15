@@ -3,21 +3,25 @@ import { MessageSquare, Eye, ArrowRight } from 'lucide-react';
 import { CardFooter, StatsGroup, StatItem, ReadMoreButton } from '../styles';
 
 interface PostCardFooterProps {
-  // TODO: 실제 데이터가 연동되면 props 타입 수정
+  viewCount: number;
+  commentCount: number;
 }
 
-export const PostCardFooter: React.FC<PostCardFooterProps> = () => {
+export const PostCardFooter: React.FC<PostCardFooterProps> = ({
+  viewCount,
+  commentCount,
+}) => {
   return (
     <CardFooter>
       <StatsGroup>
         <StatItem>
-          <MessageSquare />
-          <span className="count">0</span>
+          <MessageSquare size={16} />
+          <span className="count">{commentCount}</span>
         </StatItem>
 
         <StatItem>
-          <Eye />
-          <span className="count">0</span>
+          <Eye size={16} />
+          <span className="count">{viewCount}</span>
         </StatItem>
       </StatsGroup>
 

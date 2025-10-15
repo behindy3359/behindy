@@ -61,6 +61,8 @@ public class EntityDtoMapper {
                 .content(post.getPostContents())
                 .authorName(post.getUser().getUserName())
                 .authorId(post.getUser().getUserId())
+                .viewCount(post.getViewCount())
+                .commentCount(post.getComments() != null ? post.getComments().size() : 0)
                 .isEditable(isOwner)
                 .isDeletable(isOwner)
                 .createdAt(post.getCreatedAt())
