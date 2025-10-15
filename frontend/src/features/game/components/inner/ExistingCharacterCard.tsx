@@ -46,13 +46,6 @@ export const ExistingCharacterCard: React.FC<ExistingCharacterCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <CardHeader>
-        <CardTitle>
-          <User size={24} />
-          이미 캐릭터가 있습니다
-        </CardTitle>
-      </CardHeader>
-
       <ExistingCharacterInfo>
         <CharacterCard>
           <CharacterIcon>
@@ -100,17 +93,6 @@ export const ExistingCharacterCard: React.FC<ExistingCharacterCardProps> = ({
               ? `${stationName}역으로 이동하기` 
               : '이 캐릭터로 계속하기'
             }
-          </Button>
-          
-          {/* 홈으로 돌아가기 버튼 */}
-          <Button
-            variant="outline"
-            onClick={onGoHome}
-            size="lg"
-            fullWidth
-            leftIcon={<Home size={20} />}
-          >
-            홈으로 돌아가기
           </Button>
 
           <Button
