@@ -60,13 +60,18 @@ public class PostService {
     /**
      * 단일 게시글 조회
      * 캐싱: key = postId, TTL = 5분
+     * 조회 시 조회수 증가
      */
     @Cacheable(value = "postDetail", key = "#postId")
-    @Transactional(readOnly = true)
+    @Transactional
     public PostResponse getPostById(Long postId) {
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
+
+        // 조회수 증가
+        post.incrementViewCount();
+        postRepository.save(post);
 
         return entityDtoMapper.toPostResponse(post);
     }

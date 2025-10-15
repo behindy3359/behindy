@@ -21,6 +21,8 @@ export interface Post {
   content: string;
   authorName: string;
   authorId: number;
+  viewCount: number;
+  commentCount: number;
   isEditable: boolean;
   isDeletable: boolean;
   createdAt: string;

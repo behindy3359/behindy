@@ -6,7 +6,6 @@ import { PageContainer } from '@/shared/styles/commonContainers';
 import { CommunitySection } from './styles';
 import { useHomePageData } from '../hooks/useHomePageData';
 import { useHomePageActions } from '../hooks/useHomePageActions';
-import { useHomePageStats } from '../hooks/useHomePageStats';
 import { MetroMapSection } from './inner/MetroMapSection';
 import { CommunityHeader } from './inner/CommunityHeader';
 import { PostsGrid } from './inner/PostsGrid';
@@ -29,8 +28,6 @@ export const HomePage: React.FC = () => {
     handleViewAllPosts,
   } = useHomePageActions();
 
-  const { statItems } = useHomePageStats(stats);
-
   return (
     <PageContainer>
       {/* 지하철 노선도 섹션 */}
@@ -40,7 +37,6 @@ export const HomePage: React.FC = () => {
       <CommunitySection>
         {/* 커뮤니티 헤더 */}
         <CommunityHeader
-          statItems={statItems}
           onWritePost={handleWritePost}
         />
 
