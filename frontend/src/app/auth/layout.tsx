@@ -1,10 +1,11 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { gradients } from '@/shared/styles/theme';
+import { PortfolioWarningModal } from '@/features/auth/components/PortfolioWarningModal/PortfolioWarningModal';
 
 const AuthLayoutContainer = styled.div`
   min-height: 100vh;
@@ -225,9 +226,22 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  
+  const [showWarningModal, setShowWarningModal] = useState(false);
+
   const handleHeaderClick = () => {
     router.push('/');
+  };
+
+  // 최초 진입 시 모달 표시 (세션 스토리지로 한 번만 표시)
+  useEffect(() => {
+    const hasSeenWarning = sessionStorage.getItem('portfolio-warning-seen');
+    if (!hasSeenWarning) {
+      setShowWarningModal(true);
+    }
+  }, []);
+
+  const handleWarningConfirm = () => {
+    sessionStorage.setItem('portfolio-warning-seen', 'true');
   };
 
   return (
@@ -295,6 +309,17 @@ export default function AuthLayout({
           {children}
         </ContentSection>
       </AuthCard>
+
+      {/* 포트폴리오 경고 모달 */}
+      <AnimatePresence>
+        {showWarningModal && (
+          <PortfolioWarningModal
+            isOpen={showWarningModal}
+            onClose={() => setShowWarningModal(false)}
+            onConfirm={handleWarningConfirm}
+          />
+        )}
+      </AnimatePresence>
     </AuthLayoutContainer>
   );
 }
