@@ -30,9 +30,9 @@ public class Post {
     @Column(name="post_contents",columnDefinition = "TEXT")
     private String postContents;
 
-    @Column(name="view_count")
-    @Builder.Default
-    private Long viewCount = 0L;
+    // PostStats와의 1:1 관계
+    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private PostStats stats;
 
 //    @Column(name="post_xcord")
 //    @Builder.Default
@@ -41,14 +41,6 @@ public class Post {
 //    @Column(name="post_ycord")
 //    @Builder.Default
 //    private long postY = 0;
-
-    // 조회수 증가 메서드
-    public void incrementViewCount() {
-        if (this.viewCount == null) {
-            this.viewCount = 0L;
-        }
-        this.viewCount++;
-    }
 
     // 관리 영역
     @CreatedDate

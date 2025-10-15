@@ -62,6 +62,8 @@ export interface Comment {
   authorId: number;
   isEditable: boolean;
   isDeletable: boolean;
+  likeCount?: number;
+  isLiked?: boolean;
   createdAt: string;
   updatedAt: string;
 }

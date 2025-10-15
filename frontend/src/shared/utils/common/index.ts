@@ -58,7 +58,7 @@ export const timeUtils = {
   // 절대적 시간
   absolute: (dateString: string | Date, includeTime = true): string => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    
+
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'long',
@@ -68,6 +68,24 @@ export const timeUtils = {
         minute: '2-digit',
       }),
     });
+  },
+
+  // 상대시간 + 절대날짜 조합 (예: "3달전 · 7월 16일")
+  combined: (dateString: string | Date): string => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    const relativeTime = timeUtils.relative(date);
+
+    // 절대 날짜 (시간 제외, 연도 조건부 표시)
+    const now = new Date();
+    const isSameYear = date.getFullYear() === now.getFullYear();
+
+    const absoluteDate = date.toLocaleDateString('ko-KR', {
+      ...(isSameYear ? {} : { year: 'numeric' }),
+      month: 'long',
+      day: 'numeric',
+    });
+
+    return `${relativeTime} · ${absoluteDate}`;
   },
 };
 
@@ -144,6 +162,7 @@ export const domUtils = {
 export const formatters = {
   relativeTime: timeUtils.relative,
   absoluteTime: timeUtils.absolute,
+  combinedTime: timeUtils.combined,
   truncateText: textUtils.truncate,
   stripHtml: textUtils.stripHtml,
   getUserInitial: userUtils.getInitial,

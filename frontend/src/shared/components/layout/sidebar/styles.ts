@@ -84,7 +84,18 @@ export const BrandLogo = styled(FlexContainer).withConfig({
   align-items: center;
   gap: ${({ theme }) => theme.spacing[3]};
   transition: ${({ theme }) => theme.transition.normal};
-  
+  cursor: pointer;
+  user-select: none;
+
+  &:hover .logo {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+  }
+
+  &:active .logo {
+    transform: scale(0.98);
+  }
+
   .logo {
     width: 40px;
     height: 40px;
@@ -95,23 +106,21 @@ export const BrandLogo = styled(FlexContainer).withConfig({
     justify-content: center;
     font-size: ${({ theme }) => theme.typography.fontSize.xl};
     font-weight: ${({ theme }) => theme.typography.fontWeight.extrabold};
-    
     transition: ${({ theme }) => theme.transition.fast};
-    cursor: pointer;
-    
-    &:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.05);
-    }
   }
-  
+
   .brand-name {
     font-size: ${({ theme }) => theme.typography.fontSize.xl};
     font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
     letter-spacing: -0.5px;
     color: ${({ theme }) => theme.colors.text.inverse};
+    transition: ${({ theme }) => theme.transition.fast};
   }
-  
+
+  &:hover .brand-name {
+    opacity: 0.9;
+  }
+
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     display: flex;
   }

@@ -111,4 +111,18 @@ public class CommentController {
         CommentListResponse response = commentService.getMyComments(page, size);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "댓글 좋아요 토글", description = "댓글에 좋아요를 추가하거나 제거합니다. 이미 좋아요를 눌렀다면 취소되고, 누르지 않았다면 추가됩니다. 인증된 사용자만 사용할 수 있습니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좋아요 토글 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "댓글을 찾을 수 없음")
+    })
+    @PostMapping("/{commentId}/like")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CommentResponse> toggleLike(
+            @Parameter(description = "좋아요를 토글할 댓글 ID", required = true) @PathVariable Long commentId) {
+        CommentResponse response = commentService.toggleLike(commentId);
+        return ResponseEntity.ok(response);
+    }
 }

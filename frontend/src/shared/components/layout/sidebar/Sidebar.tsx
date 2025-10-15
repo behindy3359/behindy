@@ -39,6 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         <SidebarHeader
           isOpen={sidebar.isOpen}
           onToggle={toggleSidebar}
+          onNavigate={handleNavigation}
         />
         <SidebarNavigation
           navItems={navItems}

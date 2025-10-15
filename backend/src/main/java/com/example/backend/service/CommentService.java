@@ -5,9 +5,11 @@ import com.example.backend.dto.comment.CommentListResponse;
 import com.example.backend.dto.comment.CommentResponse;
 import com.example.backend.dto.comment.CommentUpdateRequest;
 import com.example.backend.entity.Comment;
+import com.example.backend.entity.CommentLike;
 import com.example.backend.entity.Post;
 import com.example.backend.entity.User;
 import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.repository.CommentLikeRepository;
 import com.example.backend.repository.CommentRepository;
 import com.example.backend.repository.PostRepository;
 import com.example.backend.service.mapper.EntityDtoMapper;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
     private final PostRepository postRepository;
     private final HtmlSanitizer htmlSanitizer;
     private final AuthService authService;
@@ -165,5 +168,37 @@ public class CommentService {
                 .hasNext(commentsPage.hasNext())
                 .hasPrevious(commentsPage.hasPrevious())
                 .build();
+    }
+
+    /**
+     * 댓글 좋아요 토글
+     * 이미 좋아요를 눌렀다면 취소, 누르지 않았다면 추가
+     */
+    @Transactional
+    public CommentResponse toggleLike(Long commentId) {
+        // 댓글 존재 여부 확인
+        Comment comment = commentRepository.findById(commentId)
+                .filter(c -> !c.isDeleted())
+                .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", commentId));
+
+        User currentUser = authService.getCurrentUser();
+
+        // 기존 좋아요 확인
+        var existingLike = commentLikeRepository.findByCommentAndUser(comment, currentUser);
+
+        if (existingLike.isPresent()) {
+            // 좋아요 취소
+            commentLikeRepository.delete(existingLike.get());
+        } else {
+            // 좋아요 추가
+            CommentLike newLike = CommentLike.builder()
+                    .comment(comment)
+                    .user(currentUser)
+                    .build();
+            commentLikeRepository.save(newLike);
+        }
+
+        // 업데이트된 댓글 정보 반환
+        return entityDtoMapper.toCommentResponse(comment);
     }
 }

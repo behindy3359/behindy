@@ -13,7 +13,7 @@ export const CharacterFormInfo: React.FC = () => {
       <InfoList>
         <InfoItem><span>• 초기 체력: 100</span></InfoItem>
         <InfoItem><span>• 초기 정신력: 100</span></InfoItem>
-        <InfoItem><span>• 선택에 따라 능력치가 변화합니다</span></InfoItem>
+        <InfoItem><span>• 앞으로의 선택에 따라 능력치가 변화합니다</span></InfoItem>
         <InfoItem><span>• 체력이나 정신력이 0이 되면 게임 오버</span></InfoItem>
       </InfoList>
     </InfoBox>

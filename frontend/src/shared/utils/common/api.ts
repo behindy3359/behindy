@@ -169,6 +169,7 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/comments/${id}`,
     BY_POST: (postId: number) => `/comments/posts/${postId}`,
     MY_COMMENTS: '/comments/my',
+    LIKE: (id: number) => `/comments/${id}/like`,
   },
 } as const;
 
