@@ -99,14 +99,14 @@ ai:
 # 데모 계정 설정
 demo:
   accounts:
-    - email: ${DEMO_ACCOUNT_1_EMAIL:demo1@behindy.me}
-      password: ${DEMO_ACCOUNT_1_PASSWORD:Demo1234!}
+    - email: ${DEMO_ACCOUNT_1_EMAIL:demo1@demo.com}
+      password: ${DEMO_ACCOUNT_1_PASSWORD:Demo123!}
       name: ${DEMO_ACCOUNT_1_NAME:데모유저1}
-    - email: ${DEMO_ACCOUNT_2_EMAIL:demo2@behindy.me}
-      password: ${DEMO_ACCOUNT_2_PASSWORD:Demo1234!}
+    - email: ${DEMO_ACCOUNT_2_EMAIL:demo2@demo.com}
+      password: ${DEMO_ACCOUNT_2_PASSWORD:Demo123!}
       name: ${DEMO_ACCOUNT_2_NAME:데모유저2}
-    - email: ${DEMO_ACCOUNT_3_EMAIL:demo3@behindy.me}
-      password: ${DEMO_ACCOUNT_3_PASSWORD:Demo1234!}
+    - email: ${DEMO_ACCOUNT_3_EMAIL:demo3@demo.com}
+      password: ${DEMO_ACCOUNT_3_PASSWORD:Demo123!}
       name: ${DEMO_ACCOUNT_3_NAME:데모유저3}
 
 # 로깅 설정
