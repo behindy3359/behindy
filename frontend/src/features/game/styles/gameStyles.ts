@@ -718,13 +718,14 @@ export const EmptyState = styled(StateContainer).attrs({
 export const CompletionHeader = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing[12]} ${({ theme }) => theme.spacing[8]};
-  background: linear-gradient(135deg, ${({ theme }) => theme.colors.background.secondary} 0%, ${({ theme }) => theme.colors.background.tertiary} 100%);
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+  background: ${({ theme }) => theme.colors.background.primary};
+  border-bottom: none;
 `;
 
 export const CompletionEmoji = styled.div`
-  font-size: 4rem;
+  font-size: 5rem;
   margin-bottom: ${({ theme }) => theme.spacing[4]};
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 `;
 
 export const CompletionTitle = styled.h1`
@@ -732,11 +733,19 @@ export const CompletionTitle = styled.h1`
   font-weight: ${({ theme }) => theme.textStyles.heading.h1.fontWeight};
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing[2]};
+  
+  background: linear-gradient(135deg, 
+    ${({ theme }) => theme.colors.primary[500]} 0%, 
+    ${({ theme }) => theme.colors.secondary[500]} 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 `;
 
 export const CompletionSubtitle = styled.p`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg};
   color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.lg};
   margin-bottom: ${({ theme }) => theme.spacing[6]};
 `;
 
@@ -744,19 +753,34 @@ export const GradeBadge = styled.div<{ $color: string }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
-  background: ${({ $color }) => $color};
-  color: ${({ theme }) => theme.colors.text.inverse};
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, ${({ $color }) => $color} 0%, ${({ $color }) => $color}dd 100%);
+  color: #ffffff;
   border-radius: 50%;
-  font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
+  font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  box-shadow: ${({ theme }) => theme.shadows.dropdown};
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.15),
+    0 0 0 8px ${({ theme }) => theme.colors.background.secondary},
+    0 0 0 12px ${({ $color }) => $color}33;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid ${({ $color }) => $color};
+    opacity: 0.3;
+  }
 `;
 
 export const ResultSummary = styled.div`
   padding: ${({ theme }) => theme.spacing[8]};
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.xl};
+  margin: ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[8]};
 `;
 
 export const SummaryHeader = styled(FlexContainer).attrs({
