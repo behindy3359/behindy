@@ -45,11 +45,8 @@ export const PostDetail: React.FC<PostDetailProps> = ({
   } = usePostComments(postId);
 
   const {
-    isLiked,
-    likeCount,
     handleBack,
     handleEdit,
-    handleLike,
     handleShare,
   } = usePostInteractions(post); // post는 Post | undefined
 
