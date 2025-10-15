@@ -10,17 +10,14 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Free up disk space
+      - name: Check disk space
         run: |
-          echo "=== 배포 전 디스크 정리 ==="
+          echo "=== 배포 전 디스크 상태 확인 ==="
           df -h
-          
-          docker system prune -f --volumes
-          docker image prune -a -f
-          
-          sudo apt autoremove -y
-          sudo apt autoclean
-          
+
+          echo "🧹 빌드 캐시 정리 중..."
+          docker builder prune -f
+
           echo "=== 정리 후 디스크 상태 ==="
           df -h
 
@@ -34,45 +31,29 @@ jobs:
           git reset --hard origin/main
           echo "[+] Force sync complete"
 
-      - name: Stop existing containers
+      - name: Stop application containers
         run: |
           cd ~/behindy
-          echo "🛑 기존 컨테이너 완전 정리 중..."
-          
-          # 1. Docker Compose 컨테이너 중지
-          docker-compose down --timeout 30 || true
-          
-          # 2. behindy 관련 모든 컨테이너 강제 중지 및 제거
-          echo "📋 behindy 관련 실행 중인 컨테이너 확인:"
-          docker ps | grep behindy || echo "behindy 컨테이너 없음"
-          
-          echo "🗑️ behindy 관련 모든 컨테이너 중지 및 제거:"
-          docker ps -a | grep behindy | awk '{print $1}' | xargs -r docker stop || true
-          docker ps -a | grep behindy | awk '{print $1}' | xargs -r docker rm -f || true
-          
-          # 3. 포트 사용 중인 컨테이너 확인 및 정리
-          echo "🔍 포트 8000, 8080 사용 중인 컨테이너 확인:"
-          docker ps | grep ":8000\|:8080" || echo "해당 포트 사용 컨테이너 없음"
-          
-          # 4. aiserver, llmserver 이름 포함 컨테이너 정리
-          echo "🧹 AI/LLM 서버 관련 컨테이너 정리:"
-          docker ps -a | grep -E "(aiserver|llmserver)" | awk '{print $1}' | xargs -r docker stop || true
-          docker ps -a | grep -E "(aiserver|llmserver)" | awk '{print $1}' | xargs -r docker rm -f || true
-          
-          echo "✅ 컨테이너 정리 완료"
-          echo "현재 실행 중인 컨테이너:"
-          docker ps
+          echo "애플리케이션 컨테이너 중지 (DB/Redis 유지)..."
 
-      - name: Clean up old images
+          # 애플리케이션 컨테이너 중지 및 제거
+          echo "중지할 컨테이너: frontend, backend, llmserver, nginx"
+
+          docker-compose stop frontend backend llmserver nginx || true
+          docker-compose rm -f frontend backend llmserver nginx || true
+
+          echo "✅ 애플리케이션 컨테이너 정리 완료"
+          docker ps --filter "name=postgres" --filter "name=redis" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+      - name: Clean up dangling images
         run: |
           cd ~/behindy
-          echo "🧹 오래된 이미지 정리 중..."
-          
+          echo "🧹 dangling 이미지만 정리 중..."
+
+          # <none> 태그 이미지만 제거
           docker image prune -f
-          
-          docker images | grep behindy | awk '{print $3}' | xargs -r docker rmi -f || true
-          
-          echo "✅ 이미지 정리 완료"
+
+          echo "✅ 정리 완료"
 
       - name: Build and start containers
         run: |
@@ -92,12 +73,8 @@ jobs:
           export DOCKER_BUILDKIT=1
           export COMPOSE_DOCKER_CLI_BUILD=1
 
-          echo "📦 프론트엔드 이미지 빌드 중 (캐시 활용)..."
-          # --no-cache 제거하여 캐시 활용, 메모리 사용량 감소
-          docker-compose build frontend
-
-          echo "📦 다른 서비스들 빌드 중..."
-          docker-compose build backend llmserver
+          echo "📦 서비스 빌드 중..."
+          docker-compose build frontend backend llmserver nginx
 
           echo "🚀 모든 서비스 시작 중..."
           docker-compose up -d
@@ -107,8 +84,8 @@ jobs:
       - name: Wait for services
         run: |
           echo "⏳ 서비스 시작 대기 중..."
-          sleep 30
-          
+          sleep 15
+
           echo "🔍 컨테이너 상태 확인..."
           cd ~/behindy
           docker-compose ps
@@ -117,50 +94,50 @@ jobs:
         run: |
           echo "=== 헬스체크 진행 ==="
           cd ~/behindy
-          
+
           echo "⏳ DB 준비 대기..."
-          for i in {1..20}; do
+          for i in {1..5}; do
             if docker-compose exec -T postgres pg_isready -U ${DB_USER:-behindy} -d ${DB_NAME:-behindy} >/dev/null 2>&1; then
-              echo "✅ DB 준비 완료! ($i/20)"
+              echo "✅ DB 준비 완료! ($i/5)"
               break
             fi
-            echo "DB 대기 중... ($i/20)"
+            echo "DB 대기 중... ($i/5)"
             sleep 3
           done
-          
+
           echo "⏳ 백엔드 API 대기..."
-          for i in {1..30}; do
+          for i in {1..5}; do
             if curl -f http://localhost:8080/actuator/health >/dev/null 2>&1; then
-              echo "✅ 백엔드 API 준비 완료! ($i/30)"
+              echo "✅ 백엔드 API 준비 완료! ($i/5)"
               break
             fi
-            echo "백엔드 대기 중... ($i/30)"
-            sleep 2
+            echo "백엔드 대기 중... ($i/5)"
+            sleep 3
           done
-          
+
           echo "⏳ 프론트엔드 대기..."
-          for i in {1..20}; do
+          for i in {1..5}; do
             if curl -f http://localhost:3000/ >/dev/null 2>&1; then
-              echo "✅ 프론트엔드 준비 완료! ($i/20)"
+              echo "✅ 프론트엔드 준비 완료! ($i/5)"
               break
             fi
-            echo "프론트엔드 대기 중... ($i/20)"
-            sleep 2
+            echo "프론트엔드 대기 중... ($i/5)"
+            sleep 3
           done
-          
+
           echo "⏳ AI 서버 대기..."
-          for i in {1..20}; do
+          for i in {1..5}; do
             if curl -f http://localhost:8000/health >/dev/null 2>&1; then
-              echo "✅ AI 서버 준비 완료! ($i/20)"
+              echo "✅ AI 서버 준비 완료! ($i/5)"
               break
             fi
-            echo "AI 서버 대기 중... ($i/20)"
-            sleep 2
+            echo "AI 서버 대기 중... ($i/5)"
+            sleep 3
           done
-          
+
           echo "⏳ 최종 헬스체크..."
-          sleep 10
-          
+          sleep 5
+
           if curl -f http://localhost/ >/dev/null 2>&1; then
             echo "✅ 배포 성공!"
           elif curl -f http://localhost:3000/ >/dev/null 2>&1; then
@@ -216,14 +193,14 @@ jobs:
         run: |
           cd ~/behindy
           echo "🧹 최종 정리 작업..."
-          
+
           docker builder prune -f
-          docker volume prune -f
           docker network prune -f
-          
+
           echo "=== 최종 디스크 상태 ==="
           df -h
-          
+
+          echo ""
           echo "✅ 배포 완료!"
 
       - name: Notify on failure
