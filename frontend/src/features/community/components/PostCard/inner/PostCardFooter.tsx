@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Heart, Eye, ArrowRight } from 'lucide-react';
+import { MessageSquare, Eye, ArrowRight } from 'lucide-react';
 import { CardFooter, StatsGroup, StatItem, ReadMoreButton } from '../styles';
 
 interface PostCardFooterProps {
@@ -14,12 +14,7 @@ export const PostCardFooter: React.FC<PostCardFooterProps> = () => {
           <MessageSquare />
           <span className="count">0</span>
         </StatItem>
-        
-        <StatItem>
-          <Heart />
-          <span className="count">0</span>
-        </StatItem>
-        
+
         <StatItem>
           <Eye />
           <span className="count">0</span>

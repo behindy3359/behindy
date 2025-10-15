@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { DropdownMenu, MenuButton, MenuItem, StyledCommentActions } from "../styles";
-import { Edit3, Flag, MoreHorizontal, Trash2 } from "lucide-react";
+import { Edit3, MoreHorizontal, Trash2 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 
 export const CommentActions = React.memo<{
@@ -36,8 +36,8 @@ export const CommentActions = React.memo<{
 
   return (
     <StyledCommentActions>
-      <MenuButton 
-        onClick={onToggleMenu} 
+      <MenuButton
+        onClick={onToggleMenu}
         aria-label="댓글 메뉴 열기"
         type="button"
       >
@@ -62,9 +62,6 @@ export const CommentActions = React.memo<{
                 <Trash2 size={14} /> 삭제
               </MenuItem>
             )}
-            <MenuItem type="button">
-              <Flag size={14} /> 신고
-            </MenuItem>
           </DropdownMenu>
         )}
       </AnimatePresence>

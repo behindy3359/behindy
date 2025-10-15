@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { UserPlus, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
 import { useSignupForm } from '../../hooks/useSignupForm';
 import { SignupFormFields } from './inner/SignupFormFields';
-import { PortfolioWarningModal } from '../PortfolioWarningModal/PortfolioWarningModal';
 import {
   SignupContainer,
   ActionsContainer,
@@ -21,8 +20,6 @@ import {
 } from '@/shared/styles/commonAuthStyles';
 
 export const SignupForm: React.FC = () => {
-  const [showWarningModal, setShowWarningModal] = useState(false);
-
   const {
     formData,
     errors,
@@ -35,18 +32,6 @@ export const SignupForm: React.FC = () => {
     handleSubmit,
     navigateToLogin,
   } = useSignupForm();
-
-  // 최초 진입 시 모달 표시 (세션 스토리지로 한 번만 표시)
-  useEffect(() => {
-    const hasSeenWarning = sessionStorage.getItem('portfolio-warning-seen');
-    if (!hasSeenWarning) {
-      setShowWarningModal(true);
-    }
-  }, []);
-
-  const handleWarningConfirm = () => {
-    sessionStorage.setItem('portfolio-warning-seen', 'true');
-  };
 
   return (
     <SignupContainer>
@@ -164,17 +149,6 @@ export const SignupForm: React.FC = () => {
           </button>
         </p>
       </LoginPrompt>
-
-      {/* 포트폴리오 경고 모달 */}
-      <AnimatePresence>
-        {showWarningModal && (
-          <PortfolioWarningModal
-            isOpen={showWarningModal}
-            onClose={() => setShowWarningModal(false)}
-            onConfirm={handleWarningConfirm}
-          />
-        )}
-      </AnimatePresence>
     </SignupContainer>
   );
 };

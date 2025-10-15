@@ -9,7 +9,6 @@ import type { LoginFormData, LoginFormErrors } from '../types/types';
 const initialFormData: LoginFormData = {
   email: '',
   password: '',
-  rememberMe: false,
 };
 
 export function useLoginForm() {
@@ -60,7 +59,6 @@ export function useLoginForm() {
   const performLogin = useCallback(async (credentials: {
     email: string;
     password: string;
-    rememberMe: boolean;
   }) => {
     setIsLoading(true);
     setErrors({});
@@ -98,7 +96,6 @@ export function useLoginForm() {
     await performLogin({
       email: formData.email.trim().toLowerCase(),
       password: formData.password,
-      rememberMe: formData.rememberMe,
     });
   }, [formData, performLogin]);
 
@@ -106,7 +103,6 @@ export function useLoginForm() {
     await performLogin({
       email: 'demo@demo.com',
       password: 'Ademo123!',
-      rememberMe: false,
     });
   }, [performLogin]);
 

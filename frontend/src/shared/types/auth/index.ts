@@ -26,7 +26,6 @@ export interface CurrentUser {
 export interface LoginRequest {
   email: string;
   password: string;
-  rememberMe?: boolean;
 }
 
 export interface SignupRequest {
@@ -79,13 +78,11 @@ export interface AuthState {
 export interface LoginFormData {
   email: string;
   password: string;
-  rememberMe: boolean;
 }
 
 export interface LoginFormErrors {
   email?: string;
   password?: string;
-  rememberMe?: boolean;
   submit?: string;
 }
 
