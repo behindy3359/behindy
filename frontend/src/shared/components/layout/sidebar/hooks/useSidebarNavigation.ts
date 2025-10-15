@@ -2,12 +2,13 @@ import { useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/shared/store/authStore';
 import { useUIStore } from '@/shared/store/uiStore';
-import { 
-  Home, 
+import { api } from '@/config/axiosConfig';
+import {
+  Home,
   Info,
-  MessageSquare, 
-  User, 
-  LogIn, 
+  MessageSquare,
+  User,
+  LogIn,
   UserPlus,
 } from 'lucide-react';
 import { isRouteActive, filterNavItemsByPermission } from '../utils';
@@ -108,12 +109,37 @@ export const useSidebarNavigation = () => {
 
     navigationTimeoutRef.current = setTimeout(async () => {
       if (action === 'logout') {
-        await logout(); // 🔥 await 추가
+        await logout();
         router.push('/');
+      } else if (path === '/character') {
+        // 캐릭터 메뉴 클릭 시 캐릭터 존재 여부 확인 후 라우팅
+        try {
+          const response = await api.get<{
+            success: boolean;
+            message: string;
+            data: any;
+          }>('/characters/exists');
+
+          // 캐릭터가 존재하면 캐릭터 정보 페이지로
+          if (response.success && response.data) {
+            router.push('/character');
+          } else {
+            // 캐릭터가 없으면 생성 페이지로
+            router.push('/character/create');
+          }
+        } catch (error: any) {
+          // 404 에러 (캐릭터 없음) 또는 기타 에러 시 생성 페이지로
+          if (error.response?.status === 404) {
+            router.push('/character/create');
+          } else {
+            // 다른 에러는 일단 캐릭터 정보 페이지로 (페이지에서 처리)
+            router.push('/character');
+          }
+        }
       } else if (path) {
         router.push(path);
       }
-      
+
       if (window.innerWidth < 768 && sidebar.isOpen) {
         toggleSidebar();
       }
