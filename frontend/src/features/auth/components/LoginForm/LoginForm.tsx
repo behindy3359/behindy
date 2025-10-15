@@ -1,34 +1,31 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { LogIn, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
 import { useLoginForm } from '../../hooks/useLoginForm';
 import { LoginFormFields } from './inner/LoginFormFields';
-import { PortfolioWarningModal } from '../PortfolioWarningModal/PortfolioWarningModal';
 import {
   SignupPrompt
 } from './styles';
 import type { LoginFormProps } from '../../types/types';
 import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
-import { 
+import {
   CommonAuthHeaderSection,
   CommonAuthPageTitle,
   CommonAuthPageSubtitle,
   CommonAuthDivider,
-  CommonAuthErrorAlert, 
-  CommonAuthSuccessAlert 
+  CommonAuthErrorAlert,
+  CommonAuthSuccessAlert
 } from '@/shared/styles/commonAuthStyles';
-import { 
-  CommonWrapper, 
+import {
+  CommonWrapper,
 } from '@/shared/styles/commonStyles';
 
 export const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess
 }) => {
-  const [showWarningModal, setShowWarningModal] = useState(false);
-  
   const {
     formData,
     errors,
@@ -42,18 +39,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     navigateToSignup,
     navigateToForgotPassword,
   } = useLoginForm();
-
-  // 최초 진입 시 모달 표시 (세션 스토리지로 한 번만 표시)
-  useEffect(() => {
-    const hasSeenWarning = sessionStorage.getItem('portfolio-warning-seen');
-    if (!hasSeenWarning) {
-      setShowWarningModal(true);
-    }
-  }, []);
-
-  const handleWarningConfirm = () => {
-    sessionStorage.setItem('portfolio-warning-seen', 'true');
-  };
 
   // 비밀번호 찾기 네비게이션 이벤트 리스너
   useEffect(() => {
@@ -192,17 +177,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </p>
         </SignupPrompt>
       </BasicFullWidthContainer>
-
-      {/* 포트폴리오 경고 모달 */}
-      <AnimatePresence>
-        {showWarningModal && (
-          <PortfolioWarningModal
-            isOpen={showWarningModal}
-            onClose={() => setShowWarningModal(false)}
-            onConfirm={handleWarningConfirm}
-          />
-        )}
-      </AnimatePresence>
     </>
   );
 };
