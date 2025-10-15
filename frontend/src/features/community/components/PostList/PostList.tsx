@@ -8,7 +8,7 @@ import { PostListActionBar } from './inner/PostListActionBar';
 import { PostListFilters } from './inner/PostListFilters';
 import { PostListContent } from './inner/PostListContent';
 import { PostListPagination } from './inner/PostListPagination';
-import { Header } from './styles';
+import { Header, HeaderContent, HeaderTop } from './styles';
 import type { PostListProps } from '../../types/postListTypes';
 
 export const PostList: React.FC<PostListProps> = ({
@@ -37,17 +37,20 @@ export const PostList: React.FC<PostListProps> = ({
   return (
     <PageContainer>
       <Header>
-        <PostListHeader onWritePost={handleWritePost} />
-        
-        <PostListActionBar
-          searchQuery={state.searchQuery}
-          showSearch={state.showSearch}
-          enableSearch={enableSearch}
-          onSearch={handleSearch}
-          onSearchQueryChange={setSearchQuery}
-          onToggleSearch={() => setShowSearch(!state.showSearch)}
-          onWritePost={handleWritePost}
-        />
+        <HeaderTop>
+          <HeaderContent>
+            <PostListHeader />
+          </HeaderContent>
+          <PostListActionBar
+            searchQuery={state.searchQuery}
+            showSearch={state.showSearch}
+            enableSearch={enableSearch}
+            onSearch={handleSearch}
+            onSearchQueryChange={setSearchQuery}
+            onToggleSearch={() => setShowSearch(!state.showSearch)}
+            onWritePost={handleWritePost}
+          />
+        </HeaderTop>
       </Header>
 
       <PostListFilters
