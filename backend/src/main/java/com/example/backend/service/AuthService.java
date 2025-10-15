@@ -74,6 +74,7 @@ public class AuthService {
 
     /**
      * 로그인 - HttpOnly Cookie에 Refresh Token 저장
+     * 단일 세션 정책: 기존 세션 강제 종료
      */
     @Transactional
     public JwtAuthResponse authenticate(LoginRequest request, HttpServletResponse response) {
@@ -84,6 +85,10 @@ public class AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        // 단일 세션 정책: 기존 모든 Refresh Token 삭제 (기존 세션 강제 종료)
+        redisService.deleteAllRefreshTokensForUser(String.valueOf(userDetails.getId()));
+        log.info("기존 세션 강제 종료: userId={}", userDetails.getId());
 
         // Access Token 생성 (짧은 수명)
         String accessToken = tokenProvider.generateAccessToken(authentication);

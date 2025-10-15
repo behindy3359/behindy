@@ -124,7 +124,7 @@ export interface SignupFormFieldsProps {
 }
 
 export interface DemoLoginSectionProps {
-  onDemoLogin: () => void;
+  onDemoLogin: (email: string, password: string) => void;
   disabled?: boolean;
 }
 

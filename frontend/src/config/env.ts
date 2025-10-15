@@ -1,15 +1,24 @@
+interface DemoAccount {
+  email: string;
+  password: string;
+  name: string;
+}
+
 interface EnvConfig {
   // API URLs
   API_URL: string;
   AI_URL: string;
-  
+
   // 개발 모드
   DEV_MODE: boolean;
   LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
-  
+
   // 앱 정보
   APP_NAME: string;
   APP_VERSION: string;
+
+  // 데모 계정
+  DEMO_ACCOUNTS: DemoAccount[];
 }
 
 // 환경변수 검증 및 파싱 (더 안전한 방식)
@@ -44,16 +53,35 @@ export const env: EnvConfig = (() => {
       // API URLs
       API_URL: getEnvVar('NEXT_PUBLIC_API_URL', 'https://behindy.me/api'),
       AI_URL: getEnvVar('NEXT_PUBLIC_AI_URL', 'https://behindy.me/ai'),
-      
+
       // 개발 모드
       DEV_MODE: getBooleanEnv('NEXT_PUBLIC_DEV_MODE', false),
       LOG_LEVEL: (getEnvVar('NEXT_PUBLIC_LOG_LEVEL', 'info') as EnvConfig['LOG_LEVEL']),
-      
+
       // 앱 정보
       APP_NAME: getEnvVar('NEXT_PUBLIC_APP_NAME', 'Behindy'),
       APP_VERSION: getEnvVar('NEXT_PUBLIC_APP_VERSION', '1.0.0'),
+
+      // 데모 계정
+      DEMO_ACCOUNTS: [
+        {
+          email: getEnvVar('NEXT_PUBLIC_DEMO1_EMAIL', 'demo@demo.com'),
+          password: getEnvVar('NEXT_PUBLIC_DEMO1_PASSWORD', 'ADemo123!'),
+          name: getEnvVar('NEXT_PUBLIC_DEMO1_NAME', '데모 사용자 1'),
+        },
+        {
+          email: getEnvVar('NEXT_PUBLIC_DEMO2_EMAIL', 'demo@demo.com'),
+          password: getEnvVar('NEXT_PUBLIC_DEMO2_PASSWORD', 'ADemo123!'),
+          name: getEnvVar('NEXT_PUBLIC_DEMO2_NAME', '데모 사용자 2'),
+        },
+        {
+          email: getEnvVar('NEXT_PUBLIC_DEMO3_EMAIL', 'demo@demo.com'),
+          password: getEnvVar('NEXT_PUBLIC_DEMO3_PASSWORD', 'ADemo123!'),
+          name: getEnvVar('NEXT_PUBLIC_DEMO3_NAME', '데모 사용자 3'),
+        },
+      ],
     };
-    
+
     return config;
   } catch (error) {
     console.error('Failed to load environment configuration:', error);

@@ -92,10 +92,10 @@ export interface LoginFormFieldsProps {
   onBlur: (field: keyof LoginFormData) => void;
   disabled?: boolean;
   showDemoLogin?: boolean;
-  onDemoLogin?: () => void;
+  onDemoLogin?: (email: string, password: string) => void;
 }
 
 export interface DemoLoginSectionProps {
-  onDemoLogin: () => void;
+  onDemoLogin: (email: string, password: string) => void;
   disabled?: boolean;
 }

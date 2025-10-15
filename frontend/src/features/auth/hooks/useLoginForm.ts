@@ -99,10 +99,10 @@ export function useLoginForm() {
     });
   }, [formData, performLogin]);
 
-  const handleDemoLogin = useCallback(async () => {
+  const handleDemoLogin = useCallback(async (email: string, password: string) => {
     await performLogin({
-      email: 'demo@demo.com',
-      password: 'Ademo123!',
+      email,
+      password,
     });
   }, [performLogin]);
 
