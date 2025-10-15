@@ -19,23 +19,43 @@ import {
   BaseSelect
 } from '@/shared/styles/components/inputs';
 
-export const Header = styled(CommonPageHeader).attrs({
-  $textAlign: 'left' as const,
-  $spacing: 'normal' as const,
-})`
+export const Header = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  
   @media (max-width: 768px) {
     align-items: stretch;
   }
 `;
 
-export const HeaderActions = styled(CommonActionGroup).attrs({
-  $justify: 'end' as const,
-  $responsive: true,
-})`
-  align-items: flex-end;
+export const HeaderTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   
   @media (max-width: 768px) {
-    align-items: stretch;
+    flex-direction: column;
+    gap: ${({ theme }) => theme.spacing[4]};
+  }
+`;
+
+export const HeaderContent = styled.div`
+  flex: 1;
+`;
+
+export const HeaderActions = styled(CommonActionGroup).attrs({
+  $justify: 'end' as const,
+  $responsive: false,
+})`
+  flex-shrink: 0;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    flex-direction: column;
+    
+    button {
+      width: 100%;
+    }
   }
 `;
 
