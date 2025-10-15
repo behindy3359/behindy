@@ -65,18 +65,18 @@ export const env: EnvConfig = (() => {
       // 데모 계정
       DEMO_ACCOUNTS: [
         {
-          email: getEnvVar('NEXT_PUBLIC_DEMO1_EMAIL', 'demo1@demo.com'),
-          password: getEnvVar('NEXT_PUBLIC_DEMO1_PASSWORD', 'Demo123!'),
+          email: getEnvVar('NEXT_PUBLIC_DEMO1_EMAIL', 'demo@demo.com'),
+          password: getEnvVar('NEXT_PUBLIC_DEMO1_PASSWORD', 'ADemo123!'),
           name: getEnvVar('NEXT_PUBLIC_DEMO1_NAME', '데모 사용자 1'),
         },
         {
-          email: getEnvVar('NEXT_PUBLIC_DEMO2_EMAIL', 'demo2@demo.com'),
-          password: getEnvVar('NEXT_PUBLIC_DEMO2_PASSWORD', 'Demo123!'),
+          email: getEnvVar('NEXT_PUBLIC_DEMO2_EMAIL', 'demo@demo.com'),
+          password: getEnvVar('NEXT_PUBLIC_DEMO2_PASSWORD', 'ADemo123!'),
           name: getEnvVar('NEXT_PUBLIC_DEMO2_NAME', '데모 사용자 2'),
         },
         {
-          email: getEnvVar('NEXT_PUBLIC_DEMO3_EMAIL', 'demo3@demo.com'),
-          password: getEnvVar('NEXT_PUBLIC_DEMO3_PASSWORD', 'Demo123!'),
+          email: getEnvVar('NEXT_PUBLIC_DEMO3_EMAIL', 'demo@demo.com'),
+          password: getEnvVar('NEXT_PUBLIC_DEMO3_PASSWORD', 'ADemo123!'),
           name: getEnvVar('NEXT_PUBLIC_DEMO3_NAME', '데모 사용자 3'),
         },
       ],

@@ -147,7 +147,7 @@ export const DemoAccountItem = styled(motion.button)`
 
   &:hover {
     background: ${({ theme }) => theme.colors.background.secondary};
-    border-color: ${({ theme }) => theme.colors.primary[300]};
+    border-color: ${({ theme }) => theme.colors.primary[500]};
   }
 
   .account-name {
