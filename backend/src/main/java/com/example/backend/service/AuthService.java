@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.config.DemoAccountConfig;
 import com.example.backend.dto.auth.JwtAuthResponse;
 import com.example.backend.dto.auth.LoginRequest;
 import com.example.backend.dto.auth.SignupRequest;
@@ -26,6 +27,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -38,6 +41,7 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final RedisService redisService;
     private final HtmlSanitizer htmlSanitizer;
+    private final DemoAccountConfig demoAccountConfig;
 
     // Cookie 설정 상수
     private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
@@ -262,5 +266,57 @@ public class AuthService {
         cookie.setMaxAge(0); // 즉시 만료
 
         response.addCookie(cookie);
+    }
+
+    /**
+     * 데모 로그인 - 사용 가능한 데모 계정으로 자동 로그인
+     */
+    @Transactional
+    public JwtAuthResponse demoLogin(HttpServletResponse response) {
+        log.info("데모 로그인 시도 - 사용 가능한 계정 검색 중");
+
+        List<DemoAccountConfig.DemoAccount> demoAccounts = demoAccountConfig.getAccounts();
+
+        if (demoAccounts == null || demoAccounts.isEmpty()) {
+            throw new IllegalStateException("설정된 데모 계정이 없습니다.");
+        }
+
+        // 모든 데모 계정을 순회하면서 사용 가능한 계정 찾기
+        for (DemoAccountConfig.DemoAccount demoAccount : demoAccounts) {
+            try {
+                // 데모 계정 사용자 조회
+                User user = userRepository.findByUserEmail(demoAccount.getEmail())
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "User", "email", demoAccount.getEmail()));
+
+                // 해당 사용자의 활성 세션 확인
+                Set<String> activeTokens = redisService.getAllRefreshTokensForUser(String.valueOf(user.getUserId()));
+
+                // 활성 세션이 없으면 이 계정 사용 가능
+                if (activeTokens.isEmpty()) {
+                    log.info("사용 가능한 데모 계정 발견: {}", demoAccount.getEmail());
+
+                    // 일반 로그인과 동일한 방식으로 로그인 처리
+                    LoginRequest loginRequest = new LoginRequest();
+                    loginRequest.setEmail(demoAccount.getEmail());
+                    loginRequest.setPassword(demoAccount.getPassword());
+
+                    return authenticate(loginRequest, response);
+                }
+
+                log.debug("데모 계정 사용 중: {} (활성 세션 {}개)",
+                    demoAccount.getEmail(), activeTokens.size());
+
+            } catch (ResourceNotFoundException e) {
+                log.warn("데모 계정 사용자를 찾을 수 없음: {}", demoAccount.getEmail());
+                continue;
+            } catch (Exception e) {
+                log.error("데모 계정 확인 중 오류 발생: {} - {}", demoAccount.getEmail(), e.getMessage());
+                continue;
+            }
+        }
+
+        // 모든 데모 계정이 사용 중인 경우
+        throw new IllegalStateException("현재 모든 데모 계정이 사용 중입니다. 잠시 후 다시 시도해주세요.");
     }
 }

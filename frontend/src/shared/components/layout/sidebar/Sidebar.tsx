@@ -16,7 +16,6 @@ import { SidebarFooter } from './inner/SidebarFooter';
 export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const { sidebar, isMobile, toggleSidebar, handleOverlayClick } = useSidebarState();
   const { navItems, accountItems, handleNavigation, isActiveRoute } = useSidebarNavigation();
-  const { isDarkTheme, handleThemeToggle } = useSidebarTheme();
 
   return (
     <>
@@ -52,11 +51,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           isOpen={sidebar.isOpen}
           onNavigate={handleNavigation}
         />
-        {/* <SidebarFooter
-          isOpen={sidebar.isOpen}
-          isDarkTheme={isDarkTheme}
-          onThemeToggle={handleThemeToggle}
-        /> */}
       </SidebarContainer>
     </>
   );

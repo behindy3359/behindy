@@ -34,7 +34,7 @@ interface AuthResult {
 
 // 인증 스토어 액션 타입 정의
 interface AuthActions {
-  login: (credentials: LoginRequest) => Promise<AuthResult>;
+  login: (credentials: LoginRequest | Record<string, never>, isDemo?: boolean) => Promise<AuthResult>;
   logout: () => Promise<void>;
   signup: (userData: SignupRequest) => Promise<AuthResult>;
   refreshToken: () => Promise<boolean>;
@@ -120,17 +120,18 @@ export const useAuthStore = create<AuthStore>()(
       ...restoreAuthState(),
 
       // 사용자 로그인
-      login: async (credentials: LoginRequest): Promise<AuthResult> => {
+      login: async (credentials: LoginRequest | Record<string, never>, isDemo = false): Promise<AuthResult> => {
         try {
           set({ isLoading: true, error: null }, false, 'auth/login/start');
 
-          const response = await api.post<JwtAuthResponse>(
-            API_ENDPOINTS.AUTH.LOGIN,
-            {
-              email: credentials.email,
-              password: credentials.password,
-            }
-          );
+          // 데모 로그인과 일반 로그인 분기
+          const endpoint = isDemo ? API_ENDPOINTS.AUTH.DEMO_LOGIN : API_ENDPOINTS.AUTH.LOGIN;
+          const body = isDemo ? {} : {
+            email: (credentials as LoginRequest).email,
+            password: (credentials as LoginRequest).password,
+          };
+
+          const response = await api.post<JwtAuthResponse>(endpoint, body);
 
           // Access Token sessionStorage에 저장
           TokenManager.setAccessToken(response.accessToken);

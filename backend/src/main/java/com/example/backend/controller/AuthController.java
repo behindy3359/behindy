@@ -356,4 +356,57 @@ public class AuthController {
                     .build());
         }
     }
+
+    @Operation(
+            summary = "데모 로그인",
+            description = """
+                세션에 연결되지 않은 사용 가능한 데모 계정으로 자동 로그인합니다.
+
+                **동작 방식:**
+                1. 설정된 데모 계정들 중 현재 활성 세션이 없는 계정을 찾음
+                2. 사용 가능한 계정으로 자동 로그인 처리
+                3. 일반 로그인과 동일하게 토큰 발급
+
+                **특징:**
+                - 요청 본문 없이 호출 가능
+                - 사용자가 계정을 선택할 필요 없음
+                - 여러 사용자가 동시에 체험 가능
+                - 모든 데모 계정이 사용 중이면 503 반환
+                """
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "데모 로그인 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = JwtAuthResponse.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "503",
+                    description = "사용 가능한 데모 계정 없음 - 모든 계정이 사용 중",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponse.class)
+                    )
+            )
+    })
+    @PostMapping("/demo-login")
+    public ResponseEntity<?> demoLogin(HttpServletResponse response) {
+        log.info("데모 로그인 요청");
+
+        try {
+            JwtAuthResponse authResponse = authService.demoLogin(response);
+            log.info("데모 로그인 성공: userId={}, email={}", authResponse.getUserId(), authResponse.getEmail());
+            return ResponseEntity.ok(authResponse);
+        } catch (IllegalStateException e) {
+            log.warn("데모 로그인 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        }
+    }
 }

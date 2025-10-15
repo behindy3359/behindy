@@ -99,12 +99,30 @@ export function useLoginForm() {
     });
   }, [formData, performLogin]);
 
-  const handleDemoLogin = useCallback(async (email: string, password: string) => {
-    await performLogin({
-      email,
-      password,
-    });
-  }, [performLogin]);
+  const handleDemoLogin = useCallback(async () => {
+    setIsLoading(true);
+    setErrors({});
+    setSuccess('');
+
+    try {
+      const result = await login({}, true); // 두 번째 매개변수로 데모 로그인 플래그 전달
+
+      if (result.success) {
+        setSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
+        setTimeout(() => {
+          const redirectTo = searchParams.get('redirect') || '/';
+          router.push(redirectTo);
+        }, 1000);
+      } else {
+        setErrors({ submit: result.error || ERROR_MESSAGES.LOGIN_FAILED });
+      }
+    } catch (error: unknown) {
+      const errorInfo = apiErrorHandler.parseError(error);
+      setErrors({ submit: errorInfo.message });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [login, router, searchParams]);
 
   const navigateToSignup = useCallback(() => {
     router.push('/auth/signup');

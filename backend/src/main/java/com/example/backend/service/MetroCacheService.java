@@ -26,7 +26,7 @@ public class MetroCacheService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${seoul.metro.cache.ttl:180}")
+    @Value("${seoul.metro.cache.ttl:420}")
     private int cacheTtlSeconds;
 
     // Redis 키 패턴 (단순화)

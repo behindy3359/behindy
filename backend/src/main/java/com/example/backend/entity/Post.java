@@ -44,6 +44,9 @@ public class Post {
 
     // 조회수 증가 메서드
     public void incrementViewCount() {
+        if (this.viewCount == null) {
+            this.viewCount = 0L;
+        }
         this.viewCount++;
     }
 
