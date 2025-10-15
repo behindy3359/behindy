@@ -30,11 +30,7 @@ export const validateLoginForm = {
         }
         // 로그인시에는 비밀번호 강도 검사 안함
         return { isValid: true };
-        
-      case 'rememberMe':
-        // 선택사항이므로 항상 유효
-        return { isValid: true };
-        
+
       default:
         return { isValid: true };
     }
