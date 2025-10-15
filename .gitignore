@@ -19,6 +19,12 @@ __pycache__/
 # etc
 .DS_Store
 
+# Docker Compose local override (for development only)
+docker-compose.override.yml
+
+# nginx local config (for development only)
+nginx/nginx.local.conf
+
 #pgdata
 /pgdata
 
