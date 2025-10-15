@@ -12,11 +12,11 @@ export const CommonGroup = styled(FlexContainer).attrs({
 `;
 
 // CommonWrapper - 폼용 세로 배치 컨테이너
-export const CommonWrapper = styled(motion.div)`
+export const CommonWrapper = styled(motion.form)`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.componentSpacing.form.fieldGap};
-  
+
   @media ${({ theme }) => `(max-height: 600px)`} {
     gap: ${({ theme }) => theme.spacing[4]};
   }

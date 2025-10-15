@@ -119,5 +119,46 @@ export const DemoContainer = styled(motion.div)`
 
 // DemoContent - 중앙 정렬 패턴
 export const DemoContent = styled.div`
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[3]};
+`;
+
+// DemoAccountList - 데모 계정 목록
+export const DemoAccountList = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[2]} 0;
+`;
+
+// DemoAccountItem - 데모 계정 아이템
+export const DemoAccountItem = styled(motion.button)`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: ${({ theme }) => theme.spacing[3]};
+  background: ${({ theme }) => theme.colors.background.primary};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  cursor: pointer;
+  transition: ${({ theme }) => theme.transition.fast};
+  width: 100%;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.secondary};
+    border-color: ${({ theme }) => theme.colors.primary[300]};
+  }
+
+  .account-name {
+    font-size: ${({ theme }) => theme.typography.fontSize.sm};
+    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+    color: ${({ theme }) => theme.colors.text.primary};
+    margin-bottom: ${({ theme }) => theme.spacing[1]};
+  }
+
+  .account-email {
+    font-size: ${({ theme }) => theme.typography.fontSize.xs};
+    color: ${({ theme }) => theme.colors.text.secondary};
+  }
 `;
