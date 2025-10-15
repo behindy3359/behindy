@@ -8,9 +8,11 @@ import com.example.backend.dto.game.StoryResponse;
 import com.example.backend.dto.post.PostResponse;
 import com.example.backend.entity.*;
 import com.example.backend.entity.Character;
+import com.example.backend.repository.CommentLikeRepository;
 import com.example.backend.repository.NowRepository;
 import com.example.backend.repository.OptionsRepository;
 import com.example.backend.repository.PageRepository;
+import com.example.backend.repository.PostStatsRepository;
 import com.example.backend.security.user.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,12 +42,15 @@ public class EntityDtoMapper {
     private final OptionsRepository optionsRepository;
     private final PageRepository pageRepository;
     private final NowRepository nowRepository;
+    private final PostStatsRepository postStatsRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
     // ===== POST 관련 변환 =====
 
     /**
      * Post → PostResponse 변환
      * 기존: PostService.mapToPostResponse() 대체
+     * PostStats에서 조회수 정보 가져옴
      */
     public PostResponse toPostResponse(Post post) {
         if (post == null) {
@@ -55,13 +60,18 @@ public class EntityDtoMapper {
         User currentUser = getCurrentUserSafely();
         boolean isOwner = isOwner(currentUser, post.getUser());
 
+        // PostStats에서 조회수 가져오기
+        Long viewCount = postStatsRepository.findByPostId(post.getPostId())
+                .map(PostStats::getViewCount)
+                .orElse(0L);
+
         return PostResponse.builder()
                 .id(post.getPostId())
                 .title(post.getPostTitle())
                 .content(post.getPostContents())
                 .authorName(post.getUser().getUserName())
                 .authorId(post.getUser().getUserId())
-                .viewCount(post.getViewCount())
+                .viewCount(viewCount)
                 .commentCount(post.getComments() != null ? post.getComments().size() : 0)
                 .isEditable(isOwner)
                 .isDeletable(isOwner)
@@ -75,6 +85,7 @@ public class EntityDtoMapper {
     /**
      * Comment → CommentResponse 변환
      * 기존: CommentService.mapToCommentResponse() 대체
+     * 좋아요 정보 포함
      */
     public CommentResponse toCommentResponse(Comment comment) {
         if (comment == null) {
@@ -84,6 +95,18 @@ public class EntityDtoMapper {
         User currentUser = getCurrentUserSafely();
         boolean isOwner = isOwner(currentUser, comment.getUser());
 
+        // 좋아요 수 조회
+        long likeCount = commentLikeRepository.countByCommentId(comment.getCmtId());
+
+        // 현재 사용자의 좋아요 여부
+        boolean isLiked = false;
+        if (currentUser != null) {
+            isLiked = commentLikeRepository.existsByCommentIdAndUserId(
+                    comment.getCmtId(),
+                    currentUser.getUserId()
+            );
+        }
+
         return CommentResponse.builder()
                 .id(comment.getCmtId())
                 .postId(comment.getPost().getPostId())
@@ -92,6 +115,8 @@ public class EntityDtoMapper {
                 .authorId(comment.getUser().getUserId())
                 .isEditable(isOwner)
                 .isDeletable(isOwner)
+                .likeCount(likeCount)
+                .isLiked(isLiked)
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();

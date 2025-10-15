@@ -8,19 +8,19 @@ export const CommentMeta = React.memo<{
   createdAt: string;
   updatedAt: string;
 }>(function CommentMeta({ authorName, createdAt, updatedAt }) {
-  
-  const userInitial = useMemo(() => 
-    formatters.getUserInitial(authorName), 
+
+  const userInitial = useMemo(() =>
+    formatters.getUserInitial(authorName),
     [authorName]
   );
-  
-  const relativeTime = useMemo(() => 
-    formatters.relativeTime(createdAt), 
+
+  const combinedTime = useMemo(() =>
+    formatters.combinedTime(createdAt),
     [createdAt]
   );
 
-  const isEdited = useMemo(() => 
-    createdAt !== updatedAt, 
+  const isEdited = useMemo(() =>
+    createdAt !== updatedAt,
     [createdAt, updatedAt]
   );
 
@@ -32,7 +32,7 @@ export const CommentMeta = React.memo<{
       </div>
       <div className="date">
         <Calendar size={12} />
-        {relativeTime}
+        {combinedTime}
         {isEdited && (
           <span style={{ color: '#9ca3af', marginLeft: '4px' }}>
             (수정됨)

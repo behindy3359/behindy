@@ -5,9 +5,11 @@ import com.example.backend.dto.post.PostListResponse;
 import com.example.backend.dto.post.PostResponse;
 import com.example.backend.dto.post.PostUpdateRequest;
 import com.example.backend.entity.Post;
+import com.example.backend.entity.PostStats;
 import com.example.backend.entity.User;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.PostRepository;
+import com.example.backend.repository.PostStatsRepository;
 import com.example.backend.service.mapper.EntityDtoMapper;
 import com.example.backend.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final PostStatsRepository postStatsRepository;
     private final AuthService authService;
     private final HtmlSanitizer htmlSanitizer;
     private final EntityDtoMapper entityDtoMapper;
@@ -54,13 +57,22 @@ public class PostService {
                 .build();
 
         Post savedPost = postRepository.save(post);
+
+        // PostStats 생성 (조회수 0으로 초기화)
+        PostStats stats = PostStats.builder()
+                .post(savedPost)
+                .viewCount(0L)
+                .likeCount(0L)
+                .build();
+        postStatsRepository.save(stats);
+
         return entityDtoMapper.toPostResponse(savedPost);
     }
 
     /**
      * 단일 게시글 조회
      * 캐싱: key = postId, TTL = 5분
-     * 조회 시 조회수 증가
+     * 조회 시 조회수 증가 (PostStats에만 영향)
      */
     @Cacheable(value = "postDetail", key = "#postId")
     @Transactional
@@ -69,9 +81,20 @@ public class PostService {
                 .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
-        // 조회수 증가
-        post.incrementViewCount();
-        postRepository.save(post);
+        // PostStats 조회 및 조회수 증가 (Post의 updatedAt은 변경되지 않음)
+        PostStats stats = postStatsRepository.findByPostId(postId)
+                .orElseGet(() -> {
+                    // Stats가 없으면 생성
+                    PostStats newStats = PostStats.builder()
+                            .post(post)
+                            .viewCount(0L)
+                            .likeCount(0L)
+                            .build();
+                    return postStatsRepository.save(newStats);
+                });
+
+        stats.incrementViewCount();
+        postStatsRepository.save(stats);
 
         return entityDtoMapper.toPostResponse(post);
     }

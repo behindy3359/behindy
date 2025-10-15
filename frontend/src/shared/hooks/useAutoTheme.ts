@@ -32,19 +32,14 @@ export const useAutoTheme = () => {
   const pathname = usePathname();
 
   useEffect(() => {
-    const isCharacterPage = pathname.startsWith('/character');
-    
-    if (isCharacterPage) {
-      gameThemeControls.enableGameMode();
-    } else {
-      gameThemeControls.disableGameMode();
-    }
+    // 모든 페이지에서 라이트 테마 사용
+    gameThemeControls.disableGameMode();
   }, [pathname]);
 
-  const isGameMode = pathname.startsWith('/character');
-  
+  const isGameMode = false; // 항상 라이트 모드
+
   return {
     isGameMode,
-    theme: isGameMode ? 'dark' : 'light'
+    theme: 'light'
   };
 };

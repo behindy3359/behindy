@@ -19,8 +19,6 @@ export const CommentItemComponent = React.memo<{
   const { user } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
 
   const permissions = useMemo(() => ({
     canEdit: Boolean(user && (comment.authorId === user.id || comment.isEditable)),
@@ -37,6 +35,15 @@ export const CommentItemComponent = React.memo<{
     },
   });
 
+  const likeCommentMutation = useMutation({
+    mutationFn: async () => {
+      await api.post(API_ENDPOINTS.COMMENTS.LIKE(comment.id));
+    },
+    onSuccess: () => {
+      onUpdate(); // 댓글 목록 새로고침으로 좋아요 상태 업데이트
+    },
+  });
+
   const handleEdit = useCallback(() => {
     setIsEditing(true);
     setShowMenu(false);
@@ -46,10 +53,13 @@ export const CommentItemComponent = React.memo<{
     await deleteCommentMutation.mutateAsync();
   }, [deleteCommentMutation]);
 
-  const handleLike = useCallback(() => {
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-  }, [isLiked]);
+  const handleLike = useCallback(async () => {
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    await likeCommentMutation.mutateAsync();
+  }, [user, likeCommentMutation]);
 
   const handleEditComplete = useCallback(() => {
     setIsEditing(false);
@@ -106,8 +116,8 @@ export const CommentItemComponent = React.memo<{
               <CommentContent>{comment.content}</CommentContent>
 
               <CommentFooter
-                isLiked={isLiked}
-                likeCount={likeCount}
+                isLiked={comment.isLiked || false}
+                likeCount={comment.likeCount || 0}
                 createdAt={comment.createdAt}
                 updatedAt={comment.updatedAt}
                 onLike={handleLike}

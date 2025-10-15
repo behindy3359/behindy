@@ -21,6 +21,10 @@ public class CommentResponse {
     private boolean isEditable;
     private boolean isDeletable;
 
+    // 좋아요 관련 필드
+    private Long likeCount;
+    private boolean isLiked;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
