@@ -10,16 +10,36 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Check disk space
+      - name: Check disk space and aggressive cleanup
         run: |
           echo "=== 배포 전 디스크 상태 확인 ==="
           df -h
 
-          echo "🧹 빌드 캐시 정리 중..."
-          docker builder prune -f
+          echo "📊 Docker 디스크 사용량 확인..."
+          docker system df
+
+          echo "🧹 사용하지 않는 모든 리소스 정리 중..."
+
+          # 중지된 컨테이너 모두 제거
+          docker container prune -f
+
+          # 사용하지 않는 이미지 모두 제거 (dangling + unused)
+          docker image prune -a -f
+
+          # 사용하지 않는 볼륨 제거
+          docker volume prune -f
+
+          # 사용하지 않는 네트워크 제거
+          docker network prune -f
+
+          # 빌드 캐시 완전 제거
+          docker builder prune -a -f
 
           echo "=== 정리 후 디스크 상태 ==="
           df -h
+
+          echo "📊 Docker 정리 후 사용량..."
+          docker system df
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -45,12 +65,19 @@ jobs:
           echo "✅ 애플리케이션 컨테이너 정리 완료"
           docker ps --filter "name=postgres" --filter "name=redis" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-      - name: Clean up dangling images
+      - name: Clean up old images (keep only latest)
         run: |
           cd ~/behindy
-          echo "🧹 dangling 이미지만 정리 중..."
+          echo "🧹 이전 버전 이미지 정리 중..."
 
-          # <none> 태그 이미지만 제거
+          # behindy 프로젝트의 오래된 이미지 제거 (최신 것만 유지)
+          for image in behindy-frontend behindy-backend behindy-llmserver behindy-nginx; do
+            echo "Cleaning up old $image images..."
+            docker images "$image" --format "{{.ID}} {{.CreatedAt}}" | \
+              tail -n +2 | awk '{print $1}' | xargs -r docker rmi -f || true
+          done
+
+          # dangling 이미지 제거
           docker image prune -f
 
           echo "✅ 정리 완료"
@@ -194,11 +221,24 @@ jobs:
           cd ~/behindy
           echo "🧹 최종 정리 작업..."
 
+          # 빌드 캐시 정리
           docker builder prune -f
+
+          # 사용하지 않는 네트워크 정리
           docker network prune -f
+
+          # 중지된 컨테이너 정리
+          docker container prune -f
+
+          # 사용하지 않는 이미지 정리
+          docker image prune -f
 
           echo "=== 최종 디스크 상태 ==="
           df -h
+
+          echo ""
+          echo "📊 최종 Docker 디스크 사용량..."
+          docker system df
 
           echo ""
           echo "✅ 배포 완료!"
