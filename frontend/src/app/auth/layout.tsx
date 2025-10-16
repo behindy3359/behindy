@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gradients } from '@/shared/styles/theme';
-import { PortfolioWarningModal } from '@/features/auth/components/PortfolioWarningModal/PortfolioWarningModal';
+import { PortfolioWarningModal } from '@/features/auth/components/PortfolioWarningModal';
+import { AuthLayoutProvider } from '@/features/auth/contexts/AuthLayoutContext';
 
 const AuthLayoutContainer = styled.div`
   min-height: 100vh;
@@ -244,6 +245,10 @@ export default function AuthLayout({
     sessionStorage.setItem('portfolio-warning-seen', 'true');
   };
 
+  const openWarningModal = () => {
+    setShowWarningModal(true);
+  };
+
   return (
     <AuthLayoutContainer>
       <FloatingElement
@@ -306,7 +311,9 @@ export default function AuthLayout({
         </BrandSection>
 
         <ContentSection>
-          {children}
+          <AuthLayoutProvider openWarningModal={openWarningModal}>
+            {children}
+          </AuthLayoutProvider>
         </ContentSection>
       </AuthCard>
 

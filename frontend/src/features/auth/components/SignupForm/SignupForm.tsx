@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { UserPlus, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
 import { useSignupForm } from '../../hooks/useSignupForm';
 import { SignupFormFields } from './inner/SignupFormFields';
-import { PortfolioWarningModal } from './inner/PortfolioWarningModal';
+import { useAuthLayout } from '../../contexts/AuthLayoutContext';
 import {
   SignupContainer,
   ActionsContainer,
@@ -21,7 +21,7 @@ import {
 } from '@/shared/styles/commonAuthStyles';
 
 export const SignupForm: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { openWarningModal } = useAuthLayout();
 
   const {
     formData,
@@ -36,20 +36,8 @@ export const SignupForm: React.FC = () => {
     navigateToLogin,
   } = useSignupForm();
 
-  // 컴포넌트 마운트 시 모달 표시
-  useEffect(() => {
-    setIsModalOpen(true);
-  }, []);
-
   return (
-    <>
-      {/* 포트폴리오 안내 모달 */}
-      <PortfolioWarningModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-
-      <SignupContainer>
+    <SignupContainer>
         {/* 헤더 */}
         <CommonAuthHeaderSection>
         <CommonAuthPageTitle
@@ -108,6 +96,7 @@ export const SignupForm: React.FC = () => {
           onChange={handleInputChange}
           onBlur={handleFieldBlur}
           disabled={isLoading}
+          onShowDetails={openWarningModal}
         />
 
         {/* 액션 버튼들 */}
@@ -164,7 +153,6 @@ export const SignupForm: React.FC = () => {
           </button>
         </p>
       </LoginPrompt>
-      </SignupContainer>
-    </>
+    </SignupContainer>
   );
 };

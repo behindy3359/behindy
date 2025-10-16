@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 import {
   AgreementContainer,
   AgreementTitle,
@@ -12,14 +12,20 @@ import {
   RequiredMark,
   AgreementErrorText,
   AgreementDescription,
+  DetailButton,
 } from '../styles';
 import type { AgreementSectionProps } from '../../../types/types';
 
-export const AgreementSection: React.FC<AgreementSectionProps> = ({
+interface ExtendedAgreementSectionProps extends AgreementSectionProps {
+  onShowDetails?: () => void;
+}
+
+export const AgreementSection: React.FC<ExtendedAgreementSectionProps> = ({
   agreements,
   errors,
   onChange,
   disabled = false,
+  onShowDetails,
 }) => {
   return (
     <AgreementContainer
@@ -48,11 +54,27 @@ export const AgreementSection: React.FC<AgreementSectionProps> = ({
               />
             </CheckboxWrapper>
             <AgreementContent>
-              <AgreementText>
+              <AgreementText
+                onClick={onShowDetails}
+                style={{ cursor: onShowDetails ? 'pointer' : 'default' }}
+              >
                 <RequiredMark>*</RequiredMark>
                 <span>
                   포트폴리오 프로젝트임을 이해하고, 실제 개인정보를 사용하지 않겠습니다
                 </span>
+                {onShowDetails && (
+                  <DetailButton
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onShowDetails();
+                    }}
+                    disabled={disabled}
+                  >
+                    <Info size={14} />
+                    자세히
+                  </DetailButton>
+                )}
               </AgreementText>
               <AgreementDescription>
                 <AlertCircle size={14} style={{ marginRight: '6px' }} />

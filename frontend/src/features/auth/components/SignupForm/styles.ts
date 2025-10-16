@@ -332,9 +332,40 @@ export const AgreementLink = styled(LinkButton)`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
+export const DetailButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[1]};
+  padding: ${({ theme }) => `${theme.spacing[1]} ${theme.spacing[2]}`};
+  background: #eff6ff;
+  color: ${({ theme }) => theme.colors.primary[600]};
+  border: 1px solid #bfdbfe;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  cursor: pointer;
+  transition: ${({ theme }) => theme.transition.fast};
+  margin-left: ${({ theme }) => theme.spacing[2]};
+
+  &:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
 export const ExternalLinkIcon = styled.span`
   color: ${({ theme }) => theme.colors.text.tertiary};
-  
+
   svg {
     width: 12px;
     height: 12px;
