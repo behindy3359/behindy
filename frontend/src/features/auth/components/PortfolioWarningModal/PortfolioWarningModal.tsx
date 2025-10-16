@@ -42,18 +42,18 @@ export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          <Overlay
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
+        <Overlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
           <ModalContainer
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
+            onClick={(e) => e.stopPropagation()}
           >
             <ModalHeader>
               <HeaderIcon>
@@ -67,7 +67,7 @@ export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
 
             <ModalContent>
               <IntroText>
-                본 사이트는 <strong>포트폴리오</strong>를 위한 데모 프로젝트입니다.
+                이 프로젝트는 <strong>포트폴리오</strong>를 위한 데모 프로젝트입니다.
               </IntroText>
 
               <WarningSection>
@@ -77,13 +77,7 @@ export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
                 </SectionTitle>
                 <WarningList>
                   <WarningItem>
-                    <strong>실제 사용 중인 이메일 주소</strong>를 입력하지 마세요
-                  </WarningItem>
-                  <WarningItem>
-                    <strong>다른 서비스에서 사용하는 비밀번호</strong>를 절대 사용하지 마세요
-                  </WarningItem>
-                  <WarningItem>
-                    <strong>민감한 개인정보</strong>를 입력하지 마세요
+                    가입 정보는 암호화 되지만 <strong>민감한 개인정보</strong>를 입력하지 마세요
                   </WarningItem>
                 </WarningList>
               </WarningSection>
@@ -121,10 +115,6 @@ export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
                   • 포트폴리오 기술 시연 목적으로만 활용됩니다
                 </DataCollectionNote>
               </DataCollectionSection>
-
-              <DisclaimerText>
-                데이터는 암호화 처리되지만, 프로덕션급 보안이 적용되지 않은 개발 환경입니다.
-              </DisclaimerText>
             </ModalContent>
 
             <ModalFooter>
@@ -133,7 +123,7 @@ export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
               </ConfirmButton>
             </ModalFooter>
           </ModalContainer>
-        </>
+        </Overlay>
       )}
     </AnimatePresence>
   );
