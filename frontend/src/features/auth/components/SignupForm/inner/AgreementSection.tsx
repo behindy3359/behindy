@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import {
   AgreementContainer,
   AgreementTitle,
@@ -10,12 +10,8 @@ import {
   AgreementContent,
   AgreementText,
   RequiredMark,
-  AgreementLink,
-  ExternalLinkIcon,
-  AgreementDescription,
-  OptionalText,
   AgreementErrorText,
-  RequiredNotice
+  AgreementDescription,
 } from '../styles';
 import type { AgreementSectionProps } from '../../../types/types';
 
@@ -25,14 +21,6 @@ export const AgreementSection: React.FC<AgreementSectionProps> = ({
   onChange,
   disabled = false,
 }) => {
-  const handleTermsClick = () => {
-    window.open('/terms', '_blank', 'noopener,noreferrer');
-  };
-
-  const handlePrivacyClick = () => {
-    window.open('/privacy', '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <AgreementContainer
       initial={{ opacity: 0, y: 10 }}
@@ -40,15 +28,15 @@ export const AgreementSection: React.FC<AgreementSectionProps> = ({
       transition={{ duration: 0.3 }}
     >
       <AgreementTitle>
-        약관 동의
+        포트폴리오 프로젝트 확인
       </AgreementTitle>
 
       <AgreementsList>
-        {/* 이용약관 동의 */}
+        {/* 포트폴리오 프로젝트 이해 동의 */}
         <AgreementItem>
           <AgreementLabel>
-            <CheckboxWrapper 
-              $required={true} 
+            <CheckboxWrapper
+              $required={true}
               $checked={agreements.terms}
               className="checkbox-wrapper"
             >
@@ -62,18 +50,14 @@ export const AgreementSection: React.FC<AgreementSectionProps> = ({
             <AgreementContent>
               <AgreementText>
                 <RequiredMark>*</RequiredMark>
-                <AgreementLink
-                  type="button"
-                  onClick={handleTermsClick}
-                  disabled={disabled}
-                >
-                  이용약관
-                </AgreementLink>
-                <ExternalLinkIcon>
-                  <ExternalLink size={14} />
-                </ExternalLinkIcon>
-                <span>에 동의합니다</span>
+                <span>
+                  포트폴리오 프로젝트임을 이해하고, 실제 개인정보를 사용하지 않겠습니다
+                </span>
               </AgreementText>
+              <AgreementDescription>
+                <AlertCircle size={14} style={{ marginRight: '6px' }} />
+                테스트용 데이터 사용을 권장합니다
+              </AgreementDescription>
               {errors.agreeToTerms && (
                 <AgreementErrorText>
                   {errors.agreeToTerms}
@@ -82,81 +66,7 @@ export const AgreementSection: React.FC<AgreementSectionProps> = ({
             </AgreementContent>
           </AgreementLabel>
         </AgreementItem>
-
-        {/* 개인정보처리방침 동의 */}
-        <AgreementItem>
-          <AgreementLabel>
-            <CheckboxWrapper 
-              $required={true} 
-              $checked={agreements.privacy}
-              className="checkbox-wrapper"
-            >
-              <input
-                type="checkbox"
-                checked={agreements.privacy}
-                onChange={(e) => onChange('agreeToPrivacy', e.target.checked)}
-                disabled={disabled}
-              />
-            </CheckboxWrapper>
-            <AgreementContent>
-              <AgreementText>
-                <RequiredMark>*</RequiredMark>
-                <AgreementLink
-                  type="button"
-                  onClick={handlePrivacyClick}
-                  disabled={disabled}
-                >
-                  개인정보처리방침
-                </AgreementLink>
-                <ExternalLinkIcon>
-                  <ExternalLink size={14} />
-                </ExternalLinkIcon>
-                <span>에 동의합니다</span>
-              </AgreementText>
-              {errors.agreeToPrivacy && (
-                <AgreementErrorText>
-                  {errors.agreeToPrivacy}
-                </AgreementErrorText>
-              )}
-            </AgreementContent>
-          </AgreementLabel>
-        </AgreementItem>
-
-        {/* 마케팅 정보 수신 동의 (선택) */}
-        <AgreementItem>
-          <AgreementLabel>
-            <CheckboxWrapper 
-              $checked={agreements.marketing}
-              className="checkbox-wrapper"
-            >
-              <input
-                type="checkbox"
-                checked={agreements.marketing}
-                onChange={(e) => onChange('marketingOptIn', e.target.checked)}
-                disabled={disabled}
-              />
-            </CheckboxWrapper>
-            <AgreementContent>
-              <AgreementText>
-                <span>
-                  마케팅 정보 수신에 동의합니다
-                  <OptionalText>(선택)</OptionalText>
-                </span>
-              </AgreementText>
-              <AgreementDescription>
-                새로운 게임 업데이트와 이벤트 소식을 받아보세요
-              </AgreementDescription>
-            </AgreementContent>
-          </AgreementLabel>
-        </AgreementItem>
       </AgreementsList>
-
-      {/* 필수 동의 안내 */}
-      <RequiredNotice>
-        <p>
-          <span className="required-mark">*</span> 표시된 항목은 필수 동의 사항입니다.
-        </p>
-      </RequiredNotice>
     </AgreementContainer>
   );
 };
