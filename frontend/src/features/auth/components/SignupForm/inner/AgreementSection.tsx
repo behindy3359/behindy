@@ -33,10 +33,6 @@ export const AgreementSection: React.FC<ExtendedAgreementSectionProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <AgreementTitle>
-        포트폴리오 프로젝트 확인
-      </AgreementTitle>
-
       <AgreementsList>
         {/* 포트폴리오 프로젝트 이해 동의 */}
         <AgreementItem>
@@ -58,9 +54,8 @@ export const AgreementSection: React.FC<ExtendedAgreementSectionProps> = ({
                 onClick={onShowDetails}
                 style={{ cursor: onShowDetails ? 'pointer' : 'default' }}
               >
-                <RequiredMark>*</RequiredMark>
                 <span>
-                  포트폴리오 프로젝트임을 이해하고, 실제 개인정보를 사용하지 않겠습니다
+                  <RequiredMark>*</RequiredMark> 이 프로젝트는 포트폴리오용으로 작성되었습니다.
                 </span>
                 {onShowDetails && (
                   <DetailButton
@@ -76,10 +71,6 @@ export const AgreementSection: React.FC<ExtendedAgreementSectionProps> = ({
                   </DetailButton>
                 )}
               </AgreementText>
-              <AgreementDescription>
-                <AlertCircle size={14} style={{ marginRight: '6px' }} />
-                테스트용 데이터 사용을 권장합니다
-              </AgreementDescription>
               {errors.agreeToTerms && (
                 <AgreementErrorText>
                   {errors.agreeToTerms}

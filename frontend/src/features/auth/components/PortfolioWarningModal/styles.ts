@@ -10,20 +10,20 @@ export const Overlay = styled(motion.div)`
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 `;
 
 export const ModalContainer = styled(motion.div)`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   width: 90%;
   max-width: 520px;
   max-height: 85vh;
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  z-index: 1001;
   overflow: hidden;
   display: flex;
   flex-direction: column;

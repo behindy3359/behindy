@@ -112,18 +112,6 @@ export const SignupForm: React.FC = () => {
           >
             {isLoading ? '계정 생성 중...' : '계정 만들기'}
           </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="lg"
-            fullWidth
-            onClick={navigateToLogin}
-            disabled={isLoading}
-            leftIcon={<X size={20} />}
-          >
-            취소
-          </Button>
         </ActionsContainer>
       </form>
 
