@@ -103,13 +103,26 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
 
       toast.success(`캐릭터 '${response.charName}'이 생성되었습니다!`);
 
-      // 원래 목적지로 이동
+      // 노선도에서 진입한 경우
       if (stationName && lineNumber) {
+        // 약간의 딜레이 후 게임 시작 안내
+        await new Promise(resolve => setTimeout(resolve, 800));
+        toast.info('게임을 시작합니다...');
+
+        await new Promise(resolve => setTimeout(resolve, 500));
         const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
         router.push(gameUrl);
-      } else if (returnUrl && returnUrl !== '/') {
+      }
+      // returnUrl이 있는 경우
+      else if (returnUrl && returnUrl !== '/') {
+        await new Promise(resolve => setTimeout(resolve, 800));
         router.push(returnUrl);
-      } else {
+      }
+      // 기본: 홈으로 이동
+      else {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        toast.info('홈으로 돌아갑니다');
+        await new Promise(resolve => setTimeout(resolve, 500));
         router.push('/');
       }
     } catch (error: any) {
@@ -118,8 +131,8 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
       let errorMessage = '캐릭터 생성에 실패했습니다';
 
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { 
-          response: { 
+        const axiosError = error as {
+          response: {
             status: number;
             data: { message: string };
             statusText?: string;
@@ -128,7 +141,7 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
         };
 
         errorMessage = axiosError.response?.data?.message || errorMessage;
-        
+
         if (axiosError.response?.status === 409) {
           // 이미 캐릭터가 있다는 에러인 경우 다시 확인
           checkExistingCharacter();
@@ -136,9 +149,9 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
       }
 
       toast.error(errorMessage);
-    } finally {
       setIsLoading(false);
     }
+    // Note: setIsLoading(false)를 finally에서 제거 - 페이지 전환 시까지 로딩 유지
   };
 
   // 기존 캐릭터로 계속하기

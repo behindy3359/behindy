@@ -1,6 +1,8 @@
 import React from 'react';
 import { Input } from '@/shared/components/ui/input/Input';
 import { Button } from '@/shared/components/ui/button/Button';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 interface CharacterCreationFormUIProps {
   charName: string;
@@ -21,6 +23,35 @@ export const CharacterCreationFormUI: React.FC<CharacterCreationFormUIProps> = (
 }) => {
   return (
     <form onSubmit={onSubmit}>
+      <AnimatePresence mode="wait">
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1rem',
+              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+              borderRadius: '0.75rem',
+              border: '1px solid rgba(102, 126, 234, 0.2)',
+            }}
+          >
+            <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+            <span style={{
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              color: 'var(--text-primary)',
+            }}>
+              캐릭터를 생성하고 있습니다...
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div style={{ 
         display: 'flex', 
         flexDirection: 'column', 

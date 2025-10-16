@@ -10,9 +10,9 @@ export const PostListHeader = React.memo(
           <MessageSquare size={32} />
           커뮤니티
         </Title>
-        <Subtitle>
+        {/* <Subtitle>
           흥미로운 이야기들을 공유해보세요
-        </Subtitle>
+        </Subtitle> */}
       </>
     );
   }

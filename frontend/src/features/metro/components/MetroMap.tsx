@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { getVisibleLineConnections } from '@/features/metro/data/metroLineConnections';
 import { MetroControls } from './inner/MetroControls';
 import { MetroSVG } from './inner/MetroSVG';
-import { useMetroRealtime } from '../hooks/useMetroRealtime';
 import { useMetroState } from '../hooks/useMetroState';
 import {
   processRealtimeData,
@@ -10,15 +9,20 @@ import {
   calculateLineStats,
 } from '../utils/metroMapUtils';
 import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
+import type { MetroApiResponse } from '../types/metroMapTypes';
 
-export const MetroMap: React.FC = () => {
+interface MetroMapProps {
+  realtimeData: MetroApiResponse['data'] | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export const MetroMap: React.FC<MetroMapProps> = ({ realtimeData, isLoading, error }) => {
   const {
     visibleLines,
     showDistricts,
     handleLineToggle,
   } = useMetroState();
-
-  const { data: realtimeData, isLoading, error } = useMetroRealtime(30000);
 
   const processedRealtimeData = useMemo(() => {
     return processRealtimeData(realtimeData);
