@@ -11,12 +11,17 @@ import type { SignupFormFieldsProps } from '../../../types/types';
 import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
 import { CommonWrapper } from '@/shared/styles/commonStyles';
 
-export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
+interface ExtendedSignupFormFieldsProps extends SignupFormFieldsProps {
+  onShowDetails?: () => void;
+}
+
+export const SignupFormFields: React.FC<ExtendedSignupFormFieldsProps> = ({
   formData,
   errors,
   onChange,
   onBlur,
   disabled = false,
+  onShowDetails,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -178,6 +183,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             }
           }}
           disabled={disabled}
+          onShowDetails={onShowDetails}
         />
       </BasicFullWidthContainer>
     </CommonWrapper>

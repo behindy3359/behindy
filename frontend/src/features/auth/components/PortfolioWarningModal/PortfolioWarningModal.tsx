@@ -1,128 +1,140 @@
-"use client";
-
 import React from 'react';
-import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button/Button';
+import { AnimatePresence } from 'framer-motion';
+import { AlertTriangle, X } from 'lucide-react';
+import type { PortfolioWarningModalProps } from './types';
 import {
-  ModalOverlay,
+  Overlay,
   ModalContainer,
   ModalHeader,
+  HeaderIcon,
   ModalTitle,
   CloseButton,
-  ModalBody,
-  WarningIcon,
-  WarningTitle,
+  ModalContent,
+  IntroText,
+  WarningSection,
+  SectionTitle,
   WarningList,
   WarningItem,
-  ConfirmCheckbox,
+  RecommendSection,
+  RecommendList,
+  RecommendItem,
+  DemoHighlight,
+  DataCollectionSection,
+  DataCollectionText,
+  DataCollectionList,
+  DataCollectionItem,
+  DataCollectionNote,
+  DisclaimerText,
   ModalFooter,
-  DemoAccountInfo,
-  InfoTitle,
-  InfoText
+  ConfirmButton,
 } from './styles';
-import type { PortfolioWarningModalProps } from './types';
 
 export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
 }) => {
-  const [isChecked, setIsChecked] = React.useState(false);
-
   const handleConfirm = () => {
-    if (isChecked) {
-      onConfirm();
-      onClose();
-    }
+    onConfirm?.();
+    onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <ModalOverlay
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
-      <ModalContainer
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ModalHeader>
-          <ModalTitle>
-            <AlertTriangle size={24} />
-            포트폴리오 프로젝트 안내
-          </ModalTitle>
-          <CloseButton onClick={onClose}>
-            <X size={20} />
-          </CloseButton>
-        </ModalHeader>
-
-        <ModalBody>
-          <WarningIcon>
-            <AlertTriangle size={48} />
-          </WarningIcon>
-
-          <WarningTitle>
-            이 프로젝트는 포트폴리오 목적으로 동작하고 있습니다
-          </WarningTitle>
-
-          <WarningList>
-            <WarningItem>
-              <CheckCircle2 size={16} />
-              <span>실제 개인정보를 입력하지 말아주세요</span>
-            </WarningItem>
-            <WarningItem>
-              <CheckCircle2 size={16} />
-              <span>테스트용 임시 정보만 사용해주세요</span>
-            </WarningItem>
-            <WarningItem>
-              <CheckCircle2 size={16} />
-              <span>Swagger UI에서 API 명세를 확인할 수 있습니다</span>
-            </WarningItem>
-          </WarningList>
-
-          <DemoAccountInfo>
-            <InfoTitle>데모 계정으로 접속하기</InfoTitle>
-            <InfoText>
-              로그인 화면에서 &ldquo;데모 계정으로 접속하기&rdquo; 버튼을 클릭하면
-              <br />
-              별도의 회원가입 없이 서비스를 체험하실 수 있습니다.
-            </InfoText>
-          </DemoAccountInfo>
-
-          <ConfirmCheckbox>
-            <input
-              type="checkbox"
-              id="portfolio-confirm"
-              checked={isChecked}
-              onChange={(e) => setIsChecked(e.target.checked)}
-            />
-            <label htmlFor="portfolio-confirm">
-              위 내용을 확인했습니다
-            </label>
-          </ConfirmCheckbox>
-        </ModalBody>
-
-        <ModalFooter>
-          <Button
-            variant="outline"
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <Overlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onClose}
+          />
+          <ModalContainer
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2 }}
           >
-            취소
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleConfirm}
-            disabled={!isChecked}
-          >
-            확인했습니다
-          </Button>
-        </ModalFooter>
-      </ModalContainer>
-    </ModalOverlay>
+            <ModalHeader>
+              <HeaderIcon>
+                <AlertTriangle size={28} />
+              </HeaderIcon>
+              <ModalTitle>포트폴리오 프로젝트 안내</ModalTitle>
+              <CloseButton onClick={onClose}>
+                <X size={20} />
+              </CloseButton>
+            </ModalHeader>
+
+            <ModalContent>
+              <IntroText>
+                본 사이트는 <strong>포트폴리오</strong>를 위한 데모 프로젝트입니다.
+              </IntroText>
+
+              <WarningSection>
+                <SectionTitle>
+                  <AlertTriangle size={18} />
+                  보안 관련 주의사항
+                </SectionTitle>
+                <WarningList>
+                  <WarningItem>
+                    <strong>실제 사용 중인 이메일 주소</strong>를 입력하지 마세요
+                  </WarningItem>
+                  <WarningItem>
+                    <strong>다른 서비스에서 사용하는 비밀번호</strong>를 절대 사용하지 마세요
+                  </WarningItem>
+                  <WarningItem>
+                    <strong>민감한 개인정보</strong>를 입력하지 마세요
+                  </WarningItem>
+                </WarningList>
+              </WarningSection>
+
+              <RecommendSection>
+                <SectionTitle>✅ 권장사항</SectionTitle>
+                <RecommendList>
+                  <RecommendItem>
+                    테스트용 더미 데이터를 사용해주세요
+                  </RecommendItem>
+                  <RecommendItem>
+                    제공되는 <DemoHighlight>데모 계정</DemoHighlight>을 이용하실 수 있습니다
+                  </RecommendItem>
+                </RecommendList>
+              </RecommendSection>
+
+              <DataCollectionSection>
+                <SectionTitle>수집되는 정보</SectionTitle>
+                <DataCollectionText>
+                  기술 시연을 위해 최소한의 접속 로그를 수집합니다:
+                </DataCollectionText>
+                <DataCollectionList>
+                  <DataCollectionItem>
+                    IP 주소 (마지막 부분 마스킹 처리, 예: 192.168.1.XXX)
+                  </DataCollectionItem>
+                  <DataCollectionItem>
+                    접속 시간 및 요청 경로
+                  </DataCollectionItem>
+                  <DataCollectionItem>
+                    브라우저 정보 (User Agent)
+                  </DataCollectionItem>
+                </DataCollectionList>
+                <DataCollectionNote>
+                  • 마케팅 목적으로 사용되지 않습니다<br />
+                  • 포트폴리오 기술 시연 목적으로만 활용됩니다
+                </DataCollectionNote>
+              </DataCollectionSection>
+
+              <DisclaimerText>
+                데이터는 암호화 처리되지만, 프로덕션급 보안이 적용되지 않은 개발 환경입니다.
+              </DisclaimerText>
+            </ModalContent>
+
+            <ModalFooter>
+              <ConfirmButton onClick={handleConfirm}>
+                확인했습니다
+              </ConfirmButton>
+            </ModalFooter>
+          </ModalContainer>
+        </>
+      )}
+    </AnimatePresence>
   );
 };

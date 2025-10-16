@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Info } from 'lucide-react';
 import { Input } from '@/shared/components/ui/input/Input';
 import { DemoLoginSection } from './DemoLoginSection';
 import {
@@ -10,6 +10,37 @@ import {
 import type { LoginFormFieldsProps } from '../../../types/types';
 import { BasicFullWidthContainer } from '@/shared/styles/commonContainers';
 import { CommonWrapper } from '@/shared/styles/commonStyles';
+import { useAuthLayout } from '../../../contexts/AuthLayoutContext';
+import styled from 'styled-components';
+
+const PortfolioInfoBox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(to right, #eff6ff, #eef2ff);
+  border: 1px solid #bfdbfe;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: #1e40af;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+
+  &:hover {
+    background: linear-gradient(to right, #dbeafe, #e0e7ff);
+    border-color: #93c5fd;
+    transform: translateY(-1px);
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  span {
+    flex: 1;
+  }
+`;
 
 export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
   formData,
@@ -21,6 +52,7 @@ export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
   onDemoLogin,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const { openWarningModal } = useAuthLayout();
 
   return (
     <CommonWrapper>
@@ -93,6 +125,13 @@ export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
           비밀번호를 잊으셨나요?
         </ForgotPasswordLink>
       </OptionsContainer>
+
+      <PortfolioInfoBox onClick={openWarningModal}>
+        <Info size={16} />
+        <span>
+          포트폴리오 프로젝트임을 이해하고, 실제 개인정보를 사용하지 않겠습니다
+        </span>
+      </PortfolioInfoBox>
     </CommonWrapper>
   );
 };
