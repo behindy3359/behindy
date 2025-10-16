@@ -21,15 +21,6 @@ export const PostListActionBar = React.memo<PostListActionBarProps>(
   }) {
     return (
       <HeaderActions>
-        <PostListSearch
-          searchQuery={searchQuery}
-          showSearch={showSearch}
-          enableSearch={enableSearch}
-          onSearch={onSearch}
-          onSearchQueryChange={onSearchQueryChange}
-          onToggleSearch={onToggleSearch}
-        />
-        
         <Button
           variant="primary"
           onClick={onWritePost}

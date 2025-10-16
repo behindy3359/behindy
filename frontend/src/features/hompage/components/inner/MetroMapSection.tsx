@@ -86,7 +86,11 @@ export const MetroMapSection: React.FC = () => {
       </MetroHeader>
       
       <MetroMapContainer>
-        <MetroMap />
+        <MetroMap
+          realtimeData={realtimeData}
+          isLoading={isLoading}
+          error={error}
+        />
       </MetroMapContainer>
     </SectionContainer>
   );
