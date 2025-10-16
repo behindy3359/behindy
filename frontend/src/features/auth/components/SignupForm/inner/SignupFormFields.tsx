@@ -165,18 +165,16 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
         <AgreementSection
           agreements={{
             terms: formData.agreeToTerms,
-            privacy: formData.agreeToPrivacy,
-            marketing: formData.marketingOptIn,
+            privacy: false,
+            marketing: false,
           }}
           errors={{
             agreeToTerms: errors.agreeToTerms,
-            agreeToPrivacy: errors.agreeToPrivacy,
+            agreeToPrivacy: undefined,
           }}
           onChange={(field, value) => {
-            if (field === 'agreeToTerms' || field === 'agreeToPrivacy') {
+            if (field === 'agreeToTerms') {
               onChange(field, value);
-            } else if (field === 'marketingOptIn') {
-              onChange('marketingOptIn', value);
             }
           }}
           disabled={disabled}
