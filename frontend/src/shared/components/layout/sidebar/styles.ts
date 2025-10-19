@@ -1,4 +1,3 @@
-// frontend/src/shared/components/layout/sidebar/styles.ts
 import { motion } from "framer-motion";
 import styled from "styled-components";
 import { 
@@ -187,10 +186,10 @@ export const NavigationSection = styled.nav.withConfig({
 `;
 
 export const StyledNavItem = styled.div.withConfig({
-  shouldForwardProp: (prop) => !['$isActive', '$isOpen'].includes(prop),
-})<{ $isActive: boolean; $isOpen: boolean }>`
+  shouldForwardProp: (prop) => !['$isActive', '$isOpen', '$hasChildren'].includes(prop),
+})<{ $isActive: boolean; $isOpen: boolean; $hasChildren?: boolean }>`
   margin: 0 ${({ theme }) => theme.spacing[3]};
-  
+
   a {
     display: flex;
     align-items: center;
@@ -203,11 +202,11 @@ export const StyledNavItem = styled.div.withConfig({
     position: relative;
     overflow: hidden;
     
-    ${({ $isActive, theme }) =>
+    ${({ $isActive, $hasChildren, theme }) =>
       $isActive &&
       `
       background: rgba(255, 255, 255, 0.15);
-      
+
       &::before {
         content: '';
         position: absolute;
@@ -219,18 +218,20 @@ export const StyledNavItem = styled.div.withConfig({
         background: ${theme.colors.text.inverse};
         border-radius: 0 2px 2px 0;
       }
-      
-      &::after {
-        content: '';
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 6px;
-        height: 6px;
-        background: rgba(255, 255, 255, 0.8);
-        border-radius: 50%;
-      }
+
+      ${!$hasChildren ? `
+        &::after {
+          content: '';
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 6px;
+          height: 6px;
+          background: rgba(255, 255, 255, 0.8);
+          border-radius: 50%;
+        }
+      ` : ''}
     `}
     
     &:hover {
@@ -277,7 +278,89 @@ export const StyledNavItem = styled.div.withConfig({
       opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
       transition: opacity 0.2s ease;
       white-space: nowrap;
-      
+      flex: 1;
+
+      @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+        opacity: 1;
+      }
+    }
+
+    .chevron-icon {
+      margin-left: auto;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+  }
+`;
+
+export const SubMenuContainer = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['$isOpen'].includes(prop),
+})<{ $isOpen: boolean }>`
+  margin: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[3]};
+  margin-left: ${({ theme }) => theme.spacing[6]};
+  padding-left: ${({ theme }) => theme.spacing[4]};
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+  display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    display: block;
+  }
+`;
+
+export const SubMenuItem = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['$isActive', '$isOpen'].includes(prop),
+})<{ $isActive: boolean; $isOpen: boolean }>`
+  a {
+    display: flex;
+    align-items: center;
+    gap: ${({ theme }) => theme.spacing[3]};
+    padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+    color: ${({ theme }) => theme.colors.text.inverse};
+    text-decoration: none;
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    transition: ${({ theme }) => theme.transition.fast};
+    position: relative;
+    opacity: 0.85;
+
+    ${({ $isActive, theme }) =>
+      $isActive &&
+      `
+      background: rgba(255, 255, 255, 0.1);
+      opacity: 1;
+      font-weight: ${theme.typography.fontWeight.semibold};
+
+      &::after {
+        content: '';
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+      }
+    `}
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+      opacity: 1;
+      transform: translateX(2px);
+    }
+
+    .sub-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .sub-label {
+      font-size: ${({ theme }) => theme.typography.fontSize.xs};
+      font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+      white-space: nowrap;
+      opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+      transition: opacity 0.2s ease;
+
       @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
         opacity: 1;
       }
