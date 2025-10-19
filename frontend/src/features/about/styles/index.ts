@@ -169,3 +169,84 @@ export const ImagePlaceholder = styled.div`
     }
   }
 `;
+
+// ProjectStructureDiagram styles
+export const DiagramContainer = styled.div`
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  margin-top: 1rem;
+`;
+
+export const TreeLine = styled.div<{ $level: number; $isLast?: boolean }>`
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
+  padding-left: ${({ $level }) => $level * 1.5}rem;
+  color: var(--text-secondary);
+  position: relative;
+
+  &:hover {
+    background: var(--bg-tertiary);
+    border-radius: 0.25rem;
+  }
+
+  ${({ $level, $isLast }) =>
+    $level > 0 && `
+      &:before {
+        content: '';
+        position: absolute;
+        left: ${($level - 1) * 1.5 + 0.5}rem;
+        top: 0;
+        bottom: ${$isLast ? '50%' : '0'};
+        width: 2px;
+        background: var(--primary-500);
+        opacity: 0.4;
+      }
+
+      &:after {
+        content: '';
+        position: absolute;
+        left: ${($level - 1) * 1.5 + 0.5}rem;
+        top: 50%;
+        width: 0.75rem;
+        height: 2px;
+        background: var(--primary-500);
+        opacity: 0.4;
+      }
+    `
+  }
+`;
+
+export const IconWrapper = styled.span`
+  display: inline-flex;
+  margin-right: 0.5rem;
+  color: var(--primary-500);
+`;
+
+export const ItemName = styled.span<{ $isFolder?: boolean }>`
+  color: ${({ $isFolder }) => $isFolder ? 'var(--text-primary)' : 'var(--text-secondary)'};
+  font-weight: ${({ $isFolder }) => $isFolder ? '600' : '400'};
+`;
+
+export const Comment = styled.span`
+  margin-left: 0.75rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+  opacity: 0.8;
+`;
+
+export const FolderBadge = styled.span`
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+`;

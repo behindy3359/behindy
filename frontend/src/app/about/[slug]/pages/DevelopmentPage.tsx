@@ -50,8 +50,6 @@ export default function DevelopmentPage() {
             <div className="placeholder-content">
               <p className="title">기술적 도전 과제 이미지 영역</p>
               <p className="description">
-                /public/images/dev-challenges.png 파일을 추가하고<br />
-                위 주석의 Image 컴포넌트를 활성화하세요
               </p>
             </div>
           </ImagePlaceholder>

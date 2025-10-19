@@ -20,7 +20,7 @@ export default function OverviewPage() {
         <div className="section-content">
           <p>
             Behindy는 서울시 지하철 노선도를 기반으로 한 텍스트 어드벤처 게임입니다.
-            실시간 지하철 정보와 AI 생성 스토리를 결합하여 독특한 경험을 제공합니다.
+            실시간 지하철 정보와 AI 생성 스토리를 활용하여 게임 시스템을 표현합니다.
           </p>
         </div>
       </AboutSection>
@@ -42,14 +42,12 @@ export default function OverviewPage() {
               style={{ width: '100%', height: 'auto' }}
             />
           </ImagePlaceholder>
-           
-            <div className="placeholder-content">
-              <p className="title">사용 가이드 이미지 영역</p>
-              <p className="description">
-                /public/images/user-guide.png 파일을 추가하고<br />
-                위 주석의 Image 컴포넌트를 활성화하세요
-              </p>
-            </div>
+          <div className="p[laceholder-content">
+            <p className="description">
+              로그인 상태에서 노선도의 역 아이콘과 상호작용하면 게임으로 진입합니다.<br />
+              제시된 선택지중 하나를 선택해 모험을 진행하다 보면 돌아올 수 있습니다.
+            </p>
+          </div>
         </div>
       </AboutSection>
 
@@ -104,9 +102,8 @@ export default function OverviewPage() {
       >
         <h2 className="section-title">시스템 아키텍처</h2>
         <div className="section-content">
-          <p>전체 시스템 구조도와 각 컴포넌트 간의 관계를 설명합니다.</p>
+          <p>전체 시스템 구조도와 각 컴포넌트 간의 관계를 묘사합니다.</p>
           <ImagePlaceholder>
-            {/* 아키텍처 이미지를 추가하려면:
             <Image
               src="/images/architecture.png"
               alt="System Architecture"
@@ -114,14 +111,6 @@ export default function OverviewPage() {
               height={600}
               style={{ width: '100%', height: 'auto' }}
             />
-            */}
-            <div className="placeholder-content">
-              <p className="title">아키텍처 다이어그램 이미지 영역</p>
-              <p className="description">
-                /public/images/architecture.png 파일을 추가하고<br />
-                위 주석의 Image 컴포넌트를 활성화하세요
-              </p>
-            </div>
           </ImagePlaceholder>
         </div>
       </AboutSection>

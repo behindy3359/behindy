@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { AboutLayout } from '@/features/about/components/AboutLayout';
 import { AboutSection, TechStackGrid, TechStackItem, ImagePlaceholder } from '@/features/about/styles';
+import { ProjectStructureDiagram } from '@/features/about/components/ProjectStructureDiagram';
 
 export default function FrontendPage() {
   return (
@@ -55,24 +56,7 @@ export default function FrontendPage() {
         <h2 className="section-title">프로젝트 구조</h2>
         <div className="section-content">
           <p>Feature-based 아키텍처를 채택하여 확장 가능한 구조로 설계했습니다.</p>
-          <ImagePlaceholder>
-            {/* 디렉토리 구조 이미지를 추가하려면:
-            <Image
-              src="/images/frontend-structure.png"
-              alt="Frontend Project Structure"
-              width={900}
-              height={600}
-              style={{ width: '100%', height: 'auto' }}
-            />
-            */}
-            <div className="placeholder-content">
-              <p className="title">프로젝트 구조 다이어그램 이미지 영역</p>
-              <p className="description">
-                /public/images/frontend-structure.png 파일을 추가하고<br />
-                위 주석의 Image 컴포넌트를 활성화하세요
-              </p>
-            </div>
-          </ImagePlaceholder>
+          <ProjectStructureDiagram />
         </div>
       </AboutSection>
 
@@ -97,8 +81,6 @@ export default function FrontendPage() {
             <div className="placeholder-content">
               <p className="title">주요 기능 이미지 영역</p>
               <p className="description">
-                /public/images/frontend-features.png 파일을 추가하고<br />
-                위 주석의 Image 컴포넌트를 활성화하세요
               </p>
             </div>
           </ImagePlaceholder>

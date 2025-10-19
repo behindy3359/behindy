@@ -64,8 +64,6 @@ export default function DevOpsPage() {
             <div className="placeholder-content">
               <p className="title">CI/CD 파이프라인 다이어그램 이미지 영역</p>
               <p className="description">
-                /public/images/devops-pipeline.png 파일을 추가하고<br />
-                위 주석의 Image 컴포넌트를 활성화하세요
               </p>
             </div>
           </ImagePlaceholder>
