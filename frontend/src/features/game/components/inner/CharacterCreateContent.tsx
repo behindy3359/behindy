@@ -66,7 +66,7 @@ export const CharacterCreateContent: React.FC<CharacterCreateContentProps> = ({
             margin: 0
           }}>
             <User size={24} />
-            이미 캐릭터가 있습니다
+            캐릭터 정보
           </h2>
         </div>
 

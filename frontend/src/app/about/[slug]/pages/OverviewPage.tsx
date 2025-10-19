@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { AboutLayout } from '@/features/about/components/AboutLayout';
 import { AboutSection, TechStackGrid, TechStackItem, ImagePlaceholder } from '@/features/about/styles';
 
@@ -33,7 +34,6 @@ export default function OverviewPage() {
         <div className="section-content">
           <p>게임 플레이 방법과 주요 기능을 소개합니다.</p>
           <ImagePlaceholder>
-            {/* 사용 가이드 이미지를 추가하려면:
             <Image
               src="/images/user-guide.png"
               alt="User Guide"
@@ -41,7 +41,8 @@ export default function OverviewPage() {
               height={600}
               style={{ width: '100%', height: 'auto' }}
             />
-            */}
+          </ImagePlaceholder>
+           
             <div className="placeholder-content">
               <p className="title">사용 가이드 이미지 영역</p>
               <p className="description">
@@ -49,7 +50,6 @@ export default function OverviewPage() {
                 위 주석의 Image 컴포넌트를 활성화하세요
               </p>
             </div>
-          </ImagePlaceholder>
         </div>
       </AboutSection>
 
