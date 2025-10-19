@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { AboutLayout } from '@/features/about/components/AboutLayout';

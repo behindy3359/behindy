@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { AboutLayout } from '@/features/about/components/AboutLayout';
 import { AboutSection, TechStackGrid, TechStackItem, ImagePlaceholder } from '@/features/about/styles';
 

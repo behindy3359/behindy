@@ -40,7 +40,7 @@ export const ExistingCharacterActions: React.FC<ExistingCharacterActionsProps> =
       </Button>
       
       {/* 홈으로 돌아가기 */}
-      <Button
+      {/* <Button
         variant="outline"
         onClick={onGoHome}
         size="lg"
@@ -48,7 +48,7 @@ export const ExistingCharacterActions: React.FC<ExistingCharacterActionsProps> =
         leftIcon={<Home size={20} />}
       >
         홈으로 돌아가기
-      </Button>
+      </Button> */}
 
       {/* 위험한 액션 */}
       <Button

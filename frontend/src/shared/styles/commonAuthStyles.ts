@@ -1,11 +1,5 @@
 import { motion } from "framer-motion";
 import styled from "styled-components";
-import { 
-  FormError, 
-  FormSuccess, 
-  FormHeader,
-  FormDivider
-} from './components';
 
 const BaseAlert = styled(motion.div)`
   display: flex;
@@ -131,7 +125,6 @@ export const CommonAuthPageSubtitle = styled(motion.p)`
   }
 `;
 
-// Auth 구분선 - FormDivider 재활용하되 스타일 조정
 export const CommonAuthDivider = styled(motion.div)`
   display: flex;
   align-items: center;
