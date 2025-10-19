@@ -70,16 +70,17 @@ export const sidebarAnimationVariants = {
   closed: {
     width: 60,
     transition: { duration: 0.3, ease: 'easeInOut' }
+  }
+};
+
+export const sidebarMobileAnimationVariants = {
+  open: {
+    x: 0,
+    transition: { duration: 0.3, ease: 'easeInOut' }
   },
-  mobile: {
-    open: {
-      transform: 'translateX(0)',
-      transition: { duration: 0.3, ease: 'easeInOut' }
-    },
-    closed: {
-      transform: 'translateX(-100%)',
-      transition: { duration: 0.3, ease: 'easeInOut' }
-    }
+  closed: {
+    x: '-100%',
+    transition: { duration: 0.3, ease: 'easeInOut' }
   }
 };
 
