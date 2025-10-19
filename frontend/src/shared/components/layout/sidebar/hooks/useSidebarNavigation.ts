@@ -10,8 +10,15 @@ import {
   User,
   LogIn,
   UserPlus,
+  FileText,
+  Server,
+  Code,
+  Bot,
+  Container,
+  Book,
 } from 'lucide-react';
 import { isRouteActive, filterNavItemsByPermission } from '../utils';
+import { aboutPages } from '@/features/about/utils';
 
 export const useSidebarNavigation = () => {
   const router = useRouter();
@@ -27,23 +34,41 @@ export const useSidebarNavigation = () => {
     setIsHydrated(true);
   }, []);
 
-  const baseNavItems = useMemo(() => [
-    { 
-      path: '/', 
-      label: '홈', 
-      icon: Home,
-    },
-    { 
-      path: '/about', 
-      label: '소개', 
-      icon: Info,
-    },
-    { 
-      path: '/community', 
-      label: '게시판', 
-      icon: MessageSquare,
-    },
-  ], []);
+  const baseNavItems = useMemo(() => {
+    // About 서브메뉴 아이콘 매핑
+    const aboutIconMap: Record<string, any> = {
+      overview: FileText,
+      backend: Server,
+      frontend: Code,
+      aiserver: Bot,
+      devops: Container,
+      development: Book,
+    };
+
+    return [
+      {
+        path: '/',
+        label: '홈',
+        icon: Home,
+      },
+      {
+        path: '/about',
+        label: '소개',
+        icon: Info,
+        children: aboutPages.map((page) => ({
+          path: page.path,
+          label: page.label,
+          icon: aboutIconMap[page.slug] || FileText,
+          isActive: isRouteActive(page.path, pathname),
+        })),
+      },
+      {
+        path: '/community',
+        label: '게시판',
+        icon: MessageSquare,
+      },
+    ];
+  }, [pathname]);
 
   // 🔥 status 기반으로 판단
   const baseAccountItems = useMemo(() => {

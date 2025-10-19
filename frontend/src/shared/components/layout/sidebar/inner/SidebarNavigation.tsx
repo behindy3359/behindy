@@ -1,10 +1,10 @@
 import React from 'react';
 import { NavigationSection } from '../styles';
 import { NavItem } from './NavItem';
-import type { NavItem as NavItemType } from '../types';
+import type { NavigationItem } from '../types';
 
 interface SidebarNavigationProps {
-  navItems: NavItemType[];
+  navItems: NavigationItem[];
   isOpen: boolean;
   isActiveRoute: (path: string) => boolean;
   onNavigate: (path?: string, action?: string) => void;
@@ -27,6 +27,8 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
           isActive={isActiveRoute(item.path)}
           isOpen={isOpen}
           onClick={onNavigate}
+          action={item.action}
+          subMenuItems={item.children}
         />
       ))}
     </NavigationSection>

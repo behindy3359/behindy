@@ -3,7 +3,7 @@
 import React from 'react';
 import { SidebarContainer } from './styles';
 import { SidebarProps } from './types';
-import { sidebarAnimationVariants } from './utils';
+import { sidebarAnimationVariants, sidebarMobileAnimationVariants } from './utils';
 import { useSidebarState } from './hooks/useSidebarState';
 import { useSidebarNavigation } from './hooks/useSidebarNavigation';
 import { useSidebarTheme } from './hooks/useSidebarTheme';
@@ -29,12 +29,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         $isMobile={isMobile}
         className={className}
         initial={false}
-        animate={
-          isMobile 
-            ? sidebar.isOpen ? 'open' : 'closed'
-            : sidebar.isOpen ? 'open' : 'closed'
-        }
-        variants={isMobile ? sidebarAnimationVariants.mobile : sidebarAnimationVariants}
+        animate={sidebar.isOpen ? 'open' : 'closed'}
+        variants={isMobile ? sidebarMobileAnimationVariants : sidebarAnimationVariants}
       >
         <SidebarHeader
           isOpen={sidebar.isOpen}
