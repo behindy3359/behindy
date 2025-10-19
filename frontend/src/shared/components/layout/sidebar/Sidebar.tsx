@@ -1,7 +1,8 @@
 "use client";
 
 import React from 'react';
-import { SidebarContainer } from './styles';
+import { Menu } from 'lucide-react';
+import { SidebarContainer, MobileFloatingButton } from './styles';
 import { SidebarProps } from './types';
 import { sidebarAnimationVariants, sidebarMobileAnimationVariants } from './utils';
 import { useSidebarState } from './hooks/useSidebarState';
@@ -24,7 +25,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         onClick={handleOverlayClick}
       />
 
+      <MobileFloatingButton
+        $isVisible={isMobile && !sidebar.isOpen}
+        onClick={toggleSidebar}
+        aria-label="메뉴 열기"
+      >
+        <Menu size={24} />
+      </MobileFloatingButton>
+
       <SidebarContainer
+        key={isMobile ? 'mobile' : 'desktop'}
         $isOpen={sidebar.isOpen}
         $isMobile={isMobile}
         className={className}
