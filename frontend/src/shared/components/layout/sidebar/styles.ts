@@ -178,13 +178,13 @@ export const MobileFloatingButton = styled(BaseButton).withConfig({
   justify-content: center;
   cursor: pointer;
   z-index: ${({ theme }) => theme.zIndex.fixed - 2};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
+  box-shadow: ${({ theme }) => theme.shadows.base.lg};
   transition: ${({ theme }) => theme.transition.fast};
   padding: 0;
 
   &:hover:not(:disabled) {
     transform: scale(1.05);
-    box-shadow: ${({ theme }) => theme.shadows.xl};
+    box-shadow: ${({ theme }) => theme.shadows.base.xl};
   }
 
   &:active:not(:disabled) {
