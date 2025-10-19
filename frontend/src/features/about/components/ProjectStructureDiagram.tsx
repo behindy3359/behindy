@@ -27,7 +27,7 @@ const renderTree = (items: TreeItem[], level: number = 0): React.ReactNode => {
             {item.name}
           </ItemName>
           {item.badge && <FolderBadge>{item.badge}</FolderBadge>}
-          {item.comment && <Comment>// {item.comment}</Comment>}
+          {item.comment && <Comment>{`// ${item.comment}`}</Comment>}
         </TreeLine>
         {item.children && renderTree(item.children, level + 1)}
       </React.Fragment>

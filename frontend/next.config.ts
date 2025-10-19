@@ -8,6 +8,12 @@ const nextConfig = {
     // Remove unused code
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
   // 번들 최적화 설정
   experimental: {
     optimizePackageImports: ['lucide-react', 'd3', 'framer-motion', '@tanstack/react-query'],
