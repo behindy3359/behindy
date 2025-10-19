@@ -18,3 +18,13 @@ export interface AboutNavigationItem {
   label: string;
   path: string;
 }
+
+// ProjectStructureDiagram types
+export interface TreeItem {
+  name: string;
+  type: 'folder' | 'file';
+  comment?: string;
+  badge?: string;
+  children?: TreeItem[];
+  isLast?: boolean;
+}

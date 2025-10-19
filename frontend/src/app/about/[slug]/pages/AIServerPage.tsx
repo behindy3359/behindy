@@ -60,8 +60,6 @@ export default function AIServerPage() {
             <div className="placeholder-content">
               <p className="title">스토리 생성 시스템 다이어그램 이미지 영역</p>
               <p className="description">
-                /public/images/ai-story-system.png 파일을 추가하고<br />
-                위 주석의 Image 컴포넌트를 활성화하세요
               </p>
             </div>
           </ImagePlaceholder>
@@ -89,8 +87,6 @@ export default function AIServerPage() {
             <div className="placeholder-content">
               <p className="title">프롬프트 설계 다이어그램 이미지 영역</p>
               <p className="description">
-                /public/images/ai-prompt-design.png 파일을 추가하고<br />
-                위 주석의 Image 컴포넌트를 활성화하세요
               </p>
             </div>
           </ImagePlaceholder>
