@@ -139,25 +139,65 @@ export const ToggleButton = styled(BaseButton)`
   transition: ${({ theme }) => theme.transition.fast};
   flex-shrink: 0;
   padding: 0;
-  
+
   &:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.2);
     transform: scale(1.05);
   }
-  
+
   &:active:not(:disabled) {
     transform: scale(0.95);
   }
-  
+
   &:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
   }
-  
+
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     position: absolute;
     right: ${({ theme }) => theme.spacing[6]};
     top: 22px;
+  }
+`;
+
+export const MobileFloatingButton = styled(BaseButton).withConfig({
+  shouldForwardProp: (prop) => !['$isVisible'].includes(prop),
+})<{ $isVisible: boolean }>`
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary[500]} 0%, ${({ theme }) => theme.colors.secondary[500]} 100%);
+  border: none;
+  color: ${({ theme }) => theme.colors.text.inverse};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  display: ${({ $isVisible }) => ($isVisible ? 'flex' : 'none')};
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: ${({ theme }) => theme.zIndex.fixed - 2};
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  transition: ${({ theme }) => theme.transition.fast};
+  padding: 0;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: ${({ theme }) => theme.shadows.xl};
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(${({ theme }) => theme.colors.primary[500]}, 0.3);
+  }
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    display: none;
   }
 `;
 
