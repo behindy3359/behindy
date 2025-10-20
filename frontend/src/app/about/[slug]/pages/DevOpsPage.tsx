@@ -9,7 +9,7 @@ export default function DevOpsPage() {
   return (
     <AboutLayout
       title="DevOps"
-      description="CI/CD 파이프라인과 인프라 구성을 설명합니다."
+      description="프로젝트의 안정적인 운영과 자동화를 위한 CI/CD 파이프라인과 인프라 구성을 설명합니다."
     >
       <AboutSection
         initial={{ opacity: 0, y: 20 }}

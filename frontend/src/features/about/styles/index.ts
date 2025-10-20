@@ -71,6 +71,29 @@ export const AboutSection = styled(motion.section)`
       font-family: 'Consolas', 'Monaco', monospace;
       font-size: 0.875rem;
     }
+
+    .placeholder-content {
+      margin-top: 1.5rem;
+
+      .title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        padding-left: 0.75rem;
+        border-left: 4px solid var(--primary-500);
+        line-height: 1.4;
+      }
+
+      .description {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+        padding-left: 1rem;
+      }
+    }
   }
 `;
 
@@ -158,19 +181,20 @@ export const ImagePlaceholder = styled.div`
     color: var(--text-tertiary);
 
     .title {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
     }
 
     .description {
-      font-size: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
       line-height: 1.6;
     }
   }
 `;
 
-// ProjectStructureDiagram styles
 export const DiagramContainer = styled.div`
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);
