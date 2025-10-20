@@ -143,3 +143,10 @@ behindy/
 - **Backend ↔ AI Server**: X-Internal-API-Key + HTTP 통신
 - **공통 캐시**: Redis를 통한 세션 + 지하철 데이터 공유
 - **컨테이너 네트워크**: Docker Compose 내부 통신
+## 🎉 Phase 1 CI/CD 구현 완료
+
+- **로컬 빌드**: Frontend (Next.js) + Backend (Spring Boot)
+- **자동 배포**: GitHub Actions + EC2 Self-Hosted Runner
+- **배포 시간**: ~2분 (빌드 생략)
+- **메모리 최적화**: EC2 메모리 사용량 52% 감소
+
