@@ -132,10 +132,11 @@ behindy/
 - **AWS EC2**: Ubuntu 22.04 LTS
 - **Docker Compose**: 3개 서비스 오케스트레이션
   - Spring Boot (backend)
-  - Next.js (frontend) 
+  - Next.js (frontend)
   - FastAPI (llmserver)
 - **Nginx**: 리버스 프록시
 - **GitHub Actions**: 자동 배포
+- **CI/CD**: Phase 1 구현 완료 (로컬 빌드 + 결과물 배포)
 
 ## 🔗 마이크로서비스 통신
 - **Frontend ↔ Backend**: JWT 인증 + RESTful API + React Query
