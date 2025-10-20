@@ -81,9 +81,8 @@ export default function BackendPage() {
       >
         <h2 className="section-title">데이터베이스 설계</h2>
         <div className="section-content">
-          <p>ERD와 주요 테이블 구조를 설명합니다.</p>
+          <p>주요 시스템인 게임 시스템에 관여하는 ERD와 테이블 구조를 묘사합니다.</p>
           <ImagePlaceholder>
-            {/* ERD 이미지를 추가하려면:
             <Image
               src="/images/backend-erd.png"
               alt="Backend ERD"
@@ -91,13 +90,7 @@ export default function BackendPage() {
               height={600}
               style={{ width: '100%', height: 'auto' }}
             />
-            */}
-            <div className="placeholder-content">
-              <p className="title">ERD 다이어그램 이미지 영역</p>
-              <p className="description">
-              </p>
-            </div>
-          </ImagePlaceholder>
+            </ImagePlaceholder>
         </div>
       </AboutSection>
     </AboutLayout>
