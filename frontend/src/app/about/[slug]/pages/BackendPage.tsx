@@ -9,7 +9,7 @@ export default function BackendPage() {
   return (
     <AboutLayout
       title="백엔드"
-      description="Spring Boot 기반 백엔드 시스템의 구조와 주요 기능을 설명합니다."
+      description="서비스의 중심이 되는 서버 프로그램입니다. 서비스 로직을 처리하고,  데이터베이스 및 Redis 캐시와 연동하며, Story-Gen API 와의 통신을  통해 스토리를 생성·관리합니다."
     >
       <AboutSection
         initial={{ opacity: 0, y: 20 }}
@@ -52,25 +52,34 @@ export default function BackendPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <h2 className="section-title">주요 기능</h2>
+        <h2 className="section-title">Security - 서비스에 필요한 보안 기능</h2>
         <div className="section-content">
-          <p>백엔드 시스템의 주요 기능과 API 구조를 설명합니다.</p>
-          <ImagePlaceholder>
-            {/* API 구조 이미지를 추가하려면:
-            <Image
-              src="/images/backend-api.png"
-              alt="Backend API Structure"
-              width={900}
-              height={600}
-              style={{ width: '100%', height: 'auto' }}
-            />
-            */}
-            <div className="placeholder-content">
-              <p className="title">API 구조 다이어그램 이미지 영역</p>
+          <div className="placeholder-content">
+              <p className="title">인증 및 인가 (Spring Security + JWT)</p>
               <p className="description">
+                JWT 형태의 이중 토큰 (Access + Refresh Token)구조를 사용했습니다. 클라이언트로 넘겨지는 Access 토큰은 HttpOnly Cookie에 저장합니다.
               </p>
-            </div>
-          </ImagePlaceholder>
+          </div>
+          <div className="placeholder-content">
+              <p className="title">데이터 암호화 (Jasypt)</p>
+              <p className="description">
+                민감한 정보를 보호하기 위해서 테이블 전체 또는 일부 컬럼에 대한 암호화 함수를 사용합니다. 서비스에 사용되는 데이터에 따라 암호화 방식을 구분합니다. 암호화/복호화 과정은 JPA Converter로 자동 으로 수행됩니다.<br/>
+- 단방향 암호화 : 비밀번호<br/>
+- 양방향 암호화 : 닉네임, 이메일
+              </p>
+          </div>
+          <div className="placeholder-content">
+              <p className="title">XSS 방지</p>
+              <p className="description">
+                HTMLCharacterEscapes를 적용하여, 입력값에 대한 검증을 실시합니다. 또한 클라이언트에 JSON 형태의 응답 시 HTML 특수문자를 Escape처리합니다. 
+              </p>
+          </div>
+          <div className="placeholder-content">
+              <p className="title">마이크로서비스 간 인증</p>
+              <p className="description">
+                시스템 내부의 서버끼리의 통신에 내부 인증키 헤더 를 포함하여 Backend 와 AIServer 간의 통신을 보호합니다.
+              </p>
+          </div>
         </div>
       </AboutSection>
 

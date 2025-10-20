@@ -66,10 +66,6 @@ export default function DevelopmentPage() {
           <p style={{ marginBottom: '1.5rem', color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>
             카드를 클릭하면 자세한 내용을 확인할 수 있습니다.
           </p>
-          <ClickableCard onClick={() => handleCardClick('realtime-data')}>
-            <h3 className="card-title">실시간 데이터 처리</h3>
-            <p className="card-content">서울시 OpenAPI와의 연동 및 최적화 과정</p>
-          </ClickableCard>
           <ClickableCard onClick={() => handleCardClick('performance')}>
             <h3 className="card-title">성능 최적화</h3>
             <p className="card-content">지하철 맵 렌더링 성능 개선 과정</p>
@@ -77,6 +73,10 @@ export default function DevelopmentPage() {
           <ClickableCard onClick={() => handleCardClick('ai-optimization')}>
             <h3 className="card-title">AI 응답 최적화</h3>
             <p className="card-content">LLM 응답 속도 및 품질 개선 과정</p>
+          </ClickableCard>
+          <ClickableCard onClick={() => handleCardClick('realtime-data')}>
+            <h3 className="card-title">프로젝트 다운타임 최소화</h3>
+            <p className="card-content">서울시 OpenAPI와의 연동 및 최적화 과정</p>
           </ClickableCard>
         </div>
       </AboutSection>
