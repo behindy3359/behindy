@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { RotateCcw, AlertTriangle } from 'lucide-react';
+import { RotateCcw, AlertTriangle, MapPin, Home } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button/Button';
 import { CharacterCreationForm } from './CharacterCreationForm';
 import { CharacterStatus } from './CharacterStatus';
@@ -38,6 +38,7 @@ interface GameContentProps {
   onNewGame: () => void;
   onBackToMain: () => void;
   onShareResult: () => void;
+  onGoToRandomStory: () => void;
 }
 
 export const GameContent: React.FC<GameContentProps> = ({
@@ -56,6 +57,7 @@ export const GameContent: React.FC<GameContentProps> = ({
   onNewGame,
   onBackToMain,
   onShareResult,
+  onGoToRandomStory,
 }) => {
   const renderGameState = () => {
     switch (gameState) {
@@ -131,6 +133,50 @@ export const GameContent: React.FC<GameContentProps> = ({
           </GameCompletionSection>
         );
 
+      case 'NO_STORIES':
+        return (
+          <ErrorSection
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ErrorTitle>
+              <MapPin size={28} />
+              아직 이 역에선 아무 일도 일어나지 않았습니다
+            </ErrorTitle>
+            <ErrorMessage>
+              {stationName && lineNumber ? (
+                <>
+                  <strong>{stationName}역 {lineNumber}호선</strong>에는 아직 준비된 스토리가 없습니다.
+                  <br />
+                  다른 역을 선택하거나 메인으로 돌아가 주세요.
+                </>
+              ) : (
+                <>
+                  이 역에는 아직 준비된 스토리가 없습니다.
+                  <br />
+                  다른 역을 선택하거나 메인으로 돌아가 주세요.
+                </>
+              )}
+            </ErrorMessage>
+            <ErrorActions>
+              <Button
+                onClick={onGoToRandomStory}
+                leftIcon={<MapPin size={16} />}
+              >
+                스토리가 있는 역으로
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onBackToMain}
+                leftIcon={<Home size={16} />}
+              >
+                메인으로
+              </Button>
+            </ErrorActions>
+          </ErrorSection>
+        );
+
       case 'ERROR':
         return (
           <ErrorSection
@@ -144,8 +190,8 @@ export const GameContent: React.FC<GameContentProps> = ({
             </ErrorTitle>
             <ErrorMessage>{error}</ErrorMessage>
             <ErrorActions>
-              <Button 
-                onClick={() => window.location.reload()} 
+              <Button
+                onClick={() => window.location.reload()}
                 leftIcon={<RotateCcw size={16} />}
               >
                 다시 시도

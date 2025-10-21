@@ -134,9 +134,10 @@ export interface GameCompletionData {
   storyData: GameData;
 }
 
-export type GameFlowState = 
-  | 'LOADING'           
-  | 'CHARACTER_CREATE'  
-  | 'GAME_PLAYING'        
-  | 'GAME_COMPLETED'    
+export type GameFlowState =
+  | 'LOADING'
+  | 'CHARACTER_CREATE'
+  | 'GAME_PLAYING'
+  | 'GAME_COMPLETED'
+  | 'NO_STORIES'
   | 'ERROR';            
