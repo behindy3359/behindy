@@ -132,13 +132,21 @@ behindy/
 - **AWS EC2**: Ubuntu 22.04 LTS
 - **Docker Compose**: 3개 서비스 오케스트레이션
   - Spring Boot (backend)
-  - Next.js (frontend) 
+  - Next.js (frontend)
   - FastAPI (llmserver)
 - **Nginx**: 리버스 프록시
 - **GitHub Actions**: 자동 배포
+- **CI/CD**: Phase 1 구현 완료 (로컬 빌드 + 결과물 배포)
 
 ## 🔗 마이크로서비스 통신
 - **Frontend ↔ Backend**: JWT 인증 + RESTful API + React Query
 - **Backend ↔ AI Server**: X-Internal-API-Key + HTTP 통신
 - **공통 캐시**: Redis를 통한 세션 + 지하철 데이터 공유
 - **컨테이너 네트워크**: Docker Compose 내부 통신
+## 🎉 Phase 1 CI/CD 구현 완료
+
+- **로컬 빌드**: Frontend (Next.js) + Backend (Spring Boot)
+- **자동 배포**: GitHub Actions + EC2 Self-Hosted Runner
+- **배포 시간**: ~2분 (빌드 생략)
+- **메모리 최적화**: EC2 메모리 사용량 52% 감소
+

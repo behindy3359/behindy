@@ -9,7 +9,7 @@ export default function DevOpsPage() {
   return (
     <AboutLayout
       title="DevOps"
-      description="프로젝트의 안정적인 운영과 자동화를 위한 CI/CD 파이프라인과 인프라 구성을 설명합니다."
+      description="프로젝트의 운영과 자동화를 위한 CI/CD 파이프라인과 인프라 구성을 설명합니다."
     >
       <AboutSection
         initial={{ opacity: 0, y: 20 }}
@@ -50,9 +50,8 @@ export default function DevOpsPage() {
       >
         <h2 className="section-title">CI/CD 파이프라인</h2>
         <div className="section-content">
-          <p>GitHub Actions을 활용한 자동화된 배포 프로세스를 설명합니다.</p>
+          <p>GitHub Actions을 활용한 배포 과정을 설명합니다.</p>
           <ImagePlaceholder>
-            {/* CI/CD 파이프라인 이미지를 추가하려면:
             <Image
               src="/images/devops-pipeline.png"
               alt="CI/CD Pipeline"
@@ -60,13 +59,12 @@ export default function DevOpsPage() {
               height={600}
               style={{ width: '100%', height: 'auto' }}
             />
-            */}
-            <div className="placeholder-content">
-              <p className="title">CI/CD 파이프라인 다이어그램 이미지 영역</p>
-              <p className="description">
-              </p>
-            </div>
           </ImagePlaceholder>
+          {/* <div className="placeholder-content">
+            <p className="title">CI/CD 파이프라인 다이어그램 이미지 영역</p>
+            <p className="description">
+            </p>
+          </div> */}
         </div>
       </AboutSection>
 

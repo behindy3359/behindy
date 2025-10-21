@@ -117,14 +117,13 @@ export function useSignupForm() {
   }, [router]);
 
   // 🔥 간단한 폼 유효성 검사 - errors 체크 제거
-  const isFormValid = 
-    formData.name.trim().length > 0 && 
-    formData.email.trim().length > 0 && 
-    formData.password.length > 0 && 
+  const isFormValid =
+    formData.name.trim().length > 0 &&
+    formData.email.trim().length > 0 &&
+    formData.password.length > 0 &&
     formData.confirmPassword.length > 0 &&
     formData.password === formData.confirmPassword &&
-    formData.agreeToTerms === true && 
-    formData.agreeToPrivacy === true;
+    formData.agreeToTerms === true;
 
   return {
     // 상태
