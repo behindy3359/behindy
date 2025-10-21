@@ -26,11 +26,11 @@ export const aboutPages: AboutNavigationItem[] = [
     label: 'DevOps',
     path: '/about/devops',
   },
-  {
-    slug: 'development',
-    label: '개발 과정',
-    path: '/about/development',
-  },
+  // {
+  //   slug: 'development',
+  //   label: '개발 과정',
+  //   path: '/about/development',
+  // },
 ];
 
 export const getAboutPageBySlug = (slug: string): AboutNavigationItem | undefined => {
