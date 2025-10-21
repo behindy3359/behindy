@@ -58,7 +58,7 @@ export const PostFormContent = React.memo<PostFormContentProps>(
               <textarea
                 {...register('content')}
                 className="content-textarea"
-                placeholder="내용을 입력하세요&#10;&#10;마크다운 문법을 지원합니다:&#10;- **굵은 글씨**&#10;- *기울인 글씨*&#10;- # 제목&#10;- ## 소제목"
+                placeholder="내용을 입력하세요"
                 disabled={isLoading}
                 style={{
                   resize: 'vertical',

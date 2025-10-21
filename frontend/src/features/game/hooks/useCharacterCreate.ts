@@ -103,27 +103,23 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
 
       toast.success(`캐릭터 '${response.charName}'이 생성되었습니다!`);
 
+      // 약간의 딜레이 후 페이지 전환
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // 노선도에서 진입한 경우
       if (stationName && lineNumber) {
-        // 약간의 딜레이 후 게임 시작 안내
-        await new Promise(resolve => setTimeout(resolve, 800));
         toast.info('게임을 시작합니다...');
-
         await new Promise(resolve => setTimeout(resolve, 500));
         const gameUrl = `/game?station=${encodeURIComponent(stationName)}&line=${lineNumber}`;
         router.push(gameUrl);
       }
       // returnUrl이 있는 경우
       else if (returnUrl && returnUrl !== '/') {
-        await new Promise(resolve => setTimeout(resolve, 800));
         router.push(returnUrl);
       }
-      // 기본: 홈으로 이동
+      // 기본: 메인 게임 페이지로 이동
       else {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        toast.info('홈으로 돌아갑니다');
-        await new Promise(resolve => setTimeout(resolve, 500));
-        router.push('/');
+        router.push('/game');
       }
     } catch (error: any) {
       console.error('Character creation failed:', error);
@@ -149,9 +145,12 @@ export const useCharacterCreate = ({ returnUrl, stationName, lineNumber }: UseCh
       }
 
       toast.error(errorMessage);
-      setIsLoading(false);
+    } finally {
+      // 에러 발생 시나 타임아웃 시 로딩 해제
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 3000);
     }
-    // Note: setIsLoading(false)를 finally에서 제거 - 페이지 전환 시까지 로딩 유지
   };
 
   // 기존 캐릭터로 계속하기

@@ -36,6 +36,15 @@ export const MetroMapSection: React.FC = () => {
 
     const { dataSource, isRealtime, totalTrains } = realtimeData;
 
+    // Mock 데이터인 경우 (API 제한 또는 운행 종료 시 Fallback)
+    if (dataSource.includes("MOCK")) {
+      return {
+        text: 'TEST',
+        className: 'test-indicator',
+        color: '#f59e0b'
+      };
+    }
+
     // 실제 API 데이터인 경우
     if (dataSource === "API" && isRealtime && totalTrains > 0) {
       return {
@@ -45,25 +54,7 @@ export const MetroMapSection: React.FC = () => {
       };
     }
 
-    // 목업 데이터인 경우
-    if (dataSource.includes("MOCK")) {
-      return {
-        text: 'TEST',
-        className: 'test-indicator',
-        color: '#f59e0b'
-      };
-    }
-
-    // 운행 종료 (데이터는 있지만 열차가 없는 경우)
-    if (totalTrains === 0) {
-      return {
-        text: 'CLOSED',
-        className: 'closed-indicator',
-        color: '#6b7280'
-      };
-    }
-
-    // 기타 상황
+    // 기타 상황 (API 데이터지만 실시간이 아니거나 제한적인 경우)
     return {
       text: 'LIMITED',
       className: 'limited-indicator',

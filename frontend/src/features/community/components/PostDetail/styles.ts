@@ -20,6 +20,7 @@ export const BackButton = styled(BaseButton).attrs({
 // ActionMenu - 기본 컨테이너
 export const ActionMenu = styled.div`
   position: relative;
+  z-index: ${({ theme }) => theme.zIndex.dropdown + 1};
 `;
 
 // MenuButton - BaseButton 재사용

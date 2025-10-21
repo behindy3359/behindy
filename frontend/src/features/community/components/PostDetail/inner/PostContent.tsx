@@ -1,4 +1,6 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { User, Calendar } from 'lucide-react';
 import { PostContainer, PostHeader, PostMeta, PostTitle, PostContent as StyledPostContent } from '../styles';
 import type { Post } from '@/shared/types/community/community';
@@ -48,7 +50,9 @@ export const PostContent: React.FC<PostContentProps> = ({ post }) => {
       </PostHeader>
 
       <StyledPostContent>
-        {post.content}
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {post.content}
+        </ReactMarkdown>
       </StyledPostContent>
     </PostContainer>
   );
