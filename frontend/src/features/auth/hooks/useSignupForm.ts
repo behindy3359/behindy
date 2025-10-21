@@ -116,7 +116,7 @@ export function useSignupForm() {
     router.push('/auth/login');
   }, [router]);
 
-  // 🔥 간단한 폼 유효성 검사 - errors 체크 제거
+  // 폼 유효성 검사 - 포트폴리오 알람만 필수
   const isFormValid =
     formData.name.trim().length > 0 &&
     formData.email.trim().length > 0 &&

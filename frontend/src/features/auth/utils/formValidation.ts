@@ -41,10 +41,8 @@ export const validateSignupForm = {
         };
         
       case 'agreeToPrivacy':
-        return {
-          isValid: value === true,
-          message: value ? undefined : '개인정보처리방침에 동의해주세요.',
-        };
+        // 선택사항 - 항상 유효
+        return { isValid: true };
         
       case 'marketingOptIn':
         // 선택사항이므로 항상 유효
@@ -79,15 +77,15 @@ export const validateSignupForm = {
     return { isValid, errors };
   },
 
-  // 필수 필드 검증
+  // 필수 필드 검증 - 포트폴리오 알람만 필수
   required: (formData: SignupFormData): boolean => {
     return !!(
       formData.name.trim() &&
       formData.email.trim() &&
       formData.password &&
       formData.confirmPassword &&
-      formData.agreeToTerms &&
-      formData.agreeToPrivacy
+      formData.agreeToTerms
+      // agreeToPrivacy는 선택사항 (UI에 표시 안 됨)
     );
   },
 
