@@ -27,6 +27,7 @@ export const GamePageContainer: React.FC = () => {
     handleNewGame,
     handleBackToMain,
     handleShareResult,
+    handleGoToRandomStory,
   } = useGameFlow({
     stationName: stationName || '',
     lineNumber: lineNumber || '',
@@ -57,6 +58,7 @@ export const GamePageContainer: React.FC = () => {
         onNewGame={handleNewGame}
         onBackToMain={handleBackToMain}
         onShareResult={handleShareResult}
+        onGoToRandomStory={handleGoToRandomStory}
       />
     </GameContainer>
   );

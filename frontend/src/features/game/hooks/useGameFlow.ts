@@ -156,10 +156,7 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
             break;
 
           case 'NO_STORIES':
-            setError('플레이 가능한 스토리가 없습니다');
-            setGameState('ERROR');
-            toast.error('이 역에는 아직 스토리가 없습니다');
-            router.push('/');
+            setGameState('NO_STORIES');
             break;
 
           default:
@@ -378,6 +375,32 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
     }
   };
 
+  const handleGoToRandomStory = async () => {
+    try {
+      toast.info('스토리가 있는 역을 찾는 중...');
+
+      const response = await api.get<Array<{
+        storyId: number;
+        storyTitle: string;
+        stationName: string;
+        stationLine: number;
+      }>>('/stories/random?count=1');
+
+      if (response && response.length > 0) {
+        const story = response[0];
+        const gameUrl = `/game?station=${encodeURIComponent(story.stationName)}&line=${story.stationLine}`;
+
+        toast.success(`${story.stationName}역으로 이동합니다!`);
+        router.push(gameUrl);
+      } else {
+        toast.error('스토리가 있는 역을 찾을 수 없습니다');
+      }
+    } catch (error: any) {
+      console.error('Random story fetch failed:', error);
+      toast.error('스토리를 불러오는 중 오류가 발생했습니다');
+    }
+  };
+
   useEffect(() => {
     if (!hasInitialized && !initializeRef.current) {
       initializeGame();
@@ -399,5 +422,6 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
     handleNewGame,
     handleBackToMain,
     handleShareResult,
+    handleGoToRandomStory,
   };
 };

@@ -5,6 +5,8 @@ import { LoginForm } from '@/features/auth/components/LoginForm/LoginForm';
 import { LOADING_MESSAGES } from '@/shared/utils/common/constants';
 import { useToast } from '@/shared/store/uiStore';
 import { useSearchParams } from 'next/navigation';
+import { TokenManager } from '@/config/axiosConfig';
+import { useAuthStore } from '@/shared/store/authStore';
 
 // 로딩 폴백 컴포넌트
 function LoginLoadingFallback() {
@@ -22,17 +24,24 @@ function LoginLoadingFallback() {
 export default function LoginPage() {
   const searchParams = useSearchParams();
   const toast = useToast();
+  const clearTokens = useAuthStore(state => state.clearTokens);
 
   useEffect(() => {
     // URL 파라미터에서 세션 만료 이유 확인
     const reason = searchParams.get('reason');
 
-    if (reason === 'session_expired') {
-      toast.warning('세션이 만료되었습니다. 다시 로그인해주세요.');
-    } else if (reason === 'server_restart') {
-      toast.info('서버 점검으로 인해 로그아웃되었습니다. 다시 로그인해주세요.');
+    if (reason === 'session_expired' || reason === 'server_restart') {
+      // 서버 재시작 또는 세션 만료 시 클라이언트 토큰도 강제 삭제
+      TokenManager.clearAllTokens();
+      clearTokens();
+
+      if (reason === 'session_expired') {
+        toast.warning('세션이 만료되었습니다. 다시 로그인해주세요.');
+      } else if (reason === 'server_restart') {
+        toast.info('서버 점검으로 인해 로그아웃되었습니다. 다시 로그인해주세요.');
+      }
     }
-  }, [searchParams, toast]);
+  }, [searchParams, toast, clearTokens]);
 
   return (
     <Suspense fallback={<LoginLoadingFallback />}>

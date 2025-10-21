@@ -21,12 +21,19 @@ export function useLoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState<string>('');
 
-  // 이미 로그인된 사용자 리다이렉트
+  // 이미 로그인된 사용자 리다이렉트 (reason 파라미터가 있으면 무시)
   useEffect(() => {
+    const reason = searchParams.get('reason');
+
+    // 세션 만료나 서버 재시작으로 인한 리다이렉트는 무시
+    if (reason === 'session_expired' || reason === 'server_restart') {
+      return;
+    }
+
     if (isAuthenticated()) {
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, searchParams]);
 
   // URL 파라미터에서 회원가입 성공 메시지 확인
   useEffect(() => {

@@ -3,11 +3,16 @@
 ## 활성화된 워크플로우
 
 ### CI 워크플로우
-- `ci.yml`: 전체 CI 파이프라인
-- `frontend-test.yml`: Frontend 테스트
-- `backend-test.yml`: Backend 테스트
+- `frontend-test.yml`: Frontend 테스트 (`frontend/**` 변경 시 실행)
+- `backend-test.yml`: Backend 테스트 (`backend/**` 변경 시 실행)
 
 ## 비활성화된 워크플로우
+
+### ci.yml.disabled (통합 CI/CD)
+**비활성화 사유**: 중복 job으로 인한 "skipped" 상태 발생
+- 4개의 job (frontend-test, backend-test, build-frontend, build-backend)이 조건부 실행으로 항상 skip됨
+- `frontend-test.yml`과 `backend-test.yml`이 이미 동일한 테스트 기능 수행 중
+- **비활성화 날짜**: 2025-01-21
 
 ### deploy.yml.disabled (배포)
 **비활성화 사유**: 배포 프로세스를 `behindy-build` Repository로 이전
