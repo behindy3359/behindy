@@ -12,7 +12,6 @@ import { usePostComments } from '../../hooks/usePostComments';
 import { usePostInteractions } from '../../hooks/usePostInteractions';
 import { PostHeader } from './inner/PostHeader';
 import { PostContent } from './inner/PostContent';
-import { PostActions } from './inner/PostActions';
 import { PostErrorState } from './inner/PostErrorState';
 import { CommentsSection, CommentsSectionHeader } from './styles';
 import { CommonLoadingState } from '@/shared/styles/commonStyles';
@@ -89,14 +88,13 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     );
   }
 
-  // 이 시점에서 post는 존재함이 보장됨
   return (
     <PageContainer>
       {/* 헤더 */}
       <PostHeader
         showMenu={showMenu}
-        canEdit={canEdit}     // boolean 타입
-        canDelete={canDelete} // boolean 타입
+        canEdit={canEdit}
+        canDelete={canDelete}
         isDeleting={isDeleting}
         onBack={handleBack}
         onEdit={handleEdit}
