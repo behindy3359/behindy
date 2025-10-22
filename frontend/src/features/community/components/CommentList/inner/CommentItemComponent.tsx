@@ -170,7 +170,7 @@ export const CommentItemComponent = React.memo<{
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 90,
+            zIndex: 9,  // CommonCommentHeader(z-index: 10)보다 낮게 설정
             background: 'transparent',
           }}
           onClick={handleMenuOutsideClick}

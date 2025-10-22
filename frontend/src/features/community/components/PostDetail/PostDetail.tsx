@@ -158,7 +158,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 1049,
+            zIndex: 9,  // CommonCommentHeader(z-index: 10)보다 낮게 설정
           }}
           onClick={() => {
             console.log('⚙️ [PostDetail] 메뉴 외부 클릭됨, 메뉴 닫기');
