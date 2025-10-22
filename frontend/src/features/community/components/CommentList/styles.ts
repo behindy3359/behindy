@@ -150,7 +150,7 @@ export const EditingContainer = styled.div`
   padding: ${({ theme }) => theme.spacing[4]};
   background: ${({ theme }) => theme.colors.background.primary};  /* 내부 배경과 통일 */
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  border: 2px solid ${({ theme }) => theme.colors.primary[400]};  /* 푸른색 테두리 강조 */
+  border: 2px solid ${({ theme }) => theme.colors.primary[500]};  /* 푸른색 테두리 강조 */
 `;
 
 // MenuButton - BaseButton 재사용
