@@ -148,9 +148,9 @@ export const CommentTime = styled.div`
 export const EditingContainer = styled.div`
   margin-top: ${({ theme }) => theme.spacing[4]};
   padding: ${({ theme }) => theme.spacing[4]};
-  background: #f0f4ff;
+  background: ${({ theme }) => theme.colors.background.primary};  /* 내부 배경과 통일 */
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  border: 1px solid #c7d2fe;
+  border: 2px solid ${({ theme }) => theme.colors.primary[400]};  /* 푸른색 테두리 강조 */
 `;
 
 // MenuButton - BaseButton 재사용
@@ -172,7 +172,7 @@ export const DropdownMenu = styled(motion.div)`
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 8px;
+  margin-top: 4px;  /* 8px → 4px로 줄임 (댓글 간격이 줄어드는 것처럼 보이는 문제 완화) */
   background: ${({ theme }) => theme.colors.background.primary};
   border: 1px solid ${({ theme }) => theme.colors.border.light};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
