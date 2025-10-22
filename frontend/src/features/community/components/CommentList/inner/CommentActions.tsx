@@ -29,6 +29,7 @@ export const CommentActions = React.memo<{
 
   const handleDelete = useCallback(async () => {
     console.log('[CommentActions] 삭제 버튼 클릭됨', { commentId });
+    alert('🔴 댓글 삭제 버튼이 클릭되었습니다! (이 메시지는 디버깅용입니다)');
     if (window.confirm('정말로 이 댓글을 삭제하시겠습니까?')) {
       console.log('[CommentActions] 사용자가 삭제 확인함');
       try {

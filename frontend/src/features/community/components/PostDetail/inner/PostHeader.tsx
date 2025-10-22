@@ -34,6 +34,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
 
   const handleDeleteClick = () => {
     console.log('[PostHeader] 삭제 버튼 클릭됨');
+    alert('🔴 삭제 버튼이 클릭되었습니다! (이 메시지는 디버깅용입니다)');
     onDelete();
   };
 

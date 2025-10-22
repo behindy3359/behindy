@@ -17,11 +17,13 @@ import { PostErrorState } from './inner/PostErrorState';
 import { CommentsSection, CommentsSectionHeader } from './styles';
 import { CommonLoadingState } from '@/shared/styles/commonStyles';
 
-export const PostDetail: React.FC<PostDetailProps> = ({ 
+export const PostDetail: React.FC<PostDetailProps> = ({
   postId,
   showComments = true,
-  enableInteractions = true 
+  enableInteractions = true
 }) => {
+  console.log('🔴 [PostDetail] 컴포넌트 렌더링 시작', { postId, showComments, enableInteractions });
+
   const [showMenu, setShowMenu] = useState(false);
 
   // 훅들로 로직 분리
@@ -37,6 +39,14 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     handleDelete,
     isDeleting,
   } = usePostDetail(postId);
+
+  console.log('🔴 [PostDetail] 게시글 데이터:', {
+    post: post?.id,
+    user: user?.id,
+    canEdit,
+    canDelete,
+    showMenu
+  });
 
   const {
     commentsData,
