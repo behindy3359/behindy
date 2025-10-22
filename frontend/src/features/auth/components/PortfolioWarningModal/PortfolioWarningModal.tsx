@@ -30,7 +30,7 @@ import {
   ConfirmButton,
 } from './styles';
 
-const APP_VERSION = 'v1.0.001';
+const APP_VERSION = 'v1.0.002';
 
 export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
   isOpen,

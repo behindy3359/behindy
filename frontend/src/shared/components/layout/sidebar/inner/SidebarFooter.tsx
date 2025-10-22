@@ -13,20 +13,22 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   isDarkTheme,
   onThemeToggle,
 }) => {
+  if (!onThemeToggle) {
+    return null;
+  }
+
   return (
     <BottomSection $isOpen={isOpen}>
-      {onThemeToggle && (
-        <button className="theme-toggle" onClick={onThemeToggle}>
-          {isDarkTheme ? (
-            <Sun className="theme-icon" />
-          ) : (
-            <Moon className="theme-icon" />
-          )}
-          <span className="theme-label">
-            {isDarkTheme ? '라이트 모드' : '다크 모드'} | 공사중
-          </span>
-        </button>
-      )}
+      <button className="theme-toggle" onClick={onThemeToggle}>
+        {isDarkTheme ? (
+          <Sun className="theme-icon" />
+        ) : (
+          <Moon className="theme-icon" />
+        )}
+        <span className="theme-label">
+          {isDarkTheme ? '라이트 모드' : '다크 모드'} | 공사중
+        </span>
+      </button>
     </BottomSection>
   );
 };

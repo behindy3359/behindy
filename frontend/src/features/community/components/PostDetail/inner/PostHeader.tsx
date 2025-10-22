@@ -68,6 +68,11 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
         목록으로
       </BackButton>
 
+      {/* DEBUG: 권한 표시 */}
+      <div style={{ position: 'fixed', top: '80px', right: '10px', background: 'yellow', padding: '5px', zIndex: 9999, fontSize: '11px' }}>
+        DEBUG: canEdit={canEdit ? 'Y' : 'N'} | canDelete={canDelete ? 'Y' : 'N'} | showMenu={showMenu ? 'Y' : 'N'}
+      </div>
+
       {(canEdit || canDelete) && (
         <ActionMenu>
           <MenuButton

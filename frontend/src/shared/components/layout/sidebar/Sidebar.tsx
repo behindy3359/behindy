@@ -58,9 +58,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           isOpen={sidebar.isOpen}
           onNavigate={handleNavigation}
         />
-        <SidebarFooter
-          isOpen={sidebar.isOpen}
-        />
       </SidebarContainer>
     </>
   );
