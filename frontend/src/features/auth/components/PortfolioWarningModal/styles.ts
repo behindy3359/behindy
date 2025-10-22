@@ -50,6 +50,20 @@ export const ModalTitle = styled.h2`
   font-size: 20px;
   font-weight: 700;
   color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+export const VersionBadge = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  letter-spacing: 0.5px;
 `;
 
 export const CloseButton = styled.button`
