@@ -41,6 +41,8 @@ export const CommonCommentHeader = styled(FlexContainer).attrs({
   $justify: 'between' as const,
   $align: 'start' as const,
 })`
+  position: relative;
+  z-index: 10;  /* ActionMenu가 다른 요소에 가려지지 않도록 */
   margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 

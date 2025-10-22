@@ -22,7 +22,7 @@ export const CommentItem = styled(BaseCard).attrs({
   margin-left: ${({ $isReply }) => $isReply ? '32px' : '0'};
   position: relative;
   overflow: visible;
-  z-index: 1;  /* StyledCommentActions(z-index: 1000)보다 낮게 설정 */
+  /* z-index 제거: CommonCommentHeader가 ActionMenu를 포함하므로 stacking context 생성 방지 */
   background: ${({ $isReply, theme }) =>
     $isReply ? theme.colors.background.secondary : theme.colors.background.primary};
 
