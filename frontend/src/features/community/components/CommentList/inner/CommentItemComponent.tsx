@@ -59,14 +59,27 @@ export const CommentItemComponent = React.memo<{
   });
 
   const handleEdit = useCallback(() => {
-    console.log('[CommentItemComponent] handleEdit 호출됨', { commentId: comment.id });
-    setIsEditing(true);
-    setShowMenu(false);
+    console.log('🔵 [CommentItemComponent] handleEdit 호출됨', { commentId: comment.id });
+    console.log('🔵 [CommentItemComponent] 편집 모드로 전환 시작');
+    try {
+      setIsEditing(true);
+      setShowMenu(false);
+      console.log('✅ [CommentItemComponent] 편집 모드 전환 성공');
+    } catch (error) {
+      console.error('❌ [CommentItemComponent] 편집 모드 전환 실패:', error);
+    }
   }, [comment.id]);
 
   const handleDelete = useCallback(async () => {
-    console.log('[CommentItemComponent] handleDelete 호출됨', { commentId: comment.id });
-    await deleteCommentMutation.mutateAsync();
+    console.log('🔴 [CommentItemComponent] handleDelete 호출됨', { commentId: comment.id });
+    console.log('🔴 [CommentItemComponent] deleteCommentMutation.mutateAsync 호출 시작');
+    try {
+      await deleteCommentMutation.mutateAsync();
+      console.log('✅ [CommentItemComponent] deleteCommentMutation 성공');
+    } catch (error) {
+      console.error('❌ [CommentItemComponent] deleteCommentMutation 실패:', error);
+      throw error;
+    }
   }, [deleteCommentMutation, comment.id]);
 
   const handleLike = useCallback(async () => {
@@ -83,12 +96,17 @@ export const CommentItemComponent = React.memo<{
   }, [onUpdate]);
 
   const handleToggleMenu = useCallback(() => {
-    setShowMenu(prev => !prev);
-  }, []);
+    console.log('⚙️ [CommentItemComponent] handleToggleMenu 호출됨', { commentId: comment.id, currentShowMenu: showMenu });
+    setShowMenu(prev => {
+      console.log('⚙️ [CommentItemComponent] showMenu 토글:', prev, '->', !prev);
+      return !prev;
+    });
+  }, [comment.id, showMenu]);
 
   const handleMenuOutsideClick = useCallback(() => {
+    console.log('⚙️ [CommentItemComponent] 메뉴 외부 클릭됨, 메뉴 닫기', { commentId: comment.id });
     setShowMenu(false);
-  }, []);
+  }, [comment.id]);
 
   return (
     <>

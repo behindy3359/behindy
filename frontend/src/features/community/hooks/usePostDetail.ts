@@ -67,16 +67,19 @@ export const usePostDetail = (postId: number) => {
   });
 
   const handleDelete = async () => {
-    console.log('[usePostDetail] handleDelete 호출됨');
+    console.log('🔴 [usePostDetail] handleDelete 호출됨');
+    console.log('🔴 [usePostDetail] confirm 대화상자 표시');
     if (window.confirm(CONFIRM_MESSAGES.DELETE_POST)) {
-      console.log('[usePostDetail] 사용자가 삭제 확인함');
+      console.log('🔴 [usePostDetail] 사용자가 삭제 확인함');
+      console.log('🔴 [usePostDetail] deletePostMutation.mutateAsync 호출 시작');
       try {
         await deletePostMutation.mutateAsync();
+        console.log('✅ [usePostDetail] deletePostMutation 성공');
       } catch (error) {
-        console.error('[usePostDetail] Delete post error:', error);
+        console.error('❌ [usePostDetail] Delete post error:', error);
       }
     } else {
-      console.log('[usePostDetail] 사용자가 삭제 취소함');
+      console.log('⚠️ [usePostDetail] 사용자가 삭제 취소함');
     }
   };
 

@@ -26,7 +26,12 @@ export const PostDetail: React.FC<PostDetailProps> = ({
 
   const [showMenu, setShowMenu] = useState(false);
 
-  // 훅들로 로직 분리
+  const handleToggleMenu = () => {
+    console.log('⚙️ [PostDetail] handleToggleMenu 호출됨, 현재 showMenu:', showMenu);
+    setShowMenu(!showMenu);
+    console.log('⚙️ [PostDetail] showMenu 토글 완료, 새 값:', !showMenu);
+  };
+
   const {
     post,
     user,
@@ -34,8 +39,8 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     isLoading,
     error,
     isAuthenticated,
-    canEdit,     // 이제 boolean 타입 보장됨
-    canDelete,   // 이제 boolean 타입 보장됨
+    canEdit,
+    canDelete,
     handleDelete,
     isDeleting,
   } = usePostDetail(postId);
@@ -96,21 +101,11 @@ export const PostDetail: React.FC<PostDetailProps> = ({
         onBack={handleBack}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        onToggleMenu={() => setShowMenu(!showMenu)}
+        onToggleMenu={handleToggleMenu}
       />
 
       {/* 게시글 내용 */}
       <PostContent post={post} />
-
-      {/* 게시글 액션 */}
-      {/* <PostActions
-        enableInteractions={enableInteractions}
-        isLiked={isLiked}
-        likeCount={likeCount}
-        commentsData={commentsData}
-        onLike={handleLike}
-        onShare={handleShare}
-      /> */}
 
       {/* 댓글 섹션 */}
       {showComments && (
@@ -165,9 +160,12 @@ export const PostDetail: React.FC<PostDetailProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 90,
+            zIndex: 1049,
           }}
-          onClick={() => setShowMenu(false)}
+          onClick={() => {
+            console.log('⚙️ [PostDetail] 메뉴 외부 클릭됨, 메뉴 닫기');
+            setShowMenu(false);
+          }}
         />
       )}
     </PageContainer>

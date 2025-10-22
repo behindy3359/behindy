@@ -429,13 +429,15 @@ export const BottomSection = styled(FlexContainer).withConfig({
 })<{ $isOpen: boolean }>`
   padding: ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[3]};
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
+  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[3]};
   flex-shrink: 0;
-  
+
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    display: block;
+    display: flex;
   }
-  
+
   .theme-toggle {
     display: flex;
     align-items: center;
@@ -449,36 +451,46 @@ export const BottomSection = styled(FlexContainer).withConfig({
     transition: ${({ theme }) => theme.transition.fast};
     width: 100%;
     justify-content: flex-start;
-    
+
     &:hover {
       background: rgba(255, 255, 255, 0.15);
       transform: translateY(-1px);
     }
-    
+
     &:active {
       transform: translateY(0);
     }
-    
+
     &:focus {
       outline: none;
       box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
     }
-    
+
     .theme-icon {
       width: 20px;
       height: 20px;
       flex-shrink: 0;
       transition: transform 0.3s ease;
     }
-    
+
     &:hover .theme-icon {
       transform: rotate(20deg) scale(1.1);
     }
-    
+
     .theme-label {
       font-size: ${({ theme }) => theme.typography.fontSize.sm};
       font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
       opacity: 0.9;
     }
   }
+`;
+
+export const VersionInfo = styled.div`
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing[2]} 0;
+  user-select: none;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  letter-spacing: 0.5px;
 `;

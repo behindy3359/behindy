@@ -20,7 +20,7 @@ export const BackButton = styled(BaseButton).attrs({
 // ActionMenu - 기본 컨테이너
 export const ActionMenu = styled.div`
   position: relative;
-  z-index: ${({ theme }) => theme.zIndex.modal};
+  z-index: ${({ theme }) => theme.zIndex.popover};
 `;
 
 // MenuButton - BaseButton 재사용
@@ -41,7 +41,7 @@ export const MenuDropdown = styled(motion.div)`
   border: 1px solid ${({ theme }) => theme.colors.border.light};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme }) => theme.shadows.dropdown};
-  z-index: ${({ theme }) => theme.zIndex.modal + 1};
+  z-index: ${({ theme }) => theme.zIndex.popover + 10};
   min-width: 120px;
   overflow: hidden;
 `;
