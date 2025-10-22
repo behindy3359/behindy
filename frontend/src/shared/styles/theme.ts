@@ -67,6 +67,7 @@ export const theme = {
     card: 'var(--shadow-card)',
     button: 'var(--shadow-button)',
     buttonHover: 'var(--shadow-button)',
+    dropdown: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
   },
 
   // 나머지는 기존과 동일
@@ -95,8 +96,17 @@ export const theme = {
       sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
     },
     lineHeight: {
+      tight: 1.25,
       normal: 1.5,
-    },    
+      relaxed: 1.75,
+      loose: 2,
+    },
+    fontWeight: {
+      normal: 400,
+      medium: 500,
+      semibold: 600,
+      bold: 700,
+    },
     fontSize: {
       xs: '0.75rem',
       sm: '0.875rem',
@@ -118,10 +128,65 @@ export const theme = {
 
   container: {
     lg: '900px',
-  }
+  },
+
+  // z-index 레이어 시스템
+  zIndex: {
+    base: 1,
+    dropdown: 100,
+    modal: 1000,
+    toast: 2000,
+    tooltip: 3000,
+  },
+
+  // 텍스트 스타일 시스템
+  textStyles: {
+    heading: {
+      h1: {
+        fontSize: '2.25rem',
+        fontWeight: 700,
+        lineHeight: 1.25,
+      },
+      h2: {
+        fontSize: '1.875rem',
+        fontWeight: 700,
+        lineHeight: 1.3,
+      },
+      h3: {
+        fontSize: '1.5rem',
+        fontWeight: 600,
+        lineHeight: 1.35,
+      },
+      h4: {
+        fontSize: '1.25rem',
+        fontWeight: 600,
+        lineHeight: 1.4,
+      },
+    },
+    body: {
+      large: {
+        fontSize: '1.125rem',
+        lineHeight: 1.75,
+      },
+      medium: {
+        fontSize: '1rem',
+        lineHeight: 1.5,
+      },
+      small: {
+        fontSize: '0.875rem',
+        lineHeight: 1.5,
+      },
+    },
+  },
+
+  // 전환 효과
+  transition: {
+    fast: 'all 0.15s ease',
+    normal: 'all 0.3s ease',
+    slow: 'all 0.5s ease',
+  },
 } as const;
 
-// 🔥 그라데이션도 CSS 변수 기반으로 수정
 export const gradients = {
   primary: `linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%)`,
   primaryHover: `linear-gradient(135deg, var(--primary-600) 0%, var(--secondary-600) 100%)`,

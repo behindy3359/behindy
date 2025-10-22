@@ -155,7 +155,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 50,
+            zIndex: 90,
           }}
           onClick={() => setShowMenu(false)}
         />

@@ -63,6 +63,15 @@ public class MetroDataScheduler {
     }
 
     /**
+     * 지하철 운행 시간 확인 (심야시간 0시~6시 제외)
+     */
+    private boolean isOperatingHours() {
+        int currentHour = LocalDateTime.now().getHour();
+        // 0시~6시는 운행하지 않음
+        return currentHour >= 6 && currentHour < 24;
+    }
+
+    /**
      * 전체 지하철 위치 데이터 업데이트 - null 안전 처리
      */
     public void updateAllMetroPositions() {
@@ -70,6 +79,16 @@ public class MetroDataScheduler {
 
         if (!apiEnabled) {
             log.warn("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] API 비활성화 상태");
+            return;
+        }
+
+        // 심야시간(0시~6시) 체크
+        if (!isOperatingHours()) {
+            log.info("🚇 심야시간 (0시~6시) - API 요청 스킵. Mock 데이터 사용 중");
+            // 심야시간에는 기존 캐시 데이터를 유지하거나 Mock 데이터 사용
+            if (metroCacheService != null) {
+                metroCacheService.cacheHealthStatus("NIGHT_MODE", "심야시간 - 지하철 운행 중단");
+            }
             return;
         }
 
@@ -327,6 +346,16 @@ public class MetroDataScheduler {
         log.info("=== 시간별 시스템 상태 점검 ===");
 
         try {
+            // 심야시간 체크
+            if (!isOperatingHours()) {
+                log.info("심야시간 (0시~6시) - 헬스체크: 정상 (운행 중단 시간)");
+                if (metroCacheService != null) {
+                    metroCacheService.cacheHealthStatus("NIGHT_MODE",
+                        "심야시간 - 지하철 운행 중단 (정상)");
+                }
+                return;
+            }
+
             MetroCacheService.CacheStatistics stats = metroCacheService != null ?
                     metroCacheService.getCacheStatistics() : null;
             int currentCalls = metroApiService != null ? metroApiService.getDailyCallCount() : 0;

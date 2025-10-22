@@ -401,11 +401,27 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
     }
   };
 
+  // stationName 또는 lineNumber 변경 시 게임 상태 리셋
+  useEffect(() => {
+    if (hasInitialized) {
+      // 역 정보가 변경되었으므로 상태 초기화
+      setHasInitialized(false);
+      setGameState('LOADING');
+      setError('');
+      setGameData(null);
+      setGameCompletionData(null);
+      setGameStartTime(null);
+      initializeRef.current = false;
+    }
+  }, [stationName, lineNumber]);
+
+  // 초기화되지 않은 상태일 때 게임 초기화 실행
   useEffect(() => {
     if (!hasInitialized && !initializeRef.current) {
       initializeGame();
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasInitialized]);
 
   return {
     gameState,

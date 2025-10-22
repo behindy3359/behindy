@@ -21,9 +21,10 @@ export const CommentItem = styled(BaseCard).attrs({
 })<{ $isReply?: boolean }>`
   margin-left: ${({ $isReply }) => $isReply ? '32px' : '0'};
   position: relative;
-  background: ${({ $isReply, theme }) => 
+  overflow: visible;
+  background: ${({ $isReply, theme }) =>
     $isReply ? theme.colors.background.secondary : theme.colors.background.primary};
-  
+
   ${({ $isReply, theme }) => $isReply && `
     &::before {
       content: '';
@@ -82,6 +83,7 @@ export const StyledCommentMeta = styled(FlexContainer).attrs({
 // StyledCommentActions - 액션 컨테이너
 export const StyledCommentActions = styled.div`
   position: relative;
+  z-index: ${({ theme }) => theme.zIndex.modal};
 `;
 
 // CommentContent - 댓글 내용
@@ -116,17 +118,17 @@ export const FooterButton = styled(motion.button)<{ $active?: boolean }>`
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  color: ${({ $active, theme }) => 
+  color: ${({ $active, theme }) =>
     $active ? theme.colors.primary[500] : theme.colors.text.tertiary};
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.background.secondary};
-    color: ${({ $active, theme }) => 
+    color: ${({ $active, theme }) =>
       $active ? theme.colors.primary[600] : theme.colors.text.secondary};
   }
-  
+
   .count {
     font-weight: 500;
   }
@@ -154,7 +156,7 @@ export const MenuButton = styled(BaseButton).attrs({
 })`
   padding: 4px;
   color: ${({ theme }) => theme.colors.text.tertiary};
-  
+
   &:hover {
     color: ${({ theme }) => theme.colors.text.primary};
     background: ${({ theme }) => theme.colors.background.secondary};
@@ -171,7 +173,7 @@ export const DropdownMenu = styled(motion.div)`
   border: 1px solid ${({ theme }) => theme.colors.border.light};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 100;
+  z-index: ${({ theme }) => theme.zIndex.modal + 1};
   overflow: hidden;
   min-width: 120px;
 `;

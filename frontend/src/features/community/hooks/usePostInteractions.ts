@@ -16,8 +16,12 @@ export const usePostInteractions = (post: Post | undefined) => {
   }, [router]);
 
   const handleEdit = useCallback(() => {
+    console.log('[usePostInteractions] handleEdit 호출됨', { post });
     if (post) {
+      console.log('[usePostInteractions] 수정 페이지로 이동:', `/community/${post.id}/edit`);
       router.push(`/community/${post.id}/edit`);
+    } else {
+      console.warn('[usePostInteractions] post가 없어서 수정 페이지로 이동 불가');
     }
   }, [router, post]);
 

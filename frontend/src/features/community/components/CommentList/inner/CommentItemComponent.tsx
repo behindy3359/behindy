@@ -25,13 +25,27 @@ export const CommentItemComponent = React.memo<{
     canDelete: Boolean(user && (comment.authorId === user.id || comment.isDeletable))
   }), [user, comment.authorId, comment.isEditable, comment.isDeletable]);
 
+  console.log('[CommentItemComponent] 렌더링됨:', {
+    commentId: comment.id,
+    userId: user?.id,
+    authorId: comment.authorId,
+    isEditable: comment.isEditable,
+    isDeletable: comment.isDeletable,
+    permissions,
+  });
+
   const deleteCommentMutation = useMutation({
     mutationFn: async () => {
+      console.log('[CommentItemComponent] 삭제 API 요청 시작:', API_ENDPOINTS.COMMENTS.BY_ID(comment.id));
       await api.delete(API_ENDPOINTS.COMMENTS.BY_ID(comment.id));
     },
     onSuccess: () => {
+      console.log('[CommentItemComponent] 삭제 성공');
       setShowMenu(false);
       onUpdate();
+    },
+    onError: (error) => {
+      console.error('[CommentItemComponent] 삭제 실패:', error);
     },
   });
 
@@ -45,13 +59,15 @@ export const CommentItemComponent = React.memo<{
   });
 
   const handleEdit = useCallback(() => {
+    console.log('[CommentItemComponent] handleEdit 호출됨', { commentId: comment.id });
     setIsEditing(true);
     setShowMenu(false);
-  }, []);
+  }, [comment.id]);
 
   const handleDelete = useCallback(async () => {
+    console.log('[CommentItemComponent] handleDelete 호출됨', { commentId: comment.id });
     await deleteCommentMutation.mutateAsync();
-  }, [deleteCommentMutation]);
+  }, [deleteCommentMutation, comment.id]);
 
   const handleLike = useCallback(async () => {
     if (!user) {
@@ -136,7 +152,7 @@ export const CommentItemComponent = React.memo<{
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 50,
+            zIndex: 90,
             background: 'transparent',
           }}
           onClick={handleMenuOutsideClick}

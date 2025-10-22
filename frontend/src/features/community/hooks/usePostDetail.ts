@@ -37,9 +37,11 @@ export const usePostDetail = (postId: number) => {
 
   const deletePostMutation = useMutation({
     mutationFn: async () => {
+      console.log('[usePostDetail] 삭제 API 요청 시작:', API_ENDPOINTS.POSTS.BY_ID(postId));
       return await api.delete(API_ENDPOINTS.POSTS.BY_ID(postId));
     },
     onSuccess: () => {
+      console.log('[usePostDetail] 삭제 성공');
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       showToast({
         type: 'success',
@@ -48,12 +50,13 @@ export const usePostDetail = (postId: number) => {
       router.push('/community');
     },
     onError: (error: unknown) => {
+      console.error('[usePostDetail] 삭제 실패:', error);
       const errorInfo = apiErrorHandler.parseError(error);
       showToast({
         type: 'error',
         message: errorInfo.message
       });
-      
+
       const actionInfo = apiErrorHandler.getErrorAction(errorInfo.code);
       if (actionInfo.action === 'login') {
         setTimeout(() => {
@@ -64,17 +67,31 @@ export const usePostDetail = (postId: number) => {
   });
 
   const handleDelete = async () => {
+    console.log('[usePostDetail] handleDelete 호출됨');
     if (window.confirm(CONFIRM_MESSAGES.DELETE_POST)) {
+      console.log('[usePostDetail] 사용자가 삭제 확인함');
       try {
         await deletePostMutation.mutateAsync();
       } catch (error) {
-        console.error('Delete post error:', error);
+        console.error('[usePostDetail] Delete post error:', error);
       }
+    } else {
+      console.log('[usePostDetail] 사용자가 삭제 취소함');
     }
   };
 
   const canEdit = Boolean(post && user && (post.authorId === user.id || post.isEditable));
   const canDelete = Boolean(post && user && (post.authorId === user.id || post.isDeletable));
+
+  console.log('[usePostDetail] 권한 확인:', {
+    postId,
+    userId: user?.id,
+    postAuthorId: post?.authorId,
+    isEditable: post?.isEditable,
+    isDeletable: post?.isDeletable,
+    canEdit,
+    canDelete
+  });
 
   return {
     post,

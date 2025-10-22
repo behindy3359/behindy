@@ -20,7 +20,7 @@ export const BackButton = styled(BaseButton).attrs({
 // ActionMenu - 기본 컨테이너
 export const ActionMenu = styled.div`
   position: relative;
-  z-index: ${({ theme }) => theme.zIndex.dropdown + 1};
+  z-index: ${({ theme }) => theme.zIndex.modal};
 `;
 
 // MenuButton - BaseButton 재사용
@@ -41,7 +41,7 @@ export const MenuDropdown = styled(motion.div)`
   border: 1px solid ${({ theme }) => theme.colors.border.light};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme }) => theme.shadows.dropdown};
-  z-index: ${({ theme }) => theme.zIndex.dropdown};
+  z-index: ${({ theme }) => theme.zIndex.modal + 1};
   min-width: 120px;
   overflow: hidden;
 `;
@@ -78,7 +78,7 @@ export const MenuItem = styled.button<{ $danger?: boolean }>`
 export const PostContainer = styled(BaseCard).attrs({
   $variant: 'elevated' as const,
 })`
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: ${({ theme }) => theme.spacing[6]};
 `;
 
@@ -207,7 +207,7 @@ export const ActionButton = styled(motion.button)<{ $active?: boolean }>`
 export const CommentsSection = styled(BaseCard).attrs({
   $variant: 'elevated' as const,
 })`
-  overflow: hidden;
+  overflow: visible;
 `;
 
 // CommentsSectionHeader - CommonCardHeader 재사용

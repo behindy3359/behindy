@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AppLayout } from '@/shared/components/layout/applayout/AppLayout'; // 🔥 수정
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
 import { HomePage } from '@/features/hompage/components/HomePage';
 import { useAutoTheme } from '@/shared/hooks/useAutoTheme';
 

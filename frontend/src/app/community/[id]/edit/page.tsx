@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostForm } from '@/features/community/components/PostForm/PostForm';
-import { AppLayout } from '@/shared/components/layout/applayout/AppLayout'; // 🔥 수정
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
 
 const queryClient = new QueryClient();
 

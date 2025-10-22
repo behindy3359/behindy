@@ -25,6 +25,23 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
   onDelete,
   onToggleMenu,
 }) => {
+  console.log('[PostHeader] 렌더링됨:', { canEdit, canDelete, showMenu, isDeleting });
+
+  const handleEditClick = () => {
+    console.log('[PostHeader] 수정 버튼 클릭됨');
+    onEdit();
+  };
+
+  const handleDeleteClick = () => {
+    console.log('[PostHeader] 삭제 버튼 클릭됨');
+    onDelete();
+  };
+
+  const handleToggleClick = () => {
+    console.log('[PostHeader] 메뉴 토글 버튼 클릭됨');
+    onToggleMenu();
+  };
+
   return (
     <CommonCommentHeader>
       <BackButton
@@ -39,7 +56,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
       {(canEdit || canDelete) && (
         <ActionMenu>
           <MenuButton
-            onClick={onToggleMenu}
+            onClick={handleToggleClick}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             disabled={isDeleting}
@@ -56,13 +73,13 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
                 transition={{ duration: 0.2 }}
               >
                 {canEdit && (
-                  <MenuItem onClick={onEdit}>
+                  <MenuItem onClick={handleEditClick}>
                     <Edit3 size={14} />
                     수정
                   </MenuItem>
                 )}
                 {canDelete && (
-                  <MenuItem $danger onClick={onDelete} disabled={isDeleting}>
+                  <MenuItem $danger onClick={handleDeleteClick} disabled={isDeleting}>
                     <Trash2 size={14} />
                     {isDeleting ? '삭제 중...' : '삭제'}
                   </MenuItem>
