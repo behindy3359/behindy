@@ -20,48 +20,25 @@ export const CommentActions = React.memo<{
   onDelete,
   onToggleMenu
 }) {
-  console.log('[CommentActions] 렌더링됨:', { commentId, canEdit, canDelete, showMenu });
-
   const handleEdit = useCallback(() => {
-    console.log('🔵 [CommentActions] 수정 버튼 클릭됨', { commentId });
-    console.log('🔵 [CommentActions] onEdit 함수 호출 시작');
-    try {
-      onEdit();
-      console.log('✅ [CommentActions] onEdit 함수 호출 성공');
-    } catch (error) {
-      console.error('❌ [CommentActions] onEdit 함수 호출 실패:', error);
-    }
-  }, [onEdit, commentId]);
+    onEdit();
+  }, [onEdit]);
 
   const handleDelete = useCallback(async () => {
-    console.log('🔴 [CommentActions] 삭제 버튼 클릭됨', { commentId });
-    alert('🔴 댓글 삭제 버튼이 클릭되었습니다! (이 메시지는 디버깅용입니다)');
     if (window.confirm('정말로 이 댓글을 삭제하시겠습니까?')) {
-      console.log('🔴 [CommentActions] 사용자가 삭제 확인함');
-      console.log('🔴 [CommentActions] onDelete 함수 호출 시작');
       try {
         await onDelete();
-        console.log('✅ [CommentActions] onDelete 함수 호출 성공');
       } catch (error) {
         console.error('❌ [CommentActions] 댓글 삭제 실패:', error);
       }
-    } else {
-      console.log('⚠️ [CommentActions] 사용자가 삭제 취소함');
     }
-  }, [onDelete, commentId]);
+  }, [onDelete]);
 
   const handleToggleMenu = useCallback(() => {
-    console.log('⚙️ [CommentActions] 메뉴 토글 버튼 클릭됨', { commentId, currentShowMenu: showMenu });
-    try {
-      onToggleMenu();
-      console.log('✅ [CommentActions] onToggleMenu 호출 성공');
-    } catch (error) {
-      console.error('❌ [CommentActions] onToggleMenu 호출 실패:', error);
-    }
-  }, [onToggleMenu, commentId, showMenu]);
+    onToggleMenu();
+  }, [onToggleMenu]);
 
   if (!canEdit && !canDelete) {
-    console.log('[CommentActions] 권한 없어서 렌더링 안함', { commentId });
     return null;
   }
 

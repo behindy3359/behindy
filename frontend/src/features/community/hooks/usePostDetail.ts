@@ -37,11 +37,9 @@ export const usePostDetail = (postId: number) => {
 
   const deletePostMutation = useMutation({
     mutationFn: async () => {
-      console.log('[usePostDetail] 삭제 API 요청 시작:', API_ENDPOINTS.POSTS.BY_ID(postId));
       return await api.delete(API_ENDPOINTS.POSTS.BY_ID(postId));
     },
     onSuccess: () => {
-      console.log('[usePostDetail] 삭제 성공');
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       showToast({
         type: 'success',
@@ -67,34 +65,17 @@ export const usePostDetail = (postId: number) => {
   });
 
   const handleDelete = async () => {
-    console.log('🔴 [usePostDetail] handleDelete 호출됨');
-    console.log('🔴 [usePostDetail] confirm 대화상자 표시');
     if (window.confirm(CONFIRM_MESSAGES.DELETE_POST)) {
-      console.log('🔴 [usePostDetail] 사용자가 삭제 확인함');
-      console.log('🔴 [usePostDetail] deletePostMutation.mutateAsync 호출 시작');
       try {
         await deletePostMutation.mutateAsync();
-        console.log('✅ [usePostDetail] deletePostMutation 성공');
       } catch (error) {
         console.error('❌ [usePostDetail] Delete post error:', error);
       }
-    } else {
-      console.log('⚠️ [usePostDetail] 사용자가 삭제 취소함');
     }
   };
 
   const canEdit = Boolean(post && user && (post.authorId === user.id || post.isEditable));
   const canDelete = Boolean(post && user && (post.authorId === user.id || post.isDeletable));
-
-  console.log('[usePostDetail] 권한 확인:', {
-    postId,
-    userId: user?.id,
-    postAuthorId: post?.authorId,
-    isEditable: post?.isEditable,
-    isDeletable: post?.isDeletable,
-    canEdit,
-    canDelete
-  });
 
   return {
     post,

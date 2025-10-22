@@ -16,18 +16,8 @@ export const usePostInteractions = (post: Post | undefined) => {
   }, [router]);
 
   const handleEdit = useCallback(() => {
-    console.log('🔵 [usePostInteractions] handleEdit 호출됨', { postId: post?.id });
     if (post) {
-      const editUrl = `/community/${post.id}/edit`;
-      console.log('🔵 [usePostInteractions] 수정 페이지로 이동:', editUrl);
-      try {
-        router.push(editUrl);
-        console.log('✅ [usePostInteractions] router.push 호출 성공');
-      } catch (error) {
-        console.error('❌ [usePostInteractions] router.push 실패:', error);
-      }
-    } else {
-      console.warn('⚠️ [usePostInteractions] post가 없어서 수정 페이지로 이동 불가');
+      router.push(`/community/${post.id}/edit`);
     }
   }, [router, post]);
 

@@ -21,14 +21,10 @@ export const PostDetail: React.FC<PostDetailProps> = ({
   showComments = true,
   enableInteractions = true
 }) => {
-  console.log('🔴 [PostDetail] 컴포넌트 렌더링 시작', { postId, showComments, enableInteractions });
-
   const [showMenu, setShowMenu] = useState(false);
 
   const handleToggleMenu = () => {
-    console.log('⚙️ [PostDetail] handleToggleMenu 호출됨, 현재 showMenu:', showMenu);
     setShowMenu(!showMenu);
-    console.log('⚙️ [PostDetail] showMenu 토글 완료, 새 값:', !showMenu);
   };
 
   const {
@@ -43,14 +39,6 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     handleDelete,
     isDeleting,
   } = usePostDetail(postId);
-
-  console.log('🔴 [PostDetail] 게시글 데이터:', {
-    post: post?.id,
-    user: user?.id,
-    canEdit,
-    canDelete,
-    showMenu
-  });
 
   const {
     commentsData,
@@ -160,10 +148,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
             bottom: 0,
             zIndex: 9,  // CommonCommentHeader(z-index: 10)보다 낮게 설정
           }}
-          onClick={() => {
-            console.log('⚙️ [PostDetail] 메뉴 외부 클릭됨, 메뉴 닫기');
-            setShowMenu(false);
-          }}
+          onClick={() => setShowMenu(false)}
         />
       )}
     </PageContainer>

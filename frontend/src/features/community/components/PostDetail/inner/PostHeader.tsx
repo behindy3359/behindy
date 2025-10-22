@@ -25,36 +25,16 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
   onDelete,
   onToggleMenu,
 }) => {
-  console.log('[PostHeader] 렌더링됨:', { canEdit, canDelete, showMenu, isDeleting });
-
   const handleEditClick = () => {
-    console.log('🔵 [PostHeader] 수정 버튼 클릭됨');
-    console.log('🔵 [PostHeader] onEdit 함수 호출 시작');
-    try {
-      onEdit();
-      console.log('✅ [PostHeader] onEdit 함수 호출 성공');
-    } catch (error) {
-      console.error('❌ [PostHeader] onEdit 함수 호출 실패:', error);
-    }
+    onEdit();
   };
 
   const handleDeleteClick = () => {
-    console.log('🔴 [PostHeader] 삭제 버튼 클릭됨');
-    console.log('🔴 [PostHeader] onDelete 함수 호출 시작');
-    alert('🔴 삭제 버튼이 클릭되었습니다! (이 메시지는 디버깅용입니다)');
-    try {
-      onDelete();
-      console.log('✅ [PostHeader] onDelete 함수 호출 성공');
-    } catch (error) {
-      console.error('❌ [PostHeader] onDelete 함수 호출 실패:', error);
-    }
+    onDelete();
   };
 
   const handleToggleClick = () => {
-    console.log('⚙️ [PostHeader] 메뉴 토글 버튼 클릭됨');
-    console.log('⚙️ [PostHeader] 현재 showMenu 상태:', showMenu);
     onToggleMenu();
-    console.log('⚙️ [PostHeader] onToggleMenu 호출 완료');
   };
 
   return (
