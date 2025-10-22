@@ -20,7 +20,8 @@ export const BackButton = styled(BaseButton).attrs({
 // ActionMenu - 기본 컨테이너
 export const ActionMenu = styled.div`
   position: relative;
-  z-index: ${({ theme }) => theme.zIndex.popover};
+  z-index: ${({ theme }) => theme.zIndex.popover};  /* 1050 */
+  /* PostContainer(z-index: 1)보다 높아서 항상 위에 표시됨 */
 `;
 
 // MenuButton - BaseButton 재사용
@@ -80,6 +81,8 @@ export const PostContainer = styled(BaseCard).attrs({
 })`
   overflow: visible;
   margin-bottom: ${({ theme }) => theme.spacing[6]};
+  position: relative;
+  z-index: 1;  /* ActionMenu(z-index: 1050)보다 낮게 설정 */
 `;
 
 // PostHeader - CommonCardHeader 재사용

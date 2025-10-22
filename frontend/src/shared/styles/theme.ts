@@ -134,6 +134,7 @@ export const theme = {
   zIndex: {
     base: 1,
     dropdown: 100,
+    popover: 1050,  // 메뉴, 드롭다운 등
     modal: 1000,
     toast: 2000,
     tooltip: 3000,
