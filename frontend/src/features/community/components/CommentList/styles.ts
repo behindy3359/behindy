@@ -8,7 +8,10 @@ import {
 } from '@/shared/styles/components';
 
 // CommentContainer - 각 댓글 컨테이너
-export const CommentContainer = styled(motion.div)`
+export const CommentContainer = styled(motion.div)<{ $menuOpen?: boolean }>`
+  position: relative;
+  z-index: ${({ $menuOpen }) => $menuOpen ? 100 : 'auto'};
+
   & + & {
     margin-top: ${({ theme }) => theme.spacing[4]};
   }
