@@ -429,13 +429,11 @@ export const BottomSection = styled(FlexContainer).withConfig({
 })<{ $isOpen: boolean }>`
   padding: ${({ theme }) => theme.spacing[6]} ${({ theme }) => theme.spacing[3]};
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[3]};
+  display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
   flex-shrink: 0;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    display: flex;
+    display: block;
   }
 
   .theme-toggle {
