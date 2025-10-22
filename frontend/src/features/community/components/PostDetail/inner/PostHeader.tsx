@@ -25,6 +25,38 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
   onDelete,
   onToggleMenu,
 }) => {
+  console.log('[PostHeader] 렌더링됨:', { canEdit, canDelete, showMenu, isDeleting });
+
+  const handleEditClick = () => {
+    console.log('🔵 [PostHeader] 수정 버튼 클릭됨');
+    console.log('🔵 [PostHeader] onEdit 함수 호출 시작');
+    try {
+      onEdit();
+      console.log('✅ [PostHeader] onEdit 함수 호출 성공');
+    } catch (error) {
+      console.error('❌ [PostHeader] onEdit 함수 호출 실패:', error);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    console.log('🔴 [PostHeader] 삭제 버튼 클릭됨');
+    console.log('🔴 [PostHeader] onDelete 함수 호출 시작');
+    alert('🔴 삭제 버튼이 클릭되었습니다! (이 메시지는 디버깅용입니다)');
+    try {
+      onDelete();
+      console.log('✅ [PostHeader] onDelete 함수 호출 성공');
+    } catch (error) {
+      console.error('❌ [PostHeader] onDelete 함수 호출 실패:', error);
+    }
+  };
+
+  const handleToggleClick = () => {
+    console.log('⚙️ [PostHeader] 메뉴 토글 버튼 클릭됨');
+    console.log('⚙️ [PostHeader] 현재 showMenu 상태:', showMenu);
+    onToggleMenu();
+    console.log('⚙️ [PostHeader] onToggleMenu 호출 완료');
+  };
+
   return (
     <CommonCommentHeader>
       <BackButton
@@ -39,7 +71,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
       {(canEdit || canDelete) && (
         <ActionMenu>
           <MenuButton
-            onClick={onToggleMenu}
+            onClick={handleToggleClick}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             disabled={isDeleting}
@@ -56,13 +88,13 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
                 transition={{ duration: 0.2 }}
               >
                 {canEdit && (
-                  <MenuItem onClick={onEdit}>
+                  <MenuItem onClick={handleEditClick}>
                     <Edit3 size={14} />
                     수정
                   </MenuItem>
                 )}
                 {canDelete && (
-                  <MenuItem $danger onClick={onDelete} disabled={isDeleting}>
+                  <MenuItem $danger onClick={handleDeleteClick} disabled={isDeleting}>
                     <Trash2 size={14} />
                     {isDeleting ? '삭제 중...' : '삭제'}
                   </MenuItem>

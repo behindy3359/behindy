@@ -36,8 +36,8 @@ export const GamePageContainer: React.FC = () => {
   return (
     <GameContainer>
       <GameHeader
-        stationName={stationName}
-        lineNumber={lineNumber}
+        stationName={gameData?.stationName || stationName}
+        lineNumber={gameData?.stationLine?.toString() || lineNumber}
         gameState={gameState}
         onQuit={handleQuitGame}
       />

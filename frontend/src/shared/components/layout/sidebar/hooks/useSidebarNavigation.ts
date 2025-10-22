@@ -115,7 +115,7 @@ export const useSidebarNavigation = () => {
         icon: UserPlus,
       },
     ];
-  }, [status, user, isHydrated]); // 🔥 의존성 배열 수정
+  }, [status, user, isHydrated]);
 
   const navItems = useMemo(() => {
     const userPermissions = user?.permissions || [];

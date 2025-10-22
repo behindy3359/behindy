@@ -25,13 +25,27 @@ export const CommentItemComponent = React.memo<{
     canDelete: Boolean(user && (comment.authorId === user.id || comment.isDeletable))
   }), [user, comment.authorId, comment.isEditable, comment.isDeletable]);
 
+  console.log('[CommentItemComponent] 렌더링됨:', {
+    commentId: comment.id,
+    userId: user?.id,
+    authorId: comment.authorId,
+    isEditable: comment.isEditable,
+    isDeletable: comment.isDeletable,
+    permissions,
+  });
+
   const deleteCommentMutation = useMutation({
     mutationFn: async () => {
+      console.log('[CommentItemComponent] 삭제 API 요청 시작:', API_ENDPOINTS.COMMENTS.BY_ID(comment.id));
       await api.delete(API_ENDPOINTS.COMMENTS.BY_ID(comment.id));
     },
     onSuccess: () => {
+      console.log('[CommentItemComponent] 삭제 성공');
       setShowMenu(false);
       onUpdate();
+    },
+    onError: (error) => {
+      console.error('[CommentItemComponent] 삭제 실패:', error);
     },
   });
 
@@ -45,13 +59,28 @@ export const CommentItemComponent = React.memo<{
   });
 
   const handleEdit = useCallback(() => {
-    setIsEditing(true);
-    setShowMenu(false);
-  }, []);
+    console.log('🔵 [CommentItemComponent] handleEdit 호출됨', { commentId: comment.id });
+    console.log('🔵 [CommentItemComponent] 편집 모드로 전환 시작');
+    try {
+      setIsEditing(true);
+      setShowMenu(false);
+      console.log('✅ [CommentItemComponent] 편집 모드 전환 성공');
+    } catch (error) {
+      console.error('❌ [CommentItemComponent] 편집 모드 전환 실패:', error);
+    }
+  }, [comment.id]);
 
   const handleDelete = useCallback(async () => {
-    await deleteCommentMutation.mutateAsync();
-  }, [deleteCommentMutation]);
+    console.log('🔴 [CommentItemComponent] handleDelete 호출됨', { commentId: comment.id });
+    console.log('🔴 [CommentItemComponent] deleteCommentMutation.mutateAsync 호출 시작');
+    try {
+      await deleteCommentMutation.mutateAsync();
+      console.log('✅ [CommentItemComponent] deleteCommentMutation 성공');
+    } catch (error) {
+      console.error('❌ [CommentItemComponent] deleteCommentMutation 실패:', error);
+      throw error;
+    }
+  }, [deleteCommentMutation, comment.id]);
 
   const handleLike = useCallback(async () => {
     if (!user) {
@@ -67,12 +96,17 @@ export const CommentItemComponent = React.memo<{
   }, [onUpdate]);
 
   const handleToggleMenu = useCallback(() => {
-    setShowMenu(prev => !prev);
-  }, []);
+    console.log('⚙️ [CommentItemComponent] handleToggleMenu 호출됨', { commentId: comment.id, currentShowMenu: showMenu });
+    setShowMenu(prev => {
+      console.log('⚙️ [CommentItemComponent] showMenu 토글:', prev, '->', !prev);
+      return !prev;
+    });
+  }, [comment.id, showMenu]);
 
   const handleMenuOutsideClick = useCallback(() => {
+    console.log('⚙️ [CommentItemComponent] 메뉴 외부 클릭됨, 메뉴 닫기', { commentId: comment.id });
     setShowMenu(false);
-  }, []);
+  }, [comment.id]);
 
   return (
     <>
@@ -136,7 +170,7 @@ export const CommentItemComponent = React.memo<{
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 50,
+            zIndex: 90,
             background: 'transparent',
           }}
           onClick={handleMenuOutsideClick}

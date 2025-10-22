@@ -3,7 +3,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostList } from '@/features/community/components/PostList/PostList';
-import { AppLayout } from '@/shared/components/layout/applayout/AppLayout'; // 🔥 수정
+import { AppLayout } from '@/shared/components/layout/applayout/AppLayout';
 
 const queryClient = new QueryClient({
   defaultOptions: {

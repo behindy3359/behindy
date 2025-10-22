@@ -10,13 +10,7 @@ interface PostListActionBarProps extends PostListSearchProps {
 }
 
 export const PostListActionBar = React.memo<PostListActionBarProps>(
-  function PostListActionBar({ 
-    searchQuery,
-    showSearch,
-    enableSearch,
-    onSearch,
-    onSearchQueryChange,
-    onToggleSearch,
+  function PostListActionBar({
     onWritePost 
   }) {
     return (

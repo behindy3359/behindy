@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.dto.auth.ApiResponse;
 import com.example.backend.dto.game.*;
 import com.example.backend.service.GameService;
+import com.example.backend.service.DemoAccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -27,6 +28,7 @@ import java.util.List;
 public class GameController {
 
     private final GameService gameService;
+    private final DemoAccountService demoAccountService;
 
     @Operation(summary = "게임 진입 자격 확인", description = "현재 사용자가 게임을 시작할 수 있는지 확인합니다. 살아있는 캐릭터 존재 여부, 진행 중인 게임 유무 등을 체크합니다.")
     @ApiResponses(value = {
@@ -372,6 +374,22 @@ public class GameController {
                 .success(true)
                 .message(String.format("%d개의 오래된 게임 세션이 정리되었습니다.", cleanedCount))
                 .data(cleanedCount)
+                .build());
+    }
+
+    @Operation(summary = "[관리자] 데모 계정 세션 해제", description = "모든 데모 계정의 로그인 세션(Redis Refresh Token)을 삭제하여 다른 사용자가 로그인할 수 있게 합니다. 실제 데이터(캐릭터, 게시글, 댓글 등)는 유지됩니다. 배포 후 자동 호출용 API입니다. 관리자 권한이 필요합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "데모 계정 세션 해제 완료"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+    })
+    @PostMapping("/admin/demo-accounts/release")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> releaseDemoAccounts() {
+        log.info("🔓 관리자 요청: 데모 계정 세션 해제 시작");
+        demoAccountService.releaseAllDemoAccounts();
+        return ResponseEntity.ok(ApiResponse.builder()
+                .success(true)
+                .message("데모 계정 세션 해제가 완료되었습니다. 이제 다른 사용자가 로그인할 수 있습니다.")
                 .build());
     }
 }

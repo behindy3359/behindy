@@ -21,10 +21,8 @@ export const NavItem = React.memo<{
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
 
-    // 서브 메뉴가 있으면 드롭다운 토글 + 첫 번째 서브메뉴로 이동
     if (subMenuItems && subMenuItems.length > 0) {
       setIsExpanded(prev => !prev);
-      // 첫 번째 서브메뉴 (overview)로 이동
       onClick(subMenuItems[0].path, action);
     } else {
       onClick(path, action);

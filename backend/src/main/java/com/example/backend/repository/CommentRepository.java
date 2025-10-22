@@ -38,4 +38,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.postId = :postId AND c.deletedAt IS NULL")
     Long countByPostIdAndNotDeleted(@Param("postId") Long postId);
 
+    /**
+     * 특정 사용자의 모든 댓글 조회 (삭제된 것 포함, 데모 계정 정리용)
+     */
+    @Query("SELECT c FROM Comment c WHERE c.user = :user")
+    java.util.List<Comment> findByUser(@Param("user") User user);
+
 }

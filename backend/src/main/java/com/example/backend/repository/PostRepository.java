@@ -19,9 +19,15 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAllActive(Pageable pageable);
 
     /**
-     * 특정 사용자의 게시글 조회
+     * 특정 사용자의 게시글 조회 (페이징)
      * ✅ @Query로 변경
      */
     @Query("SELECT p FROM Post p WHERE p.user = :user AND p.deletedAt IS NULL")
     Page<Post> findByUserAndDeletedAtIsNull(@Param("user") User user, Pageable pageable);
+
+    /**
+     * 특정 사용자의 모든 게시글 조회 (삭제된 것 포함, 데모 계정 정리용)
+     */
+    @Query("SELECT p FROM Post p WHERE p.user = :user")
+    java.util.List<Post> findByUser(@Param("user") User user);
 }

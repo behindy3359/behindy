@@ -103,7 +103,6 @@ const blink = keyframes`
 
 // 애니메이션 컴포넌트들
 
-// 🔥 수정: css 헬퍼 사용
 export const AnimatedContainer = styled(motion.div)<{
   $animation?: 'fadeIn' | 'slideInLeft' | 'slideInRight' | 'scaleIn';
   $duration?: string;

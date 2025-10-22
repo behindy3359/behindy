@@ -111,7 +111,7 @@ public class GameService {
 
         // 다른 역인 경우 기존 게임 정보와 함께 안내
         return GameEnterResponse.builder()
-                .success(false)
+                .success(true)
                 .action("RESUME_EXISTING")
                 .message(String.format("다른 역에서 진행 중인 게임이 있습니다: %s역 %d호선 - %s",
                         currentStation.getStaName(), currentStation.getStaLine(), currentStory.getStoTitle()))
@@ -119,8 +119,8 @@ public class GameService {
                 .resumeStoryTitle(currentStory.getStoTitle())
                 .currentPage(entityDtoMapper.toPageResponse(currentPage))
                 .character(entityDtoMapper.toCharacterResponse(character))
-                .stationName(requestedStation)
-                .stationLine(requestedLine)
+                .stationName(currentStation.getStaName())
+                .stationLine(currentStation.getStaLine())
                 .build();
     }
 
