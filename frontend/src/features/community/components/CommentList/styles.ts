@@ -84,7 +84,7 @@ export const StyledCommentMeta = styled(FlexContainer).attrs({
 // StyledCommentActions - 액션 컨테이너
 export const StyledCommentActions = styled.div`
   position: relative;
-  z-index: ${({ theme }) => theme.zIndex.modal};
+  /* z-index는 CommonCommentHeader가 관리 */
 `;
 
 // CommentContent - 댓글 내용
@@ -174,7 +174,7 @@ export const DropdownMenu = styled(motion.div)`
   border: 1px solid ${({ theme }) => theme.colors.border.light};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: ${({ theme }) => theme.zIndex.modal + 1};
+  z-index: 1;  /* StyledCommentActions 내부에서 최상위 */
   overflow: hidden;
   min-width: 120px;
 `;
