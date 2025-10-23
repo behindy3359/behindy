@@ -88,7 +88,8 @@ public class AccessLoggingFilter extends OncePerRequestFilter {
 
         } catch (Exception e) {
             // 로그 저장 실패가 애플리케이션 동작에 영향을 주지 않도록 예외를 삼킴
-            log.error("접속 로그 저장 실패", e);
+            log.error("Access log save failed: {}", e.getMessage());
+            log.debug("Access log error details", e);
         }
     }
 

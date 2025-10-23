@@ -75,17 +75,12 @@ public class MetroDataScheduler {
      * 전체 지하철 위치 데이터 업데이트 - null 안전 처리
      */
     public void updateAllMetroPositions() {
-        log.info("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] ========== 스케줄러 실행 시작 ==========");
-
         if (!apiEnabled) {
-            log.warn("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] API 비활성화 상태");
             return;
         }
 
         // 심야시간(0시~6시) 체크
         if (!isOperatingHours()) {
-            log.info("🚇 심야시간 (0시~6시) - API 요청 스킵. Mock 데이터 사용 중");
-            // 심야시간에는 기존 캐시 데이터를 유지하거나 Mock 데이터 사용
             if (metroCacheService != null) {
                 metroCacheService.cacheHealthStatus("NIGHT_MODE", "심야시간 - 지하철 운행 중단");
             }
@@ -93,39 +88,29 @@ public class MetroDataScheduler {
         }
 
         if (!isUpdating.compareAndSet(false, true)) {
-            log.warn("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] 이미 업데이트 진행 중 - 중복 실행 방지");
-            log.warn("업데이트 중복 실행 방지");
             return;
         }
 
         try {
-            log.info("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] 업데이트 시작");
-            log.info("=== 지하철 위치 데이터 업데이트 시작 ===");
-
             if (!checkApiLimit()) {
-                log.warn("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] API 호출 한도 초과");
                 return;
             }
 
-            // 단순화된 업데이트 로직 - null 안전 처리 추가
             if (metroApiService != null) {
-                log.info("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] MetroApiService.getAllLinesRealtime() 호출");
                 metroApiService.getAllLinesRealtime()
                         .subscribe(
                                 this::handleSuccessfulUpdate,
                                 this::handleFailedUpdate
                         );
             } else {
-                log.error("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] MetroApiService가 null");
-                log.error("MetroApiService가 null입니다");
+                log.error("MetroApiService is null");
             }
 
         } catch (Exception e) {
-            log.error("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] 예외 발생: {}", e.getMessage());
+            log.error("Metro update failed: {}", e.getMessage());
             handleFailedUpdate(e);
         } finally {
             isUpdating.set(false);
-            log.info("🚇 DEBUG_LOG: [MetroDataScheduler.updateAllMetroPositions] ========== 스케줄러 실행 종료 ==========");
         }
     }
 
@@ -169,41 +154,30 @@ public class MetroDataScheduler {
 
     // 성공적인 업데이트 처리 - null 안전
     private void handleSuccessfulUpdate(List<TrainPosition> allTrains) {
-        log.info("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] 업데이트 성공 처리 시작 - 원본 열차 수: {}",
-            allTrains != null ? allTrains.size() : 0);
-
         if (allTrains == null) {
-            log.warn("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] 업데이트 데이터가 null");
-            log.warn("업데이트 데이터가 null입니다");
+            log.warn("Update data is null");
             return;
         }
 
         try {
             // 1. 프론트엔드 역 필터링
-            log.info("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] 프론트엔드 역 필터링 시작");
             List<TrainPosition> filteredTrains = null;
             if (stationFilter != null) {
                 filteredTrains = stationFilter.filterFrontendStations(allTrains);
-                log.info("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] 필터링 완료 - {}대 → {}대",
-                    allTrains.size(), filteredTrains != null ? filteredTrains.size() : 0);
             } else {
                 filteredTrains = allTrains;
-                log.warn("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] StationFilter가 null - 필터링 없이 진행");
-                log.warn("StationFilter가 null - 필터링 없이 진행");
+                log.warn("StationFilter is null - proceeding without filtering");
             }
 
             // 2. 전체 데이터 캐시
-            log.info("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] Redis 전체 캐시 저장 시작");
             if (metroCacheService != null && filteredTrains != null) {
                 metroCacheService.cacheAllPositions(filteredTrains);
-                log.info("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] Redis 전체 캐시 저장 완료");
             } else {
-                log.error("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] 캐시 저장 실패 - metroCacheService: {}, filteredTrains: {}",
+                log.error("Cache failed - metroCacheService: {}, filteredTrains: {}",
                     metroCacheService != null, filteredTrains != null);
             }
 
             // 3. 노선별 캐시
-            log.info("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] Redis 노선별 캐시 저장 시작");
             if (metroApiService != null && metroCacheService != null && filteredTrains != null) {
                 List<String> enabledLines = metroApiService.getEnabledLines();
                 if (enabledLines != null) {
@@ -213,11 +187,7 @@ public class MetroDataScheduler {
                                         lineNum.equals(String.valueOf(train.getLineNumber())))
                                 .toList();
                         metroCacheService.cacheLinePositions(lineNum, lineTrains);
-                        log.info("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] {}호선 캐시 저장 - {}대",
-                            lineNum, lineTrains.size());
                     }
-                    log.info("🚇 DEBUG_LOG: [MetroDataScheduler.handleSuccessfulUpdate] Redis 노선별 캐시 저장 완료 - {} 개 노선",
-                        enabledLines.size());
                 }
             }
 
@@ -245,12 +215,11 @@ public class MetroDataScheduler {
             int filteredCount = filteredTrains != null ? filteredTrains.size() : 0;
             int dailyCalls = metroApiService != null ? metroApiService.getDailyCallCount() : 0;
 
-            log.info("=== 업데이트 성공 ===");
-            log.info("원본: {}대 → 필터링: {}대", allTrains.size(), filteredCount);
-            log.info("API 호출: {}/{}", dailyCalls, dailyLimit);
+            log.info("Metro update success: {} → {} trains, API calls: {}/{}",
+                allTrains.size(), filteredCount, dailyCalls, dailyLimit);
 
         } catch (Exception e) {
-            log.error("업데이트 후처리 중 오류: {}", e.getMessage(), e);
+            log.error("Post-update processing failed: {}", e.getMessage(), e);
         }
     }
 
@@ -343,12 +312,9 @@ public class MetroDataScheduler {
 
     @Scheduled(cron = "0 0 * * * *")
     public void hourlyHealthCheck() {
-        log.info("=== 시간별 시스템 상태 점검 ===");
-
         try {
             // 심야시간 체크
             if (!isOperatingHours()) {
-                log.info("심야시간 (0시~6시) - 헬스체크: 정상 (운행 중단 시간)");
                 if (metroCacheService != null) {
                     metroCacheService.cacheHealthStatus("NIGHT_MODE",
                         "심야시간 - 지하철 운행 중단 (정상)");
@@ -395,14 +361,12 @@ public class MetroDataScheduler {
                 metroCacheService.cacheHealthStatus(healthStatus, healthDetails);
             }
 
-            log.info("시스템 상태: {} - {}", healthStatus, healthDetails);
-            if (stats != null) {
-                log.info("캐시 통계: 활성 {}개, 열차 {}대",
-                        stats.getActiveLinesCaches(), stats.getTotalTrains());
+            if (!"HEALTHY".equals(healthStatus)) {
+                log.warn("System health: {} - {}", healthStatus, healthDetails);
             }
 
         } catch (Exception e) {
-            log.error("시간별 상태 점검 실패: {}", e.getMessage(), e);
+            log.error("Health check failed: {}", e.getMessage(), e);
             if (metroCacheService != null) {
                 metroCacheService.cacheHealthStatus("ERROR", "상태 점검 실패: " + e.getMessage());
             }

@@ -30,24 +30,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         // Swagger 관련 경로는 필터 제외
-        boolean isSwaggerPath = path.startsWith("/swagger-ui") ||
-                                path.startsWith("/v3/api-docs") ||
-                                path.startsWith("/swagger-resources") ||
-                                path.startsWith("/webjars");
-
-        if (isSwaggerPath) {
-            log.info("🔓 [JwtAuthenticationFilter] Swagger 경로 필터 제외: {}", path);
-        }
-
-        return isSwaggerPath;
+        return path.startsWith("/swagger-ui") ||
+               path.startsWith("/v3/api-docs") ||
+               path.startsWith("/swagger-resources") ||
+               path.startsWith("/webjars");
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
-        String requestURI = request.getRequestURI();
-        log.info("🔍 [JwtAuthenticationFilter] 요청 처리 시작: {} {}", request.getMethod(), requestURI);
 
         try {
             String jwt = getJwtFromRequest(request);
@@ -61,15 +52,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.info("✅ [JwtAuthenticationFilter] JWT 인증 성공: userId={}", userId);
-            } else {
-                log.info("⚠️ [JwtAuthenticationFilter] JWT 없음 또는 유효하지 않음: {}", requestURI);
             }
         } catch (Exception ex) {
-            log.error("❌ [JwtAuthenticationFilter] 인증 처리 실패: {}", ex.getMessage(), ex);
+            log.error("JWT authentication error: {}", ex.getMessage());
         }
 
-        log.info("➡️ [JwtAuthenticationFilter] 다음 필터로 전달: {}", requestURI);
         filterChain.doFilter(request, response);
     }
 

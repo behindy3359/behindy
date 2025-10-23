@@ -109,14 +109,15 @@ demo:
       password: ${DEMO_ACCOUNT_3_PASSWORD:Demo123!}
       name: ${DEMO_ACCOUNT_3_NAME:야식뭐먹지}
 
-# 로깅 설정
+# 로깅 설정 (개발 환경)
 logging:
   level:
-    com.example.backend: INFO
-    com.example.backend.service.AIStoryScheduler: INFO
-    com.example.backend.service.AIStoryService: INFO
-    org.springframework.web.client.RestTemplate: DEBUG
-    org.apache.http: DEBUG
+    com.example.backend: DEBUG
+    com.example.backend.service.AIStoryScheduler: DEBUG
+    com.example.backend.service.AIStoryService: DEBUG
+    com.example.backend.service.MetroDataScheduler: DEBUG
+    org.springframework.web.client.RestTemplate: INFO
+    org.apache.http: WARN
     org.springframework.security: WARN
     org.hibernate.SQL: ERROR
     org.hibernate.type.descriptor.sql.BasicBinder: ERROR

@@ -82,8 +82,6 @@ public class AuthService {
      */
     @Transactional
     public JwtAuthResponse authenticate(LoginRequest request, HttpServletResponse response) {
-        log.info("로그인 시도: {}", request.getEmail());
-
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
@@ -92,7 +90,6 @@ public class AuthService {
 
         // 단일 세션 정책: 기존 모든 Refresh Token 삭제 (기존 세션 강제 종료)
         redisService.deleteAllRefreshTokensForUser(String.valueOf(userDetails.getId()));
-        log.info("기존 세션 강제 종료: userId={}", userDetails.getId());
 
         // Access Token 생성 (짧은 수명)
         String accessToken = tokenProvider.generateAccessToken(authentication);
@@ -107,7 +104,7 @@ public class AuthService {
         // HttpOnly Cookie에 Refresh Token 설정
         setRefreshTokenCookie(response, refreshToken);
 
-        log.info("로그인 성공: userId={}, jti={}", userDetails.getId(), jti);
+        log.info("Login successful: userId={}", userDetails.getId());
 
         return JwtAuthResponse.builder()
                 .accessToken(accessToken)
@@ -167,8 +164,6 @@ public class AuthService {
         // 새 Refresh Token을 Cookie에 설정
         setRefreshTokenCookie(response, newRefreshToken);
 
-        log.info("토큰 갱신 성공: userId={}, oldJti={}, newJti={}", userId, jti, newJti);
-
         return JwtAuthResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(null) // 프론트엔드에는 전달하지 않음
@@ -192,15 +187,12 @@ public class AuthService {
 
                 // Redis에서 토큰 삭제
                 redisService.deleteRefreshToken(userId.toString(), jti);
-
-                log.info("로그아웃 성공: userId={}, jti={}", userId, jti);
             }
 
             // Cookie 삭제
             clearRefreshTokenCookie(response);
 
         } catch (Exception e) {
-            log.warn("로그아웃 처리 중 오류 발생: {}", e.getMessage());
             // 에러가 발생해도 Cookie는 삭제
             clearRefreshTokenCookie(response);
         }
@@ -273,8 +265,6 @@ public class AuthService {
      */
     @Transactional
     public JwtAuthResponse demoLogin(HttpServletResponse response) {
-        log.info("데모 로그인 시도 - 사용 가능한 계정 검색 중");
-
         List<DemoAccountConfig.DemoAccount> demoAccounts = demoAccountConfig.getAccounts();
 
         if (demoAccounts == null || demoAccounts.isEmpty()) {
@@ -294,7 +284,7 @@ public class AuthService {
 
                 // 활성 세션이 없으면 이 계정 사용 가능
                 if (activeTokens.isEmpty()) {
-                    log.info("사용 가능한 데모 계정 발견: {}", demoAccount.getEmail());
+                    log.info("Demo account available: {}", demoAccount.getEmail());
 
                     // 일반 로그인과 동일한 방식으로 로그인 처리
                     LoginRequest loginRequest = new LoginRequest();
@@ -304,14 +294,11 @@ public class AuthService {
                     return authenticate(loginRequest, response);
                 }
 
-                log.debug("데모 계정 사용 중: {} (활성 세션 {}개)",
-                    demoAccount.getEmail(), activeTokens.size());
-
             } catch (ResourceNotFoundException e) {
-                log.warn("데모 계정 사용자를 찾을 수 없음: {}", demoAccount.getEmail());
+                log.warn("Demo account user not found: {}", demoAccount.getEmail());
                 continue;
             } catch (Exception e) {
-                log.error("데모 계정 확인 중 오류 발생: {} - {}", demoAccount.getEmail(), e.getMessage());
+                log.error("Demo account check failed: {} - {}", demoAccount.getEmail(), e.getMessage());
                 continue;
             }
         }
