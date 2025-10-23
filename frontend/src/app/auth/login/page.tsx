@@ -8,7 +8,6 @@ import { useSearchParams } from 'next/navigation';
 import { TokenManager } from '@/config/axiosConfig';
 import { useAuthStore } from '@/shared/store/authStore';
 
-// 로딩 폴백 컴포넌트
 function LoginLoadingFallback() {
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -20,7 +19,6 @@ function LoginLoadingFallback() {
   );
 }
 
-// 메인 페이지 컴포넌트 - 단순히 조합만 담당
 export default function LoginPage() {
   const searchParams = useSearchParams();
   const toast = useToast();
