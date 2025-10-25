@@ -38,7 +38,6 @@ dependencies {
 
 	// Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.jasypt:jasypt:1.9.3'
 
 	// xss
 	implementation 'org.jsoup:jsoup:1.15.3'
