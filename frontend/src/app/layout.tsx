@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   },
   description: '포트폴리오용 페이지',
   keywords: ['지하철', '게임', '텍스트 어드벤처', '서울', '노선도', 'behindy'],
-  authors: [{ name: 'Behindy Team' }],
+  authors: [{ name: 'Behindy' }],
   creator: 'Behindy',
   publisher: 'Behindy',
   robots: {

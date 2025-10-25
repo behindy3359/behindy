@@ -1,0 +1,26 @@
+{
+  "name": "behindy",
+  "version": "1.0.0",
+  "description": "Behindy 프로젝트 - 지하철 스토리 게임",
+  "private": true,
+  "scripts": {
+    "test": "./test-all.sh",
+    "test:frontend": "./test-frontend.sh",
+    "test:backend": "./test-backend.sh",
+    "test:llmserver": "./test-llmserver.sh",
+    "test:watch": "cd frontend && npm run test:watch",
+    "test:coverage": "cd frontend && npm run test:coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/behindy.git"
+  },
+  "keywords": [
+    "game",
+    "story",
+    "subway",
+    "llm"
+  ],
+  "author": "",
+  "license": "MIT"
+}

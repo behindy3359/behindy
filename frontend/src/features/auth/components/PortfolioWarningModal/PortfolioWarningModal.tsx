@@ -8,7 +8,6 @@ import {
   ModalHeader,
   HeaderIcon,
   ModalTitle,
-  VersionBadge,
   CloseButton,
   ModalContent,
   IntroText,
@@ -25,12 +24,9 @@ import {
   DataCollectionList,
   DataCollectionItem,
   DataCollectionNote,
-  DisclaimerText,
   ModalFooter,
   ConfirmButton,
 } from './styles';
-
-const APP_VERSION = 'v1.0.002';
 
 export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
   isOpen,
@@ -64,7 +60,6 @@ export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
               </HeaderIcon>
               <ModalTitle>
                 포트폴리오 프로젝트 안내
-                <VersionBadge>{APP_VERSION}</VersionBadge>
               </ModalTitle>
               <CloseButton onClick={onClose}>
                 <X size={20} />

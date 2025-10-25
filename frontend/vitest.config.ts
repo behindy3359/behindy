@@ -5,36 +5,27 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.ts'],
+    environment: 'happy-dom',
+    setupFiles: './vitest.setup.ts',
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [
         'node_modules/',
-        'src/test/',
-        '**/*.d.ts',
+        '.next/',
         '**/*.config.*',
-        '**/mockData',
-        '**/*.type.ts',
-        '**/*.types.ts',
-        'src/app/**',
-        'src/shared/styles/**',
-        '.next/**',
+        '**/*.d.ts',
+        '**/dist/**',
+        '**/.next/**',
         'coverage/**',
-        'dist/**',
-        'build/**',
+        '**/public/**',
       ],
-      thresholds: {
-        // 현재 커버리지: statements 2.02%, functions 59.06%, lines 2.02%, branches 98.68%
-        // 목표: 70% (점진적으로 증가 예정)
-        // 현재는 최소 기준으로 설정하여 CI/CD 통과 가능하도록 함
-        statements: 2,
-        branches: 70,
-        functions: 50,
-        lines: 2,
-      },
+      all: true,
+      lines: 50,
+      functions: 50,
+      branches: 40,
+      statements: 50,
     },
   },
   resolve: {
