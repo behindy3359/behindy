@@ -6,6 +6,8 @@ import { CharacterInfoCard } from './CharacterInfoCard';
 import { GameStatsCard } from './GameStatsCard';
 import { CurrentGameCard } from './CurrentGameCard';
 import { EmptyCharacterState } from './EmptyCharacterState';
+import { VisitedStationBadges } from './VisitedStationBadges';
+import { useVisitedStations } from '../../hooks/useVisitedStations';
 import { ContentGrid } from '../../styles/gameStyles';
 
 interface CharacterContentProps {
@@ -21,6 +23,8 @@ export const CharacterContent: React.FC<CharacterContentProps> = ({
   onNewGame,
   onCreateCharacter,
 }) => {
+  const { visitedStations, isLoading: isLoadingStations } = useVisitedStations();
+
   // 캐릭터가 없는 경우
   if (!character) {
     return <EmptyCharacterState onCreateCharacter={onCreateCharacter} />;
@@ -30,9 +34,14 @@ export const CharacterContent: React.FC<CharacterContentProps> = ({
   return (
     <ContentGrid>
       <CharacterInfoCard character={character} />
-      
+
       <GameStatsCard character={character} />
-      
+
+      <VisitedStationBadges
+        visitedStations={visitedStations}
+        isLoading={isLoadingStations}
+      />
+
       <CurrentGameCard
         character={character}
         onResumeGame={onResumeGame}
