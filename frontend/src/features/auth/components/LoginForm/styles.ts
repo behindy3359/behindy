@@ -111,10 +111,15 @@ export const PasswordToggleButton = styled.button`
 // DemoContainer - 공통 알림 패턴 적용
 export const DemoContainer = styled(motion.div)`
   margin-bottom: ${({ theme }) => theme.spacing[6]};
-  padding: ${({ theme }) => theme.spacing[4]};
+  padding: ${({ theme }) => theme.spacing[2]};
   background: linear-gradient(to right, #eff6ff, #eef2ff);
   border: 1px solid #bfdbfe;
   border-radius: ${({ theme }) => theme.borderRadius.md};
+
+  /* Button이 전체 영역을 차지하도록 */
+  button {
+    width: 100%;
+  }
 `;
 
 // DemoContent - 중앙 정렬 패턴
