@@ -816,3 +816,10 @@ export const ActionButtons = styled(FlexContainer).attrs({
   padding: ${({ theme }) => theme.spacing[8]};
   border-top: 1px solid ${({ theme }) => theme.colors.border.light};
 `;
+
+// 게임 엔딩 섹션
+export const GameEndingSection = styled(motion.div)`
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+`;

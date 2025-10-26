@@ -7,6 +7,7 @@ import { CharacterStatus } from './CharacterStatus';
 import { StoryDisplay } from '@/features/game/components/StoryDisplay/StoryDisplay';
 import { ChoiceButtons } from './ChoiceButtons';
 import { GameCompletion } from './GameCompletion';
+import { GameEndingPage } from './GameEndingPage';
 import { LoadingStates } from './LoadingStates';
 import { GameFlowState, Character, GameData, GameCompletionData } from '../../types/gameTypes';
 import {
@@ -16,6 +17,7 @@ import {
   CharacterSection,
   StorySection,
   GameCompletionSection,
+  GameEndingSection,
   ErrorSection,
   ErrorTitle,
   ErrorMessage,
@@ -39,6 +41,7 @@ interface GameContentProps {
   onBackToMain: () => void;
   onShareResult: () => void;
   onGoToRandomStory: () => void;
+  onViewResults: () => void;
 }
 
 export const GameContent: React.FC<GameContentProps> = ({
@@ -58,6 +61,7 @@ export const GameContent: React.FC<GameContentProps> = ({
   onBackToMain,
   onShareResult,
   onGoToRandomStory,
+  onViewResults,
 }) => {
   const renderGameState = () => {
     switch (gameState) {
@@ -113,6 +117,23 @@ export const GameContent: React.FC<GameContentProps> = ({
               )}
             </StorySection>
           </GamePlayingSection>
+        );
+
+      case 'GAME_ENDING':
+        return gameCompletionData && (
+          <GameEndingSection
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <GameEndingPage
+              completionType={gameCompletionData.completionType}
+              storyTitle={gameCompletionData.storyData.storyTitle}
+              onViewResults={onViewResults}
+              onBackToHome={onBackToMain}
+              onPlayAgain={onNewGame}
+            />
+          </GameEndingSection>
         );
 
       case 'GAME_COMPLETED':

@@ -138,6 +138,7 @@ export type GameFlowState =
   | 'LOADING'
   | 'CHARACTER_CREATE'
   | 'GAME_PLAYING'
+  | 'GAME_ENDING'
   | 'GAME_COMPLETED'
   | 'NO_STORIES'
   | 'ERROR';            

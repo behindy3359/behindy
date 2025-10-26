@@ -6,6 +6,7 @@ import { GameContainer } from '../styles/gameStyles';
 import { useGameFlow } from '../hooks/useGameFlow';
 import { GameHeader } from './inner/GameHeader';
 import { GameContent } from './inner/GameContent';
+import { ChoiceEffectModal } from './inner/ChoiceEffectModal';
 
 export const GamePageContainer: React.FC = () => {
   const searchParams = useSearchParams();
@@ -20,6 +21,8 @@ export const GamePageContainer: React.FC = () => {
     isChoiceLoading,
     canMakeChoice,
     gameCompletionData,
+    showEffectModal,
+    selectedEffect,
     handleChoice,
     handleQuitGame,
     handleTypingComplete,
@@ -28,6 +31,8 @@ export const GamePageContainer: React.FC = () => {
     handleBackToMain,
     handleShareResult,
     handleGoToRandomStory,
+    handleViewResults,
+    handleCloseEffectModal,
   } = useGameFlow({
     stationName: stationName || '',
     lineNumber: lineNumber || '',
@@ -41,7 +46,7 @@ export const GamePageContainer: React.FC = () => {
         gameState={gameState}
         onQuit={handleQuitGame}
       />
-      
+
       <GameContent
         gameState={gameState}
         character={character}
@@ -59,6 +64,16 @@ export const GamePageContainer: React.FC = () => {
         onBackToMain={handleBackToMain}
         onShareResult={handleShareResult}
         onGoToRandomStory={handleGoToRandomStory}
+        onViewResults={handleViewResults}
+      />
+
+      {/* 선택 효과 모달 */}
+      <ChoiceEffectModal
+        isVisible={showEffectModal}
+        effect={selectedEffect?.effect}
+        amount={selectedEffect?.amount}
+        effectPreview={selectedEffect?.effectPreview}
+        onClose={handleCloseEffectModal}
       />
     </GameContainer>
   );

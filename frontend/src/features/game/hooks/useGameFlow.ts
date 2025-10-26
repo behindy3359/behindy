@@ -39,6 +39,14 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
   const [gameCompletionData, setGameCompletionData] = useState<GameCompletionData | null>(null);
   const [gameStartTime, setGameStartTime] = useState<string | null>(null);
 
+  // 선택 효과 모달 상태
+  const [showEffectModal, setShowEffectModal] = useState(false);
+  const [selectedEffect, setSelectedEffect] = useState<{
+    effect?: 'health' | 'sanity' | 'both' | 'none';
+    amount?: number;
+    effectPreview?: string | null;
+  } | null>(null);
+
   // 게임 페이지 진입 시 라이트모드 유지
   useEffect(() => {
     gameThemeControls.disableGameMode();
@@ -206,6 +214,21 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
       return;
     }
 
+    // 선택한 옵션의 효과 찾기
+    const selectedOption = gameData.currentPage.options.find(opt => opt.optionId === optionId);
+    if (selectedOption && selectedOption.effect && selectedOption.amount !== 0) {
+      setSelectedEffect({
+        effect: selectedOption.effect,
+        amount: selectedOption.amount,
+        effectPreview: selectedOption.effectPreview || null,
+      });
+      setShowEffectModal(true);
+
+      // 모달 표시 후 자동으로 닫힐 때까지 대기 (2초)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setShowEffectModal(false);
+    }
+
     try {
       setIsChoiceLoading(true);
       setCanMakeChoice(false);
@@ -244,16 +267,12 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
             gameStartTime,
             storyData: gameData
           });
-        }
 
-        setGameState('GAME_COMPLETED');
-
-        if (isStoryComplete) {
-          toast.success('🎉 축하합니다! 스토리를 완료했습니다!');
-        } else if (isCharacterDead) {
-          toast.error('💀 캐릭터가 사망했습니다');
+          // GAME_ENDING 상태로 먼저 전환 (엔딩 페이지 표시)
+          setGameState('GAME_ENDING');
         } else {
-          toast.info('🏁 게임이 종료되었습니다');
+          // gameData나 gameStartTime이 없으면 직접 완료로
+          setGameState('GAME_COMPLETED');
         }
 
         return;
@@ -401,6 +420,10 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
     }
   };
 
+  const handleViewResults = useCallback(() => {
+    setGameState('GAME_COMPLETED');
+  }, []);
+
   // stationName 또는 lineNumber 변경 시 게임 상태 리셋
   useEffect(() => {
     if (hasInitialized) {
@@ -431,6 +454,8 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
     isChoiceLoading,
     canMakeChoice,
     gameCompletionData,
+    showEffectModal,
+    selectedEffect,
     handleChoice,
     handleQuitGame,
     handleTypingComplete,
@@ -439,5 +464,7 @@ export const useGameFlow = ({ stationName, lineNumber }: UseGameFlowParams) => {
     handleBackToMain,
     handleShareResult,
     handleGoToRandomStory,
+    handleViewResults,
+    handleCloseEffectModal: () => setShowEffectModal(false),
   };
 };
