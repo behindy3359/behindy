@@ -102,21 +102,21 @@ demo:
     - email: ${DEMO_ACCOUNT_1_EMAIL:demo1@demo.com}
       password: ${DEMO_ACCOUNT_1_PASSWORD:Demo123!}
       name: ${DEMO_ACCOUNT_1_NAME:점심뭐먹지}
-    - email: ${DEMO_ACCOUNT_2_EMAIL}
-      password: ${DEMO_ACCOUNT_2_PASSWORD}
-      name: ${DEMO_ACCOUNT_2_NAME}
-    - email: ${DEMO_ACCOUNT_3_EMAIL}
-      password: ${DEMO_ACCOUNT_3_PASSWORD}
-      name: ${DEMO_ACCOUNT_3_NAME}
-    - email: ${DEMO_ACCOUNT_4_EMAIL}
-      password: ${DEMO_ACCOUNT_4_PASSWORD}
-      name: ${DEMO_ACCOUNT_4_NAME}
-    - email: ${DEMO_ACCOUNT_5_EMAIL}
-      password: ${DEMO_ACCOUNT_5_PASSWORD}
-      name: ${DEMO_ACCOUNT_5_NAME}
-    - email: ${DEMO_ACCOUNT_6_EMAIL}
-      password: ${DEMO_ACCOUNT_6_PASSWORD}
-      name: ${DEMO_ACCOUNT_6_NAME}
+    - email: ${DEMO_ACCOUNT_2_EMAIL:demo2@demo.com}
+      password: ${DEMO_ACCOUNT_2_PASSWORD:Demo123!}
+      name: ${DEMO_ACCOUNT_2_NAME:저녁뭐먹지}
+    - email: ${DEMO_ACCOUNT_3_EMAIL:demo3@demo.com}
+      password: ${DEMO_ACCOUNT_3_PASSWORD:Demo123!}
+      name: ${DEMO_ACCOUNT_3_NAME:야식뭐먹지}
+    - email: ${DEMO_ACCOUNT_4_EMAIL:demo4@demo.com}
+      password: ${DEMO_ACCOUNT_4_PASSWORD:Demo123!}
+      name: ${DEMO_ACCOUNT_4_NAME:야식뭐먹지}
+    - email: ${DEMO_ACCOUNT_5_EMAIL:demo5@demo.com}
+      password: ${DEMO_ACCOUNT_5_PASSWORD:Demo123!}
+      name: ${DEMO_ACCOUNT_5_NAME:야식뭐먹지}
+    - email: ${DEMO_ACCOUNT_6_EMAIL:demo6@demo.com}
+      password: ${DEMO_ACCOUNT_6_PASSWORD:Demo123!}
+      name: ${DEMO_ACCOUNT_6_NAME:야식뭐먹지}
 
 # 로깅 설정 (개발 환경)
 logging:
