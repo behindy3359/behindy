@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.dto.auth.ApiResponse;
 import com.example.backend.dto.character.CharacterCreateRequest;
 import com.example.backend.dto.character.CharacterResponse;
+import com.example.backend.dto.character.VisitedStationResponse;
 import com.example.backend.service.CharacterService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -117,5 +118,19 @@ public class CharacterController {
             @Parameter(description = "정신력 변화량 (양수: 증가, 음수: 감소)", required = false) @RequestParam(required = false) Integer sanityChange) {
         CharacterResponse response = characterService.updateCharacterStats(charId, healthChange, sanityChange);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "캐릭터가 방문한 역 통계 조회",
+               description = "현재 캐릭터가 클리어한 역들의 방문 통계를 조회합니다. 방문 횟수, 클리어율, 뱃지 등급 정보를 포함합니다. 인증된 사용자만 사용할 수 있습니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "방문한 역 통계 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "캐릭터를 찾을 수 없음")
+    })
+    @GetMapping("/visited-stations")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<VisitedStationResponse>> getVisitedStations() {
+        List<VisitedStationResponse> responses = characterService.getVisitedStations();
+        return ResponseEntity.ok(responses);
     }
 }

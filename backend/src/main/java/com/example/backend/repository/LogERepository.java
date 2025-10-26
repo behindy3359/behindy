@@ -83,4 +83,18 @@ public interface LogERepository extends JpaRepository<LogE, Long> {
     @Query("SELECT l.story, COUNT(l) as completionCount FROM LogE l " +
             "WHERE l.logeEnding = 1 GROUP BY l.story ORDER BY completionCount DESC")
     List<Object[]> findPopularStoriesByCompletions();
+
+    /**
+     * 특정 캐릭터가 방문한 역 통계 조회
+     * 역 이름, 호선, 방문 횟수(클리어), 총 플레이 횟수, 최근 방문 시간
+     */
+    @Query("SELECT l.story.station.staName, l.story.station.staLine, " +
+            "SUM(CASE WHEN l.logeEnding = 1 THEN 1 ELSE 0 END) as clearCount, " +
+            "COUNT(l) as totalPlayCount, " +
+            "MAX(l.createdAt) as lastVisitedAt " +
+            "FROM LogE l " +
+            "WHERE l.character.charId = :charId " +
+            "GROUP BY l.story.station.staName, l.story.station.staLine " +
+            "ORDER BY clearCount DESC, totalPlayCount DESC")
+    List<Object[]> findVisitedStationsByCharacter(@Param("charId") Long charId);
 }

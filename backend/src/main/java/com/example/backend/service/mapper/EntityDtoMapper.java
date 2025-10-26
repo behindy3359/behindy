@@ -156,16 +156,12 @@ public class EntityDtoMapper {
                 .charName(character.getCharName())
                 .charHealth(character.getCharHealth())
                 .charSanity(character.getCharSanity())
-                .userId(character.getUser().getUserId())
-                .userName(character.getUser().getUserName())
                 .isAlive(isAlive)
                 .isDying(isDying)
                 .statusMessage(statusMessage)
                 .hasGameProgress(hasGameProgress)
                 .currentStoryId(currentStoryId)
                 .createdAt(character.getCreatedAt())
-                .updatedAt(character.getUpdatedAt())
-                .deletedAt(character.getDeletedAt())
                 .build();
     }
 

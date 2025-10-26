@@ -3,6 +3,7 @@ package com.example.backend.service;
 import com.example.backend.dto.character.CharacterCreateRequest;
 import com.example.backend.dto.character.CharacterGameStatusResponse;
 import com.example.backend.dto.character.CharacterResponse;
+import com.example.backend.dto.character.VisitedStationResponse;
 import com.example.backend.entity.Character;
 import com.example.backend.entity.User;
 import com.example.backend.entity.Now;
@@ -22,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -269,6 +272,64 @@ public class CharacterService {
             nowRepository.deleteByCharacter(character);
         } catch (Exception e) {
             log.error("게임 진행 데이터 정리 실패: charId={}, error={}", character.getCharId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 캐릭터가 방문한 역 통계 조회
+     */
+    @Transactional(readOnly = true)
+    public List<VisitedStationResponse> getVisitedStations() {
+        User currentUser = authService.getCurrentUser();
+        Character character = characterRepository.findByUserAndDeletedAtIsNull(currentUser)
+                .orElseThrow(() -> new ResourceNotFoundException("Character", "user", currentUser.getUserId()));
+
+        List<Object[]> results = logERepository.findVisitedStationsByCharacter(character.getCharId());
+
+        List<VisitedStationResponse> responses = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        for (Object[] row : results) {
+            String stationName = (String) row[0];
+            Integer stationLine = (Integer) row[1];
+            Long clearCount = (Long) row[2];
+            Long totalPlayCount = (Long) row[3];
+            LocalDateTime lastVisitedAt = (LocalDateTime) row[4];
+
+            // 클리어율 계산
+            Double clearRate = totalPlayCount > 0 ? (double) clearCount / totalPlayCount * 100 : 0.0;
+
+            // 방문 등급 결정 (클리어 횟수 기준)
+            String visitBadge = determineVisitBadge(clearCount);
+
+            VisitedStationResponse response = VisitedStationResponse.builder()
+                    .stationName(stationName)
+                    .stationLine(stationLine)
+                    .visitCount(clearCount)
+                    .totalPlayCount(totalPlayCount)
+                    .clearRate(Math.round(clearRate * 10) / 10.0) // 소수점 1자리
+                    .lastVisitedAt(lastVisitedAt.format(formatter))
+                    .visitBadge(visitBadge)
+                    .build();
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
+    /**
+     * 방문 등급 결정 (클리어 횟수 기준)
+     */
+    private String determineVisitBadge(Long clearCount) {
+        if (clearCount >= 10) {
+            return "PLATINUM";  // 10회 이상: 플래티넘 (가장 밝은 색)
+        } else if (clearCount >= 5) {
+            return "GOLD";      // 5-9회: 골드 (밝은 색)
+        } else if (clearCount >= 2) {
+            return "SILVER";    // 2-4회: 실버 (중간 색)
+        } else {
+            return "BRONZE";    // 1회: 브론즈 (기본 색)
         }
     }
 }

@@ -141,4 +141,17 @@ export type GameFlowState =
   | 'GAME_ENDING'
   | 'GAME_COMPLETED'
   | 'NO_STORIES'
-  | 'ERROR';            
+  | 'ERROR';
+
+// 방문한 역 정보
+export type VisitBadge = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+
+export interface VisitedStation {
+  stationName: string;
+  stationLine: number;
+  visitCount: number;          // 클리어 횟수
+  totalPlayCount: number;       // 총 플레이 횟수 (클리어 + 실패)
+  clearRate: number;            // 클리어율 (%)
+  lastVisitedAt: string;        // 최근 방문 시간
+  visitBadge: VisitBadge;       // 방문 등급 (BRONZE, SILVER, GOLD, PLATINUM)
+}            
