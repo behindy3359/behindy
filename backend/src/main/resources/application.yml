@@ -133,3 +133,16 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+# Swagger/OpenAPI 설정
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+  show-actuator: false
