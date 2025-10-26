@@ -1,19 +1,15 @@
 import React from 'react';
 import { SlidersHorizontal, Grid, List } from 'lucide-react';
-import { getSortOptions, formatPostCount, getViewModeLabel } from '../../../utils/postListUtils';
+import { formatPostCount, getViewModeLabel } from '../../../utils/postListUtils';
 import { FilterBar, FilterLeft, FilterRight, ViewToggle, ViewButton, SortSelect } from '../styles';
 import type { PostListFiltersProps } from '../../../types/postListTypes';
 
 export const PostListFilters = React.memo<PostListFiltersProps>(
   function PostListFilters({ 
-    sortBy, 
     viewMode, 
     totalElements, 
-    onSortChange, 
     onViewModeChange 
   }) {
-    const sortOptions = getSortOptions();
-
     return (
       <FilterBar>
         <FilterLeft>
@@ -43,14 +39,6 @@ export const PostListFilters = React.memo<PostListFiltersProps>(
               {getViewModeLabel('list')}
             </ViewButton>
           </ViewToggle>
-
-          <SortSelect value={sortBy} onChange={onSortChange}>
-            {sortOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SortSelect>
         </FilterRight>
       </FilterBar>
     );

@@ -1,10 +1,3 @@
-export const getSortOptions = () => [
-  { value: 'latest', label: '최신순' },
-  { value: 'popular', label: '인기순' },
-  { value: 'comments', label: '댓글순' },
-  { value: 'views', label: '조회순' },
-];
-
 export const getViewModeIcon = (mode: 'grid' | 'list') => {
   return mode === 'grid' ? 'grid' : 'list';
 };
