@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
     /**
@@ -30,4 +32,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      */
     @Query("SELECT p FROM Post p WHERE p.user = :user")
     java.util.List<Post> findByUser(@Param("user") User user);
+
+    // 관리자 대시보드용 통계 쿼리
+    Long countByDeletedAtIsNull();
+    Long countByCreatedAtAfter(LocalDateTime date);
 }

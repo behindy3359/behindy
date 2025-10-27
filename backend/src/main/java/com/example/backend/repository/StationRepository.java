@@ -67,4 +67,8 @@ public interface StationRepository extends JpaRepository<Station, Long> {
      */
     @Query("SELECT COUNT(s) FROM Station s WHERE s.staLine = :lineNumber")
     Long countStationsByLine(@Param("lineNumber") Integer lineNumber);
+
+    // 관리자 대시보드용 통계 쿼리
+    @Query("SELECT COUNT(DISTINCT s.staLine) FROM Station s")
+    Long countDistinctStaLine();
 }

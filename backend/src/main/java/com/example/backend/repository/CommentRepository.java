@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
@@ -43,5 +44,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      */
     @Query("SELECT c FROM Comment c WHERE c.user = :user")
     java.util.List<Comment> findByUser(@Param("user") User user);
+
+    // 관리자 대시보드용 통계 쿼리
+    Long countByDeletedAtIsNull();
+    Long countByCreatedAtAfter(LocalDateTime date);
 
 }
