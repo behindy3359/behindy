@@ -7,6 +7,19 @@ import { useAuthStore } from '@/shared/store/authStore';
 import { useToast } from '@/shared/store/uiStore';
 import type { MetroSVGProps } from '../../types/metroMapTypes';
 
+// SVG 삼각형 화살표 경로 생성 함수
+const createUpTriangle = (cx: number, cy: number, size: number): string => {
+  const halfBase = size * 0.6;
+  const height = size * 0.8;
+  return `M ${cx},${cy - height} L ${cx + halfBase},${cy + height/2} L ${cx - halfBase},${cy + height/2} Z`;
+};
+
+const createDownTriangle = (cx: number, cy: number, size: number): string => {
+  const halfBase = size * 0.6;
+  const height = size * 0.8;
+  return `M ${cx},${cy + height} L ${cx - halfBase},${cy - height/2} L ${cx + halfBase},${cy - height/2} Z`;
+};
+
 export const MetroSVG: React.FC<MetroSVGProps> = ({
   showDistricts,
   visibleLines,
@@ -99,15 +112,23 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
             const realtimeInfo = processedRealtimeData.filter(
               data => data.stationName === station.id
             );
+
+            // 상행/하행 열차 분리
+            const upTrains = realtimeInfo.filter(t => t.direction === 'up');
+            const downTrains = realtimeInfo.filter(t => t.direction === 'down');
             const hasRealtimeData = realtimeInfo.length > 0;
             const isHovered = hoveredStation === station.id;
-            
+
+            // 삼각형 크기
+            const triangleSize = 1.8;
+            const baseRadius = 0.7;
+
             return (
               <g key={`station-${station.id}`}>
-                {/* 실시간 열차 도착 정보 표시 */}
-                {hasRealtimeData && (
+                {/* 상행 열차 펄스 애니메이션 */}
+                {upTrains.length > 0 && (
                   <circle
-                    cx={station.x}
+                    cx={station.x - 0.3}
                     cy={station.y}
                     r="1.5"
                     fill="none"
@@ -129,7 +150,33 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
                     />
                   </circle>
                 )}
-                
+
+                {/* 하행 열차 펄스 애니메이션 */}
+                {downTrains.length > 0 && (
+                  <circle
+                    cx={station.x + 0.3}
+                    cy={station.y}
+                    r="1.5"
+                    fill="none"
+                    stroke="#ff9500"
+                    strokeWidth="0.8"
+                    opacity="0.9"
+                  >
+                    <animate
+                      attributeName="r"
+                      values="1.0;2.8;1.0"
+                      dur="2.5s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.9;0.1;0.9"
+                      dur="2.5s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                )}
+
                 {/* 호버 시 하이라이트 */}
                 {isHovered && (
                   <circle
@@ -142,31 +189,68 @@ export const MetroSVG: React.FC<MetroSVGProps> = ({
                     opacity="0.8"
                   />
                 )}
-                
-                {/* 역 메인 아이콘 */}
-                <circle
-                  cx={station.x}
-                  cy={station.y}
-                  r="0.7"
-                  fill={
-                    hasRealtimeData 
-                      ? "#ffff00" 
-                      : isHovered
-                        ? "#6366f1" 
-                        : "#2d3748"
-                  }
-                  stroke="#ffffff"
-                  strokeWidth="0.3"
-                  style={{ 
-                    cursor: isAuthenticated() ? 'pointer' : 'default',
-                  }}
-                  onMouseEnter={() => setHoveredStation(station.id)}
-                  onMouseLeave={() => setHoveredStation(null)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleStationClick(station.id);
-                  }}
-                />
+
+                {/* 열차가 있을 때: 방향별 삼각형 화살표 표시 */}
+                {hasRealtimeData ? (
+                  <>
+                    {/* 상행 열차 (위쪽 삼각형 ▲ - 노란색) */}
+                    {upTrains.length > 0 && (
+                      <path
+                        d={createUpTriangle(station.x, station.y, triangleSize)}
+                        fill="#ffff00"
+                        stroke="#ffffff"
+                        strokeWidth="0.3"
+                        style={{
+                          cursor: isAuthenticated() ? 'pointer' : 'default',
+                        }}
+                        onMouseEnter={() => setHoveredStation(station.id)}
+                        onMouseLeave={() => setHoveredStation(null)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStationClick(station.id);
+                        }}
+                      />
+                    )}
+
+                    {/* 하행 열차 (아래쪽 삼각형 ▼ - 주황색) */}
+                    {downTrains.length > 0 && (
+                      <path
+                        d={createDownTriangle(station.x, station.y, triangleSize)}
+                        fill="#ff9500"
+                        stroke="#ffffff"
+                        strokeWidth="0.3"
+                        style={{
+                          cursor: isAuthenticated() ? 'pointer' : 'default',
+                        }}
+                        onMouseEnter={() => setHoveredStation(station.id)}
+                        onMouseLeave={() => setHoveredStation(null)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStationClick(station.id);
+                        }}
+                      />
+                    )}
+                  </>
+                ) : (
+                  /* 열차가 없을 때: 기본 원 */
+                  <circle
+                    cx={station.x}
+                    cy={station.y}
+                    r={baseRadius}
+                    fill={isHovered ? "#6366f1" : "#2d3748"}
+                    stroke="#ffffff"
+                    strokeWidth="0.3"
+                    style={{
+                      cursor: isAuthenticated() ? 'pointer' : 'default',
+                    }}
+                    onMouseEnter={() => setHoveredStation(station.id)}
+                    onMouseLeave={() => setHoveredStation(null)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStationClick(station.id);
+                    }}
+                  />
+                )}
               </g>
             );
           })}

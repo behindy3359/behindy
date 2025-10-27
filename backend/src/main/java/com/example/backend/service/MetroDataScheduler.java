@@ -35,6 +35,7 @@ public class MetroDataScheduler {
 
     private final AtomicBoolean isUpdating = new AtomicBoolean(false);
     private LocalDateTime lastSuccessfulUpdate = null;
+    private LocalDateTime lastLimitWarningTime = null;
     private int consecutiveFailures = 0;
     private static final int MAX_CONSECUTIVE_FAILURES = 5;
 
@@ -57,7 +58,7 @@ public class MetroDataScheduler {
         }).start();
     }
 
-    @Scheduled(fixedRateString = "${seoul.metro.api.update-interval:240000}")
+    @Scheduled(fixedRateString = "${seoul.metro.api.update-interval:360000}")
     public void scheduledUpdate() {
         updateAllMetroPositions();
     }
@@ -282,7 +283,12 @@ public class MetroDataScheduler {
         int currentCalls = metroApiService.getDailyCallCount();
 
         if (currentCalls >= dailyLimit) {
-            log.warn("일일 API 호출 한도 도달: {}/{}", currentCalls, dailyLimit);
+            // 시간당 1회만 로그 출력
+            LocalDateTime now = LocalDateTime.now();
+            if (lastLimitWarningTime == null || lastLimitWarningTime.isBefore(now.minusHours(1))) {
+                log.warn("일일 API 호출 한도 도달: {}/{}", currentCalls, dailyLimit);
+                lastLimitWarningTime = now;
+            }
             if (metroCacheService != null) {
                 metroCacheService.cacheHealthStatus("LIMITED", "일일 API 호출 한도 도달");
             }

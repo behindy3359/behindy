@@ -114,14 +114,8 @@ public class MetroPositionService {
      * 전체 노선의 열차 위치 정보 조회 (필터링 적용) - null 안전 처리
      */
     public MetroPositionResponse getAllPositions() {
-        log.info("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] 전체 위치 정보 조회 시작");
-        log.warn("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] ⚠️ 경고: 이 서비스는 캐시를 사용하지 않고 항상 Mock 데이터를 생성합니다!");
-
         try {
             // 1. 전체 위치 정보 생성 (필터링 전)
-            log.info("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] Mock 데이터 생성 시작 - 활성 노선: {}",
-                enabledLines);
-
             List<TrainPosition> allPositions = new ArrayList<>();
             if (enabledLines != null) {
                 for (Integer lineNumber : enabledLines) {
@@ -134,20 +128,11 @@ public class MetroPositionService {
                 }
             }
 
-            log.info("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] Mock 데이터 생성 완료 - {}대 열차",
-                allPositions.size());
-
             // 2. 프론트엔드 역만 필터링
-            log.info("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] 필터링 시작 - 원본: {}대",
-                allPositions.size());
-
             List<TrainPosition> filteredPositions = allPositions;
             if (stationFilter != null) {
                 filteredPositions = stationFilter.filterFrontendStations(allPositions);
-                log.info("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] 필터링 완료 - 결과: {}대",
-                    filteredPositions != null ? filteredPositions.size() : 0);
             } else {
-                log.warn("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] StationFilter가 null - 필터링 없이 진행");
                 log.warn("StationFilter가 null - 필터링 없이 진행");
             }
 
@@ -160,18 +145,14 @@ public class MetroPositionService {
                     .totalTrains(filteredPositions != null ? filteredPositions.size() : 0)
                     .lineStatistics(lineStats != null ? lineStats : new HashMap<>())
                     .lastUpdated(LocalDateTime.now())
-                    .nextUpdate(LocalDateTime.now().plusMinutes(2))
+                    .nextUpdate(LocalDateTime.now().plusMinutes(6))
                     .dataSource(apiEnabled ? "FILTERED_MOCK" : "MOCK")
                     .realtime(false)
                     .systemStatus("HEALTHY")
                     .build();
 
-            log.info("🚇 DEBUG_LOG: [MetroPositionService.getAllPositions] 응답 생성 완료 - dataSource: {}, isRealtime: {}",
-                response.getDataSource(), response.isRealtime());
-            log.info("전체 위치 정보 조회 완료 (필터링 적용): {}개 노선, {}대 열차 (필터링 전: {}대)",
-                    enabledLines != null ? enabledLines.size() : 0,
-                    filteredPositions != null ? filteredPositions.size() : 0,
-                    allPositions.size());
+            log.debug("Mock 데이터 생성: {}대 → {}대 (필터링)", allPositions.size(),
+                    filteredPositions != null ? filteredPositions.size() : 0);
 
             return response;
 
@@ -185,39 +166,27 @@ public class MetroPositionService {
      * 특정 노선의 열차 위치 정보 조회 (필터링 적용) - null 안전 처리
      */
     public MetroPositionResponse getLinePositions(Integer lineNumber) {
-        log.info("🚇 DEBUG_LOG: [MetroPositionService.getLinePositions] 노선 위치 정보 조회 시작 - {}호선", lineNumber);
-        log.warn("🚇 DEBUG_LOG: [MetroPositionService.getLinePositions] ⚠️ 경고: 이 서비스는 캐시를 사용하지 않고 항상 Mock 데이터를 생성합니다!");
-
         try {
             if (lineNumber == null) {
-                log.warn("🚇 DEBUG_LOG: [MetroPositionService.getLinePositions] 노선 번호가 null");
                 log.warn("노선 번호가 null입니다");
                 return createErrorResponse("유효하지 않은 노선 번호");
             }
 
             if (enabledLines == null || !enabledLines.contains(lineNumber)) {
-                log.warn("🚇 DEBUG_LOG: [MetroPositionService.getLinePositions] 비활성 노선 요청 - {}호선", lineNumber);
                 log.warn("비활성 노선 요청: {}호선", lineNumber);
                 return createEmptyResponse(lineNumber, "비활성 노선");
             }
 
             // 1. 해당 노선 위치 정보 생성
-            log.info("🚇 DEBUG_LOG: [MetroPositionService.getLinePositions] Mock 데이터 생성 시작 - {}호선", lineNumber);
-
             List<TrainPosition> allLinePositions = generateRealisticLinePositions(lineNumber);
             if (allLinePositions == null) {
                 allLinePositions = new ArrayList<>();
             }
 
-            log.info("🚇 DEBUG_LOG: [MetroPositionService.getLinePositions] Mock 데이터 생성 완료 - {}대 열차",
-                allLinePositions.size());
-
             // 2. 프론트엔드 역만 필터링
             List<TrainPosition> filteredPositions = allLinePositions;
             if (stationFilter != null) {
                 filteredPositions = stationFilter.filterLineStations(allLinePositions, lineNumber);
-                log.info("🚇 DEBUG_LOG: [MetroPositionService.getLinePositions] 필터링 완료 - {}대 → {}대",
-                    allLinePositions.size(), filteredPositions != null ? filteredPositions.size() : 0);
             }
             if (filteredPositions == null) {
                 filteredPositions = new ArrayList<>();
@@ -232,14 +201,14 @@ public class MetroPositionService {
                     .totalTrains(filteredPositions.size())
                     .lineStatistics(lineStats)
                     .lastUpdated(LocalDateTime.now())
-                    .nextUpdate(LocalDateTime.now().plusMinutes(2))
+                    .nextUpdate(LocalDateTime.now().plusMinutes(6))
                     .dataSource("FILTERED_MOCK")
                     .realtime(false)
                     .systemStatus("HEALTHY")
                     .build();
 
-            log.info("{}호선 위치 정보 조회 완료 (필터링 적용): {}대 열차 (필터링 전: {}대)",
-                    lineNumber, filteredPositions.size(), allLinePositions.size());
+            log.debug("{}호선 Mock 생성: {}대 → {}대 (필터링)", lineNumber,
+                    allLinePositions.size(), filteredPositions.size());
 
             return response;
 

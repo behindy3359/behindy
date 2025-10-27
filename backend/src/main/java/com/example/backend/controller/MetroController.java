@@ -38,25 +38,13 @@ public class MetroController {
      */
     @GetMapping("/positions")
     public ResponseEntity<ApiResponse> getAllPositions() {
-        log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] ========== 프론트엔드 요청 수신: /api/metro/positions ==========");
-
         try {
             // 1. Redis 캐시에서 실제 API 데이터 조회 시도
-            log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] Redis 캐시 조회 시도");
             MetroCacheService.PositionCacheData cacheData = metroCacheService.getAllPositions();
 
             if (cacheData != null && metroCacheService.isCacheValid(cacheData)) {
-                log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] 캐시 데이터 발견 - {}대 열차, dataSource: {}",
-                    cacheData.getPositions() != null ? cacheData.getPositions().size() : 0,
-                    cacheData.getDataSource());
-
-                // 캐시 데이터를 MetroPositionResponse로 변환
                 MetroPositionResponse positions = convertCacheToResponse(cacheData);
-
-                log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] ✅ 실제 API 데이터 반환 - 열차 수: {}, dataSource: {}, isRealtime: {}",
-                    positions.getTotalTrains(),
-                    positions.getDataSource(),
-                    positions.isRealtime());
+                log.debug("전체 노선 실시간 데이터 반환: {}대", positions.getTotalTrains());
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
@@ -66,14 +54,8 @@ public class MetroController {
             }
 
             // 2. 캐시가 없으면 Mock 데이터 반환 (폴백)
-            log.warn("🚇 DEBUG_LOG: [MetroController.getAllPositions] ⚠️ 캐시 없음 - Mock 데이터로 폴백");
-            log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] MetroPositionService.getAllPositions() 호출");
             MetroPositionResponse positions = metroPositionService.getAllPositions();
-
-            log.info("🚇 DEBUG_LOG: [MetroController.getAllPositions] Mock 데이터 반환 - 열차 수: {}, dataSource: {}, isRealtime: {}",
-                positions != null ? positions.getTotalTrains() : 0,
-                positions != null ? positions.getDataSource() : "null",
-                positions != null ? positions.isRealtime() : false);
+            log.debug("전체 노선 Mock 데이터 반환: {}대", positions != null ? positions.getTotalTrains() : 0);
 
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
@@ -82,8 +64,7 @@ public class MetroController {
                     .build());
 
         } catch (Exception e) {
-            log.error("🚇 DEBUG_LOG: [MetroController.getAllPositions] 예외 발생: {}", e.getMessage());
-            log.error("전체 위치 정보 조회 API 실패: {}", e.getMessage(), e);
+            log.error("전체 위치 정보 조회 API 실패: {}", e.getMessage());
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(false)
                     .message("위치 정보 조회 중 오류가 발생했습니다.")
@@ -97,13 +78,9 @@ public class MetroController {
      */
     @GetMapping("/positions/{lineNumber}")
     public ResponseEntity<ApiResponse> getLinePositions(@PathVariable Integer lineNumber) {
-        log.info("🚇 DEBUG_LOG: [MetroController.getLinePositions] ========== 프론트엔드 요청 수신: /api/metro/positions/{} ==========",
-            lineNumber);
-
         try {
             // 노선 번호 유효성 검사
             if (!isValidLineNumber(lineNumber)) {
-                log.warn("🚇 DEBUG_LOG: [MetroController.getLinePositions] 유효하지 않은 노선 번호: {}", lineNumber);
                 return ResponseEntity.badRequest().body(ApiResponse.builder()
                         .success(false)
                         .message("유효하지 않은 노선 번호입니다: " + lineNumber)
@@ -111,22 +88,11 @@ public class MetroController {
             }
 
             // 1. Redis 캐시에서 실제 API 데이터 조회 시도
-            log.info("🚇 DEBUG_LOG: [MetroController.getLinePositions] Redis 캐시 조회 시도 - {}호선", lineNumber);
             MetroCacheService.PositionCacheData cacheData = metroCacheService.getLinePositions(String.valueOf(lineNumber));
 
             if (cacheData != null && metroCacheService.isCacheValid(cacheData)) {
-                log.info("🚇 DEBUG_LOG: [MetroController.getLinePositions] 캐시 데이터 발견 - {}대 열차, dataSource: {}",
-                    cacheData.getPositions() != null ? cacheData.getPositions().size() : 0,
-                    cacheData.getDataSource());
-
-                // 캐시 데이터를 MetroPositionResponse로 변환
                 MetroPositionResponse positions = convertCacheToResponse(cacheData);
-
-                log.info("🚇 DEBUG_LOG: [MetroController.getLinePositions] ✅ 실제 API 데이터 반환 - {}호선, 열차 수: {}, dataSource: {}, isRealtime: {}",
-                    lineNumber,
-                    positions.getTotalTrains(),
-                    positions.getDataSource(),
-                    positions.isRealtime());
+                log.debug("{}호선 실시간 데이터 반환: {}대", lineNumber, positions.getTotalTrains());
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
@@ -136,14 +102,8 @@ public class MetroController {
             }
 
             // 2. 캐시가 없으면 Mock 데이터 반환 (폴백)
-            log.warn("🚇 DEBUG_LOG: [MetroController.getLinePositions] ⚠️ 캐시 없음 - Mock 데이터로 폴백");
-            log.info("🚇 DEBUG_LOG: [MetroController.getLinePositions] MetroPositionService.getLinePositions({}) 호출",
-                lineNumber);
             MetroPositionResponse positions = metroPositionService.getLinePositions(lineNumber);
-
-            log.info("🚇 DEBUG_LOG: [MetroController.getLinePositions] Mock 데이터 반환 - 열차 수: {}, dataSource: {}",
-                positions != null ? positions.getTotalTrains() : 0,
-                positions != null ? positions.getDataSource() : "null");
+            log.debug("{}호선 Mock 데이터 반환: {}대", lineNumber, positions != null ? positions.getTotalTrains() : 0);
 
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
@@ -152,8 +112,7 @@ public class MetroController {
                     .build());
 
         } catch (Exception e) {
-            log.error("🚇 DEBUG_LOG: [MetroController.getLinePositions] 예외 발생: {}", e.getMessage());
-            log.error("{}호선 위치 정보 조회 API 실패: {}", lineNumber, e.getMessage(), e);
+            log.error("{}호선 위치 정보 조회 API 실패: {}", lineNumber, e.getMessage());
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(false)
                     .message("위치 정보 조회 중 오류가 발생했습니다.")

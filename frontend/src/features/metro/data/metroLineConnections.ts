@@ -16,29 +16,9 @@ export interface LineConnection {
   color: string;
 }
 
-// 두 점 사이의 SVG path
+// 두 점 사이의 SVG 직선 경로
 const createStraightPath = (x1: number, y1: number, x2: number, y2: number): string => {
   return `M ${x1} ${y1} L ${x2} ${y2}`;
-};
-
-// 두 점 사이의 SVG path
-const createCurvedPath = (
-  x1: number, y1: number, 
-  x2: number, y2: number, 
-  curvature: number = 0.2
-): string => {
-  const midX = (x1 + x2) / 2;
-  const midY = (y1 + y2) / 2;
-  const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-  const controlOffset = distance * curvature;
-  
-  const perpX = -(y2 - y1) / distance * controlOffset;
-  const perpY = (x2 - x1) / distance * controlOffset;
-  
-  const controlX = midX + perpX;
-  const controlY = midY + perpY;
-  
-  return `M ${x1} ${y1} Q ${controlX} ${controlY} ${x2} ${y2}`;
 };
 
 
@@ -100,11 +80,7 @@ export const generateLineConnections = (): LineConnection[] => {
       const toStation = getStationByName(toStationName);
 
       if (fromStation && toStation) {
-        // 환승역의 경우 곡선 사용
-        const isSpecialConnection = fromStation.lines.length > 1 || toStation.lines.length > 1;
-        const path = isSpecialConnection 
-          ? createCurvedPath(fromStation.x, fromStation.y, toStation.x, toStation.y, 0.1)
-          : createStraightPath(fromStation.x, fromStation.y, toStation.x, toStation.y);
+        const path = createStraightPath(fromStation.x, fromStation.y, toStation.x, toStation.y);
 
         segments.push({
           lineNumber,
@@ -126,11 +102,7 @@ export const generateLineConnections = (): LineConnection[] => {
         const toStation = getStationByName(conn.to);
 
         if (fromStation && toStation) {
-          const path = createCurvedPath(
-            fromStation.x, fromStation.y, 
-            toStation.x, toStation.y, 
-            0.15
-          );
+          const path = createStraightPath(fromStation.x, fromStation.y, toStation.x, toStation.y);
 
           segments.push({
             lineNumber,
