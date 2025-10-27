@@ -6,7 +6,7 @@ import '@/shared/styles/globalTheme.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Behindy - 포트폴리오 프로젝트 (데모)',
+    default: 'Behindy - 포트폴리오 프로젝트',
     template: '%s | Behindy 포트폴리오'
   },
   description: '풀스택 개발 포트폴리오 프로젝트 - 서울 지하철 테마 텍스트 어드벤처 게임 데모. Next.js, Spring Boot, AI(LLM) 통합 기술 스택 시연용 사이트입니다. 실제 서비스가 아닌 학습 및 시연 목적의 데모 사이트입니다.',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     locale: 'ko_KR',
     url: 'https://behindy.me',
     siteName: 'Behindy 포트폴리오',
-    title: 'Behindy - 풀스택 개발 포트폴리오 (데모 사이트)',
+    title: 'Behindy - 풀스택 개발 포트폴리오',
     description: '서울 지하철 테마 텍스트 어드벤처 게임 - Next.js, Spring Boot, AI 통합 기술 스택 시연용 포트폴리오 프로젝트입니다.',
   },
   twitter: {
