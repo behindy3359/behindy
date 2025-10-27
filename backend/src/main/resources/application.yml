@@ -71,7 +71,7 @@ seoul:
       timeout: 10000
       retry-count: 3
       enabled-lines: ${METRO_ENABLED_LINES:1,2,3,4}
-      update-interval: ${METRO_UPDATE_INTERVAL:600000}
+      update-interval: ${METRO_UPDATE_INTERVAL:360000}
     cache:
       ttl: ${SEOUL_METRO_CACHE_TTL:420}
     monitoring:

@@ -64,12 +64,12 @@ public class MetroDataScheduler {
     }
 
     /**
-     * 지하철 운행 시간 확인 (심야시간 0시~6시 제외)
+     * 지하철 운행 시간 확인 (심야시간 0시~5시 제외)
      */
     private boolean isOperatingHours() {
         int currentHour = LocalDateTime.now().getHour();
-        // 0시~6시는 운행하지 않음
-        return currentHour >= 6 && currentHour < 24;
+        // 0시~5시는 운행하지 않음 (5시부터 운행 시작)
+        return currentHour >= 5 && currentHour < 24;
     }
 
     /**

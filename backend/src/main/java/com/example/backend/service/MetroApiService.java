@@ -66,37 +66,14 @@ public class MetroApiService {
      *  실시간 위치 조회 - OpenAPI 우선, 실패시에만 Mock
      */
     public Mono<List<TrainPosition>> getRealtimePositions(String lineNumber) {
-        log.info("🚇 DEBUG_LOG: [MetroApiService.getRealtimePositions] 시작 - 노선: {}", lineNumber);
-        log.info("🚇 DEBUG_LOG: [MetroApiService.getRealtimePositions] apiEnabled={}, isValidApiKey={}",
-            apiEnabled, isValidApiKey());
-
-        if (!apiEnabled) {
-            log.warn("🚇 DEBUG_LOG: [MetroApiService.getRealtimePositions] API 비활성화 - Mock 데이터 반환");
-            return createRealisticMockData(lineNumber);
-        }
-
-        if (!isValidApiKey()) {
-            log.warn("🚇 DEBUG_LOG: [MetroApiService.getRealtimePositions] 유효하지 않은 API 키 - Mock 데이터 반환");
+        if (!apiEnabled || !isValidApiKey()) {
             return createRealisticMockData(lineNumber);
         }
 
         // 실제 OpenAPI 호출
-        log.info("🚇 DEBUG_LOG: [MetroApiService.getRealtimePositions] 서울시 OpenAPI 호출 시도");
         return callSeoulMetroAPI(lineNumber)
-                .doOnSuccess(positions -> {
-                    incrementCallCount();
-                    log.info("🚇 DEBUG_LOG: [MetroApiService.getRealtimePositions] OpenAPI 호출 성공 - {}대 열차",
-                        positions != null ? positions.size() : 0);
-                })
-                .doOnError(error -> {
-                    log.error("🚇 DEBUG_LOG: [MetroApiService.getRealtimePositions] OpenAPI 호출 실패: {}",
-                        error.getMessage());
-                    log.error("{}호선 OpenAPI 호출 실패: {}", lineNumber, error.getMessage());
-                })
-                .onErrorResume(error -> {
-                    log.warn("🚇 DEBUG_LOG: [MetroApiService.getRealtimePositions] 오류 복구 - Mock 데이터 반환");
-                    return createRealisticMockData(lineNumber);
-                });
+                .doOnSuccess(positions -> incrementCallCount())
+                .onErrorResume(error -> createRealisticMockData(lineNumber));
     }
 
     /**
@@ -108,16 +85,11 @@ public class MetroApiService {
         return webClient.get()
                 .uri(url)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, response -> {
-                    log.error("OpenAPI HTTP 에러: {} - {}", response.statusCode(), url);
-                    return Mono.error(new RuntimeException("OpenAPI HTTP 에러: " + response.statusCode()));
-                })
+                .onStatus(HttpStatusCode::isError, response ->
+                    Mono.error(new RuntimeException("OpenAPI HTTP 에러: " + response.statusCode())))
                 .bodyToMono(RealtimePositionResponse.class)
                 .timeout(Duration.ofMillis(timeoutMs))
-                .retryWhen(Retry.fixedDelay(retryCount, Duration.ofSeconds(2))
-                        .doBeforeRetry(retrySignal ->
-                                log.warn("OpenAPI 재시도 {}/{}: {}",
-                                        retrySignal.totalRetries() + 1, retryCount, lineNumber)))
+                .retryWhen(Retry.fixedDelay(retryCount, Duration.ofSeconds(2)))
                 .map(response -> processOpenApiResponse(response, lineNumber))
                 .onErrorMap(Exception.class, error ->
                         new RuntimeException("OpenAPI 호출 완전 실패: " + error.getMessage(), error));
@@ -127,36 +99,24 @@ public class MetroApiService {
      *  OpenAPI 응답 처리
      */
     private List<TrainPosition> processOpenApiResponse(RealtimePositionResponse response, String lineNumber) {
-        log.info("🚇 DEBUG_LOG: [MetroApiService.processOpenApiResponse] 응답 처리 시작");
-
         // 에러 응답 체크
         if (response.isAnyError()) {
             String errorMsg = response.getUnifiedErrorMessage();
-            log.warn("🚇 DEBUG_LOG: [MetroApiService.processOpenApiResponse] API 에러 응답: {}", errorMsg);
             log.warn("OpenAPI 에러 응답: {}", errorMsg);
             throw new RuntimeException("API_ERROR: " + errorMsg);
         }
 
         // 빈 데이터 체크
         if (response.isEmpty()) {
-            log.warn("🚇 DEBUG_LOG: [MetroApiService.processOpenApiResponse] 빈 데이터 응답 (심야시간대 등)");
-            log.warn("OpenAPI 정상 응답이지만 데이터 없음 (심야시간대 등)");
             throw new RuntimeException("API_EMPTY: 운행 데이터 없음");
         }
 
         // 실제 데이터 변환
         List<RealtimePositionInfo> apiData = response.getRealtimePositionList();
-        log.info("🚇 DEBUG_LOG: [MetroApiService.processOpenApiResponse] 원본 데이터 개수: {}", apiData.size());
-
-        List<TrainPosition> trainPositions = apiData.stream()
+        return apiData.stream()
                 .map(this::convertApiDataToTrainPosition)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-
-        log.info("🚇 DEBUG_LOG: [MetroApiService.processOpenApiResponse] 변환 완료: {}개 → {}대 열차",
-            apiData.size(), trainPositions.size());
-        log.info("OpenAPI 데이터 변환 완료: {}개 → {}대 열차", apiData.size(), trainPositions.size());
-        return trainPositions;
     }
 
     /**
@@ -182,9 +142,12 @@ public class MetroApiService {
     }
 
     /**
-     *  전체 노선 조회
+     *  전체 노선 조회 - 배치 요약 로그
      */
     public Mono<List<TrainPosition>> getAllLinesRealtime() {
+        log.info("🚇 배치 시작: {}개 노선 조회 [{}]", enabledLines.size(), String.join(", ", enabledLines));
+        long startTime = System.currentTimeMillis();
+
         List<Mono<List<TrainPosition>>> requests = enabledLines.stream()
                 .map(this::getRealtimePositions)
                 .collect(Collectors.toList());
@@ -194,6 +157,14 @@ public class MetroApiService {
                     .flatMap(result -> ((List<TrainPosition>) result).stream())
                     .collect(Collectors.toList());
 
+            // 데이터 소스별 통계
+            long realCount = allTrains.stream().filter(t -> "SEOUL_OPENAPI".equals(t.getDataSource())).count();
+            long mockCount = allTrains.stream().filter(t -> "MOCK_REALISTIC".equals(t.getDataSource())).count();
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.info("🚇 배치 완료: 총 {}대 열차 (실제: {}대, Mock: {}대) | 소요시간: {}ms | API 호출수: {}",
+                    allTrains.size(), realCount, mockCount, duration, dailyCallCount.get());
+
             return allTrains;
         });
     }
@@ -202,15 +173,8 @@ public class MetroApiService {
      *  현실적인 Mock 데이터 생성
      */
     private Mono<List<TrainPosition>> createRealisticMockData(String lineNumber) {
-        log.info("🚇 DEBUG_LOG: [MetroApiService.createRealisticMockData] Mock 데이터 생성 시작 - 노선: {}",
-            lineNumber);
-
         List<String> stations = getStationsForLine(lineNumber);
         int trainCount = getRealisticTrainCountForTime(lineNumber);
-
-        log.info("🚇 DEBUG_LOG: [MetroApiService.createRealisticMockData] 생성할 열차 수: {}대, 역 수: {}개",
-            trainCount, stations.size());
-
         List<TrainPosition> mockData = new ArrayList<>();
         Random random = new Random();
 
@@ -231,9 +195,6 @@ public class MetroApiService {
 
             mockData.add(position);
         }
-
-        log.info("🚇 DEBUG_LOG: [MetroApiService.createRealisticMockData] Mock 데이터 생성 완료 - {}대 열차",
-            mockData.size());
 
         return Mono.just(mockData);
     }
