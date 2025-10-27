@@ -29,6 +29,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import java.util.Arrays;
 
 @Configuration
@@ -83,9 +85,48 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CookieCsrfTokenRepository cookieCsrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieName("XSRF-TOKEN");
+        repository.setHeaderName("X-XSRF-TOKEN");
+        repository.setCookiePath("/");
+        return repository;
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // CSRF 토큰 핸들러 설정
+        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+        requestHandler.setCsrfRequestAttributeName("_csrf");
+
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(cookieCsrfTokenRepository())
+                        .csrfTokenRequestHandler(requestHandler)
+                        .ignoringRequestMatchers(
+                                // 공개 API - CSRF 검증 제외
+                                "/api/auth/**",
+                                "/api/public/**",
+                                "/api/metro/**",
+                                "/test/**",
+                                "/error",
+                                "/",
+                                // Swagger UI - CSRF 검증 제외
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+                                // 내부 API (API Key 인증 사용)
+                                "/api/ai-stories/internal/**",
+                                // 조회 API - GET 요청은 일반적으로 CSRF 대상이 아님
+                                "/api/posts",
+                                "/api/posts/**",
+                                "/api/comments/**",
+                                "/api/stories/**",
+                                "/api/ai-stories/health"
+                        )
+                )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

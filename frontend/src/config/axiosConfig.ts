@@ -10,6 +10,27 @@ if (typeof window !== 'undefined') {
   validateSecurityConfig();
 }
 
+// CSRF 토큰 유틸리티
+class CsrfTokenManager {
+  /**
+   * 쿠키에서 CSRF 토큰 읽기
+   */
+  static getCsrfToken(): string | null {
+    if (typeof window === 'undefined') return null;
+
+    const name = 'XSRF-TOKEN';
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+
+    if (parts.length === 2) {
+      const token = parts.pop()?.split(';').shift();
+      return token ? decodeURIComponent(token) : null;
+    }
+
+    return null;
+  }
+}
+
 // 토큰 관리 유틸리티
 class TokenManager {
   static getAccessToken(): string | null {
@@ -31,15 +52,15 @@ class TokenManager {
 
   static isTokenValid(): boolean {
     if (typeof window === 'undefined') return false;
-    
+
     const token = sessionStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS);
     const tokenTime = sessionStorage.getItem(SECURITY_CONFIG.TOKEN_KEYS.ACCESS + '_time');
-    
+
     if (!token || !tokenTime) return false;
-    
+
     const tokenAge = Date.now() - parseInt(tokenTime);
     const maxAge = SECURITY_CONFIG.JWT.ACCESS_TOKEN_LIFETIME;
-    
+
     return tokenAge < maxAge;
   }
 
@@ -102,10 +123,22 @@ const createApiClient = (baseURL: string) => {
   // 요청 인터셉터
   client.interceptors.request.use(
     (config) => {
+      // JWT 토큰 추가 (인증 필요한 요청)
       if (requiresAuth(config)) {
         const token = TokenManager.getAccessToken();
         if (token && config.headers) {
           config.headers.Authorization = `${SECURITY_CONFIG.JWT.TOKEN_TYPE} ${token}`;
+        }
+      }
+
+      // CSRF 토큰 추가 (변경 요청 - POST, PUT, PATCH, DELETE)
+      const method = (config.method || 'GET').toUpperCase();
+      const needsCsrfProtection = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+
+      if (needsCsrfProtection && config.headers) {
+        const csrfToken = CsrfTokenManager.getCsrfToken();
+        if (csrfToken) {
+          config.headers['X-XSRF-TOKEN'] = csrfToken;
         }
       }
 
@@ -266,5 +299,5 @@ export const aiApi = {
   },
 };
 
-export { TokenManager };
+export { TokenManager, CsrfTokenManager };
 export default api;
