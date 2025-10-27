@@ -1,8 +1,11 @@
+import type { NextConfig } from 'next';
+import type { Configuration } from 'webpack';
+
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   compiler: {
     styledComponents: true,
     // Remove unused code
@@ -33,7 +36,7 @@ const nextConfig = {
   poweredByHeader: false,
 
   // Webpack 번들 최적화
-  webpack: (config, { isServer }) => {
+  webpack: (config: Configuration, { isServer }: { isServer: boolean }) => {
     // 서버/클라이언트 분리
     if (!isServer) {
       config.resolve.fallback = {
