@@ -102,7 +102,6 @@ public class MetroApiService {
         // 에러 응답 체크
         if (response.isAnyError()) {
             String errorMsg = response.getUnifiedErrorMessage();
-            log.warn("OpenAPI 에러 응답: {}", errorMsg);
             throw new RuntimeException("API_ERROR: " + errorMsg);
         }
 

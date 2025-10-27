@@ -13,7 +13,18 @@ import java.util.List;
 
 @Entity(name = "User")
 @Getter@Setter @NoArgsConstructor @AllArgsConstructor @Builder @EntityListeners(AuditingEntityListener.class)
-@Table(name = "users") // postgre에서 user 는 예약어;
+@Table(name = "users", // postgre에서 user 는 예약어;
+    indexes = {
+        // 이메일 로그인 (암호화되어 있어도 인덱스 필요)
+        @Index(name = "idx_user_email", columnList = "user_email"),
+        // 역할별 사용자 조회 (관리자 검색 등)
+        @Index(name = "idx_user_role", columnList = "role"),
+        // 삭제되지 않은 사용자 필터링
+        @Index(name = "idx_user_deleted_at", columnList = "deleted_at"),
+        // 복합 인덱스: 활성 사용자 목록
+        @Index(name = "idx_user_active", columnList = "deleted_at, created_at DESC")
+    }
+)
 public class User {
 
     // 서비스 영역

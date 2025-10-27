@@ -8,7 +8,16 @@ import java.util.List;
 
 @Entity
 @Getter@Setter@Builder @AllArgsConstructor@NoArgsConstructor
-@Table(name="STO")
+@Table(name="STO",
+    indexes = {
+        // 역별 스토리 조회 (가장 빈번한 쿼리)
+        @Index(name = "idx_story_station_id", columnList = "sta_id"),
+        // 테마별 스토리 검색
+        @Index(name = "idx_story_theme", columnList = "sto_theme"),
+        // 스토리 길이별 필터링 (짧은/중간/긴 스토리)
+        @Index(name = "idx_story_length", columnList = "sto_length")
+    }
+)
 public class Story {
 
     @Id @GeneratedValue(strategy = GenerationType.AUTO)

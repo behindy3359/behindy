@@ -13,7 +13,18 @@ import java.util.List;
 @Entity
 @Getter@Setter@Builder @NoArgsConstructor@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "POST")
+@Table(name = "POST",
+    indexes = {
+        // 게시글 목록 조회 (최신순 정렬)
+        @Index(name = "idx_post_created_at", columnList = "created_at DESC"),
+        // 사용자별 게시글 조회
+        @Index(name = "idx_post_user_id", columnList = "user_id"),
+        // 삭제되지 않은 게시글 필터링
+        @Index(name = "idx_post_deleted_at", columnList = "deleted_at"),
+        // 복합 인덱스: 활성 게시글 목록 조회 최적화 (deleted_at IS NULL + 최신순)
+        @Index(name = "idx_post_active_list", columnList = "deleted_at, created_at DESC")
+    }
+)
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -53,7 +53,6 @@ public class MetroCacheService {
 
             String jsonData = objectMapper.writeValueAsString(cacheData);
             redisTemplate.opsForValue().set(key, jsonData, cacheTtlSeconds, TimeUnit.SECONDS);
-            log.debug("{}호선 캐시 저장: {}대", lineNumber, positions != null ? positions.size() : 0);
 
         } catch (Exception e) {
             log.error("{}호선 위치 데이터 캐시 저장 실패: {}", lineNumber, e.getMessage());
@@ -73,7 +72,6 @@ public class MetroCacheService {
             }
 
             PositionCacheData result = objectMapper.readValue(cachedData.toString(), PositionCacheData.class);
-            log.debug("{}호선 캐시 조회: {}대", lineNumber, result.getPositions() != null ? result.getPositions().size() : 0);
             return result;
 
         } catch (Exception e) {
@@ -117,12 +115,9 @@ public class MetroCacheService {
             }
 
             PositionCacheData result = objectMapper.readValue(cachedData.toString(), PositionCacheData.class);
-            log.debug("전체 캐시 조회: {}대", result.getPositions() != null ? result.getPositions().size() : 0);
-
             return result;
 
         } catch (Exception e) {
-            log.error("🚇 DEBUG_LOG: [MetroCacheService.getAllPositions] 전체 캐시 조회 실패: {}", e.getMessage());
             log.error("전체 노선 위치 데이터 캐시 조회 실패: {}", e.getMessage(), e);
             return null;
         }

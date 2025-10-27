@@ -11,7 +11,20 @@ import java.time.LocalDateTime;
 @Entity
 @Getter@Setter @Builder@NoArgsConstructor@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "COMMENT") // comment -> cmt 로 축약
+@Table(name = "COMMENT", // comment -> cmt 로 축약
+    indexes = {
+        // 게시글별 댓글 조회 (가장 빈번한 쿼리)
+        @Index(name = "idx_comment_post_id", columnList = "post_id"),
+        // 댓글 작성 시간순 정렬
+        @Index(name = "idx_comment_created_at", columnList = "created_at DESC"),
+        // 사용자별 댓글 조회
+        @Index(name = "idx_comment_user_id", columnList = "user_id"),
+        // 삭제되지 않은 댓글 필터링
+        @Index(name = "idx_comment_deleted_at", columnList = "deleted_at"),
+        // 복합 인덱스: 특정 게시글의 활성 댓글 목록 (post_id + deleted_at IS NULL + 시간순)
+        @Index(name = "idx_comment_active_list", columnList = "post_id, deleted_at, created_at")
+    }
+)
 public class Comment {
     // 서비스영역
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
