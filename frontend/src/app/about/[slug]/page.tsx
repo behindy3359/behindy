@@ -1,17 +1,49 @@
 "use client";
 
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { AboutLayout } from '@/features/about/components/AboutLayout';
 import { isValidAboutSlug } from '@/features/about/utils';
 import { AboutSection } from '@/features/about/styles';
 
-// 각 페이지별 컴포넌트
-import OverviewPage from './pages/OverviewPage';
-import BackendPage from './pages/BackendPage';
-import FrontendPage from './pages/FrontendPage';
-import AIServerPage from './pages/AIServerPage';
-import DevOpsPage from './pages/DevOpsPage';
-import DevelopmentPage from './pages/DevelopmentPage';
+// Dynamic Import: About 서브 페이지는 선택된 페이지만 로드 (번들 크기 최적화)
+const LoadingComponent = () => (
+  <AboutSection>
+    <p style={{ textAlign: 'center', padding: '3rem 0', color: '#666' }}>
+      로딩 중...
+    </p>
+  </AboutSection>
+);
+
+const OverviewPage = dynamic(() => import('./pages/OverviewPage'), {
+  loading: LoadingComponent,
+  ssr: true,
+});
+
+const BackendPage = dynamic(() => import('./pages/BackendPage'), {
+  loading: LoadingComponent,
+  ssr: true,
+});
+
+const FrontendPage = dynamic(() => import('./pages/FrontendPage'), {
+  loading: LoadingComponent,
+  ssr: true,
+});
+
+const AIServerPage = dynamic(() => import('./pages/AIServerPage'), {
+  loading: LoadingComponent,
+  ssr: true,
+});
+
+const DevOpsPage = dynamic(() => import('./pages/DevOpsPage'), {
+  loading: LoadingComponent,
+  ssr: true,
+});
+
+const DevelopmentPage = dynamic(() => import('./pages/DevelopmentPage'), {
+  loading: LoadingComponent,
+  ssr: true,
+});
 
 export default function AboutDetailPage() {
   const params = useParams();
