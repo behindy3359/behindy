@@ -1,5 +1,4 @@
 import type { NextConfig } from 'next';
-import type { Configuration } from 'webpack';
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
@@ -36,7 +35,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   // Webpack 번들 최적화
-  webpack: (config: Configuration, { isServer }: { isServer: boolean }) => {
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
     // 서버/클라이언트 분리
     if (!isServer) {
       config.resolve.fallback = {
@@ -66,7 +65,7 @@ const nextConfig: NextConfig = {
           // UI 라이브러리
           lib: {
             test: /[\\/]node_modules[\\/]/,
-            name(module) {
+            name(module: any) {
               const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1];
               return `lib.${packageName?.replace('@', '')}`;
             },

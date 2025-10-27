@@ -16,6 +16,7 @@ export interface CurrentUser {
   name: string;
   email: string;
   isAuthenticated: boolean;
+  role?: 'USER' | 'ADMIN';
   permissions?: string[];
 }
 

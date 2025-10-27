@@ -16,9 +16,11 @@ import {
   Bot,
   Container,
   Book,
+  Shield,
 } from 'lucide-react';
 import { isRouteActive, filterNavItemsByPermission } from '../utils';
 import { aboutPages } from '@/features/about/utils';
+import type { NavItem } from '../types';
 
 export const useSidebarNavigation = () => {
   const router = useRouter();
@@ -75,43 +77,58 @@ export const useSidebarNavigation = () => {
     // 하이드레이션 전에는 기본값 반환
     if (!isHydrated) {
       return [
-        { 
-          path: '/auth/login', 
-          label: '로그인', 
+        {
+          path: '/auth/login',
+          label: '로그인',
           icon: LogIn,
         },
-        { 
-          path: '/auth/signup', 
-          label: '회원가입', 
+        {
+          path: '/auth/signup',
+          label: '회원가입',
           icon: UserPlus,
         },
       ];
     }
-    
+
     // status가 'authenticated'인지 확인
     const isLoggedIn = status === 'authenticated' && !!user;
-    
-    return isLoggedIn ? [
-      { 
+
+    // 관리자 권한 확인 (Role이 'ADMIN'인 경우)
+    const isAdmin = user?.role === 'ADMIN';
+
+    const loggedInItems: NavItem[] = [
+      {
         path: '/character',  // 🔥 프로필 대신 캐릭터 페이지로
-        label: user?.name || '내 캐릭터', 
+        label: user?.name || '내 캐릭터',
         icon: User,
       },
-      { 
-        path: '/logout',
-        label: '로그아웃', 
+    ];
+
+    // 관리자인 경우 관리자 대시보드 메뉴 추가
+    if (isAdmin) {
+      loggedInItems.push({
+        path: '/admin',
+        label: '관리자 대시보드',
+        icon: Shield,
+      });
+    }
+
+    loggedInItems.push({
+      path: '/logout',
+      label: '로그아웃',
+      icon: LogIn,
+      action: 'logout',
+    });
+
+    return isLoggedIn ? loggedInItems : [
+      {
+        path: '/auth/login',
+        label: '로그인',
         icon: LogIn,
-        action: 'logout',
       },
-    ] : [
-      { 
-        path: '/auth/login', 
-        label: '로그인', 
-        icon: LogIn,
-      },
-      { 
-        path: '/auth/signup', 
-        label: '회원가입', 
+      {
+        path: '/auth/signup',
+        label: '회원가입',
         icon: UserPlus,
       },
     ];
