@@ -94,28 +94,6 @@ export const PortfolioWarningModal: React.FC<PortfolioWarningModalProps> = ({
                   </RecommendItem>
                 </RecommendList>
               </RecommendSection>
-
-              <DataCollectionSection>
-                <SectionTitle>수집되는 정보</SectionTitle>
-                <DataCollectionText>
-                  기술 시연을 위해 최소한의 접속 로그를 수집합니다:
-                </DataCollectionText>
-                <DataCollectionList>
-                  <DataCollectionItem>
-                    IP 주소 (마지막 부분 마스킹 처리, 예: 192.168.1.XXX)
-                  </DataCollectionItem>
-                  <DataCollectionItem>
-                    접속 시간 및 요청 경로
-                  </DataCollectionItem>
-                  <DataCollectionItem>
-                    브라우저 정보 (User Agent)
-                  </DataCollectionItem>
-                </DataCollectionList>
-                <DataCollectionNote>
-                  • 마케팅 목적으로 사용되지 않습니다<br />
-                  • 포트폴리오 기술 시연 목적으로만 활용됩니다
-                </DataCollectionNote>
-              </DataCollectionSection>
             </ModalContent>
 
             <ModalFooter>
