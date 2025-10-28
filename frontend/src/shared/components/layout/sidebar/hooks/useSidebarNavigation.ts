@@ -140,9 +140,14 @@ export const useSidebarNavigation = () => {
   }, [baseNavItems, user?.permissions]);
 
   const accountItems = useMemo(() => {
+    // 관리자인 경우 permissions 체크 없이 모든 메뉴 표시
+    if (user?.role === 'ADMIN') {
+      return baseAccountItems;
+    }
+
     const userPermissions = user?.permissions || [];
     return filterNavItemsByPermission(baseAccountItems, userPermissions);
-  }, [baseAccountItems, user?.permissions]);
+  }, [baseAccountItems, user?.permissions, user?.role]);
 
   const handleNavigation = useCallback(async (path?: string, action?: string) => {
     if (navigationTimeoutRef.current) {
