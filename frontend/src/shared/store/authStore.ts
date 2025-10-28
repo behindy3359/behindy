@@ -24,6 +24,7 @@ interface JwtAuthResponse {
   userId: number;
   name: string;
   email: string;
+  role?: string; // 사용자 역할 (USER, ADMIN)
 }
 
 interface AuthResult {
@@ -141,6 +142,7 @@ export const useAuthStore = create<AuthStore>()(
             name: response.name,
             email: response.email,
             isAuthenticated: true,
+            role: (response.role === 'ADMIN' || response.role === 'USER') ? response.role : 'USER',
             permissions: [],
           };
 
@@ -393,6 +395,7 @@ export const useAuthStore = create<AuthStore>()(
             name: userResponse.data.name,
             email: userResponse.data.email,
             isAuthenticated: true,
+            role: userResponse.data.role,
             permissions: userResponse.data.permissions || [],
           };
 

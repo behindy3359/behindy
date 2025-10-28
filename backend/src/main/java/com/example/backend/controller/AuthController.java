@@ -309,9 +309,10 @@ public class AuthController {
                     .success(true)
                     .message("사용자 정보 조회 성공")
                     .data(Map.of(
-                            "userId", currentUser.getUserId(),
+                            "id", currentUser.getUserId(),
                             "name", currentUser.getUserName(),
-                            "email", currentUser.getUserEmail()
+                            "email", currentUser.getUserEmail(),
+                            "role", currentUser.getRole().name().replace("ROLE_", "")
                     ))
                     .build());
         } catch (Exception e) {

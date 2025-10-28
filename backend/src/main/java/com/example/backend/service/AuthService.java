@@ -104,6 +104,10 @@ public class AuthService {
         // HttpOnly Cookie에 Refresh Token 설정
         setRefreshTokenCookie(response, refreshToken);
 
+        // 사용자 정보 조회하여 role 가져오기
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userDetails.getId()));
+
         log.info("Login successful: userId={}", userDetails.getId());
 
         return JwtAuthResponse.builder()
@@ -112,6 +116,7 @@ public class AuthService {
                 .userId(userDetails.getId())
                 .name(userDetails.getName())
                 .email(userDetails.getEmail())
+                .role(user.getRole().name().replace("ROLE_", "")) // ROLE_ADMIN -> ADMIN
                 .build();
     }
 
@@ -170,6 +175,7 @@ public class AuthService {
                 .userId(user.getUserId())
                 .name(user.getUserName())
                 .email(user.getUserEmail())
+                .role(user.getRole().name().replace("ROLE_", "")) // ROLE_ADMIN -> ADMIN
                 .build();
     }
 
