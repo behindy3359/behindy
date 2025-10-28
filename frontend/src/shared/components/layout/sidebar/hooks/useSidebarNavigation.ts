@@ -104,14 +104,13 @@ export const useSidebarNavigation = () => {
       },
     ];
 
-    // 관리자인 경우 관리자 대시보드 메뉴 추가
-    if (isAdmin) {
-      loggedInItems.push({
-        path: '/admin',
-        label: '관리자 대시보드',
-        icon: Shield,
-      });
-    }
+    // if (isAdmin) {
+    //   loggedInItems.push({
+    //     path: '/admin',
+    //     label: '관리자 대시보드',
+    //     icon: Shield,
+    //   });
+    // }
 
     loggedInItems.push({
       path: '/logout',
