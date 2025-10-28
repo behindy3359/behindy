@@ -44,44 +44,54 @@ const nextConfig: NextConfig = {
         net: false,
         tls: false,
       };
-    }
 
-    // 번들 사이즈 최적화
-    config.optimization = {
-      ...config.optimization,
-      moduleIds: 'deterministic',
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // React 관련 라이브러리
-          framework: {
-            name: 'framework',
-            test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
-            priority: 40,
-            enforce: true,
-          },
-          // UI 라이브러리
-          lib: {
-            test: /[\\/]node_modules[\\/]/,
-            name(module: any) {
-              const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1];
-              return `lib.${packageName?.replace('@', '')}`;
+      // 클라이언트 번들만 최적화 (서버는 기본 설정 유지)
+      config.optimization = {
+        ...config.optimization,
+        moduleIds: 'deterministic',
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            // React 관련 라이브러리
+            framework: {
+              name: 'framework',
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              priority: 40,
+              enforce: true,
             },
-            priority: 30,
-            minChunks: 1,
-            reuseExistingChunk: true,
-          },
-          // 공통 컴포넌트
-          commons: {
-            name: 'commons',
-            minChunks: 2,
-            priority: 20,
+            // styled-components
+            styledComponents: {
+              name: 'styled-components',
+              test: /[\\/]node_modules[\\/]styled-components[\\/]/,
+              priority: 35,
+              enforce: true,
+            },
+            // UI 라이브러리 (lucide-react, framer-motion 등)
+            ui: {
+              name: 'ui',
+              test: /[\\/]node_modules[\\/](lucide-react|framer-motion|d3)[\\/]/,
+              priority: 30,
+              reuseExistingChunk: true,
+            },
+            // 기타 vendor 라이브러리
+            vendors: {
+              name: 'vendors',
+              test: /[\\/]node_modules[\\/]/,
+              priority: 20,
+              minChunks: 2,
+              reuseExistingChunk: true,
+            },
+            // 공통 컴포넌트
+            commons: {
+              name: 'commons',
+              minChunks: 2,
+              priority: 10,
+              reuseExistingChunk: true,
+            },
           },
         },
-      },
-    };
+      };
+    }
 
     return config;
   },
